@@ -15,6 +15,8 @@ import Streams from "@/pages/streams/index";
 import StreamDetail from "@/pages/streams/[id]";
 import Games from "@/pages/games/index";
 import GameDetail from "@/pages/games/[id]";
+import Upcoming from "@/pages/upcoming";
+import Highlights from "@/pages/highlights";
 import Wallet from "@/pages/wallet";
 import Transactions from "@/pages/transactions";
 import Bets from "@/pages/bets";
@@ -27,6 +29,7 @@ import AdminWallets from "@/pages/admin/wallets";
 import AdminReports from "@/pages/admin/reports";
 import AdminVouchers from "@/pages/admin/vouchers";
 import AdminAnnouncements from "@/pages/admin/announcements";
+import AdminHighlights from "@/pages/admin/highlights";
 import NotFound from "@/pages/not-found";
 import RefundPolicy from "@/pages/refund-policy";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -64,6 +67,8 @@ function Router() {
         <Route path="/register" component={Register} />
         <Route path="/streams" component={Streams} />
         <Route path="/streams/:id" component={StreamDetail} />
+        <Route path="/upcoming" component={Upcoming} />
+        <Route path="/highlights" component={Highlights} />
         <Route path="/games">
           {() => <ProtectedRoute component={Games} />}
         </Route>
@@ -108,6 +113,9 @@ function Router() {
         </Route>
         <Route path="/admin/announcements">
           {() => <ProtectedRoute component={() => <AdminLayout><AdminAnnouncements /></AdminLayout>} adminOnly />}
+        </Route>
+        <Route path="/admin/highlights">
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminHighlights /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/terms" component={Terms} />
         <Route path="/privacy-policy" component={PrivacyPolicy} />

@@ -11,6 +11,7 @@ import adminRouter from "./admin";
 import reportsRouter from "./reports";
 import uploadsRouter from "./uploads";
 import announcementsRouter from "./announcements";
+import highlightsRouter from "./highlights";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use("/admin", adminRouter);
 router.use("/reports", reportsRouter);
 router.use("/uploads", uploadsRouter);
 router.use("/announcements", announcementsRouter);
+router.use("/highlights", highlightsRouter);
 
 export default router;

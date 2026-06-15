@@ -83,6 +83,8 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/streams', label: 'Streams' },
+    { href: '/upcoming', label: 'Upcoming' },
+    { href: '/highlights', label: 'Highlights' },
     ...(isAuthenticated ? [{ href: '/games', label: 'Games' }] : []),
   ];
 

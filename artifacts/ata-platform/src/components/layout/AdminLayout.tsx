@@ -9,12 +9,14 @@ import {
   BarChart2,
   Ticket,
   Megaphone,
+  Clapperboard,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/admin',                  label: 'Dashboard',     icon: LayoutDashboard, exact: true },
   { href: '/admin/streams',          label: 'Streams',       icon: Radio },
   { href: '/admin/games',            label: 'Games',         icon: Trophy },
+  { href: '/admin/highlights',       label: 'Highlights',    icon: Clapperboard },
   { href: '/admin/announcements',    label: 'Announcements', icon: Megaphone },
   { href: '/admin/users',            label: 'Users',         icon: Users },
   { href: '/admin/wallets',          label: 'Wallets',       icon: Wallet },
