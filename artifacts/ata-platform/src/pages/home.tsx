@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
   useEffect(() => {
-    document.title = 'ATA - Premium Sports Streaming & Betting Exchange';
+    document.title = 'ATA Sports Live — Kampala\'s Premier Sports Streaming & Betting Exchange';
   }, []);
 
   const { data: upcomingStreams, isLoading: loadingStreams } = useListUpcomingStreams();
