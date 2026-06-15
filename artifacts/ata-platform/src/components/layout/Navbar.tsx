@@ -1,10 +1,63 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { Bell, User as UserIcon, Wallet } from 'lucide-react';
+import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
+
+function UserMenu({ onLogout }: { onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const items = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/bets', label: 'My Bets', icon: Trophy },
+    { href: '/wallet', label: 'Transactions', icon: History },
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1 rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+        aria-label="User menu"
+      >
+        <UserIcon className="h-5 w-5" />
+        <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-44 rounded-lg border border-slate-700 bg-slate-900 shadow-xl py-1 z-50">
+          {items.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} onClick={() => setOpen(false)}>
+              <div className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer">
+                <Icon className="h-4 w-4 text-slate-500" />
+                {label}
+              </div>
+            </Link>
+          ))}
+          <div className="my-1 border-t border-slate-800" />
+          <button
+            onClick={() => { setOpen(false); onLogout(); }}
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 hover:bg-slate-800 hover:text-red-300 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Navbar() {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
@@ -84,19 +137,7 @@ export function Navbar() {
                   )}
                 </Button>
               </Link>
-              <Link href="/dashboard">
-                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white">
-                  <UserIcon className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={logout}
-                className="hidden md:flex text-slate-500 hover:text-slate-300 text-xs"
-              >
-                Sign Out
-              </Button>
+              <UserMenu onLogout={logout} />
             </>
           ) : (
             <>
