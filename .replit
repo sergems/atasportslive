@@ -49,7 +49,7 @@ args = "PORT=23218 BASE_PATH=/ pnpm --filter @workspace/ata-platform run dev"
 waitForPort = 23218
 
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
 
 [postMerge]
