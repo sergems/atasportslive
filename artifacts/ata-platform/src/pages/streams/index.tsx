@@ -43,8 +43,10 @@ function StreamCard({ stream, isAuthenticated, onPaywallRequest }: StreamCardPro
   });
   const hasAccess = accessData?.hasAccess === true;
 
+  const isLive = stream.status === 'live';
+
   const handleClick = () => {
-    if (isPaid && !isEnded) {
+    if (isPaid && !isEnded && isLive) {
       if (!isAuthenticated) { navigate('/login'); return; }
       if (hasAccess) { navigate(`/streams/${stream.id}`); }
       else { onPaywallRequest(stream); }

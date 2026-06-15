@@ -4,9 +4,8 @@ import { Link } from 'wouter';
 import { useGetStream, useCheckStreamAccess, usePurchaseStreamAccess, StreamStatus } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Countdown } from '@/components/ui/countdown';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Lock, Play, Users, ChevronLeft } from 'lucide-react';
+import { Lock, Play, Users, ChevronLeft, Clock, CalendarClock } from 'lucide-react';
 import Hls from 'hls.js';
 import { toast } from 'sonner';
 
@@ -88,13 +87,27 @@ export default function StreamDetail() {
           )
         ) : stream.status === 'upcoming' ? (
            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900">
-             {stream.thumbnailUrl && <img src={stream.thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />}
-             <div className="z-10 text-center">
-               <h3 className="text-2xl font-bold text-white mb-4">Starts In</h3>
-               <div className="text-5xl font-mono font-bold text-amber-500">
-                 {/* Simplified countdown for this view */}
-                 <Countdown seconds={3600} /> {/* Assuming we'd get this from backend, hardcoded for now just as placeholder if missing field */}
+             {stream.thumbnailUrl && <img src={stream.thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />}
+             <div className="z-10 text-center px-6 max-w-md">
+               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 mb-5">
+                 <CalendarClock className="h-8 w-8 text-amber-400" />
                </div>
+               <h3 className="text-2xl font-bold text-white mb-2">Not Broadcasting Yet</h3>
+               <p className="text-slate-400 text-sm mb-5">
+                 This event is scheduled and will go live on:
+               </p>
+               <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-6 py-4 inline-block mb-5">
+                 <div className="text-amber-400 font-bold text-xl">
+                   {new Date(stream.startTime).toLocaleDateString('en-UG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                 </div>
+                 <div className="text-white font-mono text-2xl mt-1">
+                   {new Date(stream.startTime).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
+                 </div>
+               </div>
+               <p className="text-slate-500 text-xs flex items-center justify-center gap-1.5">
+                 <Clock className="h-3.5 w-3.5" />
+                 Come back when the event is live to purchase access
+               </p>
              </div>
            </div>
         ) : (

@@ -146,6 +146,22 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
     return;
   }
 
+  // Only allow purchase when the stream is actively live
+  if (stream.status !== "live") {
+    if (stream.status === "upcoming") {
+      const goLiveAt = new Date(stream.startTime).toLocaleString("en-UG", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      });
+      res.status(400).json({
+        error: `This event is not broadcasting today. It is scheduled to go live on ${goLiveAt}. Please come back then to purchase access.`,
+      });
+    } else {
+      res.status(400).json({ error: "This stream is no longer available for purchase." });
+    }
+    return;
+  }
+
   // Check existing valid access
   const now = new Date();
   const [existing] = await db
