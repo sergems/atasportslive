@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { db, gamesTable, streamsTable, betsTable, walletsTable, transactionsTable } from "@workspace/db";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc, asc, sql, and } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
 
@@ -42,7 +42,7 @@ router.get("/", async (req, res): Promise<void> => {
   if (sport) q = q.where(eq(gamesTable.sport, sport as any));
 
   const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(gamesTable);
-  const games = await q.orderBy(desc(gamesTable.createdAt)).limit(limit).offset(offset);
+  const games = await q.orderBy(asc(gamesTable.eventDate), asc(gamesTable.eventTime)).limit(limit).offset(offset);
   res.json({ games: games.map(toGame), total: Number(count), page, limit });
 });
 
