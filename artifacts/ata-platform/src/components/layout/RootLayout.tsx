@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { MapPin, Phone, Mail } from 'lucide-react';
+import { FaFacebook, FaYoutube } from 'react-icons/fa';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
 
 export function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,26 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
               <p className="mt-3 text-xs text-slate-500">
                 &copy; {new Date().getFullYear()} ATA Sports Live. All rights reserved.
               </p>
+              <div className="flex items-center gap-3 mt-4">
+                <a
+                  href="https://www.facebook.com/profile.php?id=61567116955397"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="ATA on Facebook"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-200"
+                >
+                  <FaFacebook className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://www.youtube.com/channel/UCCMb9rG7jg6g8ClKR-yBYWQ"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="ATA on YouTube"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white transition-all duration-200"
+                >
+                  <FaYoutube className="h-4 w-4" />
+                </a>
+              </div>
             </div>
 
             {/* General Contact */}
