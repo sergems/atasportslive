@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, gamesTable, betsTable, walletsTable, transactionsTable } from "@workspace/db";
+import { db, gamesTable, streamsTable, betsTable, walletsTable, transactionsTable } from "@workspace/db";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
@@ -14,6 +14,8 @@ const toGame = (g: typeof gamesTable.$inferSelect) => ({
   sport: g.sport,
   playerA: g.playerA,
   playerB: g.playerB,
+  playerACountry: g.playerACountry,
+  playerBCountry: g.playerBCountry,
   eventDate: g.eventDate,
   eventTime: g.eventTime,
   eventEndDate: g.eventEndDate,
@@ -55,12 +57,12 @@ router.get("/upcoming", async (req, res): Promise<void> => {
 });
 
 router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
-  const { type = "single", parentId, sport, playerA, playerB, eventDate, eventTime, eventEndDate, eventEndTime, city, country } = req.body;
+  const { type = "single", parentId, sport, playerA, playerB, playerACountry, playerBCountry, eventDate, eventTime, eventEndDate, eventEndTime, city, country } = req.body;
   if (!sport || !playerA || !eventDate || !eventTime) {
     res.status(400).json({ error: "sport, playerA (name/team), eventDate, eventTime required" });
     return;
   }
-  if (type === "single" && !playerB) {
+  if (type === "single" && !playerB && !parentId) {
     res.status(400).json({ error: "playerB required for single matches" });
     return;
   }
@@ -70,6 +72,8 @@ router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, 
     sport,
     playerA,
     playerB: playerB || "",
+    playerACountry: playerACountry || null,
+    playerBCountry: playerBCountry || null,
     eventDate,
     eventTime,
     eventEndDate: eventEndDate || null,
@@ -77,6 +81,28 @@ router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, 
     city: city || null,
     country: country || null,
   }).returning();
+
+  // Auto-create a stream when a match is added to a competition
+  if (parentId) {
+    const [parent] = await db.select().from(gamesTable).where(eq(gamesTable.id, Number(parentId))).limit(1);
+    if (parent && parent.type === "competition") {
+      const streamTitle = `${parent.playerA} — ${playerA} vs ${playerB || "TBD"}`;
+      const startTime = new Date(`${eventDate}T${eventTime}:00`);
+      const endTime = (eventEndDate && eventEndTime)
+        ? new Date(`${eventEndDate}T${eventEndTime}:00`)
+        : eventEndDate ? new Date(`${eventEndDate}T23:59:00`) : null;
+      await db.insert(streamsTable).values({
+        title: streamTitle,
+        sport: sport || parent.sport,
+        startTime,
+        endTime,
+        city: city || parent.city || null,
+        country: country || parent.country || null,
+        accessPrice: "1.50",
+      });
+    }
+  }
+
   res.status(201).json(toGame(game));
 });
 
@@ -91,13 +117,15 @@ router.get("/:id", async (req, res): Promise<void> => {
 
 router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
-  const { type, parentId, sport, playerA, playerB, eventDate, eventTime, eventEndDate, eventEndTime, city, country, status } = req.body;
+  const { type, parentId, sport, playerA, playerB, playerACountry, playerBCountry, eventDate, eventTime, eventEndDate, eventEndTime, city, country, status } = req.body;
   const updates: Record<string, any> = {};
   if (type !== undefined) updates.type = type;
   if (parentId !== undefined) updates.parentId = parentId ? Number(parentId) : null;
   if (sport !== undefined) updates.sport = sport;
   if (playerA !== undefined) updates.playerA = playerA;
   if (playerB !== undefined) updates.playerB = playerB;
+  if (playerACountry !== undefined) updates.playerACountry = playerACountry || null;
+  if (playerBCountry !== undefined) updates.playerBCountry = playerBCountry || null;
   if (eventDate !== undefined) updates.eventDate = eventDate;
   if (eventTime !== undefined) updates.eventTime = eventTime;
   if (eventEndDate !== undefined) updates.eventEndDate = eventEndDate || null;

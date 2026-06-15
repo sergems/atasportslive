@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
-import { useGetGame, usePlaceBet, useListGameBets } from '@workspace/api-client-react';
+import { useGetGame, usePlaceBet, useListGameBets, getGetWalletQueryKey, getListMyBetsQueryKey } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Trophy, Users, TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { getGetWalletQueryKey, getListMyBetsQueryKey } from '@workspace/api-client-react';
+
+function countryFlag(code?: string | null): string {
+  if (!code || code.trim().length < 2) return '';
+  const c = code.trim().toUpperCase().slice(0, 2);
+  return String.fromCodePoint(c.charCodeAt(0) + 127397) + String.fromCodePoint(c.charCodeAt(1) + 127397);
+}
 
 const STATUS_COLORS: Record<string, string> = {
   upcoming: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -100,16 +105,26 @@ export default function GameDetail() {
           </div>
           <div className="flex items-center justify-center gap-8 text-center">
             <div className="flex-1">
+              {(game as any).playerACountry && (
+                <div className="text-3xl mb-1">{countryFlag((game as any).playerACountry)}</div>
+              )}
               <div className="text-3xl font-extrabold text-white mb-1">{game.playerA}</div>
-              <div className="text-slate-400 text-sm">Player A</div>
+              {(game as any).playerACountry && (
+                <div className="text-xs text-slate-500 uppercase tracking-wider">{(game as any).playerACountry}</div>
+              )}
             </div>
             <div className="flex flex-col items-center">
               <Trophy className="h-8 w-8 text-amber-500 mb-1" />
               <span className="text-slate-400 font-mono text-sm">VS</span>
             </div>
             <div className="flex-1">
+              {(game as any).playerBCountry && (
+                <div className="text-3xl mb-1">{countryFlag((game as any).playerBCountry)}</div>
+              )}
               <div className="text-3xl font-extrabold text-white mb-1">{game.playerB}</div>
-              <div className="text-slate-400 text-sm">Player B</div>
+              {(game as any).playerBCountry && (
+                <div className="text-xs text-slate-500 uppercase tracking-wider">{(game as any).playerBCountry}</div>
+              )}
             </div>
           </div>
           <div className="flex justify-center gap-6 mt-6 text-sm text-slate-400">

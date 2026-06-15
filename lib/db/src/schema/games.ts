@@ -17,6 +17,8 @@ export const gamesTable = pgTable("games", {
   eventTime: text("event_time").notNull(),
   eventEndDate: date("event_end_date", { mode: "string" }),
   eventEndTime: text("event_end_time"),
+  playerACountry: text("player_a_country"),
+  playerBCountry: text("player_b_country"),
   city: text("city"),
   country: text("country"),
   status: gameStatusEnum("status").notNull().default("upcoming"),

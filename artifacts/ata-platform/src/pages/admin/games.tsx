@@ -26,7 +26,9 @@ interface GameFormData {
   type: GameType;
   sport: string;
   playerA: string;
+  playerACountry: string;
   playerB: string;
+  playerBCountry: string;
   eventDate: string;
   eventTime: string;
   eventEndDate: string;
@@ -37,7 +39,8 @@ interface GameFormData {
 
 const EMPTY_SINGLE: GameFormData = {
   type: 'single', sport: 'pool',
-  playerA: '', playerB: '',
+  playerA: '', playerACountry: '',
+  playerB: '', playerBCountry: '',
   eventDate: '', eventTime: '',
   eventEndDate: '', eventEndTime: '',
   city: '', country: '',
@@ -45,7 +48,8 @@ const EMPTY_SINGLE: GameFormData = {
 
 const EMPTY_COMPETITION: GameFormData = {
   type: 'competition', sport: 'pool',
-  playerA: '', playerB: '',
+  playerA: '', playerACountry: '',
+  playerB: '', playerBCountry: '',
   eventDate: '', eventTime: '',
   eventEndDate: '', eventEndTime: '',
   city: '', country: '',
@@ -123,8 +127,16 @@ function GameForm({
               <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. John Doe" className="bg-slate-800 border-slate-700 text-white" />
             </div>
             <div className="space-y-1">
+              <Label className="text-slate-300">Player A Country <span className="text-slate-500 font-normal text-xs">(2-letter ISO, e.g. UG)</span></Label>
+              <Input value={form.playerACountry} onChange={(e: any) => setForm({ ...form, playerACountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="UG" maxLength={2} className="bg-slate-800 border-slate-700 text-white uppercase" />
+            </div>
+            <div className="space-y-1">
               <Label className="text-slate-300">Player B <span className="text-red-400">*</span></Label>
               <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Jane Doe" className="bg-slate-800 border-slate-700 text-white" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-slate-300">Player B Country <span className="text-slate-500 font-normal text-xs">(2-letter ISO, e.g. KE)</span></Label>
+              <Input value={form.playerBCountry} onChange={(e: any) => setForm({ ...form, playerBCountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="KE" maxLength={2} className="bg-slate-800 border-slate-700 text-white uppercase" />
             </div>
           </>
         )}
@@ -262,6 +274,8 @@ export default function AdminGames() {
           sport: form.sport,
           playerA: form.playerA,
           playerB: form.type === 'competition' ? '' : form.playerB,
+          playerACountry: form.playerACountry || undefined,
+          playerBCountry: form.playerBCountry || undefined,
           eventDate: form.eventDate,
           eventTime: form.eventTime,
           eventEndDate: form.eventEndDate || undefined,
@@ -288,6 +302,8 @@ export default function AdminGames() {
           sport: childForm.sport || parentGame.sport,
           playerA: childForm.playerA,
           playerB: childForm.playerB,
+          playerACountry: childForm.playerACountry || undefined,
+          playerBCountry: childForm.playerBCountry || undefined,
           eventDate: childForm.eventDate || parentGame.eventDate,
           eventTime: childForm.eventTime,
           eventEndDate: childForm.eventEndDate || undefined,
@@ -297,7 +313,7 @@ export default function AdminGames() {
         } as any,
       });
       invalidate();
-      toast.success('Match added to competition');
+      toast.success('Match added — a stream was also created automatically');
       setAddMatchParentId(null);
       setChildForm({ ...EMPTY_SINGLE });
       setExpanded((prev) => new Set([...prev, parentGame.id]));
@@ -311,7 +327,9 @@ export default function AdminGames() {
       type: game.type || 'single',
       sport: game.sport || 'pool',
       playerA: game.playerA || '',
+      playerACountry: game.playerACountry || '',
       playerB: game.playerB || '',
+      playerBCountry: game.playerBCountry || '',
       eventDate: game.eventDate || '',
       eventTime: game.eventTime || '',
       eventEndDate: game.eventEndDate || '',
@@ -333,6 +351,8 @@ export default function AdminGames() {
           sport: editForm.sport,
           playerA: editForm.playerA,
           playerB: editForm.type === 'competition' ? '' : editForm.playerB,
+          playerACountry: editForm.playerACountry || undefined,
+          playerBCountry: editForm.playerBCountry || undefined,
           eventDate: editForm.eventDate,
           eventTime: editForm.eventTime,
           eventEndDate: editForm.eventEndDate || undefined,
