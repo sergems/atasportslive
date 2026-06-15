@@ -153,8 +153,8 @@ export default function GameDetail() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Bet Placement */}
-        {['upcoming', 'live'].includes(game.status) && (
+        {/* Bet Placement — only available for upcoming games */}
+        {game.status === 'upcoming' && (
           <Card className="lg:col-span-2 bg-slate-900 border-primary/20">
             <CardHeader>
               <CardTitle className="text-white">Place Your Bet</CardTitle>

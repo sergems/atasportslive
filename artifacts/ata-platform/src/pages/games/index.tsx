@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import { useListGames } from '@workspace/api-client-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Trophy } from 'lucide-react';
+import { MapPin, Trophy, TrendingUp, CheckCircle2 } from 'lucide-react';
 
 function FlagImg({ code, className = '' }: { code?: string | null; className?: string }) {
   if (!code || code.trim().length < 2) return null;
@@ -27,6 +27,7 @@ interface Game {
   playerACountry?: string | null;
   playerBCountry?: string | null;
   status: string;
+  result?: string | null;
   eventDate: string;
   eventTime?: string | null;
   totalBetPool?: number | null;
@@ -46,10 +47,12 @@ function StatusPill({ status }: { status: string }) {
     );
   if (status === 'upcoming')
     return <span className="rounded bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">UPCOMING</span>;
+  if (status === 'completed')
+    return <span className="rounded bg-teal-500/10 border border-teal-500/20 px-1.5 py-0.5 text-[10px] font-bold text-teal-400">COMPLETED</span>;
   return <span className="rounded bg-slate-700/40 border border-slate-700/60 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 capitalize">{status}</span>;
 }
 
-function GameCard({ game, competitionName }: { game: Game; competitionName?: string | null }) {
+function GameCard({ game, competitionName, showResult }: { game: Game; competitionName?: string | null; showResult?: boolean }) {
   const sportColor: Record<string, string> = {
     pool: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
     boxing: 'text-red-400 bg-red-500/10 border-red-500/20',
@@ -95,33 +98,38 @@ function GameCard({ game, competitionName }: { game: Game; competitionName?: str
             </div>
           </div>
 
-          {/* Players row — names lean toward centre VS, flags pinned outside truncation */}
+          {/* Players row */}
           <div className="flex items-center gap-2">
-            {/* Player A — name right-aligned, flag on the outer right edge */}
             <div className="flex-1 flex items-center justify-end gap-1.5 min-w-0">
               <div className="text-sm font-bold text-white leading-tight truncate text-right">{game.playerA}</div>
               <FlagImg code={game.playerACountry} />
             </div>
             <span className="text-[10px] font-black text-slate-600 flex-shrink-0">VS</span>
-            {/* Player B — flag on outer left edge, name left-aligned */}
             <div className="flex-1 flex items-center justify-start gap-1.5 min-w-0">
               <FlagImg code={game.playerBCountry} />
               <div className="text-sm font-bold text-white leading-tight truncate text-left">{game.playerB}</div>
             </div>
           </div>
 
-          {/* Footer: pool + bets + location */}
+          {/* Footer */}
           <div className="flex items-center justify-between pt-1.5 border-t border-slate-800/80">
-            <div className="flex items-center gap-3">
-              <div>
-                <div className="text-[9px] uppercase tracking-wider text-slate-600">Pool</div>
-                <div className="text-xs font-mono font-bold text-amber-400">${(game.totalBetPool || 0).toFixed(2)}</div>
+            {showResult && game.result ? (
+              <div className="flex items-center gap-1 text-[10px] font-bold text-teal-400">
+                <CheckCircle2 className="h-3 w-3" />
+                {game.result.replace(/_/g, ' ').replace('player a', game.playerA).replace('player b', game.playerB).toUpperCase()}
               </div>
-              <div>
-                <div className="text-[9px] uppercase tracking-wider text-slate-600">Open</div>
-                <div className="text-xs font-mono font-bold text-white">{game.openBetsCount || 0}</div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div>
+                  <div className="text-[9px] uppercase tracking-wider text-slate-600">Pool</div>
+                  <div className="text-xs font-mono font-bold text-amber-400">${(game.totalBetPool || 0).toFixed(2)}</div>
+                </div>
+                <div>
+                  <div className="text-[9px] uppercase tracking-wider text-slate-600">Open</div>
+                  <div className="text-xs font-mono font-bold text-white">{game.openBetsCount || 0}</div>
+                </div>
               </div>
-            </div>
+            )}
             {(game.city || game.country) && (
               <div className="flex items-center gap-0.5 text-[10px] text-slate-500 truncate max-w-[45%]">
                 <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
@@ -135,16 +143,17 @@ function GameCard({ game, competitionName }: { game: Game; competitionName?: str
   );
 }
 
+type Tab = 'betting' | 'results';
+
 export default function Games() {
-  const [status, setStatus] = useState<string>('all');
+  const [tab, setTab] = useState<Tab>('betting');
   const [sport, setSport] = useState<string>('all');
 
   useEffect(() => { document.title = 'Games & Markets - ATA Platform'; }, []);
 
   const { data: gamesData, isLoading } = useListGames({
-    status: status !== 'all' ? status : undefined,
     sport: sport !== 'all' ? sport : undefined,
-    limit: 50,
+    limit: 100,
   });
 
   const allGames: Game[] = (gamesData?.games || []) as Game[];
@@ -154,59 +163,89 @@ export default function Games() {
     if (g.type === 'competition') competitionMap.set(g.id, g.playerA);
   });
 
-  const flatGames = allGames.filter((g) => g.type !== 'competition');
+  const nonCompetition = allGames.filter((g) => g.type !== 'competition');
+  const bettingGames = nonCompetition.filter((g) => g.status === 'upcoming');
+  const resultGames = nonCompetition.filter((g) => g.status === 'live' || g.status === 'completed');
+
+  const displayed = tab === 'betting' ? bettingGames : resultGames;
 
   return (
     <div className="space-y-6">
+      {/* Page header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Betting Exchange</h1>
-          <p className="text-slate-400 text-sm mt-0.5">P2P markets for African sports</p>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Games</h1>
+          <p className="text-slate-400 text-sm mt-0.5">P2P betting exchange · African sports</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={sport} onValueChange={setSport}>
-            <SelectTrigger className="w-[120px] bg-slate-900 border-slate-800 text-white text-sm h-8">
-              <SelectValue placeholder="Sport" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800 text-white">
-              <SelectItem value="all">All Sports</SelectItem>
-              <SelectItem value="pool">Pool</SelectItem>
-              <SelectItem value="boxing">Boxing</SelectItem>
-              <SelectItem value="football">Football</SelectItem>
-              <SelectItem value="athletics">Athletics</SelectItem>
-              <SelectItem value="basketball">Basketball</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-[120px] bg-slate-900 border-slate-800 text-white text-sm h-8">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-900 border-slate-800 text-white">
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="upcoming">Upcoming</SelectItem>
-              <SelectItem value="live">Live</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={sport} onValueChange={setSport}>
+          <SelectTrigger className="w-[130px] bg-slate-900 border-slate-800 text-white text-sm h-8">
+            <SelectValue placeholder="Sport" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-900 border-slate-800 text-white">
+            <SelectItem value="all">All Sports</SelectItem>
+            <SelectItem value="pool">Pool</SelectItem>
+            <SelectItem value="boxing">Boxing</SelectItem>
+            <SelectItem value="football">Football</SelectItem>
+            <SelectItem value="athletics">Athletics</SelectItem>
+            <SelectItem value="basketball">Basketball</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-slate-800">
+        <button
+          onClick={() => setTab('betting')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+            tab === 'betting'
+              ? 'border-amber-400 text-amber-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <TrendingUp className="h-4 w-4" />
+          Betting Exchange
+          {bettingGames.length > 0 && (
+            <span className="rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center">
+              {bettingGames.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab('results')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+            tab === 'results'
+              ? 'border-teal-400 text-teal-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          Results
+          {resultGames.length > 0 && (
+            <span className="rounded-full bg-teal-500/20 text-teal-400 text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center">
+              {resultGames.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Games grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading
-          ? Array(8).fill(0).map((_, i) => (
+          ? Array(6).fill(0).map((_, i) => (
               <Skeleton key={i} className="h-28 w-full rounded-lg bg-slate-800" />
             ))
-          : flatGames.length
-          ? flatGames.map((game) => (
+          : displayed.length
+          ? displayed.map((game) => (
               <GameCard
                 key={game.id}
                 game={game}
                 competitionName={game.parentId ? competitionMap.get(game.parentId) : null}
+                showResult={tab === 'results'}
               />
             ))
           : (
             <div className="col-span-full py-16 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl text-sm">
-              No games found.
+              {tab === 'betting' ? 'No upcoming games available for betting.' : 'No results yet.'}
             </div>
           )}
       </div>
