@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wallet as WalletIcon, ArrowUpRight, History, Ticket } from 'lucide-react';
+import { Wallet as WalletIcon, ArrowDownLeft, ArrowUpRight, History, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGetWalletQueryKey, getListTransactionsQueryKey } from '@workspace/api-client-react';
 import { useAuthStore } from '@/lib/auth-store';
@@ -84,7 +84,6 @@ export default function Wallet() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('mtn_momo');
   const [withdrawDetails, setWithdrawDetails] = useState('');
-  const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
@@ -122,7 +121,7 @@ export default function Wallet() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-white tracking-tight">Wallet</h1>
-        <p className="text-slate-400 mt-1">Manage your funds — redeem vouchers, withdraw, and track transactions.</p>
+        <p className="text-slate-400 mt-1">Manage your funds — deposit, withdraw, and track transactions.</p>
       </div>
 
       {/* Balance Cards */}
@@ -145,131 +144,129 @@ export default function Wallet() {
         ))}
       </div>
 
+      {/* Deposit + Withdraw side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Deposit / Withdraw form */}
+
+        {/* ── Deposit ── */}
         <Card className="bg-slate-900 border-primary/20">
-          <CardHeader>
-            <div className="flex gap-2">
-              <Button
-                variant={activeTab === 'deposit' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setActiveTab('deposit')}
-                className={activeTab === 'deposit' ? 'bg-teal-500 text-slate-950 hover:bg-teal-400' : 'text-slate-400'}
-              >
-                <Ticket className="h-4 w-4 mr-1" /> Redeem Voucher
-              </Button>
-              <Button
-                variant={activeTab === 'withdraw' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setActiveTab('withdraw')}
-                className={activeTab === 'withdraw' ? 'bg-amber-500 text-slate-950 hover:bg-amber-400' : 'text-slate-400'}
-              >
-                <ArrowUpRight className="h-4 w-4 mr-1" /> Withdraw
-              </Button>
-            </div>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-teal-400">
+              <ArrowDownLeft className="h-5 w-5" /> Deposit
+            </CardTitle>
+            <p className="text-xs text-slate-500 mt-0.5">Redeem an ATA Voucher to load funds instantly</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {activeTab === 'deposit' ? (
-              <>
-                <div className="rounded-lg bg-teal-500/10 border border-teal-500/20 px-4 py-3 text-sm text-teal-300">
-                  Enter your ATA Voucher code to load funds into your wallet instantly.
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Voucher Code</Label>
-                  <Input
-                    placeholder="e.g. 228623"
-                    maxLength={6}
-                    value={voucherCode}
-                    onChange={e => setVoucherCode(e.target.value.replace(/\D/g, ''))}
-                    className="bg-slate-800 border-slate-700 text-white font-mono text-xl tracking-[0.3em] text-center"
-                  />
-                  <p className="text-xs text-slate-500 text-center">6-digit code printed on your ATA Voucher</p>
-                </div>
-                <Button
-                  onClick={() => redeemMutation.mutate()}
-                  disabled={voucherCode.length !== 6 || redeemMutation.isPending}
-                  className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold"
-                >
-                  {redeemMutation.isPending ? 'Redeeming…' : 'Redeem Voucher'}
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Amount (USD)</Label>
-                  <Input
-                    type="number" min="1" step="0.01" placeholder="0.00"
-                    value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white"
-                  />
-                  <p className="text-xs text-slate-500">Withdrawable: ${(wallet?.withdrawableBalance || 0).toFixed(2)}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Payment Method</Label>
-                  <select
-                    value={withdrawMethod} onChange={e => setWithdrawMethod(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  >
-                    {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Account Details</Label>
-                  <Input
-                    placeholder="e.g. 0771234567"
-                    value={withdrawDetails} onChange={e => setWithdrawDetails(e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white"
-                  />
-                </div>
-                <Button
-                  onClick={handleWithdraw}
-                  disabled={withdrawMutation.isPending}
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold"
-                >
-                  {withdrawMutation.isPending ? 'Processing…' : 'Request Withdrawal'}
-                </Button>
-              </>
-            )}
+            <div className="rounded-lg bg-teal-500/10 border border-teal-500/20 px-4 py-3 text-sm text-teal-300">
+              Enter your 6-digit ATA Voucher code to credit your wallet immediately.
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Voucher Code</Label>
+              <Input
+                placeholder="e.g. 228623"
+                maxLength={6}
+                value={voucherCode}
+                onChange={e => setVoucherCode(e.target.value.replace(/\D/g, ''))}
+                className="bg-slate-800 border-slate-700 text-white font-mono text-xl tracking-[0.3em] text-center"
+              />
+              <p className="text-xs text-slate-500 text-center">6-digit code printed on your ATA Voucher</p>
+            </div>
+            <Button
+              onClick={() => redeemMutation.mutate()}
+              disabled={voucherCode.length !== 6 || redeemMutation.isPending}
+              className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold"
+            >
+              <Ticket className="h-4 w-4 mr-2" />
+              {redeemMutation.isPending ? 'Redeeming…' : 'Redeem Voucher'}
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Transaction History */}
+        {/* ── Withdraw ── */}
         <Card className="bg-slate-900 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <History className="h-5 w-5" /> Transaction History
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-amber-400">
+              <ArrowUpRight className="h-5 w-5" /> Withdrawal
             </CardTitle>
+            <p className="text-xs text-slate-500 mt-0.5">Request a payout to your mobile money or crypto account</p>
           </CardHeader>
-          <CardContent>
-            {loadingTx ? (
-              <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 bg-slate-800" />)}</div>
-            ) : !txData?.transactions?.length ? (
-              <p className="text-slate-500 text-sm text-center py-8">No transactions yet.</p>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                {txData.transactions.map((tx: any) => (
-                  <div key={tx.id} className="flex items-center justify-between py-2.5 border-b border-slate-800 last:border-0">
-                    <div>
-                      <div className="text-sm text-white">{TX_LABELS[tx.type] || tx.type.replace(/_/g, ' ')}</div>
-                      <div className="text-xs text-slate-500">
-                        {new Date(tx.createdAt).toLocaleDateString('en-UG', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`font-mono font-semibold text-sm ${TX_COLORS[tx.type] || 'text-white'}`}>
-                        {TX_SIGN[tx.type] || ''}${tx.amount.toFixed(2)}
-                      </div>
-                      <Badge variant="outline" className={`text-[10px] border-slate-700 ${tx.status === 'completed' ? 'text-teal-400' : tx.status === 'pending' ? 'text-amber-400' : 'text-red-400'}`}>
-                        {tx.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-slate-300">Amount (USD)</Label>
+              <Input
+                type="number" min="1" step="0.01" placeholder="0.00"
+                value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)}
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+              <p className="text-xs text-slate-500">
+                Withdrawable balance: <span className="text-green-400 font-mono font-semibold">${(wallet?.withdrawableBalance || 0).toFixed(2)}</span>
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Payment Method</Label>
+              <select
+                value={withdrawMethod} onChange={e => setWithdrawMethod(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-slate-300">Account Details</Label>
+              <Input
+                placeholder="e.g. 0771234567"
+                value={withdrawDetails} onChange={e => setWithdrawDetails(e.target.value)}
+                className="bg-slate-800 border-slate-700 text-white"
+              />
+              <p className="text-xs text-slate-500">Enter your mobile number or crypto address</p>
+            </div>
+            <Button
+              onClick={handleWithdraw}
+              disabled={withdrawMutation.isPending}
+              className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold"
+            >
+              <ArrowUpRight className="h-4 w-4 mr-2" />
+              {withdrawMutation.isPending ? 'Processing…' : 'Request Withdrawal'}
+            </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Transaction History — full width */}
+      <Card className="bg-slate-900 border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <History className="h-5 w-5" /> Transaction History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingTx ? (
+            <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 bg-slate-800" />)}</div>
+          ) : !txData?.transactions?.length ? (
+            <p className="text-slate-500 text-sm text-center py-8">No transactions yet.</p>
+          ) : (
+            <div className="divide-y divide-slate-800">
+              {txData.transactions.map((tx: any) => (
+                <div key={tx.id} className="flex items-center justify-between py-3">
+                  <div>
+                    <div className="text-sm text-white">{TX_LABELS[tx.type] || tx.type.replace(/_/g, ' ')}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {new Date(tx.createdAt).toLocaleDateString('en-UG', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`font-mono font-semibold text-sm ${TX_COLORS[tx.type] || 'text-white'}`}>
+                      {TX_SIGN[tx.type] || ''}${tx.amount.toFixed(2)}
+                    </div>
+                    <Badge variant="outline" className={`text-[10px] border-slate-700 mt-0.5 ${tx.status === 'completed' ? 'text-teal-400' : tx.status === 'pending' ? 'text-amber-400' : 'text-red-400'}`}>
+                      {tx.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
