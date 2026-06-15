@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict SbzUcWaICcpLAZi7VGzoig7Gr8ZdOWgcC8bBwSqUWBg2xSFZp54NYMEcZykZ1PP
+\restrict yKq6hq7oyIyvonboLixANVRmywcBOkSKAfmXfmwEDHs0dj1C3qVY0Y3FHaeVY0c
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -147,11 +147,11 @@ ALTER TYPE public.payment_method OWNER TO postgres;
 CREATE TYPE public.sport_type AS ENUM (
     'pool',
     'boxing',
-    'other',
     'football',
     'athletics',
     'basketball',
-    'tournament'
+    'tournament',
+    'other'
 );
 
 
@@ -413,6 +413,45 @@ ALTER SEQUENCE public.games_id_seq OWNED BY public.games.id;
 
 
 --
+-- Name: highlights; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.highlights (
+    id integer NOT NULL,
+    title text NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    youtube_url text NOT NULL,
+    is_published boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.highlights OWNER TO postgres;
+
+--
+-- Name: highlights_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.highlights_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.highlights_id_seq OWNER TO postgres;
+
+--
+-- Name: highlights_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.highlights_id_seq OWNED BY public.highlights.id;
+
+
+--
 -- Name: notifications; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -450,6 +489,19 @@ ALTER SEQUENCE public.notifications_id_seq OWNER TO postgres;
 
 ALTER SEQUENCE public.notifications_id_seq OWNED BY public.notifications.id;
 
+
+--
+-- Name: settings; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.settings (
+    key text NOT NULL,
+    value text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.settings OWNER TO postgres;
 
 --
 -- Name: stream_access; Type: TABLE; Schema: public; Owner: postgres
@@ -734,6 +786,13 @@ ALTER TABLE ONLY public.games ALTER COLUMN id SET DEFAULT nextval('public.games_
 
 
 --
+-- Name: highlights id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.highlights ALTER COLUMN id SET DEFAULT nextval('public.highlights_id_seq'::regclass);
+
+
+--
 -- Name: notifications id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -787,7 +846,7 @@ ALTER TABLE ONLY public.wallets ALTER COLUMN id SET DEFAULT nextval('public.wall
 --
 
 COPY public.announcements (id, title, content, is_active, priority, created_at, updated_at) FROM stdin;
-1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	t	10	2026-06-15 19:17:47.184937+00	2026-06-15 21:43:07.036+00
+1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	f	10	2026-06-15 19:17:47.184937+00	2026-06-15 23:01:43.041+00
 \.
 
 
@@ -830,6 +889,19 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 
 
 --
+-- Data for Name: highlights; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.highlights (id, title, description, youtube_url, is_published, created_at, updated_at) FROM stdin;
+1	Ceaser Chandiga v Kristi Caulfield | Pro Series Event	HERE COMES DA SCORPION | Ceaser Chandiga v Kristi Caulfield | Pro Series Event 1 Last 64 2026	https://www.youtube.com/watch?v=o3b1a5mnO9M	t	2026-06-15 22:33:25.553527+00	2026-06-15 22:34:05.012+00
+2	TOM COUSINS VS CEASAR CHANDIGA	£30,000 AFRICAN PRIDE MONEY MATCH | FULL MATCH\nFull replay of a high-stakes money match	https://www.youtube.com/watch?v=BxN1U0QYA9g	t	2026-06-15 22:35:35.937751+00	2026-06-15 22:35:35.937751+00
+3	CEASER DA SCORPION vs ADEN JOSEPH GHOST	HIGHLIGHTS – THE EPIC MONEY MATCH FULL LIVE STREAM\nFull replay of a high-stakes money match where Scorpion and Ghost go shot for shot under pressure.	https://www.youtube.com/watch?v=0RHMLSwjwpo	t	2026-06-15 22:37:32.330699+00	2026-06-15 22:37:32.330699+00
+4	CEASER CHANDIGA VS IBRAH SSEJEMBA TRIPLE BATTLE	DAY 1 HIGHLIGHTS: “CEASER CHANDIGA Vs IBRAH SSEJEMBA” TRIPLE BATTLE\nFull replay of day one featuring three intense battles and the opening chapter of a fierce rivalry.	https://www.youtube.com/watch?v=UvLlPRbw7wI	t	2026-06-15 22:39:03.425307+00	2026-06-15 22:39:03.425307+00
+5	CEASER CHANDIGA VS IBRAH SSEJEMBA - TRIPLE BATTLE	DAY 3 HIGHLIGHTS “CEASER CHANDIGA Vs IBRAH SSEJEMBA” TRIPLE BATTLE\nFull replay of day three as the rivalry heats up with bigger moments and decisive racks.	https://www.youtube.com/watch?v=dxhdUIaa9o4	t	2026-06-15 22:42:04.887419+00	2026-06-15 22:42:04.887419+00
+\.
+
+
+--
 -- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -842,12 +914,22 @@ COPY public.notifications (id, user_id, type, title, message, read, created_at) 
 
 
 --
+-- Data for Name: settings; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.settings (key, value, updated_at) FROM stdin;
+liveStreamUrl		2026-06-15 23:01:56.521376+00
+\.
+
+
+--
 -- Data for Name: stream_access; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, created_at) FROM stdin;
 1	2	6	2026-06-15 20:14:11.119+00	2026-06-16 20:14:11.119+00	2026-06-15 20:14:11.16535+00
 2	2	5	2026-06-15 20:15:23.301+00	2026-06-16 20:15:23.301+00	2026-06-15 20:15:23.3139+00
+3	2	3	2026-06-15 22:11:37.424+00	2026-06-16 22:11:37.424+00	2026-06-15 22:11:37.445919+00
 \.
 
 
@@ -859,9 +941,18 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 4	Nakawa Boxing Club Showcase	Young boxing talents from Nakawa show what they've got.	boxing	https://images.unsplash.com/photo-1565846930803-a7e4a6b7e5e4?w=800&q=80	\N	\N	ended	2026-06-12 16:31:06.62+00	2026-06-13 16:31:06.62+00	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00	\N	\N
 1	Kampala Pool Championship - Quarter Finals	Top pool players from Kampala face off in the quarter final round.	pool	https://images.unsplash.com/photo-1615672968435-75e0c291cd6e?w=800&q=80	https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8	\N	ended	2026-06-14 16:31:06.62+00	2026-06-15 16:34:42.477+00	142	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:34:42.477+00	\N	\N
 5	Test Pool Match	\N	pool	\N	\N	\N	upcoming	2026-06-20 15:00:00+00	\N	0	1.50	2026-06-15 19:06:10.910462+00	2026-06-15 19:06:10.910462+00	\N	\N
-3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&q=80	\N	\N	upcoming	2026-06-17 18:31:00+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 21:50:54.622+00	Kampala	Uganda
-6	Musuna Jule VS Alex Ambo		tournament	\N	\N	\N	upcoming	2026-06-25 14:00:00+00	\N	0	1.50	2026-06-15 19:06:11.15375+00	2026-06-15 21:52:14.106+00	\N	\N
 2	Lugogo Boxing Night - Main Event	Heavyweight showdown at Lugogo Arena. The main event you've been waiting for.	boxing	https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&q=80	\N	\N	upcoming	2026-06-16 18:31:00+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 21:53:28.67+00	Lusaka	Zambia
+11	Matavu Ukasha VS Kasasa Isaac	\N	boxing	\N	\N	\N	upcoming	2026-06-20 11:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:14:13.462438+00	\N	\N
+12	Ali Hassan VS John Doe	\N	pool	\N	\N	\N	upcoming	2026-06-20 12:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:14:13.462438+00	\N	\N
+6	Musuna Jule VS Alex Ambo		tournament	/uploads/thumb-1781565397631-khwqz5.png	\N	\N	upcoming	2026-06-25 16:00:00+00	\N	0	1.50	2026-06-15 19:06:11.15375+00	2026-06-15 23:16:38.779+00	\N	\N
+15	Joseph Kato VS Richard Wanyama		boxing	/uploads/thumb-1781565449802-31q8lm.jpg	\N	\N	upcoming	2026-06-22 17:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:30.071+00	\N	\N
+14	Caesar Chandinga VS Jabulani		pool	/uploads/thumb-1781565468263-x84aol.jpg	\N	\N	upcoming	2026-06-21 15:54:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:48.614+00	Lagos	Nigeria
+13	Jacob VS Caesar Chandinga		pool	/uploads/thumb-1781565483093-ej4d6o.jpeg	\N	\N	upcoming	2026-06-20 19:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:18:03.377+00	Lagos	Nigeria
+3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	/uploads/thumb-1781565511893-cf2kgm.png	\N	\N	upcoming	2026-06-17 20:31:00+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 23:18:32.232+00	Kampala	Uganda
+8	Moses Nkosi VS Emmanuel Atiku		boxing	/uploads/thumb-1781565578428-k8dj0x.jpg	\N	\N	upcoming	2026-06-16 19:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:19:39.043+00	\N	\N
+7	Brian Lubega VS Patrick Okello		pool	/uploads/thumb-1781565625295-0oehmv.jpg	\N	\N	upcoming	2026-06-16 14:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:25.592+00	\N	\N
+9	Caesar Chandinga VS Serge		pool	/uploads/thumb-1781565653292-8uuyff.jpeg	\N	\N	upcoming	2026-06-18 17:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:53.647+00	Lagos	Nigeria
+10	Siyabonga Shezi VS Caesar Chandinga		pool	/uploads/thumb-1781565717628-74qmou.jpg	\N	\N	upcoming	2026-06-19 17:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:21:57.935+00	Lagos	Nigeria
 \.
 
 
@@ -878,6 +969,7 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 6	STR-E1EB69E1	2	stream_access	1.50	completed	internal	\N	24h access to: Kampala Open Tournament	\N	2026-06-15 20:14:11.156501+00	2026-06-15 20:14:11.156501+00
 7	STR-D7A0AA77	2	stream_access	1.50	completed	internal	\N	24h access to: Test Pool Match	\N	2026-06-15 20:15:23.309961+00	2026-06-15 20:15:23.309961+00
 8	BET-9312F53B	2	bet_stake	2.00	completed	internal	\N	Bet stake on game #3	\N	2026-06-15 21:22:49.701492+00	2026-06-15 21:22:49.701492+00
+9	STR-1F420619	2	stream_access	1.50	completed	internal	\N	24h access to: Kyebando Pool League - Finals	\N	2026-06-15 22:11:37.437814+00	2026-06-15 22:11:37.437814+00
 \.
 
 
@@ -886,8 +978,8 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 --
 
 COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at) FROM stdin;
-2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NTU0MTEsImV4cCI6MTc4NDE0NzQxMX0.8Tfxucn6tzttRWARbcmkKAePxCcswIFZux4pfamL1e8	2026-06-15 16:31:06.605107+00	2026-06-15 20:30:11.33+00
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgxNTU2NzA1LCJleHAiOjE3ODQxNDg3MDV9.TrZsLENE49FBCB9qePkzetpMxijQDGCu5pt1jljRRac	2026-06-15 16:31:06.226579+00	2026-06-15 20:51:45.484+00
+2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NjQyODgsImV4cCI6MTc4NDE1NjI4OH0.7qRVT7inZXh3364gI22wPFlGueHKD3KxNeeKAvUjcbg	2026-06-15 16:31:06.605107+00	2026-06-15 22:58:08.086+00
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgxNTYyNzA4LCJleHAiOjE3ODQxNTQ3MDh9.dRBf7xKTdUQAHq79haCilSsu-s5m-RLyLk2Qx0_mELE	2026-06-15 16:31:06.226579+00	2026-06-15 23:04:17.696+00
 \.
 
 
@@ -913,7 +1005,7 @@ COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, c
 
 COPY public.wallets (id, user_id, balance, available_balance, pending_balance, withdrawable_balance, currency, created_at, updated_at) FROM stdin;
 1	1	10000.00	10000.00	0.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-15 16:31:06.51595+00
-2	2	76.00	34.00	42.00	76.00	USD	2026-06-15 16:31:06.612958+00	2026-06-15 21:22:49.646+00
+2	2	74.50	32.50	42.00	74.50	USD	2026-06-15 16:31:06.612958+00	2026-06-15 22:11:37.428+00
 \.
 
 
@@ -946,6 +1038,13 @@ SELECT pg_catalog.setval('public.games_id_seq', 12, true);
 
 
 --
+-- Name: highlights_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.highlights_id_seq', 5, true);
+
+
+--
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -956,21 +1055,21 @@ SELECT pg_catalog.setval('public.notifications_id_seq', 4, true);
 -- Name: stream_access_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.stream_access_id_seq', 2, true);
+SELECT pg_catalog.setval('public.stream_access_id_seq', 3, true);
 
 
 --
 -- Name: streams_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.streams_id_seq', 6, true);
+SELECT pg_catalog.setval('public.streams_id_seq', 15, true);
 
 
 --
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 8, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 9, true);
 
 
 --
@@ -1035,11 +1134,27 @@ ALTER TABLE ONLY public.games
 
 
 --
+-- Name: highlights highlights_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.highlights
+    ADD CONSTRAINT highlights_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: settings settings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.settings
+    ADD CONSTRAINT settings_pkey PRIMARY KEY (key);
 
 
 --
@@ -1205,5 +1320,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SbzUcWaICcpLAZi7VGzoig7Gr8ZdOWgcC8bBwSqUWBg2xSFZp54NYMEcZykZ1PP
+\unrestrict yKq6hq7oyIyvonboLixANVRmywcBOkSKAfmXfmwEDHs0dj1C3qVY0Y3FHaeVY0c
 
