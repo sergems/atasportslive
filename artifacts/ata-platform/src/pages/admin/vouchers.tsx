@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Ticket, Plus, Trash2, Copy, CheckCheck } from 'lucide-react';
+import { Ticket, Plus, Copy, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/lib/auth-store';
 
@@ -34,11 +34,6 @@ async function generateVouchers(amount: number, quantity: number) {
   return res.json();
 }
 
-async function deleteVoucher(id: number) {
-  const res = await fetch(`/api/admin/vouchers/${id}`, { method: 'DELETE', headers: authHeaders() });
-  if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
-  return res.json();
-}
 
 export default function AdminVouchers() {
   useEffect(() => { document.title = 'Vouchers - Admin'; }, []);
@@ -56,12 +51,6 @@ export default function AdminVouchers() {
       qc.invalidateQueries({ queryKey: ['admin-vouchers'] });
       toast.success(`Generated ${data.length} voucher${data.length > 1 ? 's' : ''}`);
     },
-    onError: (err: any) => toast.error(err.message),
-  });
-
-  const remove = useMutation({
-    mutationFn: deleteVoucher,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-vouchers'] }); toast.success('Voucher deleted'); },
     onError: (err: any) => toast.error(err.message),
   });
 
@@ -139,14 +128,9 @@ export default function AdminVouchers() {
                     <div className="font-mono text-lg font-bold text-white tracking-widest">{v.code}</div>
                     <div className="text-amber-400 font-semibold text-sm">${v.amount.toFixed(2)}</div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => copyCode(v.id, v.code)}>
-                      {copiedId === v.id ? <CheckCheck className="h-4 w-4 text-teal-400" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-red-400" onClick={() => remove.mutate(v.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => copyCode(v.id, v.code)}>
+                    {copiedId === v.id ? <CheckCheck className="h-4 w-4 text-teal-400" /> : <Copy className="h-4 w-4" />}
+                  </Button>
                 </div>
               ))}
             </div>

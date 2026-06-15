@@ -181,14 +181,6 @@ router.get("/vouchers", authMiddleware, requireRole("admin"), async (req: AuthRe
   })));
 });
 
-router.delete("/vouchers/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
-  const id = Number(req.params.id);
-  const [v] = await db.select().from(vouchersTable).where(eq(vouchersTable.id, id)).limit(1);
-  if (!v) { res.status(404).json({ error: "Voucher not found" }); return; }
-  if (v.isRedeemed) { res.status(400).json({ error: "Cannot delete a redeemed voucher" }); return; }
-  await db.delete(vouchersTable).where(eq(vouchersTable.id, id));
-  res.json({ success: true });
-});
 
 // ── Admin wallet adjustments ─────────────────────────────────────────────────
 
