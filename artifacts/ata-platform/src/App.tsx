@@ -31,6 +31,7 @@ import AdminReports from "@/pages/admin/reports";
 import AdminVouchers from "@/pages/admin/vouchers";
 import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminHighlights from "@/pages/admin/highlights";
+import AdminSettings from "@/pages/admin/settings";
 import NotFound from "@/pages/not-found";
 import RefundPolicy from "@/pages/refund-policy";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -118,6 +119,9 @@ function Router() {
         </Route>
         <Route path="/admin/highlights">
           {() => <ProtectedRoute component={() => <AdminLayout><AdminHighlights /></AdminLayout>} adminOnly />}
+        </Route>
+        <Route path="/admin/settings">
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminSettings /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/terms" component={Terms} />
         <Route path="/privacy-policy" component={PrivacyPolicy} />

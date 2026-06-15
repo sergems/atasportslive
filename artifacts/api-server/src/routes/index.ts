@@ -12,6 +12,7 @@ import reportsRouter from "./reports";
 import uploadsRouter from "./uploads";
 import announcementsRouter from "./announcements";
 import highlightsRouter from "./highlights";
+import settingsRouter from "./settings";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use("/reports", reportsRouter);
 router.use("/uploads", uploadsRouter);
 router.use("/announcements", announcementsRouter);
 router.use("/highlights", highlightsRouter);
+router.use("/settings", settingsRouter);
 
 export default router;

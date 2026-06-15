@@ -10,6 +10,7 @@ import {
   Ticket,
   Megaphone,
   Clapperboard,
+  Settings,
 } from 'lucide-react';
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/admin/wallets',          label: 'Wallets',       icon: Wallet },
   { href: '/admin/vouchers',         label: 'Vouchers',      icon: Ticket },
   { href: '/admin/reports',          label: 'Reports',       icon: BarChart2 },
+  { href: '/admin/settings',         label: 'Settings',      icon: Settings },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {

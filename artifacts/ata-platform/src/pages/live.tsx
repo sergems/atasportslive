@@ -50,6 +50,14 @@ function useLiveStream() {
   });
 }
 
+function useGlobalSettings() {
+  return useQuery<Record<string, string>>({
+    queryKey: ['settings'],
+    queryFn: () => fetch('/api/settings').then((r) => r.json()),
+    refetchInterval: 60000,
+  });
+}
+
 function useStreamAccess(streamId: number | undefined) {
   const token = useAuthStore((s) => s.token);
   return useQuery<AccessStatus>({
@@ -141,7 +149,10 @@ export default function Live() {
   const qc = useQueryClient();
 
   const { data: stream, isLoading: loadingStream } = useLiveStream();
+  const { data: settings, isLoading: loadingSettings } = useGlobalSettings();
   const { data: access, isLoading: loadingAccess } = useStreamAccess(stream?.id);
+
+  const liveStreamUrl = settings?.liveStreamUrl ?? '';
 
   const purchaseMutation = useMutation({
     mutationFn: async (streamId: number) => {
@@ -163,7 +174,7 @@ export default function Live() {
     },
   });
 
-  const isLoading = loadingStream || (!!stream && isAuthenticated && loadingAccess);
+  const isLoading = loadingStream || loadingSettings || (!!stream && isAuthenticated && loadingAccess);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -171,14 +182,10 @@ export default function Live() {
       <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
         {isLoading ? (
           <Skeleton className="absolute inset-0 bg-slate-800" />
-        ) : !stream ? (
+        ) : !stream || !liveStreamUrl ? (
           <NoLiveBroadcast />
-        ) : access?.hasAccess && stream.hlsUrl ? (
-          <HlsPlayer hlsUrl={stream.hlsUrl} title={stream.title} />
-        ) : access?.hasAccess && !stream.hlsUrl ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900 text-slate-500 text-sm">
-            Stream signal not available yet. Please wait.
-          </div>
+        ) : access?.hasAccess ? (
+          <HlsPlayer hlsUrl={liveStreamUrl} title={stream.title} />
         ) : (
           /* Paywall */
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur">
