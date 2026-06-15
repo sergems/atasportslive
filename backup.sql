@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ThesM2HmK0LmYee2nypuH4ZFrtlSWX3TcLDFDKkij8XG3pPGVSpvOatAxgZs4uR
+\restrict SbzUcWaICcpLAZi7VGzoig7Gr8ZdOWgcC8bBwSqUWBg2xSFZp54NYMEcZykZ1PP
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -17,6 +17,22 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO postgres;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
+--
+
+COMMENT ON SCHEMA public IS '';
+
 
 --
 -- Name: bet_outcome; Type: TYPE; Schema: public; Owner: postgres
@@ -771,7 +787,7 @@ ALTER TABLE ONLY public.wallets ALTER COLUMN id SET DEFAULT nextval('public.wall
 --
 
 COPY public.announcements (id, title, content, is_active, priority, created_at, updated_at) FROM stdin;
-1	Welcome to ATA Sports Live	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	t	10	2026-06-15 19:17:47.184937+00	2026-06-15 19:20:59.717+00
+1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	t	10	2026-06-15 19:17:47.184937+00	2026-06-15 21:43:07.036+00
 \.
 
 
@@ -789,6 +805,7 @@ COPY public.audit_logs (id, user_id, action, entity_type, entity_id, details, ip
 
 COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_return, status, matched_bet_id, settled_at, created_at, updated_at) FROM stdin;
 1	TKT-80CBCB97	2	2	player_b_wins	40.00	0.00	pending	\N	\N	2026-06-15 16:42:22.409097+00	2026-06-15 16:42:22.409097+00
+2	TKT-94544E67	2	3	player_a_wins	2.00	0.00	pending	\N	\N	2026-06-15 21:22:49.715996+00	2026-06-15 21:22:49.715996+00
 \.
 
 
@@ -797,8 +814,6 @@ COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_ret
 --
 
 COPY public.games (id, sport, player_a, player_b, event_date, event_time, status, result, total_bet_pool, open_bets_count, matched_bets_count, created_at, updated_at, event_end_date, event_end_time, city, country, type, parent_id, player_a_country, player_b_country) FROM stdin;
-1	pool	Hassan Mukasa	David Ssemwanga	2026-06-15	19:00	live	\N	90.00	5	3	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
-3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	upcoming	\N	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
 4	boxing	Joseph Kato	Richard Wanyama	2026-06-22	18:00	upcoming	\N	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
 5	pool	Samuel Kagwa	Alex Mutumba	2026-06-13	17:00	completed	player_a_wins	240.00	0	8	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
 2	boxing	Moses Nkosi	Emmanuel Atiku	2026-06-16	20:00	upcoming	\N	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:42:22.416+00	\N	\N	\N	\N	single	\N	\N	\N
@@ -806,9 +821,11 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 7	pool	Ali Hassan	John Doe	2026-06-20	15:00	upcoming	\N	0.00	0	0	2026-06-15 19:06:10.922877+00	2026-06-15 19:06:10.922877+00	\N	\N	\N	\N	single	\N	\N	\N
 8	pool	Big Kels – ATA International Clash		2026-06-18	11:00	upcoming	\N	0.00	0	0	2026-06-15 19:41:45.888663+00	2026-06-15 19:41:45.888663+00	2026-06-21	14:30	Lagos	Nigeria	competition	\N	\N	\N
 9	pool	Caesar Chandinga	Serge	2026-06-18	18:00	upcoming	\N	0.00	0	0	2026-06-15 19:52:47.086143+00	2026-06-15 19:52:47.086143+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
-10	pool	Serge	Caesar Chandinga	2026-06-19	18:00	upcoming	\N	0.00	0	0	2026-06-15 19:53:28.784467+00	2026-06-15 19:53:28.784467+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
-11	pool	Jacob	Caesar Chandinga	2026-06-20	20:00	upcoming	\N	0.00	0	0	2026-06-15 19:54:24.775026+00	2026-06-15 19:54:24.775026+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
 12	pool	Caesar Chandinga	Jabulani	2026-06-21	16:54	upcoming	\N	0.00	0	0	2026-06-15 19:55:04.828187+00	2026-06-15 20:12:18.086+00	\N	\N	Lagos	Nigeria	single	8	UG	CD
+11	pool	Jacob	Caesar Chandinga	2026-06-20	20:00	upcoming	\N	0.00	0	0	2026-06-15 19:54:24.775026+00	2026-06-15 20:52:16.387+00	\N	\N	Lagos	Nigeria	single	8	TZ	UG
+10	pool	Siyabonga Shezi	Caesar Chandinga	2026-06-19	18:00	upcoming	\N	0.00	0	0	2026-06-15 19:53:28.784467+00	2026-06-15 20:53:34.678+00	\N	\N	Lagos	Nigeria	single	8	ZA	UG
+1	pool	Hassan Mukasa	David Ssemwanga	2026-06-15	19:00	completed	player_b_wins	90.00	5	3	2026-06-15 16:31:06.632179+00	2026-06-15 21:17:47.146+00	\N	\N	\N	\N	single	\N	\N	\N
+3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	upcoming	\N	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-15 21:22:49.722+00	\N	\N	\N	\N	single	\N	\N	\N
 \.
 
 
@@ -839,12 +856,12 @@ COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, creat
 --
 
 COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stream_key, status, start_time, end_time, viewer_count, access_price, created_at, updated_at, city, country) FROM stdin;
-2	Lugogo Boxing Night - Main Event	Heavyweight showdown at Lugogo Arena. The main event you've been waiting for.	boxing	https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&q=80	\N	\N	upcoming	2026-06-16 16:31:06.62+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00	\N	\N
-3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&q=80	\N	\N	upcoming	2026-06-17 16:31:06.62+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00	\N	\N
 4	Nakawa Boxing Club Showcase	Young boxing talents from Nakawa show what they've got.	boxing	https://images.unsplash.com/photo-1565846930803-a7e4a6b7e5e4?w=800&q=80	\N	\N	ended	2026-06-12 16:31:06.62+00	2026-06-13 16:31:06.62+00	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00	\N	\N
 1	Kampala Pool Championship - Quarter Finals	Top pool players from Kampala face off in the quarter final round.	pool	https://images.unsplash.com/photo-1615672968435-75e0c291cd6e?w=800&q=80	https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8	\N	ended	2026-06-14 16:31:06.62+00	2026-06-15 16:34:42.477+00	142	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:34:42.477+00	\N	\N
 5	Test Pool Match	\N	pool	\N	\N	\N	upcoming	2026-06-20 15:00:00+00	\N	0	1.50	2026-06-15 19:06:10.910462+00	2026-06-15 19:06:10.910462+00	\N	\N
-6	Kampala Open Tournament	\N	tournament	\N	\N	\N	upcoming	2026-06-25 10:00:00+00	\N	0	1.50	2026-06-15 19:06:11.15375+00	2026-06-15 19:06:11.15375+00	\N	\N
+3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&q=80	\N	\N	upcoming	2026-06-17 18:31:00+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 21:50:54.622+00	Kampala	Uganda
+6	Musuna Jule VS Alex Ambo		tournament	\N	\N	\N	upcoming	2026-06-25 14:00:00+00	\N	0	1.50	2026-06-15 19:06:11.15375+00	2026-06-15 21:52:14.106+00	\N	\N
+2	Lugogo Boxing Night - Main Event	Heavyweight showdown at Lugogo Arena. The main event you've been waiting for.	boxing	https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&q=80	\N	\N	upcoming	2026-06-16 18:31:00+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 21:53:28.67+00	Lusaka	Zambia
 \.
 
 
@@ -860,6 +877,7 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 5	VCH-014948	2	voucher_redeem	10.00	completed	internal	\N	Voucher 014948 redeemed	\N	2026-06-15 18:04:53.731233+00	2026-06-15 18:04:53.731233+00
 6	STR-E1EB69E1	2	stream_access	1.50	completed	internal	\N	24h access to: Kampala Open Tournament	\N	2026-06-15 20:14:11.156501+00	2026-06-15 20:14:11.156501+00
 7	STR-D7A0AA77	2	stream_access	1.50	completed	internal	\N	24h access to: Test Pool Match	\N	2026-06-15 20:15:23.309961+00	2026-06-15 20:15:23.309961+00
+8	BET-9312F53B	2	bet_stake	2.00	completed	internal	\N	Bet stake on game #3	\N	2026-06-15 21:22:49.701492+00	2026-06-15 21:22:49.701492+00
 \.
 
 
@@ -868,8 +886,8 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 --
 
 COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at) FROM stdin;
-2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NDUzNDgsImV4cCI6MTc4NDEzNzM0OH0.6W_tQ4qVBijqte_JCu2Er6LtkZwU93Hc9NODeJgZF0A	2026-06-15 16:31:06.605107+00	2026-06-15 17:44:54.072+00
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgxNTUxMDY3LCJleHAiOjE3ODQxNDMwNjd9.YQo98aw71RTWhApPB2atMf5LBgQP8Amk2GdBphjT9ao	2026-06-15 16:31:06.226579+00	2026-06-15 19:17:47.116+00
+2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NTU0MTEsImV4cCI6MTc4NDE0NzQxMX0.8Tfxucn6tzttRWARbcmkKAePxCcswIFZux4pfamL1e8	2026-06-15 16:31:06.605107+00	2026-06-15 20:30:11.33+00
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgxNTU2NzA1LCJleHAiOjE3ODQxNDg3MDV9.TrZsLENE49FBCB9qePkzetpMxijQDGCu5pt1jljRRac	2026-06-15 16:31:06.226579+00	2026-06-15 20:51:45.484+00
 \.
 
 
@@ -895,7 +913,7 @@ COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, c
 
 COPY public.wallets (id, user_id, balance, available_balance, pending_balance, withdrawable_balance, currency, created_at, updated_at) FROM stdin;
 1	1	10000.00	10000.00	0.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-15 16:31:06.51595+00
-2	2	76.00	36.00	40.00	76.00	USD	2026-06-15 16:31:06.612958+00	2026-06-15 20:15:23.305+00
+2	2	76.00	34.00	42.00	76.00	USD	2026-06-15 16:31:06.612958+00	2026-06-15 21:22:49.646+00
 \.
 
 
@@ -917,7 +935,7 @@ SELECT pg_catalog.setval('public.audit_logs_id_seq', 1, false);
 -- Name: bets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.bets_id_seq', 1, true);
+SELECT pg_catalog.setval('public.bets_id_seq', 2, true);
 
 
 --
@@ -952,7 +970,7 @@ SELECT pg_catalog.setval('public.streams_id_seq', 6, true);
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 7, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 8, true);
 
 
 --
@@ -1177,8 +1195,15 @@ ALTER TABLE ONLY public.wallets
 
 
 --
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ThesM2HmK0LmYee2nypuH4ZFrtlSWX3TcLDFDKkij8XG3pPGVSpvOatAxgZs4uR
+\unrestrict SbzUcWaICcpLAZi7VGzoig7Gr8ZdOWgcC8bBwSqUWBg2xSFZp54NYMEcZykZ1PP
 
