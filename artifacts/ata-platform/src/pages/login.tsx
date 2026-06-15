@@ -25,19 +25,21 @@ export default function Login() {
     },
   });
 
+  const { user } = useAuth();
+
   useEffect(() => {
     document.title = 'Login - ATA Platform';
     if (isAuthenticated) {
-      setLocation('/dashboard');
+      setLocation(user?.role === 'admin' ? '/admin' : '/dashboard');
     }
-  }, [isAuthenticated, setLocation]);
+  }, [isAuthenticated, user, setLocation]);
 
   const onSubmit = (data: any) => {
     loginMutation.mutate({ data }, {
       onSuccess: (res) => {
         login(res.accessToken, res.user);
         toast.success('Logged in successfully');
-        setLocation('/dashboard');
+        setLocation(res.user.role === 'admin' ? '/admin' : '/dashboard');
       },
       onError: (err: any) => {
         toast.error('Login failed', { description: err?.message || 'Invalid credentials' });
