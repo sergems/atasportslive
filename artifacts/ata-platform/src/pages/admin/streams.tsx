@@ -156,6 +156,9 @@ export default function AdminStreams() {
   const [uploading, setUploading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editThumbnailFile, setEditThumbnailFile] = useState<File | null>(null);
+  const [editThumbnailPreview, setEditThumbnailPreview] = useState<string | null>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: streamsData, isLoading } = useListStreams({ limit: 50 });
   const createStream = useCreateStream();
@@ -183,6 +186,26 @@ export default function AdminStreams() {
     if (!thumbnailFile) return null;
     const fd = new FormData();
     fd.append('thumbnail', thumbnailFile);
+    const r = await fetch('/api/uploads/thumbnail', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || 'Upload failed'); }
+    return (await r.json()).url;
+  };
+
+  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setEditThumbnailFile(file);
+    setEditThumbnailPreview(URL.createObjectURL(file));
+  };
+  const clearEditThumbnail = () => {
+    setEditThumbnailFile(null);
+    setEditThumbnailPreview(null);
+    if (editFileInputRef.current) editFileInputRef.current.value = '';
+  };
+  const uploadEditThumbnail = async (): Promise<string | null> => {
+    if (!editThumbnailFile) return null;
+    const fd = new FormData();
+    fd.append('thumbnail', editThumbnailFile);
     const r = await fetch('/api/uploads/thumbnail', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
     if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || 'Upload failed'); }
     return (await r.json()).url;
@@ -242,6 +265,8 @@ export default function AdminStreams() {
       city: stream.city || '',
       country: stream.country || '',
     });
+    clearEditThumbnail();
+    setEditThumbnailPreview(stream.thumbnailUrl || null);
     setShowForm(false);
   };
 
@@ -250,6 +275,7 @@ export default function AdminStreams() {
     if (!editForm.startTime) { toast.error('Start date and time is required'); return; }
     try {
       setEditSaving(true);
+      const newThumbnailUrl = await uploadEditThumbnail();
       await updateStream.mutateAsync({
         id: editId!,
         data: {
@@ -261,11 +287,13 @@ export default function AdminStreams() {
           accessPrice: parseFloat(editForm.accessPrice),
           city: editForm.city || undefined,
           country: editForm.country || undefined,
+          ...(newThumbnailUrl ? { thumbnailUrl: newThumbnailUrl } : {}),
         } as any,
       });
       invalidate();
       toast.success('Stream updated');
       setEditId(null);
+      clearEditThumbnail();
     } catch (e: any) {
       toast.error(e?.data?.error || 'Failed to update stream');
     } finally {
@@ -391,9 +419,9 @@ export default function AdminStreams() {
                 <div className="mt-2">
                   <StreamForm
                     form={editForm} setForm={setEditForm} isTournament={editIsTournament}
-                    thumbnailPreview={null} fileInputRef={null}
-                    onFileChange={null} onClearThumb={null}
-                    onSave={handleEdit} onCancel={() => setEditId(null)}
+                    thumbnailPreview={editThumbnailPreview} fileInputRef={editFileInputRef}
+                    onFileChange={handleEditFileChange} onClearThumb={clearEditThumbnail}
+                    onSave={handleEdit} onCancel={() => { setEditId(null); clearEditThumbnail(); }}
                     saving={editSaving} title="Edit Stream" accentClass="border-amber-500/30"
                   />
                 </div>

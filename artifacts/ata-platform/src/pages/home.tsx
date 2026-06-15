@@ -102,10 +102,10 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loadingStreams ? (
-            Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-64 w-full rounded-xl bg-slate-800" />)
+            Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-64 w-full rounded-xl bg-slate-800" />)
           ) : upcomingStreams?.length ? (
-            upcomingStreams.slice(0, 3).map((stream: any) => (
-              <Link key={stream.id} href={`/streams/${stream.id}`}>
+            upcomingStreams.slice(0, 6).map((stream: any) => (
+              <Link key={stream.id} href="/live">
                 <Card className="group overflow-hidden border-primary/20 bg-card hover:border-teal-500/50 transition-all duration-300 cursor-pointer h-full">
                   <div className="relative aspect-video bg-slate-900">
                     {stream.thumbnailUrl ? (
