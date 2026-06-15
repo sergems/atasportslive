@@ -8,3 +8,4 @@ export * from "./bets";
 export * from "./notifications";
 export * from "./audit_logs";
 export * from "./vouchers";
+export * from "./announcements";

@@ -20,6 +20,8 @@ const toStream = (s: typeof streamsTable.$inferSelect) => ({
   endTime: s.endTime,
   viewerCount: s.viewerCount,
   accessPrice: parseFloat(s.accessPrice as string),
+  city: s.city,
+  country: s.country,
   createdAt: s.createdAt,
 });
 
@@ -53,7 +55,7 @@ router.get("/upcoming", async (req, res): Promise<void> => {
 });
 
 router.post("/", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
-  const { title, description, sport, thumbnailUrl, startTime, endTime, accessPrice, playerA, playerB } = req.body;
+  const { title, description, sport, thumbnailUrl, startTime, endTime, accessPrice, playerA, playerB, city, country } = req.body;
   if (!title || !sport || !startTime) {
     res.status(400).json({ error: "title, sport, startTime required" });
     return;
@@ -77,6 +79,8 @@ router.post("/", authMiddleware, requireRole("admin", "moderator"), async (req: 
       startTime: new Date(startTime),
       endTime: endTime ? new Date(endTime) : null,
       accessPrice: accessPrice?.toString() || "1.50",
+      city: city || null,
+      country: country || null,
     })
     .returning();
 
@@ -84,7 +88,15 @@ router.post("/", authMiddleware, requireRole("admin", "moderator"), async (req: 
     const start = new Date(startTime);
     const eventDate = start.toISOString().split("T")[0];
     const eventTime = start.toTimeString().slice(0, 5);
-    await db.insert(gamesTable).values({ sport, playerA, playerB, eventDate, eventTime });
+    const endDateStr = endTime ? new Date(endTime).toISOString().split("T")[0] : null;
+    const endTimeStr = endTime ? new Date(endTime).toTimeString().slice(0, 5) : null;
+    await db.insert(gamesTable).values({
+      sport, playerA, playerB, eventDate, eventTime,
+      eventEndDate: endDateStr,
+      eventEndTime: endTimeStr,
+      city: city || null,
+      country: country || null,
+    });
   }
 
   res.status(201).json(toStream(stream));
@@ -101,17 +113,19 @@ router.get("/:id", async (req, res): Promise<void> => {
 
 router.patch("/:id", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
-  const { title, description, sport, thumbnailUrl, startTime, endTime, status, hlsUrl, accessPrice } = req.body;
+  const { title, description, sport, thumbnailUrl, startTime, endTime, status, hlsUrl, accessPrice, city, country } = req.body;
   const updates: Record<string, any> = {};
   if (title !== undefined) updates.title = title;
   if (description !== undefined) updates.description = description;
   if (sport !== undefined) updates.sport = sport;
   if (thumbnailUrl !== undefined) updates.thumbnailUrl = thumbnailUrl;
   if (startTime !== undefined) updates.startTime = new Date(startTime);
-  if (endTime !== undefined) updates.endTime = new Date(endTime);
+  if (endTime !== undefined) updates.endTime = endTime ? new Date(endTime) : null;
   if (status !== undefined) updates.status = status;
   if (hlsUrl !== undefined) updates.hlsUrl = hlsUrl;
   if (accessPrice !== undefined) updates.accessPrice = accessPrice.toString();
+  if (city !== undefined) updates.city = city || null;
+  if (country !== undefined) updates.country = country || null;
 
   const [stream] = await db.update(streamsTable).set(updates).where(eq(streamsTable.id, id)).returning();
   res.json(toStream(stream));

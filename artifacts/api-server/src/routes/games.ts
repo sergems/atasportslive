@@ -14,6 +14,10 @@ const toGame = (g: typeof gamesTable.$inferSelect) => ({
   playerB: g.playerB,
   eventDate: g.eventDate,
   eventTime: g.eventTime,
+  eventEndDate: g.eventEndDate,
+  eventEndTime: g.eventEndTime,
+  city: g.city,
+  country: g.country,
   status: g.status,
   result: g.result,
   totalBetPool: parseFloat(g.totalBetPool as string),
@@ -49,12 +53,18 @@ router.get("/upcoming", async (req, res): Promise<void> => {
 });
 
 router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
-  const { sport, playerA, playerB, eventDate, eventTime } = req.body;
+  const { sport, playerA, playerB, eventDate, eventTime, eventEndDate, eventEndTime, city, country } = req.body;
   if (!sport || !playerA || !playerB || !eventDate || !eventTime) {
-    res.status(400).json({ error: "All fields required" });
+    res.status(400).json({ error: "sport, playerA, playerB, eventDate, eventTime required" });
     return;
   }
-  const [game] = await db.insert(gamesTable).values({ sport, playerA, playerB, eventDate, eventTime }).returning();
+  const [game] = await db.insert(gamesTable).values({
+    sport, playerA, playerB, eventDate, eventTime,
+    eventEndDate: eventEndDate || null,
+    eventEndTime: eventEndTime || null,
+    city: city || null,
+    country: country || null,
+  }).returning();
   res.status(201).json(toGame(game));
 });
 
@@ -69,14 +79,18 @@ router.get("/:id", async (req, res): Promise<void> => {
 
 router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
-  const { sport, playerA, playerB, eventDate, eventTime, status } = req.body;
+  const { sport, playerA, playerB, eventDate, eventTime, eventEndDate, eventEndTime, city, country, status } = req.body;
   const updates: Record<string, any> = {};
-  if (sport) updates.sport = sport;
-  if (playerA) updates.playerA = playerA;
-  if (playerB) updates.playerB = playerB;
-  if (eventDate) updates.eventDate = eventDate;
-  if (eventTime) updates.eventTime = eventTime;
-  if (status) updates.status = status;
+  if (sport !== undefined) updates.sport = sport;
+  if (playerA !== undefined) updates.playerA = playerA;
+  if (playerB !== undefined) updates.playerB = playerB;
+  if (eventDate !== undefined) updates.eventDate = eventDate;
+  if (eventTime !== undefined) updates.eventTime = eventTime;
+  if (eventEndDate !== undefined) updates.eventEndDate = eventEndDate || null;
+  if (eventEndTime !== undefined) updates.eventEndTime = eventEndTime || null;
+  if (city !== undefined) updates.city = city || null;
+  if (country !== undefined) updates.country = country || null;
+  if (status !== undefined) updates.status = status;
   const [game] = await db.update(gamesTable).set(updates).where(eq(gamesTable.id, id)).returning();
   res.json(toGame(game));
 });

@@ -1,12 +1,28 @@
 import React, { useEffect } from 'react';
 import { Link } from 'wouter';
 import { useListUpcomingStreams, useListUpcomingGames } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Countdown } from '@/components/ui/countdown';
-import { Play, Trophy, Users, Zap } from 'lucide-react';
+import { Play, Trophy, Zap, Megaphone, MapPin, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+
+interface Announcement { id: number; title: string; content: string; priority: number; }
+
+function useActiveAnnouncements() {
+  return useQuery<Announcement[]>({
+    queryKey: ['announcements', 'active'],
+    queryFn: async () => {
+      const r = await fetch('/api/announcements/active');
+      if (!r.ok) return [];
+      return r.json();
+    },
+    staleTime: 60_000,
+  });
+}
 
 export default function Home() {
   useEffect(() => {
@@ -16,12 +32,36 @@ export default function Home() {
   const { isAuthenticated } = useAuth();
   const { data: _upcomingStreams, isLoading: loadingStreams } = useListUpcomingStreams();
   const { data: _upcomingGames, isLoading: loadingGames } = useListUpcomingGames();
+  const { data: announcements } = useActiveAnnouncements();
+  const [dismissedIds, setDismissedIds] = useState<Set<number>>(new Set());
 
   const upcomingStreams = Array.isArray(_upcomingStreams) ? _upcomingStreams : [];
   const upcomingGames = Array.isArray(_upcomingGames) ? _upcomingGames : [];
+  const visibleAnnouncements = (announcements || []).filter((a) => !dismissedIds.has(a.id));
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-10">
+      {/* Announcements Banner */}
+      {visibleAnnouncements.length > 0 && (
+        <section className="space-y-2">
+          {visibleAnnouncements.map((a) => (
+            <div key={a.id} className="relative flex items-start gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 pr-10">
+              <Megaphone className="h-4 w-4 text-orange-400 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <span className="font-semibold text-orange-300 text-sm">{a.title}: </span>
+                <span className="text-slate-300 text-sm">{a.content}</span>
+              </div>
+              <button
+                onClick={() => setDismissedIds((s) => new Set([...s, a.id]))}
+                className="absolute right-3 top-3 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </section>
+      )}
+
       {/* Hero Section */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-primary/50 to-slate-900 border border-primary/20">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=2090&auto=format&fit=crop')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
@@ -51,7 +91,7 @@ export default function Home() {
 
       {/* Upcoming Streams */}
       <section>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold tracking-tight text-white flex items-center">
             <Zap className="mr-3 h-6 w-6 text-teal-400" /> Live & Upcoming Action
           </h2>
@@ -64,7 +104,7 @@ export default function Home() {
           {loadingStreams ? (
             Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-64 w-full rounded-xl bg-slate-800" />)
           ) : upcomingStreams?.length ? (
-            upcomingStreams.slice(0, 3).map(stream => (
+            upcomingStreams.slice(0, 3).map((stream: any) => (
               <Link key={stream.id} href={`/streams/${stream.id}`}>
                 <Card className="group overflow-hidden border-primary/20 bg-card hover:border-teal-500/50 transition-all duration-300 cursor-pointer h-full">
                   <div className="relative aspect-video bg-slate-900">
@@ -78,13 +118,10 @@ export default function Home() {
                     <div className="absolute top-3 left-3">
                       {stream.status === 'live' ? (
                         <span className="inline-flex items-center rounded-md bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500/20">
-                          <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse"></span>
-                          LIVE
+                          <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse"></span>LIVE
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-md bg-teal-500/10 px-2.5 py-1 text-xs font-medium text-teal-400 ring-1 ring-inset ring-teal-500/20">
-                          UPCOMING
-                        </span>
+                        <span className="inline-flex items-center rounded-md bg-teal-500/10 px-2.5 py-1 text-xs font-medium text-teal-400 ring-1 ring-inset ring-teal-500/20">UPCOMING</span>
                       )}
                     </div>
                     {stream.status === 'upcoming' && stream.secondsUntilStart > 0 && (
@@ -95,7 +132,7 @@ export default function Home() {
                   </div>
                   <CardContent className="p-5">
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{stream.sport}</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 capitalize">{stream.sport}</span>
                       {stream.accessPrice ? (
                         <span className="text-sm font-medium text-amber-400">${stream.accessPrice.toFixed(2)}</span>
                       ) : (
@@ -103,6 +140,15 @@ export default function Home() {
                       )}
                     </div>
                     <h3 className="font-bold text-lg text-white group-hover:text-teal-300 transition-colors line-clamp-1">{stream.title}</h3>
+                    {(stream.city || stream.country) && (
+                      <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />{[stream.city, stream.country].filter(Boolean).join(', ')}
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-500 mt-1">
+                      {new Date(stream.startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {stream.endTime ? ` → ${new Date(stream.endTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+                    </p>
                   </CardContent>
                 </Card>
               </Link>
@@ -118,7 +164,7 @@ export default function Home() {
       {/* Exchange Markets — logged-in users only */}
       {isAuthenticated && (
         <section>
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold tracking-tight text-white flex items-center">
               <Trophy className="mr-3 h-6 w-6 text-amber-500" /> Exchange Markets
             </h2>
@@ -131,15 +177,18 @@ export default function Home() {
             {loadingGames ? (
               Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-slate-800" />)
             ) : upcomingGames?.length ? (
-              upcomingGames.slice(0, 4).map(game => (
+              upcomingGames.slice(0, 4).map((game: any) => (
                 <Link key={game.id} href={`/games/${game.id}`}>
                   <Card className="group overflow-hidden border-primary/20 bg-card hover:border-amber-500/50 transition-all duration-300 cursor-pointer">
                     <CardContent className="p-0">
                       <div className="flex flex-col sm:flex-row">
                         <div className="p-5 flex-1 border-b sm:border-b-0 sm:border-r border-slate-800">
-                          <div className="flex justify-between items-center mb-4">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{game.sport}</span>
-                            <span className="text-xs font-mono text-slate-500">{new Date(game.eventDate).toLocaleDateString()} {game.eventTime}</span>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 capitalize">{game.sport}</span>
+                            <span className="text-xs font-mono text-slate-500">
+                              {game.eventDate} {game.eventTime}
+                              {game.eventEndDate ? ` → ${game.eventEndDate}` : ''}
+                            </span>
                           </div>
                           <div className="flex justify-between items-center">
                             <div className="text-center flex-1">
@@ -150,6 +199,11 @@ export default function Home() {
                               <div className="font-bold text-lg text-white">{game.playerB}</div>
                             </div>
                           </div>
+                          {(game.city || game.country) && (
+                            <p className="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />{[game.city, game.country].filter(Boolean).join(', ')}
+                            </p>
+                          )}
                         </div>
                         <div className="p-5 bg-slate-900/50 sm:w-40 flex flex-col justify-center items-center">
                           <div className="text-xs text-slate-500 mb-1">Pool Size</div>
