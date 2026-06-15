@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useRoute, useLocation } from 'wouter';
+import { useRoute, useLocation, Link } from 'wouter';
 import { useGetGame, usePlaceBet, useListGameBets, getGetWalletQueryKey, getListMyBetsQueryKey } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Users, TrendingUp, Clock, AlertCircle } from 'lucide-react';
+import { Trophy, Users, TrendingUp, Clock, AlertCircle, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -99,6 +99,13 @@ export default function GameDetail() {
 
   return (
     <div className="space-y-8">
+      {/* Back nav */}
+      <Link href="/games">
+        <button className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors">
+          <ChevronLeft className="h-4 w-4" /> Back to Games
+        </button>
+      </Link>
+
       {/* Header */}
       <Card className="bg-slate-900 border-primary/20 overflow-hidden">
         <div className="relative bg-gradient-to-r from-teal-900/40 to-amber-900/20 p-8">

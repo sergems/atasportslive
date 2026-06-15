@@ -108,7 +108,7 @@ export default function Bets() {
                       <p className="text-white font-semibold">Game #{bet.gameId}</p>
                     )}
                     <p className="text-xs text-slate-400 mt-0.5 capitalize">
-                      Backing: {bet.outcome.replace(/_/g, ' ')} · {bet.game?.sport}
+                      Backing: {bet.outcome === 'player_a_wins' ? bet.game?.playerA : bet.outcome === 'player_b_wins' ? bet.game?.playerB : bet.outcome.replace(/_/g, ' ')} · {bet.game?.sport}
                     </p>
                   </div>
                   <div className="text-right ml-4">

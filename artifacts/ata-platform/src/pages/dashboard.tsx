@@ -94,20 +94,24 @@ export default function Dashboard() {
             ) : recentBets?.bets?.length ? (
               <div className="space-y-4">
                 {recentBets.bets.map(bet => (
-                  <div key={bet.id} className="flex justify-between items-center p-3 rounded-lg bg-slate-900 border border-slate-800">
-                    <div>
-                      <div className="font-medium text-white text-sm">{bet.game?.playerA} vs {bet.game?.playerB}</div>
-                      <div className="text-xs text-slate-500 mt-1">Pick: {bet.outcome.replace('_', ' ').toUpperCase()}</div>
+                  <Link key={bet.id} href={`/games/${bet.gameId}`}>
+                    <div className="flex justify-between items-center p-3 rounded-lg bg-slate-900 border border-slate-800 hover:border-amber-500/40 hover:bg-slate-900/80 transition-all cursor-pointer">
+                      <div>
+                        <div className="font-medium text-white text-sm hover:text-amber-400 transition-colors">{bet.game?.playerA} vs {bet.game?.playerB}</div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          Pick: {bet.outcome === 'player_a_wins' ? bet.game?.playerA : bet.outcome === 'player_b_wins' ? bet.game?.playerB : bet.outcome.replace(/_/g, ' ')}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-mono text-sm text-white">${bet.stake.toFixed(2)}</div>
+                        <div className={`text-[10px] font-bold mt-1 uppercase ${
+                          bet.status === 'won' ? 'text-teal-400' : 
+                          bet.status === 'lost' ? 'text-red-400' : 
+                          bet.status === 'pending' ? 'text-amber-400' : 'text-slate-400'
+                        }`}>{bet.status}</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-mono text-sm text-white">${bet.stake.toFixed(2)}</div>
-                      <div className={`text-[10px] font-bold mt-1 uppercase ${
-                        bet.status === 'won' ? 'text-teal-400' : 
-                        bet.status === 'lost' ? 'text-red-400' : 
-                        bet.status === 'pending' ? 'text-amber-400' : 'text-slate-400'
-                      }`}>{bet.status}</div>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (

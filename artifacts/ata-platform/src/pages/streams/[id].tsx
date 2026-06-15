@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRoute } from 'wouter';
+import { Link } from 'wouter';
 import { useGetStream, useCheckStreamAccess, usePurchaseStreamAccess, StreamStatus } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Countdown } from '@/components/ui/countdown';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Lock, Play, Users } from 'lucide-react';
+import { Lock, Play, Users, ChevronLeft } from 'lucide-react';
 import Hls from 'hls.js';
 import { toast } from 'sonner';
 
@@ -64,6 +65,13 @@ export default function StreamDetail() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      {/* Back nav */}
+      <Link href="/streams">
+        <button className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors">
+          <ChevronLeft className="h-4 w-4" /> Back to Streams
+        </button>
+      </Link>
+
       <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
         {stream.status === 'live' ? (
           access?.hasAccess ? (
