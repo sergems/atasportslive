@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     clearAuth();
-    setLocation('/login');
+    setLocation('/');
   };
 
   const value = {
