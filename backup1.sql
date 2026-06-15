@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6YrmbtP370DTYUsbDbINc1oiToRkGkoGMAoNQatSpcKfyc96xV14bqMBoLcVIch
+\restrict ThesM2HmK0LmYee2nypuH4ZFrtlSWX3TcLDFDKkij8XG3pPGVSpvOatAxgZs4uR
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -66,7 +66,10 @@ ALTER TYPE public.game_result OWNER TO postgres;
 
 CREATE TYPE public.game_sport AS ENUM (
     'pool',
-    'boxing'
+    'boxing',
+    'football',
+    'athletics',
+    'basketball'
 );
 
 
@@ -128,7 +131,11 @@ ALTER TYPE public.payment_method OWNER TO postgres;
 CREATE TYPE public.sport_type AS ENUM (
     'pool',
     'boxing',
-    'other'
+    'other',
+    'football',
+    'athletics',
+    'basketball',
+    'tournament'
 );
 
 
@@ -211,6 +218,45 @@ ALTER TYPE public.user_status OWNER TO postgres;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: announcements; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.announcements (
+    id integer NOT NULL,
+    title text NOT NULL,
+    content text NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    priority integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.announcements OWNER TO postgres;
+
+--
+-- Name: announcements_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.announcements_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.announcements_id_seq OWNER TO postgres;
+
+--
+-- Name: announcements_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.announcements_id_seq OWNED BY public.announcements.id;
+
 
 --
 -- Name: audit_logs; Type: TABLE; Schema: public; Owner: postgres
@@ -314,7 +360,15 @@ CREATE TABLE public.games (
     open_bets_count integer DEFAULT 0 NOT NULL,
     matched_bets_count integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    event_end_date date,
+    event_end_time text,
+    city text,
+    country text,
+    type text DEFAULT 'single'::text NOT NULL,
+    parent_id integer,
+    player_a_country text,
+    player_b_country text
 );
 
 
@@ -437,7 +491,9 @@ CREATE TABLE public.streams (
     viewer_count integer DEFAULT 0 NOT NULL,
     access_price numeric(6,2) DEFAULT 1.50 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    city text,
+    country text
 );
 
 
@@ -634,6 +690,13 @@ ALTER SEQUENCE public.wallets_id_seq OWNED BY public.wallets.id;
 
 
 --
+-- Name: announcements id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.announcements ALTER COLUMN id SET DEFAULT nextval('public.announcements_id_seq'::regclass);
+
+
+--
 -- Name: audit_logs id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -704,6 +767,15 @@ ALTER TABLE ONLY public.wallets ALTER COLUMN id SET DEFAULT nextval('public.wall
 
 
 --
+-- Data for Name: announcements; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.announcements (id, title, content, is_active, priority, created_at, updated_at) FROM stdin;
+1	Welcome to ATA Sports Live	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	t	10	2026-06-15 19:17:47.184937+00	2026-06-15 19:20:59.717+00
+\.
+
+
+--
 -- Data for Name: audit_logs; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -724,13 +796,19 @@ COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_ret
 -- Data for Name: games; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.games (id, sport, player_a, player_b, event_date, event_time, status, result, total_bet_pool, open_bets_count, matched_bets_count, created_at, updated_at) FROM stdin;
-1	pool	Hassan Mukasa	David Ssemwanga	2026-06-15	19:00	live	\N	90.00	5	3	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00
-3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	upcoming	\N	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00
-4	boxing	Joseph Kato	Richard Wanyama	2026-06-22	18:00	upcoming	\N	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00
-5	pool	Samuel Kagwa	Alex Mutumba	2026-06-13	17:00	completed	player_a_wins	240.00	0	8	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00
-2	boxing	Moses Nkosi	Emmanuel Atiku	2026-06-16	20:00	upcoming	\N	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:42:22.416+00
-6	boxing	Matavu Ukasha	Kasasa Isaac	2026-06-20	14:00	upcoming	\N	0.00	0	0	2026-06-15 18:45:17.011713+00	2026-06-15 18:45:17.011713+00
+COPY public.games (id, sport, player_a, player_b, event_date, event_time, status, result, total_bet_pool, open_bets_count, matched_bets_count, created_at, updated_at, event_end_date, event_end_time, city, country, type, parent_id, player_a_country, player_b_country) FROM stdin;
+1	pool	Hassan Mukasa	David Ssemwanga	2026-06-15	19:00	live	\N	90.00	5	3	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
+3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	upcoming	\N	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
+4	boxing	Joseph Kato	Richard Wanyama	2026-06-22	18:00	upcoming	\N	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
+5	pool	Samuel Kagwa	Alex Mutumba	2026-06-13	17:00	completed	player_a_wins	240.00	0	8	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
+2	boxing	Moses Nkosi	Emmanuel Atiku	2026-06-16	20:00	upcoming	\N	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:42:22.416+00	\N	\N	\N	\N	single	\N	\N	\N
+6	boxing	Matavu Ukasha	Kasasa Isaac	2026-06-20	14:00	upcoming	\N	0.00	0	0	2026-06-15 18:45:17.011713+00	2026-06-15 18:45:17.011713+00	\N	\N	\N	\N	single	\N	\N	\N
+7	pool	Ali Hassan	John Doe	2026-06-20	15:00	upcoming	\N	0.00	0	0	2026-06-15 19:06:10.922877+00	2026-06-15 19:06:10.922877+00	\N	\N	\N	\N	single	\N	\N	\N
+8	pool	Big Kels – ATA International Clash		2026-06-18	11:00	upcoming	\N	0.00	0	0	2026-06-15 19:41:45.888663+00	2026-06-15 19:41:45.888663+00	2026-06-21	14:30	Lagos	Nigeria	competition	\N	\N	\N
+9	pool	Caesar Chandinga	Serge	2026-06-18	18:00	upcoming	\N	0.00	0	0	2026-06-15 19:52:47.086143+00	2026-06-15 19:52:47.086143+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
+10	pool	Serge	Caesar Chandinga	2026-06-19	18:00	upcoming	\N	0.00	0	0	2026-06-15 19:53:28.784467+00	2026-06-15 19:53:28.784467+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
+11	pool	Jacob	Caesar Chandinga	2026-06-20	20:00	upcoming	\N	0.00	0	0	2026-06-15 19:54:24.775026+00	2026-06-15 19:54:24.775026+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
+12	pool	Caesar Chandinga	Jabulani	2026-06-21	16:54	upcoming	\N	0.00	0	0	2026-06-15 19:55:04.828187+00	2026-06-15 20:12:18.086+00	\N	\N	Lagos	Nigeria	single	8	UG	CD
 \.
 
 
@@ -739,10 +817,10 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 --
 
 COPY public.notifications (id, user_id, type, title, message, read, created_at) FROM stdin;
-1	2	deposit_received	Account Credited	+$10 — Test credit	f	2026-06-15 17:53:38.382367+00
-2	2	deposit_received	Deposit Confirmed	$21 has been added to your wallet.	f	2026-06-15 17:55:45.156587+00
-3	2	withdrawal_approved	Withdrawal Approved	Your withdrawal of $12.00 has been approved.	f	2026-06-15 17:57:53.644799+00
-4	2	deposit_received	Voucher Redeemed	$10.00 has been added to your wallet.	f	2026-06-15 18:04:53.735599+00
+1	2	deposit_received	Account Credited	+$10 — Test credit	t	2026-06-15 17:53:38.382367+00
+2	2	deposit_received	Deposit Confirmed	$21 has been added to your wallet.	t	2026-06-15 17:55:45.156587+00
+3	2	withdrawal_approved	Withdrawal Approved	Your withdrawal of $12.00 has been approved.	t	2026-06-15 17:57:53.644799+00
+4	2	deposit_received	Voucher Redeemed	$10.00 has been added to your wallet.	t	2026-06-15 18:04:53.735599+00
 \.
 
 
@@ -751,6 +829,8 @@ COPY public.notifications (id, user_id, type, title, message, read, created_at) 
 --
 
 COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, created_at) FROM stdin;
+1	2	6	2026-06-15 20:14:11.119+00	2026-06-16 20:14:11.119+00	2026-06-15 20:14:11.16535+00
+2	2	5	2026-06-15 20:15:23.301+00	2026-06-16 20:15:23.301+00	2026-06-15 20:15:23.3139+00
 \.
 
 
@@ -758,11 +838,13 @@ COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, creat
 -- Data for Name: streams; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stream_key, status, start_time, end_time, viewer_count, access_price, created_at, updated_at) FROM stdin;
-2	Lugogo Boxing Night - Main Event	Heavyweight showdown at Lugogo Arena. The main event you've been waiting for.	boxing	https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&q=80	\N	\N	upcoming	2026-06-16 16:31:06.62+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00
-3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&q=80	\N	\N	upcoming	2026-06-17 16:31:06.62+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00
-4	Nakawa Boxing Club Showcase	Young boxing talents from Nakawa show what they've got.	boxing	https://images.unsplash.com/photo-1565846930803-a7e4a6b7e5e4?w=800&q=80	\N	\N	ended	2026-06-12 16:31:06.62+00	2026-06-13 16:31:06.62+00	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00
-1	Kampala Pool Championship - Quarter Finals	Top pool players from Kampala face off in the quarter final round.	pool	https://images.unsplash.com/photo-1615672968435-75e0c291cd6e?w=800&q=80	https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8	\N	ended	2026-06-14 16:31:06.62+00	2026-06-15 16:34:42.477+00	142	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:34:42.477+00
+COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stream_key, status, start_time, end_time, viewer_count, access_price, created_at, updated_at, city, country) FROM stdin;
+2	Lugogo Boxing Night - Main Event	Heavyweight showdown at Lugogo Arena. The main event you've been waiting for.	boxing	https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&q=80	\N	\N	upcoming	2026-06-16 16:31:06.62+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00	\N	\N
+3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&q=80	\N	\N	upcoming	2026-06-17 16:31:06.62+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00	\N	\N
+4	Nakawa Boxing Club Showcase	Young boxing talents from Nakawa show what they've got.	boxing	https://images.unsplash.com/photo-1565846930803-a7e4a6b7e5e4?w=800&q=80	\N	\N	ended	2026-06-12 16:31:06.62+00	2026-06-13 16:31:06.62+00	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00	\N	\N
+1	Kampala Pool Championship - Quarter Finals	Top pool players from Kampala face off in the quarter final round.	pool	https://images.unsplash.com/photo-1615672968435-75e0c291cd6e?w=800&q=80	https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8	\N	ended	2026-06-14 16:31:06.62+00	2026-06-15 16:34:42.477+00	142	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:34:42.477+00	\N	\N
+5	Test Pool Match	\N	pool	\N	\N	\N	upcoming	2026-06-20 15:00:00+00	\N	0	1.50	2026-06-15 19:06:10.910462+00	2026-06-15 19:06:10.910462+00	\N	\N
+6	Kampala Open Tournament	\N	tournament	\N	\N	\N	upcoming	2026-06-25 10:00:00+00	\N	0	1.50	2026-06-15 19:06:11.15375+00	2026-06-15 19:06:11.15375+00	\N	\N
 \.
 
 
@@ -776,6 +858,8 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 3	DEP-E2ED7E27	2	deposit	21.00	completed	mtn_momo	5	Deposit via mtn_momo	\N	2026-06-15 17:55:45.112649+00	2026-06-15 17:55:45.147+00
 4	WIT-E97D2E10	2	withdrawal	12.00	completed	mtn_momo	54	Withdrawal via mtn_momo	\N	2026-06-15 17:56:03.026237+00	2026-06-15 17:57:53.607+00
 5	VCH-014948	2	voucher_redeem	10.00	completed	internal	\N	Voucher 014948 redeemed	\N	2026-06-15 18:04:53.731233+00	2026-06-15 18:04:53.731233+00
+6	STR-E1EB69E1	2	stream_access	1.50	completed	internal	\N	24h access to: Kampala Open Tournament	\N	2026-06-15 20:14:11.156501+00	2026-06-15 20:14:11.156501+00
+7	STR-D7A0AA77	2	stream_access	1.50	completed	internal	\N	24h access to: Test Pool Match	\N	2026-06-15 20:15:23.309961+00	2026-06-15 20:15:23.309961+00
 \.
 
 
@@ -785,7 +869,7 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 
 COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at) FROM stdin;
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NDUzNDgsImV4cCI6MTc4NDEzNzM0OH0.6W_tQ4qVBijqte_JCu2Er6LtkZwU93Hc9NODeJgZF0A	2026-06-15 16:31:06.605107+00	2026-06-15 17:44:54.072+00
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgxNTQ2MDE4LCJleHAiOjE3ODQxMzgwMTh9.4HeuheiQhuxNrneW3rp8GxlFmjv_ovImGjCIpoo9ad8	2026-06-15 16:31:06.226579+00	2026-06-15 17:53:38.19+00
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgxNTUxMDY3LCJleHAiOjE3ODQxNDMwNjd9.YQo98aw71RTWhApPB2atMf5LBgQP8Amk2GdBphjT9ao	2026-06-15 16:31:06.226579+00	2026-06-15 19:17:47.116+00
 \.
 
 
@@ -811,8 +895,15 @@ COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, c
 
 COPY public.wallets (id, user_id, balance, available_balance, pending_balance, withdrawable_balance, currency, created_at, updated_at) FROM stdin;
 1	1	10000.00	10000.00	0.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-15 16:31:06.51595+00
-2	2	79.00	39.00	40.00	79.00	USD	2026-06-15 16:31:06.612958+00	2026-06-15 18:04:53.725+00
+2	2	76.00	36.00	40.00	76.00	USD	2026-06-15 16:31:06.612958+00	2026-06-15 20:15:23.305+00
 \.
+
+
+--
+-- Name: announcements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.announcements_id_seq', 1, true);
 
 
 --
@@ -833,7 +924,7 @@ SELECT pg_catalog.setval('public.bets_id_seq', 1, true);
 -- Name: games_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.games_id_seq', 6, true);
+SELECT pg_catalog.setval('public.games_id_seq', 12, true);
 
 
 --
@@ -847,21 +938,21 @@ SELECT pg_catalog.setval('public.notifications_id_seq', 4, true);
 -- Name: stream_access_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.stream_access_id_seq', 1, false);
+SELECT pg_catalog.setval('public.stream_access_id_seq', 2, true);
 
 
 --
 -- Name: streams_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.streams_id_seq', 4, true);
+SELECT pg_catalog.setval('public.streams_id_seq', 6, true);
 
 
 --
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 5, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 7, true);
 
 
 --
@@ -883,6 +974,14 @@ SELECT pg_catalog.setval('public.vouchers_id_seq', 8, true);
 --
 
 SELECT pg_catalog.setval('public.wallets_id_seq', 2, true);
+
+
+--
+-- Name: announcements announcements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.announcements
+    ADD CONSTRAINT announcements_pkey PRIMARY KEY (id);
 
 
 --
@@ -1081,5 +1180,5 @@ ALTER TABLE ONLY public.wallets
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6YrmbtP370DTYUsbDbINc1oiToRkGkoGMAoNQatSpcKfyc96xV14bqMBoLcVIch
+\unrestrict ThesM2HmK0LmYee2nypuH4ZFrtlSWX3TcLDFDKkij8XG3pPGVSpvOatAxgZs4uR
 
