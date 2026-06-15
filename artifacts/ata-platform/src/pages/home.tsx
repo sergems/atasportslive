@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'wouter';
 import { useListUpcomingStreams, useListUpcomingGames } from '@workspace/api-client-react';
+import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Countdown } from '@/components/ui/countdown';
@@ -12,6 +13,7 @@ export default function Home() {
     document.title = 'ATA Sports Live — Kampala\'s Premier Sports Streaming & Betting Exchange';
   }, []);
 
+  const { isAuthenticated } = useAuth();
   const { data: _upcomingStreams, isLoading: loadingStreams } = useListUpcomingStreams();
   const { data: _upcomingGames, isLoading: loadingGames } = useListUpcomingGames();
 
@@ -113,57 +115,59 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Upcoming Games */}
-      <section>
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold tracking-tight text-white flex items-center">
-            <Trophy className="mr-3 h-6 w-6 text-amber-500" /> Exchange Markets
-          </h2>
-          <Link href="/games">
-            <Button variant="link" className="text-amber-500 hover:text-amber-400">View All</Button>
-          </Link>
-        </div>
+      {/* Exchange Markets — logged-in users only */}
+      {isAuthenticated && (
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold tracking-tight text-white flex items-center">
+              <Trophy className="mr-3 h-6 w-6 text-amber-500" /> Exchange Markets
+            </h2>
+            <Link href="/games">
+              <Button variant="link" className="text-amber-500 hover:text-amber-400">View All</Button>
+            </Link>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {loadingGames ? (
-            Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-slate-800" />)
-          ) : upcomingGames?.length ? (
-            upcomingGames.slice(0, 4).map(game => (
-              <Link key={game.id} href={`/games/${game.id}`}>
-                <Card className="group overflow-hidden border-primary/20 bg-card hover:border-amber-500/50 transition-all duration-300 cursor-pointer">
-                  <CardContent className="p-0">
-                    <div className="flex flex-col sm:flex-row">
-                      <div className="p-5 flex-1 border-b sm:border-b-0 sm:border-r border-slate-800">
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{game.sport}</span>
-                          <span className="text-xs font-mono text-slate-500">{new Date(game.eventDate).toLocaleDateString()} {game.eventTime}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {loadingGames ? (
+              Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-slate-800" />)
+            ) : upcomingGames?.length ? (
+              upcomingGames.slice(0, 4).map(game => (
+                <Link key={game.id} href={`/games/${game.id}`}>
+                  <Card className="group overflow-hidden border-primary/20 bg-card hover:border-amber-500/50 transition-all duration-300 cursor-pointer">
+                    <CardContent className="p-0">
+                      <div className="flex flex-col sm:flex-row">
+                        <div className="p-5 flex-1 border-b sm:border-b-0 sm:border-r border-slate-800">
+                          <div className="flex justify-between items-center mb-4">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{game.sport}</span>
+                            <span className="text-xs font-mono text-slate-500">{new Date(game.eventDate).toLocaleDateString()} {game.eventTime}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div className="text-center flex-1">
+                              <div className="font-bold text-lg text-white">{game.playerA}</div>
+                            </div>
+                            <div className="px-4 text-xs font-bold text-slate-600">VS</div>
+                            <div className="text-center flex-1">
+                              <div className="font-bold text-lg text-white">{game.playerB}</div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <div className="text-center flex-1">
-                            <div className="font-bold text-lg text-white">{game.playerA}</div>
-                          </div>
-                          <div className="px-4 text-xs font-bold text-slate-600">VS</div>
-                          <div className="text-center flex-1">
-                            <div className="font-bold text-lg text-white">{game.playerB}</div>
-                          </div>
+                        <div className="p-5 bg-slate-900/50 sm:w-40 flex flex-col justify-center items-center">
+                          <div className="text-xs text-slate-500 mb-1">Pool Size</div>
+                          <div className="font-mono font-bold text-xl text-amber-400">${(game.totalBetPool || 0).toFixed(2)}</div>
                         </div>
                       </div>
-                      <div className="p-5 bg-slate-900/50 sm:w-40 flex flex-col justify-center items-center">
-                        <div className="text-xs text-slate-500 mb-1">Pool Size</div>
-                        <div className="font-mono font-bold text-xl text-amber-400">${(game.totalBetPool || 0).toFixed(2)}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))
-          ) : (
-            <div className="col-span-full py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-              No upcoming games scheduled.
-            </div>
-          )}
-        </div>
-      </section>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                No upcoming games scheduled.
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
