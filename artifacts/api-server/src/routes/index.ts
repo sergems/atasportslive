@@ -9,6 +9,7 @@ import betsRouter from "./bets";
 import notificationsRouter from "./notifications";
 import adminRouter from "./admin";
 import reportsRouter from "./reports";
+import uploadsRouter from "./uploads";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use("/bets", betsRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/admin", adminRouter);
 router.use("/reports", reportsRouter);
+router.use("/uploads", uploadsRouter);
 
 export default router;

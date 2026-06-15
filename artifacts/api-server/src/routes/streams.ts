@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, streamsTable, streamAccessTable, walletsTable, transactionsTable } from "@workspace/db";
+import { db, streamsTable, streamAccessTable, walletsTable, transactionsTable, gamesTable } from "@workspace/db";
 import { eq, desc, sql, and, gt } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
@@ -53,11 +53,20 @@ router.get("/upcoming", async (req, res): Promise<void> => {
 });
 
 router.post("/", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
-  const { title, description, sport, thumbnailUrl, startTime, endTime, accessPrice } = req.body;
+  const { title, description, sport, thumbnailUrl, startTime, endTime, accessPrice, playerA, playerB } = req.body;
   if (!title || !sport || !startTime) {
     res.status(400).json({ error: "title, sport, startTime required" });
     return;
   }
+
+  const GAME_SPORTS = ["pool", "boxing", "football", "athletics", "basketball"];
+  const createsGame = GAME_SPORTS.includes(sport);
+
+  if (createsGame && (!playerA || !playerB)) {
+    res.status(400).json({ error: "playerA and playerB are required for non-tournament streams" });
+    return;
+  }
+
   const [stream] = await db
     .insert(streamsTable)
     .values({
@@ -70,6 +79,14 @@ router.post("/", authMiddleware, requireRole("admin", "moderator"), async (req: 
       accessPrice: accessPrice?.toString() || "1.50",
     })
     .returning();
+
+  if (createsGame) {
+    const start = new Date(startTime);
+    const eventDate = start.toISOString().split("T")[0];
+    const eventTime = start.toTimeString().slice(0, 5);
+    await db.insert(gamesTable).values({ sport, playerA, playerB, eventDate, eventTime });
+  }
+
   res.status(201).json(toStream(stream));
 });
 
