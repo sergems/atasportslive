@@ -82,6 +82,7 @@ export function Navbar() {
   const unreadCount = notificationsData?.unreadCount || 0;
 
   const navLinks = [
+    { href: '/live', label: 'Live', pulse: true },
     { href: '/streams', label: 'Streams' },
     { href: '/upcoming', label: 'Upcoming' },
     { href: '/highlights', label: 'Highlights' },
@@ -100,12 +101,13 @@ export function Navbar() {
 
         {/* Nav links - centered */}
         <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 text-sm font-medium">
-          {navLinks.map(({ href, label }) => (
+          {navLinks.map(({ href, label, pulse }) => (
             <Link
               key={href}
               href={href}
-              className={`transition-colors hover:text-white ${location.startsWith(href) ? 'text-white' : 'text-slate-400'}`}
+              className={`inline-flex items-center gap-1.5 transition-colors hover:text-white ${location.startsWith(href) ? 'text-white' : 'text-slate-400'}`}
             >
+              {pulse && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
               {label}
             </Link>
           ))}
