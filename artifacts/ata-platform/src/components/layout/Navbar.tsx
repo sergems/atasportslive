@@ -37,9 +37,8 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-7xl mx-auto px-4 items-center">
         <div className="mr-4 flex items-center">
-          <Link href="/" className="mr-8 flex items-center space-x-2">
-            <img src={ataLogo} alt="ATA" className="h-9 w-9 object-contain" />
-            <span className="font-bold text-lg text-white tracking-tight hidden sm:block">Advanced Talent Agency</span>
+          <Link href="/" className="mr-8 flex items-center">
+            <img src={ataLogo} alt="ATA" className="h-12 w-12 object-contain" />
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
             {navLinks.map(({ href, label }) => (

@@ -19,9 +19,8 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {/* Brand */}
             <div>
-              <Link href="/" className="flex items-center space-x-2 mb-4">
-                <img src={ataLogo} alt="ATA" className="h-10 w-10 object-contain" />
-                <span className="font-bold text-base text-white tracking-tight">Advanced Talent Agency</span>
+              <Link href="/" className="flex items-center mb-4">
+                <img src={ataLogo} alt="ATA" className="h-16 w-16 object-contain" />
               </Link>
               <p className="text-sm text-slate-400 leading-relaxed">
                 Kampala's premier sports streaming and P2P betting exchange. Watch live Pool and Boxing. Bet in real-time.
