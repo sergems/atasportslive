@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { useListStreams, usePurchaseStreamAccess } from '@workspace/api-client-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useListStreams, usePurchaseStreamAccess, useCheckStreamAccess } from '@workspace/api-client-react';
+import { CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Lock, Unlock } from 'lucide-react';
+import { Play, Lock, LockOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import {
@@ -17,12 +17,142 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
+interface Stream {
+  id: number;
+  title: string;
+  sport: string;
+  status: string;
+  accessPrice?: number | null;
+  thumbnailUrl?: string | null;
+  startTime: string;
+  viewerCount?: number | null;
+}
+
+interface StreamCardProps {
+  stream: Stream;
+  isAuthenticated: boolean;
+  onPaywallRequest: (stream: Stream) => void;
+}
+
+function StreamCard({ stream, isAuthenticated, onPaywallRequest }: StreamCardProps) {
+  const [, navigate] = useLocation();
+  const isPaid = stream.accessPrice && stream.accessPrice > 0;
+  const isEnded = stream.status === 'ended';
+
+  const { data: accessData } = useCheckStreamAccess(stream.id, {
+    query: { enabled: !!isAuthenticated && !!isPaid && !isEnded },
+  });
+  const hasAccess = accessData?.hasAccess === true;
+
+  const handleClick = () => {
+    if (isPaid && !isEnded) {
+      if (!isAuthenticated) {
+        navigate('/login');
+        return;
+      }
+      if (hasAccess) {
+        navigate(`/streams/${stream.id}`);
+      } else {
+        onPaywallRequest(stream);
+      }
+    } else {
+      navigate(`/streams/${stream.id}`);
+    }
+  };
+
+  return (
+    <div
+      className="group overflow-hidden rounded-xl border border-primary/20 bg-card hover:border-teal-500/50 transition-all duration-300 cursor-pointer flex flex-col"
+      onClick={handleClick}
+    >
+      <div className="relative aspect-video bg-slate-900">
+        {stream.thumbnailUrl ? (
+          <img
+            src={stream.thumbnailUrl}
+            alt={stream.title}
+            className="object-cover w-full h-full opacity-80 group-hover:opacity-100 transition-opacity"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-800">
+            <Play className="h-12 w-12 text-slate-600" />
+          </div>
+        )}
+
+        {/* Status badge */}
+        <div className="absolute top-3 left-3">
+          {stream.status === 'live' ? (
+            <span className="inline-flex items-center rounded-md bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse" />
+              LIVE
+            </span>
+          ) : stream.status === 'upcoming' ? (
+            <span className="inline-flex items-center rounded-md bg-teal-500/10 px-2.5 py-1 text-xs font-medium text-teal-400 ring-1 ring-inset ring-teal-500/20">
+              UPCOMING
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-md bg-slate-500/10 px-2.5 py-1 text-xs font-medium text-slate-400 ring-1 ring-inset ring-slate-500/20">
+              ENDED
+            </span>
+          )}
+        </div>
+
+        {/* Lock icon — green+open if access, amber+closed if not, grey if ended */}
+        {isPaid && !isEnded && (
+          <div className={`absolute top-3 right-3 rounded-full p-1.5 backdrop-blur-sm border ${hasAccess ? 'bg-emerald-950/80 border-emerald-500/40' : 'bg-slate-950/80 border-slate-700/60'}`}>
+            {hasAccess
+              ? <LockOpen className="h-3.5 w-3.5 text-emerald-400" />
+              : <Lock className="h-3.5 w-3.5 text-amber-400" />
+            }
+          </div>
+        )}
+        {isEnded && (
+          <div className="absolute top-3 right-3 bg-slate-950/80 rounded-full p-1.5 backdrop-blur-sm border border-slate-700/60">
+            <LockOpen className="h-3.5 w-3.5 text-slate-500" />
+          </div>
+        )}
+      </div>
+
+      <CardContent className="p-4 flex-1 flex flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 capitalize">
+              {stream.sport}
+            </span>
+            {isPaid ? (
+              hasAccess ? (
+                <span className="text-sm font-medium text-emerald-400 flex items-center gap-1">
+                  <LockOpen className="h-3 w-3" />
+                  Access active
+                </span>
+              ) : (
+                <span className="text-sm font-medium text-amber-400 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  ${stream.accessPrice!.toFixed(2)}/day
+                </span>
+              )
+            ) : (
+              <span className="text-sm font-medium text-teal-400">FREE</span>
+            )}
+          </div>
+          <h3 className="font-bold text-lg text-white group-hover:text-teal-300 transition-colors line-clamp-2">
+            {stream.title}
+          </h3>
+        </div>
+        <div className="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center text-xs text-slate-500 font-mono">
+          <span>{new Date(stream.startTime).toLocaleDateString()}</span>
+          <span>{stream.viewerCount || 0} viewers</span>
+        </div>
+      </CardContent>
+    </div>
+  );
+}
+
 export default function Streams() {
   const [status, setStatus] = useState<string>('all');
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
 
-  const [pendingStream, setPendingStream] = useState<any>(null);
+  const [pendingStream, setPendingStream] = useState<Stream | null>(null);
   const [purchasing, setPurchasing] = useState(false);
 
   const purchaseMutation = usePurchaseStreamAccess();
@@ -35,19 +165,6 @@ export default function Streams() {
     status: status !== 'all' ? status : undefined,
     limit: 20,
   });
-
-  const handleCardClick = (e: React.MouseEvent, stream: any) => {
-    e.preventDefault();
-    if (stream.accessPrice && stream.accessPrice > 0 && stream.status !== 'ended') {
-      if (!isAuthenticated) {
-        navigate('/login');
-        return;
-      }
-      setPendingStream(stream);
-    } else {
-      navigate(`/streams/${stream.id}`);
-    }
-  };
 
   const handleConfirm = async () => {
     if (!pendingStream) return;
@@ -98,87 +215,14 @@ export default function Streams() {
             <Skeleton key={i} className="h-64 w-full rounded-xl bg-slate-800" />
           ))
         ) : streamsData?.streams.length ? (
-          streamsData.streams.map((stream) => {
-            const isPaid = stream.accessPrice && stream.accessPrice > 0;
-            const isEnded = stream.status === 'ended';
-
-            return (
-              <div
-                key={stream.id}
-                className="group overflow-hidden rounded-xl border border-primary/20 bg-card hover:border-teal-500/50 transition-all duration-300 cursor-pointer flex flex-col"
-                onClick={(e) => handleCardClick(e, stream)}
-              >
-                <div className="relative aspect-video bg-slate-900">
-                  {stream.thumbnailUrl ? (
-                    <img
-                      src={stream.thumbnailUrl}
-                      alt={stream.title}
-                      className="object-cover w-full h-full opacity-80 group-hover:opacity-100 transition-opacity"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                      <Play className="h-12 w-12 text-slate-600" />
-                    </div>
-                  )}
-
-                  {/* Status badge */}
-                  <div className="absolute top-3 left-3">
-                    {stream.status === 'live' ? (
-                      <span className="inline-flex items-center rounded-md bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500/20">
-                        <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse" />
-                        LIVE
-                      </span>
-                    ) : stream.status === 'upcoming' ? (
-                      <span className="inline-flex items-center rounded-md bg-teal-500/10 px-2.5 py-1 text-xs font-medium text-teal-400 ring-1 ring-inset ring-teal-500/20">
-                        UPCOMING
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-md bg-slate-500/10 px-2.5 py-1 text-xs font-medium text-slate-400 ring-1 ring-inset ring-slate-500/20">
-                        ENDED
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Lock / access icon */}
-                  {isPaid && !isEnded && (
-                    <div className="absolute top-3 right-3 bg-slate-950/80 rounded-full p-1.5 backdrop-blur-sm border border-slate-700/60">
-                      <Lock className="h-3.5 w-3.5 text-amber-400" />
-                    </div>
-                  )}
-                  {isEnded && (
-                    <div className="absolute top-3 right-3 bg-slate-950/80 rounded-full p-1.5 backdrop-blur-sm border border-slate-700/60">
-                      <Unlock className="h-3.5 w-3.5 text-slate-500" />
-                    </div>
-                  )}
-                </div>
-
-                <CardContent className="p-4 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 capitalize">
-                        {stream.sport}
-                      </span>
-                      {isPaid ? (
-                        <span className="text-sm font-medium text-amber-400 flex items-center gap-1">
-                          <Lock className="h-3 w-3" />
-                          ${stream.accessPrice!.toFixed(2)}/day
-                        </span>
-                      ) : (
-                        <span className="text-sm font-medium text-teal-400">FREE</span>
-                      )}
-                    </div>
-                    <h3 className="font-bold text-lg text-white group-hover:text-teal-300 transition-colors line-clamp-2">
-                      {stream.title}
-                    </h3>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center text-xs text-slate-500 font-mono">
-                    <span>{new Date(stream.startTime).toLocaleDateString()}</span>
-                    <span>{stream.viewerCount || 0} viewers</span>
-                  </div>
-                </CardContent>
-              </div>
-            );
-          })
+          streamsData.streams.map((stream) => (
+            <StreamCard
+              key={stream.id}
+              stream={stream as Stream}
+              isAuthenticated={isAuthenticated}
+              onPaywallRequest={setPendingStream}
+            />
+          ))
         ) : (
           <div className="col-span-full py-20 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
             No streams found matching the criteria.
@@ -206,7 +250,7 @@ export default function Streams() {
               </span>
             </div>
             <p className="text-slate-400 text-xs">
-              ${pendingStream?.accessPrice?.toFixed(2) ?? '1.50'} will be deducted from your wallet balance. You get 24-hour access to this stream.
+              ${pendingStream?.accessPrice?.toFixed(2) ?? '1.50'} will be deducted from your wallet. You get 24-hour access to this stream.
             </p>
           </div>
 
@@ -224,7 +268,7 @@ export default function Streams() {
               disabled={purchasing}
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex-1"
             >
-              {purchasing ? 'Processing…' : `Pay & Watch`}
+              {purchasing ? 'Processing…' : `Pay $${pendingStream?.accessPrice?.toFixed(2) ?? '1.50'} & Watch`}
             </Button>
           </DialogFooter>
         </DialogContent>
