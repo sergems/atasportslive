@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { RootLayout } from "@/components/layout/RootLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -75,22 +76,22 @@ function Router() {
           {() => <ProtectedRoute component={Notifications} />}
         </Route>
         <Route path="/admin">
-          {() => <ProtectedRoute component={AdminDashboard} adminOnly />}
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminDashboard /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/admin/streams">
-          {() => <ProtectedRoute component={AdminStreams} adminOnly />}
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminStreams /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/admin/games">
-          {() => <ProtectedRoute component={AdminGames} adminOnly />}
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminGames /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/admin/users">
-          {() => <ProtectedRoute component={AdminUsers} adminOnly />}
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminUsers /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/admin/wallets">
-          {() => <ProtectedRoute component={AdminWallets} adminOnly />}
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminWallets /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/admin/reports">
-          {() => <ProtectedRoute component={AdminReports} adminOnly />}
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminReports /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/terms" component={Terms} />
         <Route path="/privacy-policy" component={PrivacyPolicy} />
