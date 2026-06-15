@@ -88,25 +88,19 @@ function GameCard({ game, competitionName }: { game: Game; competitionName?: str
           </div>
 
           {/* Players row */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
-              {countryFlag(game.playerACountry) && (
-                <div className="text-base leading-none mb-0.5">{countryFlag(game.playerACountry)}</div>
-              )}
-              <div className="text-sm font-bold text-white leading-snug break-words">
-                {game.playerA}
+              <div className="text-sm font-bold text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                {countryFlag(game.playerACountry)}{countryFlag(game.playerACountry) ? ' ' : ''}{game.playerA}
               </div>
               {game.playerACountry && (
                 <div className="text-[10px] text-slate-500 mt-0.5">{game.playerACountry}</div>
               )}
             </div>
-            <span className="text-[10px] font-black text-slate-600 flex-shrink-0 px-1">VS</span>
+            <span className="text-[10px] font-black text-slate-600 flex-shrink-0">VS</span>
             <div className="flex-1 min-w-0 text-right">
-              {countryFlag(game.playerBCountry) && (
-                <div className="text-base leading-none mb-0.5">{countryFlag(game.playerBCountry)}</div>
-              )}
-              <div className="text-sm font-bold text-white leading-snug break-words">
-                {game.playerB}
+              <div className="text-sm font-bold text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                {game.playerB}{countryFlag(game.playerBCountry) ? ' ' : ''}{countryFlag(game.playerBCountry)}
               </div>
               {game.playerBCountry && (
                 <div className="text-[10px] text-slate-500 mt-0.5">{game.playerBCountry}</div>
@@ -195,7 +189,7 @@ export default function Games() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading
           ? Array(8).fill(0).map((_, i) => (
               <Skeleton key={i} className="h-28 w-full rounded-lg bg-slate-800" />
