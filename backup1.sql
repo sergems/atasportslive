@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ea8dGKscRcIuXgpKD4jHMD31dVeu8q1QgzueLso1B9jdPSfNgPuZPbPxKqToSqW
+\restrict 6YrmbtP370DTYUsbDbINc1oiToRkGkoGMAoNQatSpcKfyc96xV14bqMBoLcVIch
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -173,7 +173,10 @@ CREATE TYPE public.transaction_type AS ENUM (
     'bet_stake',
     'bet_win',
     'bet_refund',
-    'brokerage_fee'
+    'brokerage_fee',
+    'voucher_redeem',
+    'admin_credit',
+    'admin_debit'
 );
 
 
@@ -550,6 +553,46 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: vouchers; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.vouchers (
+    id integer NOT NULL,
+    code text NOT NULL,
+    amount numeric(12,2) NOT NULL,
+    is_redeemed boolean DEFAULT false NOT NULL,
+    redeemed_by integer,
+    redeemed_at timestamp with time zone,
+    created_by integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.vouchers OWNER TO postgres;
+
+--
+-- Name: vouchers_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.vouchers_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.vouchers_id_seq OWNER TO postgres;
+
+--
+-- Name: vouchers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.vouchers_id_seq OWNED BY public.vouchers.id;
+
+
+--
 -- Name: wallets; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -647,6 +690,13 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
+-- Name: vouchers id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vouchers ALTER COLUMN id SET DEFAULT nextval('public.vouchers_id_seq'::regclass);
+
+
+--
 -- Name: wallets id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -680,6 +730,7 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 4	boxing	Joseph Kato	Richard Wanyama	2026-06-22	18:00	upcoming	\N	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00
 5	pool	Samuel Kagwa	Alex Mutumba	2026-06-13	17:00	completed	player_a_wins	240.00	0	8	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00
 2	boxing	Moses Nkosi	Emmanuel Atiku	2026-06-16	20:00	upcoming	\N	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:42:22.416+00
+6	boxing	Matavu Ukasha	Kasasa Isaac	2026-06-20	14:00	upcoming	\N	0.00	0	0	2026-06-15 18:45:17.011713+00	2026-06-15 18:45:17.011713+00
 \.
 
 
@@ -688,6 +739,10 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 --
 
 COPY public.notifications (id, user_id, type, title, message, read, created_at) FROM stdin;
+1	2	deposit_received	Account Credited	+$10 — Test credit	f	2026-06-15 17:53:38.382367+00
+2	2	deposit_received	Deposit Confirmed	$21 has been added to your wallet.	f	2026-06-15 17:55:45.156587+00
+3	2	withdrawal_approved	Withdrawal Approved	Your withdrawal of $12.00 has been approved.	f	2026-06-15 17:57:53.644799+00
+4	2	deposit_received	Voucher Redeemed	$10.00 has been added to your wallet.	f	2026-06-15 18:04:53.735599+00
 \.
 
 
@@ -717,6 +772,10 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 
 COPY public.transactions (id, transaction_id, user_id, type, amount, status, payment_method, reference, description, metadata, created_at, updated_at) FROM stdin;
 1	BET-9DB5D758	2	bet_stake	40.00	completed	internal	\N	Bet stake on game #2	\N	2026-06-15 16:42:22.274138+00	2026-06-15 16:42:22.274138+00
+2	ADJ-B8EE4056	2	admin_credit	10.00	completed	internal	\N	Test credit	\N	2026-06-15 17:53:38.377228+00	2026-06-15 17:53:38.377228+00
+3	DEP-E2ED7E27	2	deposit	21.00	completed	mtn_momo	5	Deposit via mtn_momo	\N	2026-06-15 17:55:45.112649+00	2026-06-15 17:55:45.147+00
+4	WIT-E97D2E10	2	withdrawal	12.00	completed	mtn_momo	54	Withdrawal via mtn_momo	\N	2026-06-15 17:56:03.026237+00	2026-06-15 17:57:53.607+00
+5	VCH-014948	2	voucher_redeem	10.00	completed	internal	\N	Voucher 014948 redeemed	\N	2026-06-15 18:04:53.731233+00	2026-06-15 18:04:53.731233+00
 \.
 
 
@@ -725,8 +784,24 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 --
 
 COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at) FROM stdin;
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgxNTQxMjQ2LCJleHAiOjE3ODQxMzMyNDZ9.23MAsp9IT4UZtW-UkSyz_NgptuzmynF3UawTAGSSWs8	2026-06-15 16:31:06.226579+00	2026-06-15 16:34:06.534+00
-2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NDEzNTcsImV4cCI6MTc4NDEzMzM1N30.aLbvVQhJB88Hr-hvIyC1JuC6vmrIwB3te87cXb7YCsM	2026-06-15 16:31:06.605107+00	2026-06-15 16:35:57.444+00
+2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NDUzNDgsImV4cCI6MTc4NDEzNzM0OH0.6W_tQ4qVBijqte_JCu2Er6LtkZwU93Hc9NODeJgZF0A	2026-06-15 16:31:06.605107+00	2026-06-15 17:44:54.072+00
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgxNTQ2MDE4LCJleHAiOjE3ODQxMzgwMTh9.4HeuheiQhuxNrneW3rp8GxlFmjv_ovImGjCIpoo9ad8	2026-06-15 16:31:06.226579+00	2026-06-15 17:53:38.19+00
+\.
+
+
+--
+-- Data for Name: vouchers; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, created_by, created_at) FROM stdin;
+1	228623	5.00	f	\N	\N	1	2026-06-15 17:53:38.305228+00
+2	844836	5.00	f	\N	\N	1	2026-06-15 17:53:38.312669+00
+3	156342	5.00	f	\N	\N	1	2026-06-15 17:53:38.316953+00
+4	961968	10.00	f	\N	\N	1	2026-06-15 17:54:55.111194+00
+5	204783	10.00	f	\N	\N	1	2026-06-15 17:54:55.123084+00
+6	840475	10.00	f	\N	\N	1	2026-06-15 17:54:55.130353+00
+7	751391	10.00	f	\N	\N	1	2026-06-15 17:54:55.136652+00
+8	014948	10.00	t	2	2026-06-15 18:04:53.685+00	1	2026-06-15 17:54:55.14225+00
 \.
 
 
@@ -736,7 +811,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 
 COPY public.wallets (id, user_id, balance, available_balance, pending_balance, withdrawable_balance, currency, created_at, updated_at) FROM stdin;
 1	1	10000.00	10000.00	0.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-15 16:31:06.51595+00
-2	2	50.00	10.00	40.00	50.00	USD	2026-06-15 16:31:06.612958+00	2026-06-15 16:42:21.93+00
+2	2	79.00	39.00	40.00	79.00	USD	2026-06-15 16:31:06.612958+00	2026-06-15 18:04:53.725+00
 \.
 
 
@@ -758,14 +833,14 @@ SELECT pg_catalog.setval('public.bets_id_seq', 1, true);
 -- Name: games_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.games_id_seq', 5, true);
+SELECT pg_catalog.setval('public.games_id_seq', 6, true);
 
 
 --
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 1, false);
+SELECT pg_catalog.setval('public.notifications_id_seq', 4, true);
 
 
 --
@@ -786,7 +861,7 @@ SELECT pg_catalog.setval('public.streams_id_seq', 4, true);
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 1, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 5, true);
 
 
 --
@@ -794,6 +869,13 @@ SELECT pg_catalog.setval('public.transactions_id_seq', 1, true);
 --
 
 SELECT pg_catalog.setval('public.users_id_seq', 2, true);
+
+
+--
+-- Name: vouchers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.vouchers_id_seq', 8, true);
 
 
 --
@@ -892,6 +974,22 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: vouchers vouchers_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vouchers
+    ADD CONSTRAINT vouchers_code_key UNIQUE (code);
+
+
+--
+-- Name: vouchers vouchers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vouchers
+    ADD CONSTRAINT vouchers_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: wallets wallets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -956,6 +1054,22 @@ ALTER TABLE ONLY public.transactions
 
 
 --
+-- Name: vouchers vouchers_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vouchers
+    ADD CONSTRAINT vouchers_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+
+--
+-- Name: vouchers vouchers_redeemed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vouchers
+    ADD CONSTRAINT vouchers_redeemed_by_fkey FOREIGN KEY (redeemed_by) REFERENCES public.users(id);
+
+
+--
 -- Name: wallets wallets_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -967,5 +1081,5 @@ ALTER TABLE ONLY public.wallets
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ea8dGKscRcIuXgpKD4jHMD31dVeu8q1QgzueLso1B9jdPSfNgPuZPbPxKqToSqW
+\unrestrict 6YrmbtP370DTYUsbDbINc1oiToRkGkoGMAoNQatSpcKfyc96xV14bqMBoLcVIch
 
