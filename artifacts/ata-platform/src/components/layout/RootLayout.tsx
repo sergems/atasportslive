@@ -19,9 +19,6 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {/* Brand */}
             <div>
-              <Link href="/" className="flex items-center mb-4">
-                <img src={ataLogo} alt="ATA" className="h-16 w-16 object-contain" />
-              </Link>
               <p className="text-sm text-slate-400 leading-relaxed">
                 ATA produces, and promotes sporting events in Africa. We bring live sporting events to our sports' fans. We are one of Africa's largest online streaming providers of sports programming; streaming virtually every major sports event on the continent.
               </p>
