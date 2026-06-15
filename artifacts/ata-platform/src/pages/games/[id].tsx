@@ -145,7 +145,11 @@ export default function GameDetail() {
           {game.result && (
             <div className="text-center mt-4">
               <Badge className="bg-teal-500/20 text-teal-400 border border-teal-500/30 text-sm font-bold px-4 py-1">
-                Result: {game.result.replace(/_/g, ' ').toUpperCase()}
+                {game.result === 'player_a_wins'
+                  ? `${game.playerA} Won`
+                  : game.result === 'player_b_wins'
+                  ? `${game.playerB} Won`
+                  : game.result.replace(/_/g, ' ').toUpperCase()}
               </Badge>
             </div>
           )}
