@@ -23,7 +23,7 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
                 <img src={ataLogo} alt="ATA" className="h-16 w-16 object-contain" />
               </Link>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Kampala's premier sports streaming and P2P betting exchange. Watch live Pool and Boxing. Bet in real-time.
+                ATA produces, and promotes sporting events in Africa. We bring live sporting events to our sports' fans. We are one of Africa's largest online streaming providers of sports programming; streaming virtually every major sports event on the continent.
               </p>
               <p className="mt-3 text-xs text-slate-500">
                 &copy; {new Date().getFullYear()} ATA Sports Live. All rights reserved.
