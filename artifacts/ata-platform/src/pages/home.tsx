@@ -12,8 +12,11 @@ export default function Home() {
     document.title = 'ATA Sports Live — Kampala\'s Premier Sports Streaming & Betting Exchange';
   }, []);
 
-  const { data: upcomingStreams, isLoading: loadingStreams } = useListUpcomingStreams();
-  const { data: upcomingGames, isLoading: loadingGames } = useListUpcomingGames();
+  const { data: _upcomingStreams, isLoading: loadingStreams } = useListUpcomingStreams();
+  const { data: _upcomingGames, isLoading: loadingGames } = useListUpcomingGames();
+
+  const upcomingStreams = Array.isArray(_upcomingStreams) ? _upcomingStreams : [];
+  const upcomingGames = Array.isArray(_upcomingGames) ? _upcomingGames : [];
 
   return (
     <div className="space-y-16">
