@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Play, Clapperboard } from 'lucide-react';
+import { Play, Clapperboard, X } from 'lucide-react';
 
 interface Highlight {
   id: number;
@@ -27,45 +27,82 @@ function extractYoutubeId(url: string): string | null {
   return null;
 }
 
-function HighlightCard({ h }: { h: Highlight }) {
-  const [playing, setPlaying] = useState(false);
+function VideoModal({ h, onClose }: { h: Highlight; onClose: () => void }) {
+  const videoId = extractYoutubeId(h.youtubeUrl);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-4xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 text-sm"
+        >
+          <X className="h-4 w-4" /> Close
+        </button>
+
+        <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-700">
+          {videoId ? (
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+              title={h.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-slate-500">
+              Could not load video.
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <h2 className="text-white font-bold text-lg">{h.title}</h2>
+          {h.description && <p className="text-slate-400 text-sm mt-1">{h.description}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HighlightCard({ h, onPlay }: { h: Highlight; onPlay: () => void }) {
   const videoId = extractYoutubeId(h.youtubeUrl);
   const thumb = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden hover:border-teal-500/30 transition-all">
-      {/* Video embed area */}
+    <div
+      onClick={onPlay}
+      className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden hover:border-teal-500/30 transition-all cursor-pointer group"
+    >
       <div className="relative aspect-video bg-black">
-        {playing && videoId ? (
-          <iframe
-            className="absolute inset-0 w-full h-full"
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
-            title={h.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+        {thumb ? (
+          <img src={thumb} alt={h.title} className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity" />
         ) : (
-          <button
-            onClick={() => setPlaying(true)}
-            className="absolute inset-0 w-full h-full group flex items-center justify-center"
-          >
-            {thumb ? (
-              <img src={thumb} alt={h.title} className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity" />
-            ) : (
-              <div className="absolute inset-0 bg-slate-800" />
-            )}
-            <div className="relative z-10 flex items-center justify-center w-14 h-14 rounded-full bg-red-600 group-hover:bg-red-500 transition-colors shadow-xl">
-              <Play className="h-6 w-6 text-white fill-white ml-1" />
-            </div>
-          </button>
+          <div className="absolute inset-0 bg-slate-800" />
         )}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-red-600 group-hover:bg-red-500 group-hover:scale-110 transition-all shadow-xl">
+            <Play className="h-6 w-6 text-white fill-white ml-1" />
+          </div>
+        </div>
       </div>
 
-      {/* Info */}
       <div className="p-4">
-        <h3 className="text-white font-semibold text-sm leading-snug">{h.title}</h3>
+        <h3 className="text-white font-semibold text-sm leading-snug group-hover:text-teal-300 transition-colors">{h.title}</h3>
         {h.description && (
-          <p className="text-slate-400 text-xs mt-1.5 line-clamp-3">{h.description}</p>
+          <p className="text-slate-400 text-xs mt-1.5 line-clamp-2">{h.description}</p>
         )}
         <p className="text-slate-600 text-[10px] font-mono mt-3">
           {new Date(h.createdAt).toLocaleDateString('en-UG', { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -77,6 +114,8 @@ function HighlightCard({ h }: { h: Highlight }) {
 
 export default function Highlights() {
   useEffect(() => { document.title = 'Highlights - ATA Platform'; }, []);
+
+  const [active, setActive] = useState<Highlight | null>(null);
 
   const { data: highlights, isLoading } = useQuery<Highlight[]>({
     queryKey: ['highlights'],
@@ -110,9 +149,13 @@ export default function Highlights() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {highlights.map((h) => <HighlightCard key={h.id} h={h} />)}
+          {highlights.map((h) => (
+            <HighlightCard key={h.id} h={h} onPlay={() => setActive(h)} />
+          ))}
         </div>
       )}
+
+      {active && <VideoModal h={active} onClose={() => setActive(null)} />}
     </div>
   );
 }
