@@ -1,36 +1,62 @@
-# [Project name]
+# Advanced Talent Agency (ATA)
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-stack sports streaming and P2P betting exchange platform for Kampala, Uganda. Users watch live Pool and Boxing matches ($1.50/day, wallet-gated) and bet peer-to-peer with a 10% brokerage fee.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080, proxied at `/api`)
+- `pnpm --filter @workspace/ata-platform run dev` — run the frontend (proxied at `/`)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/scripts run seed` — seed demo data (idempotent)
+- Required env: `DATABASE_URL` — Postgres connection string, `SESSION_SECRET` — session signing secret
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- API: Express 5 + WebSocket (ws)
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
+- Frontend: React + Vite, Tailwind CSS v4, TanStack Query, Wouter, Zustand, Recharts
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/api-server/src/routes/` — all Express route files
+- `artifacts/api-server/src/routes/index.ts` — route registration
+- `artifacts/api-server/src/index.ts` — HTTP + WebSocket server entry
+- `artifacts/ata-platform/src/App.tsx` — all frontend routes
+- `artifacts/ata-platform/src/pages/` — all page components
+- `artifacts/ata-platform/src/lib/auth-store.ts` — Zustand auth store (JWT token + user)
+- `lib/db/` — Drizzle schema and client
+- `lib/api-spec/` — OpenAPI spec (source of truth for API contracts)
+- `lib/api-client-react/src/generated/` — generated React Query hooks and Zod schemas
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Contract-first API: OpenAPI spec in `lib/api-spec` drives both server validation (Zod) and client hooks (Orval codegen)
+- JWT auth: tokens stored in Zustand with `persist` middleware (localStorage), passed as Bearer tokens
+- WebSocket notifications: authenticated via `?userId=` query param on connect; server broadcasts to specific user rooms
+- Wallet-gated streaming: `POST /api/streams/:id/access` charges $1.50 from wallet balance, returns 24h access token
+- P2P betting exchange: open bets matched at same odds; 10% brokerage taken from winnings on settlement
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Home** — hero landing with live/upcoming event previews
+- **Streams** — browse Pool and Boxing live streams; $1.50/day paywall; HLS playback via hls.js
+- **Games / Betting** — P2P betting exchange; place/match bets on Pool and Boxing matches
+- **Wallet** — MTN MoMo / Airtel Money / BTC deposits and withdrawals; transaction history
+- **Dashboard** — user stats, active bets, recent activity
+- **Notifications** — real-time WebSocket notifications
+- **Admin** — user management, stream management, game management, wallet approvals, reports
+
+## Demo accounts
+
+- Admin: `admin@ata.ug` / `admin123`
+- User: `demo@ata.ug` / `demo123`
 
 ## User preferences
 
@@ -38,7 +64,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- `bcrypt` must be in `onlyBuiltDependencies` in `pnpm-workspace.yaml` (native module)
+- `zustand` and `hls.js` are in the pnpm catalog; must be explicitly listed in ata-platform devDependencies
+- Never use `console.log` in server code — use `req.log` in handlers, `logger` singleton elsewhere
+- Run `pnpm --filter @workspace/api-spec run codegen` after any OpenAPI spec change before editing frontend
 
 ## Pointers
 

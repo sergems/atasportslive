@@ -1,22 +1,39 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Advanced Talent Agency - Sports Streaming & Betting Exchange
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User management
+  - name: wallet
+    description: Wallet operations
+  - name: streams
+    description: Live streaming
+  - name: games
+    description: Sports games
+  - name: bets
+    description: P2P betting exchange
+  - name: notifications
+    description: Notifications
+  - name: admin
+    description: Admin operations
+  - name: reports
+    description: Reports
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +41,1823 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/refresh:
+    post:
+      operationId: refreshToken
+      tags: [auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshInput"
+      responses:
+        "200":
+          description: New tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # USERS
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users (admin)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: role
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/role:
+    patch:
+      operationId: updateUserRole
+      tags: [users]
+      summary: Update user role (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRoleUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/suspend:
+    patch:
+      operationId: suspendUser
+      tags: [users]
+      summary: Suspend or unsuspend user (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuspendUserInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # WALLET
+  /wallet:
+    get:
+      operationId: getWallet
+      tags: [wallet]
+      summary: Get current user's wallet
+      responses:
+        "200":
+          description: Wallet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wallet"
+
+  /wallet/deposit:
+    post:
+      operationId: initiateDeposit
+      tags: [wallet]
+      summary: Initiate a deposit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepositInput"
+      responses:
+        "201":
+          description: Deposit initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /wallet/withdraw:
+    post:
+      operationId: initiateWithdrawal
+      tags: [wallet]
+      summary: Initiate a withdrawal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawalInput"
+      responses:
+        "201":
+          description: Withdrawal initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /wallet/transactions:
+    get:
+      operationId: listTransactions
+      tags: [wallet]
+      summary: List wallet transactions
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionListResponse"
+
+  /wallet/admin/approve-withdrawal/{id}:
+    patch:
+      operationId: approveWithdrawal
+      tags: [wallet]
+      summary: Approve withdrawal (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /wallet/admin/reject-withdrawal/{id}:
+    patch:
+      operationId: rejectWithdrawal
+      tags: [wallet]
+      summary: Reject withdrawal (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /wallet/admin/deposit/{id}/confirm:
+    patch:
+      operationId: confirmDeposit
+      tags: [wallet]
+      summary: Confirm deposit (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /wallet/admin/wallets:
+    get:
+      operationId: listAllWallets
+      tags: [wallet]
+      summary: List all wallets (admin)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Wallets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletListResponse"
+
+  # STREAMS
+  /streams:
+    get:
+      operationId: listStreams
+      tags: [streams]
+      summary: List streams
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Streams
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamListResponse"
+    post:
+      operationId: createStream
+      tags: [streams]
+      summary: Create stream (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreamInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stream"
+
+  /streams/upcoming:
+    get:
+      operationId: listUpcomingStreams
+      tags: [streams]
+      summary: List upcoming streams with countdown info
+      responses:
+        "200":
+          description: Upcoming streams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StreamWithCountdown"
+
+  /streams/{id}:
+    get:
+      operationId: getStream
+      tags: [streams]
+      summary: Get stream by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Stream
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stream"
+    patch:
+      operationId: updateStream
+      tags: [streams]
+      summary: Update stream (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreamUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stream"
+    delete:
+      operationId: deleteStream
+      tags: [streams]
+      summary: Delete stream (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /streams/{id}/access:
+    post:
+      operationId: purchaseStreamAccess
+      tags: [streams]
+      summary: Purchase 24h stream access ($1.50 deducted)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Access granted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamAccess"
+
+  /streams/{id}/access/check:
+    get:
+      operationId: checkStreamAccess
+      tags: [streams]
+      summary: Check if user has active stream access
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Access status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamAccess"
+
+  /streams/{id}/go-live:
+    patch:
+      operationId: goLive
+      tags: [streams]
+      summary: Mark stream as live (admin/moderator)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoLiveInput"
+      responses:
+        "200":
+          description: Stream is live
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stream"
+
+  /streams/{id}/end:
+    patch:
+      operationId: endStream
+      tags: [streams]
+      summary: End stream (admin/moderator)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Stream ended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stream"
+
+  # GAMES
+  /games:
+    get:
+      operationId: listGames
+      tags: [games]
+      summary: List games
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: sport
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Games
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameListResponse"
+    post:
+      operationId: createGame
+      tags: [games]
+      summary: Create game (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/upcoming:
+    get:
+      operationId: listUpcomingGames
+      tags: [games]
+      summary: List upcoming games
+      responses:
+        "200":
+          description: Upcoming games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Game"
+
+  /games/{id}:
+    get:
+      operationId: getGame
+      tags: [games]
+      summary: Get game by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+    patch:
+      operationId: updateGame
+      tags: [games]
+      summary: Update game (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GameUpdate"
+      responses:
+        "200":
+          description: Updated game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{id}/settle:
+    post:
+      operationId: settleGame
+      tags: [games]
+      summary: Settle game result (admin/moderator)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettleGameInput"
+      responses:
+        "200":
+          description: Settled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{id}/cancel:
+    post:
+      operationId: cancelGame
+      tags: [games]
+      summary: Cancel game and refund all bets (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{id}/bets:
+    get:
+      operationId: listGameBets
+      tags: [games]
+      summary: List all bets for a game
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game bets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bet"
+
+  # BETS
+  /bets:
+    post:
+      operationId: placeBet
+      tags: [bets]
+      summary: Place a bet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BetInput"
+      responses:
+        "201":
+          description: Bet placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BetWithMatch"
+
+  /bets/my:
+    get:
+      operationId: listMyBets
+      tags: [bets]
+      summary: List my bets
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: My bets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BetListResponse"
+
+  /bets/all:
+    get:
+      operationId: listAllBets
+      tags: [bets]
+      summary: List all bets (admin)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: All bets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BetListResponse"
+
+  /bets/{id}:
+    get:
+      operationId: getBet
+      tags: [bets]
+      summary: Get bet by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BetWithMatch"
+
+  /bets/{id}/cancel:
+    post:
+      operationId: cancelBet
+      tags: [bets]
+      summary: Cancel unmatched bet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bet"
+
+  /bets/{id}/accept-near-match:
+    post:
+      operationId: acceptNearMatch
+      tags: [bets]
+      summary: Accept a near-match offer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptNearMatchInput"
+      responses:
+        "200":
+          description: Near match accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BetWithMatch"
+
+  # NOTIFICATIONS
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List my notifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ADMIN DASHBOARD
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard statistics
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/revenue:
+    get:
+      operationId: getRevenueBreakdown
+      tags: [admin]
+      summary: Get revenue breakdown
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+            default: monthly
+      responses:
+        "200":
+          description: Revenue breakdown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueBreakdown"
+
+  /admin/activity:
+    get:
+      operationId: getRecentActivity
+      tags: [admin]
+      summary: Get recent platform activity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /admin/pending-withdrawals:
+    get:
+      operationId: listPendingWithdrawals
+      tags: [admin]
+      summary: List pending withdrawal requests
+      responses:
+        "200":
+          description: Pending withdrawals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+
+  # REPORTS
+  /reports/streaming:
+    get:
+      operationId: getStreamingReport
+      tags: [reports]
+      summary: Streaming revenue report
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+            default: monthly
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamingReport"
+
+  /reports/betting:
+    get:
+      operationId: getBettingReport
+      tags: [reports]
+      summary: Betting/brokerage revenue report
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+            default: monthly
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BettingReport"
+
+  /reports/wallets:
+    get:
+      operationId: getWalletReport
+      tags: [reports]
+      summary: Wallet transaction report
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+            default: monthly
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletReport"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    # AUTH
+    RegisterInput:
+      type: object
+      required: [email, password, fullName, phone]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    RefreshInput:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [accessToken, refreshToken, user]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    # USER
+    User:
+      type: object
+      required: [id, email, fullName, role, status, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [guest, user, moderator, admin]
+        status:
+          type: string
+          enum: [active, suspended]
+        avatarUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        avatarUrl:
+          type: string
+
+    UserRoleUpdate:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [user, moderator, admin]
+
+    SuspendUserInput:
+      type: object
+      required: [suspended]
+      properties:
+        suspended:
+          type: boolean
+        reason:
+          type: string
+
+    UserListResponse:
+      type: object
+      required: [users, total, page, limit]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # WALLET
+    Wallet:
+      type: object
+      required: [id, userId, balance, availableBalance, pendingBalance, withdrawableBalance, currency]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        balance:
+          type: number
+        availableBalance:
+          type: number
+        pendingBalance:
+          type: number
+        withdrawableBalance:
+          type: number
+        currency:
+          type: string
+          default: USD
+
+    DepositInput:
+      type: object
+      required: [amount, paymentMethod]
+      properties:
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [mtn_momo, airtel_money, btc_binance]
+        reference:
+          type: string
+
+    WithdrawalInput:
+      type: object
+      required: [amount, paymentMethod, accountDetails]
+      properties:
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [mtn_momo, airtel_money, btc_binance]
+        accountDetails:
+          type: string
+
+    Transaction:
+      type: object
+      required: [id, userId, type, amount, status, createdAt]
+      properties:
+        id:
+          type: integer
+        transactionId:
+          type: string
+        userId:
+          type: integer
+        userFullName:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [deposit, withdrawal, stream_access, bet_stake, bet_win, bet_refund, brokerage_fee]
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, completed, failed, rejected]
+        paymentMethod:
+          type: ["string", "null"]
+        reference:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    TransactionListResponse:
+      type: object
+      required: [transactions, total, page, limit]
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    WalletListResponse:
+      type: object
+      required: [wallets, total, page, limit]
+      properties:
+        wallets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Wallet"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # STREAMS
+    Stream:
+      type: object
+      required: [id, title, sport, status, startTime, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        sport:
+          type: string
+          enum: [pool, boxing, other]
+        thumbnailUrl:
+          type: ["string", "null"]
+        hlsUrl:
+          type: ["string", "null"]
+        streamKey:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [upcoming, live, ended, cancelled]
+        startTime:
+          type: string
+        endTime:
+          type: ["string", "null"]
+        viewerCount:
+          type: integer
+          default: 0
+        accessPrice:
+          type: number
+          default: 1.5
+        createdAt:
+          type: string
+
+    StreamWithCountdown:
+      type: object
+      required: [id, title, sport, status, startTime, secondsUntilStart]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        sport:
+          type: string
+        thumbnailUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+        startTime:
+          type: string
+        secondsUntilStart:
+          type: integer
+        accessPrice:
+          type: number
+
+    StreamInput:
+      type: object
+      required: [title, sport, startTime]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        sport:
+          type: string
+          enum: [pool, boxing, other]
+        thumbnailUrl:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        accessPrice:
+          type: number
+
+    StreamUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        sport:
+          type: string
+        thumbnailUrl:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+        status:
+          type: string
+        hlsUrl:
+          type: string
+        accessPrice:
+          type: number
+
+    GoLiveInput:
+      type: object
+      required: [hlsUrl]
+      properties:
+        hlsUrl:
+          type: string
+        streamKey:
+          type: string
+
+    StreamAccess:
+      type: object
+      required: [hasAccess]
+      properties:
+        hasAccess:
+          type: boolean
+        expiresAt:
+          type: ["string", "null"]
+        secondsRemaining:
+          type: ["integer", "null"]
+
+    StreamListResponse:
+      type: object
+      required: [streams, total, page, limit]
+      properties:
+        streams:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stream"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # GAMES
+    Game:
+      type: object
+      required: [id, sport, playerA, playerB, eventDate, eventTime, status, createdAt]
+      properties:
+        id:
+          type: integer
+        sport:
+          type: string
+          enum: [pool, boxing]
+        playerA:
+          type: string
+        playerB:
+          type: string
+        eventDate:
+          type: string
+        eventTime:
+          type: string
+        status:
+          type: string
+          enum: [upcoming, live, completed, cancelled]
+        result:
+          type: ["string", "null"]
+          enum: [player_a_wins, player_b_wins, draw, null]
+        totalBetPool:
+          type: number
+          default: 0
+        openBetsCount:
+          type: integer
+          default: 0
+        matchedBetsCount:
+          type: integer
+          default: 0
+        createdAt:
+          type: string
+
+    GameInput:
+      type: object
+      required: [sport, playerA, playerB, eventDate, eventTime]
+      properties:
+        sport:
+          type: string
+          enum: [pool, boxing]
+        playerA:
+          type: string
+        playerB:
+          type: string
+        eventDate:
+          type: string
+        eventTime:
+          type: string
+
+    GameUpdate:
+      type: object
+      properties:
+        sport:
+          type: string
+        playerA:
+          type: string
+        playerB:
+          type: string
+        eventDate:
+          type: string
+        eventTime:
+          type: string
+        status:
+          type: string
+
+    SettleGameInput:
+      type: object
+      required: [result]
+      properties:
+        result:
+          type: string
+          enum: [player_a_wins, player_b_wins, draw]
+
+    GameListResponse:
+      type: object
+      required: [games, total, page, limit]
+      properties:
+        games:
+          type: array
+          items:
+            $ref: "#/components/schemas/Game"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # BETS
+    Bet:
+      type: object
+      required: [id, userId, gameId, outcome, stake, status, createdAt]
+      properties:
+        id:
+          type: integer
+        ticketId:
+          type: string
+        userId:
+          type: integer
+        userFullName:
+          type: ["string", "null"]
+        gameId:
+          type: integer
+        game:
+          $ref: "#/components/schemas/Game"
+        outcome:
+          type: string
+          enum: [player_a_wins, player_b_wins]
+        stake:
+          type: number
+        potentialReturn:
+          type: number
+        status:
+          type: string
+          enum: [pending, matched, live, won, lost, refunded, cancelled]
+        matchedBetId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        settledAt:
+          type: ["string", "null"]
+
+    BetInput:
+      type: object
+      required: [gameId, outcome, stake]
+      properties:
+        gameId:
+          type: integer
+        outcome:
+          type: string
+          enum: [player_a_wins, player_b_wins]
+        stake:
+          type: number
+
+    BetWithMatch:
+      type: object
+      required: [bet, matchStatus]
+      properties:
+        bet:
+          $ref: "#/components/schemas/Bet"
+        matchStatus:
+          type: string
+          enum: [exact_match, near_match, unmatched]
+        nearMatches:
+          type: array
+          items:
+            $ref: "#/components/schemas/NearMatch"
+
+    NearMatch:
+      type: object
+      required: [betId, stake, difference]
+      properties:
+        betId:
+          type: integer
+        stake:
+          type: number
+        difference:
+          type: number
+
+    AcceptNearMatchInput:
+      type: object
+      required: [opponentBetId]
+      properties:
+        opponentBetId:
+          type: integer
+
+    BetListResponse:
+      type: object
+      required: [bets, total, page, limit]
+      properties:
+        bets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bet"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # NOTIFICATIONS
+    Notification:
+      type: object
+      required: [id, userId, type, title, message, read, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        type:
+          type: string
+          enum: [bet_matched, near_match, deposit_received, withdrawal_approved, withdrawal_rejected, stream_expiring, bet_won, bet_lost, match_result, bet_refunded, low_balance]
+        title:
+          type: string
+        message:
+          type: string
+        read:
+          type: boolean
+        createdAt:
+          type: string
+
+    NotificationListResponse:
+      type: object
+      required: [notifications, total, unreadCount, page, limit]
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        total:
+          type: integer
+        unreadCount:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # ADMIN STATS
+    AdminStats:
+      type: object
+      required: [totalUsers, activeUsers, totalWalletBalance, liveStreams, totalRevenue, brokerageRevenue, openBets, matchedBets, pendingWithdrawals, totalDepositsToday]
+      properties:
+        totalUsers:
+          type: integer
+        activeUsers:
+          type: integer
+        totalWalletBalance:
+          type: number
+        liveStreams:
+          type: integer
+        totalRevenue:
+          type: number
+        brokerageRevenue:
+          type: number
+        streamingRevenue:
+          type: number
+        openBets:
+          type: integer
+        matchedBets:
+          type: integer
+        pendingWithdrawals:
+          type: integer
+        totalDepositsToday:
+          type: number
+        totalWithdrawalsToday:
+          type: number
+
+    RevenueBreakdown:
+      type: object
+      required: [period, data]
+      properties:
+        period:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RevenueDataPoint"
+
+    RevenueDataPoint:
+      type: object
+      required: [label, streaming, brokerage, total]
+      properties:
+        label:
+          type: string
+        streaming:
+          type: number
+        brokerage:
+          type: number
+        total:
+          type: number
+
+    ActivityItem:
+      type: object
+      required: [id, type, description, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        userId:
+          type: ["integer", "null"]
+        userFullName:
+          type: ["string", "null"]
+        amount:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+
+    # REPORTS
+    StreamingReport:
+      type: object
+      required: [period, totalRevenue, totalAccesses, data]
+      properties:
+        period:
+          type: string
+        totalRevenue:
+          type: number
+        totalAccesses:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportDataPoint"
+
+    BettingReport:
+      type: object
+      required: [period, brokerageRevenue, totalBetsPlaced, totalBetsMatched, totalBetPool, data]
+      properties:
+        period:
+          type: string
+        brokerageRevenue:
+          type: number
+        totalBetsPlaced:
+          type: integer
+        totalBetsMatched:
+          type: integer
+        totalBetPool:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportDataPoint"
+
+    WalletReport:
+      type: object
+      required: [period, totalDeposits, totalWithdrawals, netFlow, data]
+      properties:
+        period:
+          type: string
+        totalDeposits:
+          type: number
+        totalWithdrawals:
+          type: number
+        netFlow:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportDataPoint"
+
+    ReportDataPoint:
+      type: object
+      required: [label, value]
+      properties:
+        label:
+          type: string
+        value:
+          type: number
+        secondary:
+          type: ["number", "null"]

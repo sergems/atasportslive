@@ -1,0 +1,610 @@
+Build a complete production-ready web platform called Advanced Talent Agency (ATA).
+Project Overview
+Advanced Talent Agency (ATA) is a sports and entertainment talent agency based in Kampala, Uganda.
+The platform consists of:
+
+1. ATA Sports Live Streaming Platform
+Admins must be able to update the information on the home page and update them. there must be Upcoming Streams details on the home page, which must display the upcoming streams and details about that stream, there must be a countdown to that stream.
+Users can:
+
+Register and login
+Deposit funds into their wallet
+Watch premium live-streamed Pool matches
+Access exclusive sports content
+
+Live streaming access is subscription-based:
+
+Cost: USD $1.50 per day
+A user can only watch live matches if they have sufficient wallet balance.
+The system automatically deducts $1.50 every 24 hours while the user continues watching premium content.
+If the balance becomes insufficient, access is immediately suspended.
+Users receive low balance notifications.
+2. Peer-to-Peer Betting Exchange
+
+ATA does NOT act as a bookmaker.
+
+ATA acts only as a broker/matching exchange.
+
+Users bet against each other.
+
+Supported sports:
+
+Pool
+Boxing
+
+Example:
+
+User A:
+
+Match: Pool Match #100
+Outcome: Player A wins
+Stake: $100
+
+User B:
+
+Match: Pool Match #100
+Outcome: Player B wins
+Stake: $100
+
+The system automatically matches both bets.
+
+ATA deducts a 10% brokerage fee from the total pool.
+
+The winner receives the remaining amount.
+
+Technology Stack
+
+Use:
+
+Frontend:
+
+React
+TypeScript
+TailwindCSS
+Shadcn UI
+
+Backend:
+
+Node.js
+Express.js
+TypeScript
+
+Database:
+
+PostgreSQL
+
+Authentication:
+
+JWT
+Refresh Tokens
+Role-based access control
+
+Storage:
+
+AWS S3 compatible storage
+Cloudflare R2 support
+
+Streaming:
+
+HLS Video Streaming
+OBS Integration
+Stream Key Management
+
+Payments:
+
+Design payment abstraction layer supporting:
+
+
+MTN Mobile Money
+Airtel Money
+BTC wallet (Binance)
+
+Future integrations can be added later.
+
+User Roles
+Guest Can:
+
+View public content
+View upcoming matches
+Register
+
+Cannot:
+
+Watch streams
+Bet
+Deposit
+
+User Can:
+
+Login
+Deposit funds
+Withdraw funds
+Watch live streams
+Bet against other users
+View wallet
+View betting history
+View streaming history
+Moderator
+
+Can:
+
+Manage streams
+Verify results
+Review disputes
+Admin
+
+Full access:
+
+Manage users
+Manage games
+Manage streams
+Manage wallets
+Manage payments
+Manage betting engine
+Manage reports
+ATA Wallet System
+
+Create a complete wallet system.
+
+Each user has:
+
+Wallet balance
+Available balance
+Pending balance
+Withdrawal balance
+
+Transactions:
+
+Deposits
+Withdrawals
+Streaming deductions
+Betting stakes
+Brokerage fees
+Winning payouts
+Refunds
+
+Every transaction must have:
+
+Transaction ID
+Timestamp
+Status
+Audit logs
+Live Streaming Module
+
+Admin can:
+
+Create stream:
+
+Title
+Description
+Sport
+Thumbnail
+Start time
+End time
+Once the embedded feed becomes live, it replaces the thumbnail with the live feed
+
+Users can:
+
+View live streams
+Watch streams if wallet balance allows
+
+Streaming Access Logic:
+
+IF user clicks watch:
+
+Check:
+
+Wallet >= $1.50
+
+IF YES:
+
+Deduct $1.50
+
+Grant access for 24 hours
+
+IF NO:
+
+Show payment modal
+
+Access automatically expires after 24 hours.
+
+Betting Exchange Engine
+
+Create a professional betting exchange.
+
+Game Creation
+
+Admin creates:
+
+Pool Match
+
+or
+
+Boxing Match
+
+Fields:
+
+Game ID
+Sport
+Player/Fighter A
+Player/Fighter B
+Event Date
+Event Time
+Status
+
+Statuses:
+
+Upcoming
+Live
+Completed
+Cancelled
+Bet Placement
+
+User selects:
+
+Game
+
+Outcome:
+
+Player A wins
+Player B wins
+
+Stake Amount
+
+Example:
+
+$10
+
+System:
+
+Locks funds immediately.
+
+Creates bet ticket.
+
+Matching Engine
+
+The system must automatically search for matching bets.
+
+Priority:
+
+1 Exact match
+
+Same game
+
+Same amount
+
+Opposite outcome
+
+Example:
+
+User A
+
+Player A wins
+
+$100
+
+Matched with:
+
+User B
+
+Player B wins
+
+$100
+
+2 Near Match Logic
+
+If exact match unavailable:
+
+Find nearest opposite stake.
+
+Examples:
+
+$100 request
+
+Available:
+
+$95
+
+$98
+
+$102
+
+$105
+
+Suggest nearest matches.
+
+Both users must accept.
+
+Only then match occurs.
+
+Brokerage Fee
+
+ATA takes:
+
+10%
+
+Example:
+
+User A = $100
+
+User B = $100
+
+Pool = $200
+
+ATA Fee = $20
+
+Winner Receives = $180
+
+Settlement
+
+Admin updates result.
+
+System automatically:
+
+Find winner
+
+Calculate payout
+
+Deduct fee
+
+Pay winner
+
+Close ticket
+
+Update reports
+
+Cancelled Match Logic
+
+If match cancelled:
+
+Refund all participants automatically.
+
+Betting Ticket System
+
+Each ticket contains:
+
+Ticket ID
+
+Game
+
+Selection
+
+Stake
+
+Opponent
+
+Status
+
+Potential Return
+
+Created Date
+
+Settlement Date
+
+Statuses:
+
+Pending
+
+Matched
+
+Live
+
+Won
+
+Lost
+
+Refunded
+
+Cancelled
+
+Real-Time Notifications
+
+Use WebSockets.
+
+Notify users for:
+
+Bet matched
+Near match found
+Deposit received
+Withdrawal approved
+Stream access expiring
+Winning payout
+Match result posted
+Admin Dashboard
+
+Professional analytics dashboard.
+
+Display:
+
+Total Users
+
+Active Users
+
+Wallet Balances
+
+Live Streams
+
+Revenue
+
+Brokerage Revenue
+
+Open Bets
+
+Matched Bets
+
+Settlement Reports
+
+Streaming Revenue
+
+Withdrawals
+
+Deposits
+
+Reports Module
+
+Generate:
+
+Daily
+
+Weekly
+
+Monthly
+
+Yearly
+
+Reports:
+
+Streaming Revenue
+
+Brokerage Revenue
+
+Wallet Transactions
+
+Match Reports
+
+User Activity
+
+Financial Statements
+
+Export:
+
+PDF
+
+Excel
+
+CSV
+
+Security
+
+Implement:
+
+JWT Authentication
+
+2FA Ready
+
+Rate Limiting
+
+CSRF Protection
+
+SQL Injection Protection
+
+Password Hashing
+
+Audit Logs
+
+Device Tracking
+
+IP Tracking
+
+Suspicious Activity Detection
+
+Database Design
+
+Create complete PostgreSQL schema including:
+
+Users
+
+Roles
+
+Wallets
+
+Transactions
+
+Streams
+
+Games
+
+Bet Tickets
+
+Matched Bets
+
+Notifications
+
+Reports
+
+Audit Logs
+
+Withdrawals
+
+Deposits
+
+Settings
+
+Media Assets
+
+Disputes
+
+Frontend Design
+
+Modern sports streaming and betting exchange UI.
+
+Theme:
+
+Professional sports platform
+
+Colors:
+
+Primary:
+#0F172A
+
+Secondary:
+#14B8A6
+
+Accent:
+#F59E0B
+
+Background:
+#020617
+
+Style:
+
+Premium
+
+Modern
+
+Responsive
+
+Mobile-first
+
+Fast loading
+
+Mobile App Ready Architecture
+
+Build APIs and architecture that can later support:
+
+Android App
+
+iOS App
+
+React Native App
+
+Flutter App
+
+without backend modifications.
+
+All business logic must reside in backend APIs.
+
+Deliverables
+
+Generate:
+
+Complete project structure
+PostgreSQL schema
+Backend APIs
+Authentication system
+Wallet engine
+Live streaming module
+Betting exchange engine
+Matching engine
+Admin dashboard
+User dashboard
+Reports module
+Notification system
+REST API documentation
+Deployment guide
+Docker configuration
+Environment variable templates
+Seed data
+Unit tests
+Production-ready code
+Scalable architecture capable of supporting 100,000+ users

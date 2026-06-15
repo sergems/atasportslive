@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Advanced Talent Agency"
+version = "1.0.0"
+id = "artifacts/ata-platform"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23218
+
+[services.development]
+run = "pnpm --filter @workspace/ata-platform run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ata-platform", "run", "build" ]
+publicDir = "artifacts/ata-platform/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23218"
+BASE_PATH = "/"
