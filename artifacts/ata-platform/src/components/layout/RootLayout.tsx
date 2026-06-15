@@ -3,7 +3,8 @@ import { Link } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { MapPin, Phone, Mail } from 'lucide-react';
-import { FaFacebook, FaYoutube } from 'react-icons/fa';
+import { FaFacebook, FaYoutube, FaInstagram } from 'react-icons/fa';
+import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
 
 export function RootLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +18,7 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
       </main>
       <footer className="mt-16 border-t border-border/40 bg-primary/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             {/* Brand */}
             <div>
               <p className="text-sm text-slate-400 leading-relaxed">
@@ -88,6 +89,63 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex gap-4 text-xs text-slate-500">
                   <a href="https://atasportslive.com/" className="hover:text-slate-300 transition-colors">atasportslive.com</a>
                 </div>
+              </div>
+            </div>
+            {/* Join the Community */}
+            <div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Join the Community</h3>
+
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Uganda Boxing Champions League</p>
+              <div className="flex items-center gap-2 mb-4">
+                <a
+                  href="https://www.instagram.com/ugandaboxingchampionsleague/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="UBCL on Instagram"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-pink-600 hover:text-white transition-all duration-200"
+                >
+                  <FaInstagram className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://x.com/UBCL_Boxing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="UBCL on X"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-black hover:text-white transition-all duration-200"
+                >
+                  <FaXTwitter className="h-4 w-4" />
+                </a>
+              </div>
+
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Uganda Boxing Federation</p>
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://x.com/BoxingUganda"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Uganda Boxing Federation on X"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-black hover:text-white transition-all duration-200"
+                >
+                  <FaXTwitter className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://www.instagram.com/ugandaboxingfederation/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Uganda Boxing Federation on Instagram"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-pink-600 hover:text-white transition-all duration-200"
+                >
+                  <FaInstagram className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://www.tiktok.com/@boxinguganda"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Uganda Boxing Federation on TikTok"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-slate-600 hover:text-white transition-all duration-200"
+                >
+                  <FaTiktok className="h-4 w-4" />
+                </a>
               </div>
             </div>
           </div>
