@@ -64,8 +64,12 @@ function Router() {
         <Route path="/register" component={Register} />
         <Route path="/streams" component={Streams} />
         <Route path="/streams/:id" component={StreamDetail} />
-        <Route path="/games" component={Games} />
-        <Route path="/games/:id" component={GameDetail} />
+        <Route path="/games">
+          {() => <ProtectedRoute component={Games} />}
+        </Route>
+        <Route path="/games/:id">
+          {() => <ProtectedRoute component={GameDetail} />}
+        </Route>
         <Route path="/dashboard">
           {() => <ProtectedRoute component={Dashboard} />}
         </Route>
