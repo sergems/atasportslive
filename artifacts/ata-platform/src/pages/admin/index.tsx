@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { Link } from 'wouter';
 import { useGetAdminStats, useGetRecentActivity } from '@workspace/api-client-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,26 +46,6 @@ export default function AdminDashboard() {
               <div className="text-slate-600 text-xs">{sub}</div>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {[
-          { to: '/admin/streams',       label: 'Streams',       color: 'border-teal-500/30 hover:bg-teal-500/10' },
-          { to: '/admin/games',         label: 'Games',         color: 'border-amber-500/30 hover:bg-amber-500/10' },
-          { to: '/admin/announcements', label: 'Announcements', color: 'border-orange-500/30 hover:bg-orange-500/10' },
-          { to: '/admin/users',         label: 'Users',         color: 'border-blue-500/30 hover:bg-blue-500/10' },
-          { to: '/admin/wallets',       label: 'Wallets',       color: 'border-green-500/30 hover:bg-green-500/10' },
-          { to: '/admin/reports',       label: 'Reports',       color: 'border-purple-500/30 hover:bg-purple-500/10' },
-        ].map(({ to, label, color }) => (
-          <Link key={to} href={to}>
-            <Card className={`bg-slate-900 border cursor-pointer transition-colors ${color}`}>
-              <CardContent className="py-4 text-center">
-                <span className="text-white font-semibold">{label}</span>
-              </CardContent>
-            </Card>
-          </Link>
         ))}
       </div>
 
