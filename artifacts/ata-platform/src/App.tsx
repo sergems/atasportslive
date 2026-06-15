@@ -24,6 +24,9 @@ import AdminUsers from "@/pages/admin/users";
 import AdminWallets from "@/pages/admin/wallets";
 import AdminReports from "@/pages/admin/reports";
 import NotFound from "@/pages/not-found";
+import RefundPolicy from "@/pages/refund-policy";
+import PrivacyPolicy from "@/pages/privacy-policy";
+import Terms from "@/pages/terms";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +92,9 @@ function Router() {
         <Route path="/admin/reports">
           {() => <ProtectedRoute component={AdminReports} adminOnly />}
         </Route>
+        <Route path="/terms" component={Terms} />
+        <Route path="/privacy-policy" component={PrivacyPolicy} />
+        <Route path="/refund-policy" component={RefundPolicy} />
         <Route component={NotFound} />
       </Switch>
     </RootLayout>

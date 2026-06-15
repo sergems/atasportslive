@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { Bell, User as UserIcon, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
+import ataLogo from '@assets/ATA_logo_1781543559550.png';
 
 export function Navbar() {
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
@@ -37,9 +38,7 @@ export function Navbar() {
       <div className="container flex h-16 max-w-7xl mx-auto px-4 items-center">
         <div className="mr-4 flex items-center">
           <Link href="/" className="mr-8 flex items-center space-x-2">
-            <div className="h-7 w-7 rounded-md bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-              <span className="text-slate-950 font-black text-xs">ATA</span>
-            </div>
+            <img src={ataLogo} alt="ATA" className="h-9 w-9 object-contain" />
             <span className="font-bold text-lg text-white tracking-tight hidden sm:block">Advanced Talent Agency</span>
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">

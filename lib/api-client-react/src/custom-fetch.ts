@@ -286,8 +286,9 @@ function inferResponseType(response: Response): "json" | "text" | "blob" {
   const mediaType = getMediaType(response.headers);
 
   if (isJsonMediaType(mediaType)) return "json";
-  if (isTextMediaType(mediaType) || mediaType == null) return "text";
-  return "blob";
+  if (isTextMediaType(mediaType)) return "text";
+  // Default to JSON for unknown/missing content-type (REST APIs almost always return JSON)
+  return "json";
 }
 
 async function parseSuccessBody(

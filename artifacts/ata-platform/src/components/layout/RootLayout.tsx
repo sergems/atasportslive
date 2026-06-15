@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { MapPin, Phone, Mail } from 'lucide-react';
+import ataLogo from '@assets/ATA_logo_1781543559550.png';
 
 export function RootLayout({ children }: { children: React.ReactNode }) {
   useWebSocket();
@@ -19,9 +20,7 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
             {/* Brand */}
             <div>
               <Link href="/" className="flex items-center space-x-2 mb-4">
-                <div className="h-7 w-7 rounded-md bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shrink-0">
-                  <span className="text-slate-950 font-black text-xs">ATA</span>
-                </div>
+                <img src={ataLogo} alt="ATA" className="h-10 w-10 object-contain" />
                 <span className="font-bold text-base text-white tracking-tight">Advanced Talent Agency</span>
               </Link>
               <p className="text-sm text-slate-400 leading-relaxed">
@@ -74,6 +73,13 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Policy Links */}
+          <div className="mt-10 pt-6 border-t border-slate-800 flex flex-wrap gap-x-6 gap-y-2 justify-center text-xs text-slate-500">
+            <Link href="/terms" className="hover:text-slate-300 transition-colors">Terms and Conditions</Link>
+            <Link href="/privacy-policy" className="hover:text-slate-300 transition-colors">Privacy Policy</Link>
+            <Link href="/refund-policy" className="hover:text-slate-300 transition-colors">Refund Policy</Link>
           </div>
         </div>
       </footer>
