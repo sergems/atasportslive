@@ -134,10 +134,7 @@ export default function Upcoming() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <CalendarClock className="h-6 w-6 text-teal-400" /> Upcoming Events
-        </h1>
-        <p className="text-slate-400 text-sm mt-1">All scheduled streams and matches, ordered by date</p>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Upcoming Events</h1>
       </div>
 
       {isLoading ? (
