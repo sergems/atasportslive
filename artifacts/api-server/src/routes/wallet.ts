@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, walletsTable, transactionsTable, usersTable } from "@workspace/db";
+import { db, walletsTable, transactionsTable, usersTable, vouchersTable } from "@workspace/db";
 import { eq, sql, desc } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
@@ -188,6 +188,40 @@ router.patch("/admin/deposit/:id/confirm", authMiddleware, requireRole("admin"),
   await notify(tx.userId, "deposit_received", "Deposit Confirmed", `$${tx.amount} has been added to your wallet.`);
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
+});
+
+router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { code } = req.body;
+  if (!code || typeof code !== "string") {
+    res.status(400).json({ error: "Voucher code is required" });
+    return;
+  }
+  const [voucher] = await db.select().from(vouchersTable).where(eq(vouchersTable.code, code.trim())).limit(1);
+  if (!voucher) { res.status(404).json({ error: "Invalid voucher code" }); return; }
+  if (voucher.isRedeemed) { res.status(400).json({ error: "This voucher has already been redeemed" }); return; }
+
+  const amount = parseFloat(voucher.amount as string);
+  const now = new Date();
+
+  await db.update(vouchersTable).set({ isRedeemed: true, redeemedBy: req.userId!, redeemedAt: now }).where(eq(vouchersTable.id, voucher.id));
+  await db.update(walletsTable).set({
+    balance: sql`balance + ${amount}`,
+    availableBalance: sql`available_balance + ${amount}`,
+    withdrawableBalance: sql`withdrawable_balance + ${amount}`,
+  }).where(eq(walletsTable.userId, req.userId!));
+
+  const [tx] = await db.insert(transactionsTable).values({
+    transactionId: `VCH-${voucher.code}`,
+    userId: req.userId!,
+    type: "voucher_redeem",
+    amount: String(amount),
+    status: "completed",
+    paymentMethod: "internal",
+    description: `Voucher ${voucher.code} redeemed`,
+  }).returning();
+
+  await notify(req.userId!, "deposit_received", "Voucher Redeemed", `$${amount.toFixed(2)} has been added to your wallet.`);
+  res.json({ success: true, amount, transaction: toTxResponse(tx) });
 });
 
 router.get("/admin/wallets", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {

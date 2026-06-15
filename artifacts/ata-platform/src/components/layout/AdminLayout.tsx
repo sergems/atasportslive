@@ -7,15 +7,17 @@ import {
   Users,
   Wallet,
   BarChart2,
+  Ticket,
 } from 'lucide-react';
 
 const navItems = [
-  { href: '/admin',          label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/admin/streams',  label: 'Streams',   icon: Radio },
-  { href: '/admin/games',    label: 'Games',     icon: Trophy },
-  { href: '/admin/users',    label: 'Users',     icon: Users },
-  { href: '/admin/wallets',  label: 'Wallets',   icon: Wallet },
-  { href: '/admin/reports',  label: 'Reports',   icon: BarChart2 },
+  { href: '/admin',           label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/admin/streams',   label: 'Streams',   icon: Radio },
+  { href: '/admin/games',     label: 'Games',     icon: Trophy },
+  { href: '/admin/users',     label: 'Users',     icon: Users },
+  { href: '/admin/wallets',   label: 'Wallets',   icon: Wallet },
+  { href: '/admin/vouchers',  label: 'Vouchers',  icon: Ticket },
+  { href: '/admin/reports',   label: 'Reports',   icon: BarChart2 },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {

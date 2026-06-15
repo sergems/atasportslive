@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable } from "@workspace/db";
+import { v4 as uuidv4 } from "uuid";
+import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable } from "@workspace/db";
 import { eq, sql, desc, and, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
+import { notify } from "../lib/notify";
 
 const router = Router();
 
@@ -126,6 +128,108 @@ router.get("/pending-withdrawals", authMiddleware, requireRole("admin"), async (
     description: tx.description,
     createdAt: tx.createdAt,
   })));
+});
+
+// ── Vouchers ────────────────────────────────────────────────────────────────
+
+const VOUCHER_VALUES = [1, 5, 10, 20, 50];
+
+function generateCode(): string {
+  return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
+}
+
+router.post("/vouchers", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const { amount, quantity = 1 } = req.body;
+  if (!VOUCHER_VALUES.includes(Number(amount))) {
+    res.status(400).json({ error: `Amount must be one of: ${VOUCHER_VALUES.join(", ")}` });
+    return;
+  }
+  const count = Math.min(Math.max(1, Number(quantity)), 50);
+  const vouchers = [];
+  for (let i = 0; i < count; i++) {
+    let code: string;
+    let attempts = 0;
+    do {
+      code = generateCode();
+      attempts++;
+      if (attempts > 20) { res.status(500).json({ error: "Could not generate unique code" }); return; }
+      const existing = await db.select().from(vouchersTable).where(eq(vouchersTable.code, code)).limit(1);
+      if (!existing.length) break;
+    } while (true);
+    const [v] = await db.insert(vouchersTable).values({ code: code!, amount: String(amount), createdBy: req.userId! }).returning();
+    vouchers.push(v);
+  }
+  res.status(201).json(vouchers.map(v => ({ id: v.id, code: v.code, amount: parseFloat(v.amount as string), isRedeemed: v.isRedeemed, createdAt: v.createdAt })));
+});
+
+router.get("/vouchers", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const vouchers = await db
+    .select({ v: vouchersTable, redeemedByUser: usersTable })
+    .from(vouchersTable)
+    .leftJoin(usersTable, eq(vouchersTable.redeemedBy, usersTable.id))
+    .orderBy(desc(vouchersTable.createdAt))
+    .limit(200);
+  res.json(vouchers.map(({ v, redeemedByUser }) => ({
+    id: v.id,
+    code: v.code,
+    amount: parseFloat(v.amount as string),
+    isRedeemed: v.isRedeemed,
+    redeemedBy: v.redeemedBy,
+    redeemedByName: redeemedByUser?.fullName || null,
+    redeemedAt: v.redeemedAt,
+    createdAt: v.createdAt,
+  })));
+});
+
+router.delete("/vouchers/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  const [v] = await db.select().from(vouchersTable).where(eq(vouchersTable.id, id)).limit(1);
+  if (!v) { res.status(404).json({ error: "Voucher not found" }); return; }
+  if (v.isRedeemed) { res.status(400).json({ error: "Cannot delete a redeemed voucher" }); return; }
+  await db.delete(vouchersTable).where(eq(vouchersTable.id, id));
+  res.json({ success: true });
+});
+
+// ── Admin wallet adjustments ─────────────────────────────────────────────────
+
+router.post("/wallets/:userId/adjust", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = Number(req.params.userId);
+  const { type, amount, note } = req.body;
+  if (!["credit", "debit"].includes(type)) { res.status(400).json({ error: "type must be credit or debit" }); return; }
+  if (!amount || Number(amount) <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
+  const amt = parseFloat(amount);
+
+  const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
+  if (!wallet) { res.status(404).json({ error: "Wallet not found" }); return; }
+
+  if (type === "debit" && parseFloat(wallet.balance as string) < amt) {
+    res.status(400).json({ error: "Insufficient balance" }); return;
+  }
+
+  const txType = type === "credit" ? "admin_credit" : "admin_debit";
+  const sign = type === "credit" ? 1 : -1;
+
+  await db.update(walletsTable).set({
+    balance: sql`balance + ${sign * amt}`,
+    availableBalance: sql`available_balance + ${sign * amt}`,
+    withdrawableBalance: sql`withdrawable_balance + ${sign * amt}`,
+  }).where(eq(walletsTable.userId, userId));
+
+  const [tx] = await db.insert(transactionsTable).values({
+    transactionId: `ADJ-${uuidv4().split("-")[0].toUpperCase()}`,
+    userId,
+    type: txType,
+    amount: String(amt),
+    status: "completed",
+    paymentMethod: "internal",
+    description: note || `Admin ${type} of $${amt}`,
+  }).returning();
+
+  await notify(userId, type === "credit" ? "deposit_received" : "withdrawal_approved",
+    type === "credit" ? "Account Credited" : "Account Debited",
+    `${type === "credit" ? "+" : "-"}$${amt} — ${note || `Admin ${type}`}`);
+
+  res.json({ success: true, transaction: tx });
 });
 
 export default router;

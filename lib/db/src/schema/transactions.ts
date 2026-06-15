@@ -11,6 +11,9 @@ export const transactionTypeEnum = pgEnum("transaction_type", [
   "bet_win",
   "bet_refund",
   "brokerage_fee",
+  "voucher_redeem",
+  "admin_credit",
+  "admin_debit",
 ]);
 
 export const transactionStatusEnum = pgEnum("transaction_status", [
