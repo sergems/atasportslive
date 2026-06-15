@@ -94,8 +94,15 @@ export default function GameDetail() {
     <div className="space-y-8">
       {/* Header */}
       <Card className="bg-slate-900 border-primary/20 overflow-hidden">
-        <div className="bg-gradient-to-r from-teal-900/40 to-amber-900/20 p-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="relative bg-gradient-to-r from-teal-900/40 to-amber-900/20 p-8">
+          {/* Centred ATA watermark */}
+          <img
+            src="/ata-logo.png"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 m-auto h-40 w-40 object-contain opacity-[0.06] select-none"
+          />
+          <div className="relative flex items-center justify-between mb-4">
             <Badge className={`${STATUS_COLORS[game.status]} border text-xs font-semibold uppercase tracking-wider`}>
               {game.status}
             </Badge>

@@ -90,20 +90,26 @@ function GameCard({ game, competitionName }: { game: Game; competitionName?: str
           {/* Players row */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-white leading-tight truncate">
-                {countryFlag(game.playerACountry)}{countryFlag(game.playerACountry) ? ' ' : ''}{game.playerA}
+              {countryFlag(game.playerACountry) && (
+                <div className="text-base leading-none mb-0.5">{countryFlag(game.playerACountry)}</div>
+              )}
+              <div className="text-sm font-bold text-white leading-snug break-words">
+                {game.playerA}
               </div>
               {game.playerACountry && (
-                <div className="text-[10px] text-slate-500 truncate">{game.playerACountry}</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">{game.playerACountry}</div>
               )}
             </div>
             <span className="text-[10px] font-black text-slate-600 flex-shrink-0 px-1">VS</span>
             <div className="flex-1 min-w-0 text-right">
-              <div className="text-sm font-bold text-white leading-tight truncate">
-                {game.playerB}{countryFlag(game.playerBCountry) ? ' ' : ''}{countryFlag(game.playerBCountry)}
+              {countryFlag(game.playerBCountry) && (
+                <div className="text-base leading-none mb-0.5">{countryFlag(game.playerBCountry)}</div>
+              )}
+              <div className="text-sm font-bold text-white leading-snug break-words">
+                {game.playerB}
               </div>
               {game.playerBCountry && (
-                <div className="text-[10px] text-slate-500 truncate">{game.playerBCountry}</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">{game.playerBCountry}</div>
               )}
             </div>
           </div>
