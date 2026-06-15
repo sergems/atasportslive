@@ -87,9 +87,9 @@ function GameCard({ game, competitionName }: { game: Game; competitionName?: str
             </div>
           </div>
 
-          {/* Players row */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex-1 min-w-0">
+          {/* Players row — both names lean toward the centre VS */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0 text-right">
               <div className="text-sm font-bold text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                 {countryFlag(game.playerACountry)}{countryFlag(game.playerACountry) ? ' ' : ''}{game.playerA}
               </div>
@@ -97,8 +97,8 @@ function GameCard({ game, competitionName }: { game: Game; competitionName?: str
                 <div className="text-[10px] text-slate-500 mt-0.5">{game.playerACountry}</div>
               )}
             </div>
-            <span className="text-[10px] font-black text-slate-600 flex-shrink-0">VS</span>
-            <div className="flex-1 min-w-0 text-right">
+            <span className="text-[10px] font-black text-slate-600 flex-shrink-0 px-1">VS</span>
+            <div className="flex-1 min-w-0 text-left">
               <div className="text-sm font-bold text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                 {game.playerB}{countryFlag(game.playerBCountry) ? ' ' : ''}{countryFlag(game.playerBCountry)}
               </div>
