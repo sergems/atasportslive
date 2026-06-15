@@ -9,6 +9,8 @@ const router = Router();
 
 const toGame = (g: typeof gamesTable.$inferSelect) => ({
   id: g.id,
+  type: g.type,
+  parentId: g.parentId,
   sport: g.sport,
   playerA: g.playerA,
   playerB: g.playerB,
@@ -53,13 +55,23 @@ router.get("/upcoming", async (req, res): Promise<void> => {
 });
 
 router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
-  const { sport, playerA, playerB, eventDate, eventTime, eventEndDate, eventEndTime, city, country } = req.body;
-  if (!sport || !playerA || !playerB || !eventDate || !eventTime) {
-    res.status(400).json({ error: "sport, playerA, playerB, eventDate, eventTime required" });
+  const { type = "single", parentId, sport, playerA, playerB, eventDate, eventTime, eventEndDate, eventEndTime, city, country } = req.body;
+  if (!sport || !playerA || !eventDate || !eventTime) {
+    res.status(400).json({ error: "sport, playerA (name/team), eventDate, eventTime required" });
+    return;
+  }
+  if (type === "single" && !playerB) {
+    res.status(400).json({ error: "playerB required for single matches" });
     return;
   }
   const [game] = await db.insert(gamesTable).values({
-    sport, playerA, playerB, eventDate, eventTime,
+    type,
+    parentId: parentId ? Number(parentId) : null,
+    sport,
+    playerA,
+    playerB: playerB || "",
+    eventDate,
+    eventTime,
     eventEndDate: eventEndDate || null,
     eventEndTime: eventEndTime || null,
     city: city || null,
@@ -79,8 +91,10 @@ router.get("/:id", async (req, res): Promise<void> => {
 
 router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
-  const { sport, playerA, playerB, eventDate, eventTime, eventEndDate, eventEndTime, city, country, status } = req.body;
+  const { type, parentId, sport, playerA, playerB, eventDate, eventTime, eventEndDate, eventEndTime, city, country, status } = req.body;
   const updates: Record<string, any> = {};
+  if (type !== undefined) updates.type = type;
+  if (parentId !== undefined) updates.parentId = parentId ? Number(parentId) : null;
   if (sport !== undefined) updates.sport = sport;
   if (playerA !== undefined) updates.playerA = playerA;
   if (playerB !== undefined) updates.playerB = playerB;

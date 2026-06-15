@@ -8,6 +8,8 @@ export const gameResultEnum = pgEnum("game_result", ["player_a_wins", "player_b_
 
 export const gamesTable = pgTable("games", {
   id: serial("id").primaryKey(),
+  type: text("type").notNull().default("single"),
+  parentId: integer("parent_id"),
   sport: gameSportEnum("sport").notNull(),
   playerA: text("player_a").notNull(),
   playerB: text("player_b").notNull(),
