@@ -5,10 +5,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, Trophy } from 'lucide-react';
 
-function countryFlag(code?: string | null): string {
-  if (!code || code.trim().length < 2) return '';
-  const c = code.trim().toUpperCase().slice(0, 2);
-  return String.fromCodePoint(c.charCodeAt(0) + 127397) + String.fromCodePoint(c.charCodeAt(1) + 127397);
+function FlagImg({ code, className = '' }: { code?: string | null; className?: string }) {
+  if (!code || code.trim().length < 2) return null;
+  const cc = code.trim().toLowerCase().slice(0, 2);
+  return (
+    <img
+      src={`https://flagcdn.com/20x15/${cc}.png`}
+      srcSet={`https://flagcdn.com/40x30/${cc}.png 2x`}
+      alt={cc.toUpperCase()}
+      className={`inline-block flex-shrink-0 rounded-[1px] ${className}`}
+      style={{ height: 12, width: 'auto' }}
+    />
+  );
 }
 
 interface Game {
@@ -87,24 +95,18 @@ function GameCard({ game, competitionName }: { game: Game; competitionName?: str
             </div>
           </div>
 
-          {/* Players row — both names lean toward the centre VS */}
+          {/* Players row — names lean toward centre VS, flags pinned outside truncation */}
           <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0 text-right">
-              <div className="text-sm font-bold text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                {countryFlag(game.playerACountry)}{countryFlag(game.playerACountry) ? ' ' : ''}{game.playerA}
-              </div>
-              {game.playerACountry && (
-                <div className="text-[10px] text-slate-500 mt-0.5">{game.playerACountry}</div>
-              )}
+            {/* Player A — name right-aligned, flag on the outer right edge */}
+            <div className="flex-1 flex items-center justify-end gap-1.5 min-w-0">
+              <div className="text-sm font-bold text-white leading-tight truncate text-right">{game.playerA}</div>
+              <FlagImg code={game.playerACountry} />
             </div>
-            <span className="text-[10px] font-black text-slate-600 flex-shrink-0 px-1">VS</span>
-            <div className="flex-1 min-w-0 text-left">
-              <div className="text-sm font-bold text-white leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                {game.playerB}{countryFlag(game.playerBCountry) ? ' ' : ''}{countryFlag(game.playerBCountry)}
-              </div>
-              {game.playerBCountry && (
-                <div className="text-[10px] text-slate-500 mt-0.5">{game.playerBCountry}</div>
-              )}
+            <span className="text-[10px] font-black text-slate-600 flex-shrink-0">VS</span>
+            {/* Player B — flag on outer left edge, name left-aligned */}
+            <div className="flex-1 flex items-center justify-start gap-1.5 min-w-0">
+              <FlagImg code={game.playerBCountry} />
+              <div className="text-sm font-bold text-white leading-tight truncate text-left">{game.playerB}</div>
             </div>
           </div>
 

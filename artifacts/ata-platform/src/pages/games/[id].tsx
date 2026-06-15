@@ -12,10 +12,17 @@ import { Trophy, Users, TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-function countryFlag(code?: string | null): string {
-  if (!code || code.trim().length < 2) return '';
-  const c = code.trim().toUpperCase().slice(0, 2);
-  return String.fromCodePoint(c.charCodeAt(0) + 127397) + String.fromCodePoint(c.charCodeAt(1) + 127397);
+function FlagImg({ code, className = '' }: { code?: string | null; className?: string }) {
+  if (!code || code.trim().length < 2) return null;
+  const cc = code.trim().toLowerCase().slice(0, 2);
+  return (
+    <img
+      src={`https://flagcdn.com/40x30/${cc}.png`}
+      srcSet={`https://flagcdn.com/80x60/${cc}.png 2x`}
+      alt={cc.toUpperCase()}
+      className={`inline-block flex-shrink-0 rounded-sm ${className}`}
+    />
+  );
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -112,9 +119,7 @@ export default function GameDetail() {
           </div>
           <div className="flex items-center justify-center gap-8 text-center">
             <div className="flex-1">
-              {(game as any).playerACountry && (
-                <div className="text-3xl mb-1">{countryFlag((game as any).playerACountry)}</div>
-              )}
+              <FlagImg code={(game as any).playerACountry} className="h-8 w-auto mb-2 mx-auto" />
               <div className="text-3xl font-extrabold text-white mb-1">{game.playerA}</div>
               {(game as any).playerACountry && (
                 <div className="text-xs text-slate-500 uppercase tracking-wider">{(game as any).playerACountry}</div>
@@ -125,9 +130,7 @@ export default function GameDetail() {
               <span className="text-slate-400 font-mono text-sm">VS</span>
             </div>
             <div className="flex-1">
-              {(game as any).playerBCountry && (
-                <div className="text-3xl mb-1">{countryFlag((game as any).playerBCountry)}</div>
-              )}
+              <FlagImg code={(game as any).playerBCountry} className="h-8 w-auto mb-2 mx-auto" />
               <div className="text-3xl font-extrabold text-white mb-1">{game.playerB}</div>
               {(game as any).playerBCountry && (
                 <div className="text-xs text-slate-500 uppercase tracking-wider">{(game as any).playerBCountry}</div>
