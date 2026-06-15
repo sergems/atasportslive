@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { useListGames } from '@workspace/api-client-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, Trophy } from 'lucide-react';
@@ -11,28 +9,6 @@ function countryFlag(code?: string | null): string {
   if (!code || code.trim().length < 2) return '';
   const c = code.trim().toUpperCase().slice(0, 2);
   return String.fromCodePoint(c.charCodeAt(0) + 127397) + String.fromCodePoint(c.charCodeAt(1) + 127397);
-}
-
-function statusBadge(status: string) {
-  if (status === 'live') {
-    return (
-      <span className="inline-flex items-center rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500/20 animate-pulse">
-        LIVE
-      </span>
-    );
-  }
-  if (status === 'upcoming') {
-    return (
-      <span className="inline-flex items-center rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400 ring-1 ring-inset ring-amber-500/20">
-        UPCOMING
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center rounded-md bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-400 ring-1 ring-inset ring-slate-500/20">
-      {status}
-    </span>
-  );
 }
 
 interface Game {
@@ -47,92 +23,112 @@ interface Game {
   eventTime?: string | null;
   totalBetPool?: number | null;
   openBetsCount?: number | null;
-  matchedBetsCount?: number | null;
   city?: string | null;
   country?: string | null;
   type?: string | null;
   parentId?: number | null;
 }
 
-interface GameCardProps {
-  game: Game;
-  competitionName?: string | null;
+function StatusPill({ status }: { status: string }) {
+  if (status === 'live')
+    return (
+      <span className="inline-flex items-center gap-1 rounded bg-red-500/10 border border-red-500/20 px-1.5 py-0.5 text-[10px] font-bold text-red-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />LIVE
+      </span>
+    );
+  if (status === 'upcoming')
+    return <span className="rounded bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">UPCOMING</span>;
+  return <span className="rounded bg-slate-700/40 border border-slate-700/60 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 capitalize">{status}</span>;
 }
 
-function GameCard({ game, competitionName }: GameCardProps) {
+function GameCard({ game, competitionName }: { game: Game; competitionName?: string | null }) {
+  const sportColor: Record<string, string> = {
+    pool: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
+    boxing: 'text-red-400 bg-red-500/10 border-red-500/20',
+    football: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    athletics: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+    basketball: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+  };
+  const sc = sportColor[game.sport] ?? 'text-slate-400 bg-slate-500/10 border-slate-500/20';
+
   return (
     <Link href={`/games/${game.id}`}>
-      <Card className="group overflow-hidden border-primary/20 bg-card hover:border-amber-500/50 transition-all duration-300 cursor-pointer h-full">
-        <CardContent className="p-0 flex flex-col h-full">
-          <div className="p-5 flex-1 border-b border-slate-800 flex flex-col">
-            {/* Competition label (top) */}
-            {competitionName && (
-              <div className="flex items-center gap-1 mb-3">
-                <Trophy className="h-3 w-3 text-purple-400 flex-shrink-0" />
-                <span className="text-[10px] font-medium text-purple-300 uppercase tracking-wider truncate">
-                  {competitionName}
-                </span>
-              </div>
-            )}
+      <div className="group relative overflow-hidden rounded-lg border border-slate-800 bg-slate-900/80 hover:border-amber-500/40 hover:bg-slate-900 transition-all duration-200 cursor-pointer">
+        {/* Faded ATA watermark */}
+        <img
+          src="/ata-logo.png"
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute right-1 bottom-1 h-14 w-14 object-contain opacity-[0.045] select-none"
+        />
 
-            {/* Sport + status + date */}
-            <div className="flex justify-between items-center mb-5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 capitalize">
-                {game.sport}
+        <div className="relative p-3 flex flex-col gap-2">
+          {/* Competition label */}
+          {competitionName && (
+            <div className="flex items-center gap-1">
+              <Trophy className="h-2.5 w-2.5 text-purple-400 flex-shrink-0" />
+              <span className="text-[9px] font-semibold text-purple-300 uppercase tracking-wider truncate">
+                {competitionName}
               </span>
-              <div className="flex items-center gap-2">
-                {statusBadge(game.status)}
-                <span className="text-xs font-mono text-slate-500">
-                  {new Date(game.eventDate).toLocaleDateString()} {game.eventTime}
-                </span>
+            </div>
+          )}
+
+          {/* Sport + status + date */}
+          <div className="flex items-center justify-between gap-1">
+            <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${sc}`}>
+              {game.sport}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <StatusPill status={game.status} />
+              <span className="text-[10px] font-mono text-slate-500 hidden sm:block">
+                {new Date(game.eventDate).toLocaleDateString()}
+                {game.eventTime ? ` ${game.eventTime}` : ''}
+              </span>
+            </div>
+          </div>
+
+          {/* Players row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-white leading-tight truncate">
+                {countryFlag(game.playerACountry)}{countryFlag(game.playerACountry) ? ' ' : ''}{game.playerA}
+              </div>
+              {game.playerACountry && (
+                <div className="text-[10px] text-slate-500 truncate">{game.playerACountry}</div>
+              )}
+            </div>
+            <span className="text-[10px] font-black text-slate-600 flex-shrink-0 px-1">VS</span>
+            <div className="flex-1 min-w-0 text-right">
+              <div className="text-sm font-bold text-white leading-tight truncate">
+                {game.playerB}{countryFlag(game.playerBCountry) ? ' ' : ''}{countryFlag(game.playerBCountry)}
+              </div>
+              {game.playerBCountry && (
+                <div className="text-[10px] text-slate-500 truncate">{game.playerBCountry}</div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer: pool + bets + location */}
+          <div className="flex items-center justify-between pt-1.5 border-t border-slate-800/80">
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-600">Pool</div>
+                <div className="text-xs font-mono font-bold text-amber-400">${(game.totalBetPool || 0).toFixed(2)}</div>
+              </div>
+              <div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-600">Open</div>
+                <div className="text-xs font-mono font-bold text-white">{game.openBetsCount || 0}</div>
               </div>
             </div>
-
-            {/* Players */}
-            <div className="flex justify-between items-center flex-1">
-              <div className="text-center flex-1">
-                <div className="text-lg text-slate-400 mb-1">
-                  {countryFlag(game.playerACountry)}
-                </div>
-                <div className="font-bold text-lg text-white leading-tight">{game.playerA}</div>
-                {game.playerACountry && (
-                  <div className="text-xs text-slate-500 mt-0.5">{game.playerACountry}</div>
-                )}
-              </div>
-              <div className="px-4 text-xs font-bold text-slate-600">VS</div>
-              <div className="text-center flex-1">
-                <div className="text-lg text-slate-400 mb-1">
-                  {countryFlag(game.playerBCountry)}
-                </div>
-                <div className="font-bold text-lg text-white leading-tight">{game.playerB}</div>
-                {game.playerBCountry && (
-                  <div className="text-xs text-slate-500 mt-0.5">{game.playerBCountry}</div>
-                )}
-              </div>
-            </div>
-
-            {/* City / country (bottom of content area) */}
             {(game.city || game.country) && (
-              <div className="flex items-center justify-center gap-1 mt-4 text-xs text-slate-500">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
-                <span>{[game.city, game.country].filter(Boolean).join(', ')}</span>
+              <div className="flex items-center gap-0.5 text-[10px] text-slate-500 truncate max-w-[45%]">
+                <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                <span className="truncate">{[game.city, game.country].filter(Boolean).join(', ')}</span>
               </div>
             )}
           </div>
-
-          {/* Bet stats footer */}
-          <div className="p-4 bg-slate-900/50 flex justify-between items-center">
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Pool Size</div>
-              <div className="font-mono font-bold text-amber-400">${(game.totalBetPool || 0).toFixed(2)}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Open Bets</div>
-              <div className="font-mono font-bold text-white">{game.openBetsCount || 0}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 }
@@ -141,9 +137,7 @@ export default function Games() {
   const [status, setStatus] = useState<string>('all');
   const [sport, setSport] = useState<string>('all');
 
-  useEffect(() => {
-    document.title = 'Games & Markets - ATA Platform';
-  }, []);
+  useEffect(() => { document.title = 'Games & Markets - ATA Platform'; }, []);
 
   const { data: gamesData, isLoading } = useListGames({
     status: status !== 'all' ? status : undefined,
@@ -153,30 +147,23 @@ export default function Games() {
 
   const allGames: Game[] = (gamesData?.games || []) as Game[];
 
-  // Build a map of competition id → competition name
   const competitionMap = new Map<number, string>();
   allGames.forEach((g) => {
-    if (g.type === 'competition') {
-      // Competition name is stored in playerA field
-      competitionMap.set(g.id, g.playerA);
-    }
+    if (g.type === 'competition') competitionMap.set(g.id, g.playerA);
   });
 
-  // Flatten: show every non-competition game individually.
-  // Children of competitions carry the competition name label.
-  // Competition nodes themselves are skipped (they're just containers).
   const flatGames = allGames.filter((g) => g.type !== 'competition');
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Betting Exchange</h1>
-          <p className="text-slate-400 mt-1">P2P markets for African sports</p>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Betting Exchange</h1>
+          <p className="text-slate-400 text-sm mt-0.5">P2P markets for African sports</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <Select value={sport} onValueChange={setSport}>
-            <SelectTrigger className="w-[140px] bg-slate-900 border-slate-800 text-white">
+            <SelectTrigger className="w-[120px] bg-slate-900 border-slate-800 text-white text-sm h-8">
               <SelectValue placeholder="Sport" />
             </SelectTrigger>
             <SelectContent className="bg-slate-900 border-slate-800 text-white">
@@ -188,9 +175,8 @@ export default function Games() {
               <SelectItem value="basketball">Basketball</SelectItem>
             </SelectContent>
           </Select>
-
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-[140px] bg-slate-900 border-slate-800 text-white">
+            <SelectTrigger className="w-[120px] bg-slate-900 border-slate-800 text-white text-sm h-8">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="bg-slate-900 border-slate-800 text-white">
@@ -203,24 +189,24 @@ export default function Games() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? (
-          Array(6).fill(0).map((_, i) => (
-            <Skeleton key={i} className="h-40 w-full rounded-xl bg-slate-800" />
-          ))
-        ) : flatGames.length ? (
-          flatGames.map((game) => (
-            <GameCard
-              key={game.id}
-              game={game}
-              competitionName={game.parentId ? competitionMap.get(game.parentId) : null}
-            />
-          ))
-        ) : (
-          <div className="col-span-full py-20 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-            No games found matching the criteria.
-          </div>
-        )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {isLoading
+          ? Array(8).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full rounded-lg bg-slate-800" />
+            ))
+          : flatGames.length
+          ? flatGames.map((game) => (
+              <GameCard
+                key={game.id}
+                game={game}
+                competitionName={game.parentId ? competitionMap.get(game.parentId) : null}
+              />
+            ))
+          : (
+            <div className="col-span-full py-16 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl text-sm">
+              No games found.
+            </div>
+          )}
       </div>
     </div>
   );
