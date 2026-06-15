@@ -36,32 +36,36 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-7xl mx-auto px-4 items-center">
-        <div className="mr-4 flex items-center">
-          <Link href="/" className="mr-8 flex items-center">
+        {/* Logo - left */}
+        <div className="flex items-center shrink-0">
+          <Link href="/" className="flex items-center">
             <img src={ataLogo} alt="ATA" className="h-12 w-12 object-contain" />
           </Link>
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            {navLinks.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`transition-colors hover:text-white ${location.startsWith(href) ? 'text-white' : 'text-slate-400'}`}
-              >
-                {label}
-              </Link>
-            ))}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className={`transition-colors hover:text-amber-400 ${location.startsWith('/admin') ? 'text-amber-400' : 'text-slate-400'}`}
-              >
-                Admin
-              </Link>
-            )}
-          </nav>
         </div>
 
-        <div className="ml-auto flex items-center space-x-2">
+        {/* Nav links - centered */}
+        <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 text-sm font-medium">
+          {navLinks.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`transition-colors hover:text-white ${location.startsWith(href) ? 'text-white' : 'text-slate-400'}`}
+            >
+              {label}
+            </Link>
+          ))}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={`transition-colors hover:text-amber-400 ${location.startsWith('/admin') ? 'text-amber-400' : 'text-slate-400'}`}
+            >
+              Admin
+            </Link>
+          )}
+        </nav>
+
+        {/* Auth actions - right */}
+        <div className="flex items-center space-x-2 shrink-0">
           {isAuthenticated ? (
             <>
               <Link href="/wallet">
