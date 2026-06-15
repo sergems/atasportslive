@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Plus, CheckCircle, XCircle, Pencil, ChevronDown, ChevronRight, Swords } from 'lucide-react';
+import { Trophy, Plus, CheckCircle, XCircle, Pencil, ChevronDown, ChevronRight, Swords, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { getListGamesQueryKey } from '@workspace/api-client-react';
+import { useAuthStore } from '@/lib/auth-store';
 
 const STATUS_COLORS: Record<string, string> = {
   upcoming: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -58,11 +59,14 @@ const EMPTY_COMPETITION: GameFormData = {
 function GameForm({
   form, setForm, onSave, onCancel, saving, title, accentClass,
   isChild = false, parentGame,
+  createStream, setCreateStream, streamPrice, setStreamPrice,
 }: {
   form: GameFormData; setForm: (f: GameFormData) => void;
   onSave: () => void; onCancel: () => void;
   saving: boolean; title: string; accentClass: string;
   isChild?: boolean; parentGame?: any;
+  createStream?: boolean; setCreateStream?: (v: boolean) => void;
+  streamPrice?: string; setStreamPrice?: (v: string) => void;
 }) {
   const isCompetition = form.type === 'competition';
 
@@ -167,6 +171,37 @@ function GameForm({
           <Label className="text-slate-300">Country</Label>
           <Input value={form.country} onChange={(e: any) => setForm({ ...form, country: e.target.value })} placeholder={parentGame?.country || 'e.g. Uganda'} className="bg-slate-800 border-slate-700 text-white" />
         </div>
+
+        {/* Stream toggle — only on top-level single-match create form */}
+        {!isChild && !isCompetition && setCreateStream && setStreamPrice && (
+          <div className="md:col-span-2 rounded-lg border border-teal-500/20 bg-teal-500/5 p-4 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <div
+                onClick={() => setCreateStream(!createStream)}
+                className={`relative w-10 h-5 rounded-full transition-colors ${createStream ? 'bg-teal-500' : 'bg-slate-700'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${createStream ? 'translate-x-5' : ''}`} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Radio className="h-4 w-4 text-teal-400" />
+                <span className="text-sm font-medium text-slate-200">Also create a stream for this game</span>
+              </div>
+            </label>
+            {createStream && (
+              <div className="space-y-1 pl-13">
+                <Label className="text-slate-400 text-xs">Access price (USD/day)</Label>
+                <Input
+                  type="number" step="0.01" value={streamPrice}
+                  onChange={(e: any) => setStreamPrice(e.target.value)}
+                  className="bg-slate-800 border-slate-700 text-white w-32 h-8 text-sm"
+                />
+                <p className="text-xs text-slate-500">
+                  A stream titled "<span className="text-slate-300">{form.playerA || 'Player A'} VS {form.playerB || 'Player B'}</span>" will be created automatically.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="md:col-span-2 flex gap-3">
           <Button onClick={onSave} disabled={saving} className="bg-amber-500 hover:bg-amber-400 text-slate-950">
@@ -368,6 +403,7 @@ export default function AdminGames() {
   useEffect(() => { document.title = 'Manage Games - Admin'; }, []);
 
   const qc = useQueryClient();
+  const token = useAuthStore((s) => s.token);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [settleId, setSettleId] = useState<number | null>(null);
@@ -378,6 +414,8 @@ export default function AdminGames() {
   const [childForm, setChildForm] = useState<GameFormData>({ ...EMPTY_SINGLE });
   const [savingChild, setSavingChild] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [createStream, setCreateStream] = useState(false);
+  const [streamPrice, setStreamPrice] = useState('1.50');
 
   const { data: gamesData, isLoading } = useListGames({ limit: 100 });
   const createGame = useCreateGame();
@@ -431,10 +469,32 @@ export default function AdminGames() {
           country: form.country || undefined,
         } as any,
       });
+
+      if (createStream && form.type === 'single') {
+        const startTime = `${form.eventDate}T${form.eventTime}`;
+        const endTime = form.eventEndDate ? `${form.eventEndDate}T${form.eventEndTime || '23:59'}` : undefined;
+        await fetch('/api/streams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            title: `${form.playerA} VS ${form.playerB}`,
+            sport: form.sport,
+            startTime,
+            endTime,
+            accessPrice: parseFloat(streamPrice) || 1.50,
+            city: form.city || undefined,
+            country: form.country || undefined,
+          }),
+        });
+      }
+
       invalidate();
-      toast.success(form.type === 'competition' ? 'Competition created — add individual matches below it' : 'Game created');
+      const streamNote = createStream && form.type === 'single' ? ' + stream created' : '';
+      toast.success(form.type === 'competition' ? 'Competition created — add individual matches below it' : `Game created${streamNote}`);
       setShowForm(false);
       setForm({ ...EMPTY_SINGLE });
+      setCreateStream(false);
+      setStreamPrice('1.50');
     } catch (e: any) { toast.error(e?.data?.error || 'Failed'); }
   };
 
@@ -555,8 +615,10 @@ export default function AdminGames() {
         <GameForm
           form={form} setForm={setForm}
           onSave={handleCreate}
-          onCancel={() => { setShowForm(false); setForm({ ...EMPTY_SINGLE }); }}
+          onCancel={() => { setShowForm(false); setForm({ ...EMPTY_SINGLE }); setCreateStream(false); setStreamPrice('1.50'); }}
           saving={createGame.isPending} title="Create Game / Competition" accentClass="border-amber-500/30"
+          createStream={createStream} setCreateStream={setCreateStream}
+          streamPrice={streamPrice} setStreamPrice={setStreamPrice}
         />
       )}
 
