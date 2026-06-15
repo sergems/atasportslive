@@ -30,7 +30,7 @@ export default function Login() {
   useEffect(() => {
     document.title = 'Login - ATA Platform';
     if (isAuthenticated) {
-      setLocation(user?.role === 'admin' ? '/admin' : '/dashboard');
+      setLocation(user?.role === 'admin' ? '/admin' : '/streams');
     }
   }, [isAuthenticated, user, setLocation]);
 
@@ -39,7 +39,7 @@ export default function Login() {
       onSuccess: (res) => {
         login(res.accessToken, res.user);
         toast.success('Logged in successfully');
-        setLocation(res.user.role === 'admin' ? '/admin' : '/dashboard');
+        setLocation(res.user.role === 'admin' ? '/admin' : '/streams');
       },
       onError: (err: any) => {
         toast.error('Login failed', { description: err?.message || 'Invalid credentials' });
