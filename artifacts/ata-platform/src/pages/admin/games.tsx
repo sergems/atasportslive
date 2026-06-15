@@ -217,6 +217,153 @@ function SettlePanel({ game, onDone }: { game: any; onDone: () => void }) {
   );
 }
 
+interface GameCardCtx {
+  childrenByParent: Record<number, any[]>;
+  expanded: Set<number>;
+  toggleExpand: (id: number) => void;
+  editId: number | null;
+  setEditId: (id: number | null) => void;
+  editForm: GameFormData;
+  setEditForm: (f: GameFormData) => void;
+  handleEdit: () => void;
+  savingEdit: boolean;
+  settleId: number | null;
+  setSettleId: (id: number | null) => void;
+  addMatchParentId: number | null;
+  setAddMatchParentId: (id: number | null) => void;
+  childForm: GameFormData;
+  setChildForm: (f: GameFormData) => void;
+  handleAddMatch: (parentGame: any) => Promise<void>;
+  savingChild: boolean;
+  handleCancel: (id: number) => Promise<void>;
+  startEdit: (game: any) => void;
+  formatDateRange: (game: any) => string;
+}
+
+function GameCard({ game, isChild = false, ctx }: { game: any; isChild?: boolean; ctx: GameCardCtx }) {
+  const {
+    childrenByParent, expanded, toggleExpand,
+    editId, setEditId, editForm, setEditForm, handleEdit, savingEdit,
+    settleId, setSettleId,
+    addMatchParentId, setAddMatchParentId, childForm, setChildForm, handleAddMatch, savingChild,
+    handleCancel, startEdit, formatDateRange,
+  } = ctx;
+
+  const isCompetition = game.type === 'competition';
+  const children = childrenByParent[game.id] || [];
+  const isExpanded = expanded.has(game.id);
+
+  return (
+    <div>
+      <Card className={`bg-slate-900 border-primary/20 ${editId === game.id ? 'border-amber-500/40' : ''} ${isChild ? 'bg-slate-950/60' : ''}`}>
+        <CardContent className="py-3 px-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {isCompetition && (
+              <button onClick={() => toggleExpand(game.id)} className="text-slate-500 hover:text-slate-300 flex-shrink-0">
+                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
+            )}
+            {isChild && <Swords className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                {isCompetition && (
+                  <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs">Competition</Badge>
+                )}
+                <Badge className={`${STATUS_COLORS[game.status]} border text-xs`}>{game.status}</Badge>
+                <span className="text-xs text-slate-500 capitalize">{game.sport}</span>
+                {!isCompetition && (
+                  <span className="text-xs text-slate-600">{game.openBetsCount} open · {game.matchedBetsCount} matched</span>
+                )}
+              </div>
+              <p className="text-white font-semibold text-sm">
+                {isCompetition
+                  ? game.playerA
+                  : <>{game.playerA} <span className="text-slate-500 font-normal text-xs">vs</span> {game.playerB}</>}
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {formatDateRange(game)}
+                {(game.city || game.country) ? ` · ${[game.city, game.country].filter(Boolean).join(', ')}` : ''}
+                {isCompetition && children.length > 0 ? ` · ${children.length} match${children.length !== 1 ? 'es' : ''}` : ''}
+                {!isCompetition ? ` · Pool: $${(game.totalBetPool || 0).toFixed(2)}` : ''}
+              </p>
+              {game.result && <p className="text-xs text-teal-400 mt-0.5">Result: {game.result.replace(/_/g, ' ')}</p>}
+            </div>
+          </div>
+
+          <div className="flex gap-1.5 flex-shrink-0 items-center flex-wrap justify-end">
+            <Button
+              size="sm" variant="ghost"
+              onClick={() => editId === game.id ? setEditId(null) : startEdit(game)}
+              className="h-7 w-7 p-0 text-slate-400 hover:text-amber-400"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+
+            {['upcoming', 'live'].includes(game.status) && (
+              settleId === game.id
+                ? <SettlePanel game={game} onDone={() => setSettleId(null)} />
+                : (
+                  <Button size="sm" onClick={() => setSettleId(game.id)} className="bg-teal-500/20 text-teal-400 border border-teal-500/30 h-7 text-xs">
+                    <CheckCircle className="h-3 w-3 mr-1" /> Settle
+                  </Button>
+                )
+            )}
+
+            {['upcoming', 'live'].includes(game.status) && (
+              <Button size="sm" variant="destructive" onClick={() => handleCancel(game.id)} className="h-7 text-xs">
+                <XCircle className="h-3 w-3 mr-1" /> Cancel
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit form */}
+      {editId === game.id && (
+        <div className="mt-2">
+          <GameForm
+            form={editForm} setForm={setEditForm}
+            onSave={handleEdit} onCancel={() => setEditId(null)}
+            saving={savingEdit} title="Edit" accentClass="border-amber-500/30"
+            isChild={isChild}
+          />
+        </div>
+      )}
+
+      {/* Competition children */}
+      {isCompetition && isExpanded && (
+        <div className="ml-6 mt-2 space-y-2 border-l-2 border-slate-800 pl-4">
+          {children.map((child) => (
+            <GameCard key={child.id} game={child} isChild ctx={ctx} />
+          ))}
+
+          {addMatchParentId === game.id ? (
+            <div className="mt-2">
+              <GameForm
+                form={childForm} setForm={setChildForm}
+                onSave={() => handleAddMatch(game)}
+                onCancel={() => { setAddMatchParentId(null); setChildForm({ ...EMPTY_SINGLE }); }}
+                saving={savingChild} title={`Add Match to "${game.playerA}"`}
+                accentClass="border-teal-500/30" isChild parentGame={game}
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setAddMatchParentId(game.id);
+                setChildForm({ ...EMPTY_SINGLE, sport: game.sport, city: game.city || '', country: game.country || '' });
+              }}
+              className="w-full py-2 px-4 rounded-lg border border-dashed border-slate-700 text-slate-500 hover:text-teal-400 hover:border-teal-500/40 text-sm transition-colors flex items-center justify-center gap-2"
+            >
+              <Plus className="h-4 w-4" /> Add Match
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminGames() {
   useEffect(() => { document.title = 'Manage Games - Admin'; }, []);
 
@@ -382,123 +529,12 @@ export default function AdminGames() {
     return s;
   };
 
-  const GameCard = ({ game, isChild = false }: { game: any; isChild?: boolean }) => {
-    const isCompetition = game.type === 'competition';
-    const children = childrenByParent[game.id] || [];
-    const isExpanded = expanded.has(game.id);
-
-    return (
-      <div>
-        <Card className={`bg-slate-900 border-primary/20 ${editId === game.id ? 'border-amber-500/40' : ''} ${isChild ? 'bg-slate-950/60' : ''}`}>
-          <CardContent className="py-3 px-5 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              {isCompetition && (
-                <button
-                  onClick={() => toggleExpand(game.id)}
-                  className="text-slate-500 hover:text-slate-300 flex-shrink-0"
-                >
-                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </button>
-              )}
-              {isChild && <Swords className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  {isCompetition && (
-                    <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs">Competition</Badge>
-                  )}
-                  <Badge className={`${STATUS_COLORS[game.status]} border text-xs`}>{game.status}</Badge>
-                  <span className="text-xs text-slate-500 capitalize">{game.sport}</span>
-                  {!isCompetition && (
-                    <span className="text-xs text-slate-600">{game.openBetsCount} open · {game.matchedBetsCount} matched</span>
-                  )}
-                </div>
-                <p className="text-white font-semibold text-sm">
-                  {isCompetition
-                    ? game.playerA
-                    : <>{game.playerA} <span className="text-slate-500 font-normal text-xs">vs</span> {game.playerB}</>}
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {formatDateRange(game)}
-                  {(game.city || game.country) ? ` · ${[game.city, game.country].filter(Boolean).join(', ')}` : ''}
-                  {isCompetition && children.length > 0 ? ` · ${children.length} match${children.length !== 1 ? 'es' : ''}` : ''}
-                  {!isCompetition ? ` · Pool: $${(game.totalBetPool || 0).toFixed(2)}` : ''}
-                </p>
-                {game.result && <p className="text-xs text-teal-400 mt-0.5">Result: {game.result.replace(/_/g, ' ')}</p>}
-              </div>
-            </div>
-
-            <div className="flex gap-1.5 flex-shrink-0 items-center flex-wrap justify-end">
-              <Button
-                size="sm" variant="ghost"
-                onClick={() => editId === game.id ? setEditId(null) : startEdit(game)}
-                className="h-7 w-7 p-0 text-slate-400 hover:text-amber-400"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-
-              {['upcoming', 'live'].includes(game.status) && (
-                settleId === game.id
-                  ? <SettlePanel game={game} onDone={() => setSettleId(null)} />
-                  : (
-                    <Button size="sm" onClick={() => setSettleId(game.id)} className="bg-teal-500/20 text-teal-400 border border-teal-500/30 h-7 text-xs">
-                      <CheckCircle className="h-3 w-3 mr-1" /> Settle
-                    </Button>
-                  )
-              )}
-
-              {['upcoming', 'live'].includes(game.status) && (
-                <Button size="sm" variant="destructive" onClick={() => handleCancel(game.id)} className="h-7 text-xs">
-                  <XCircle className="h-3 w-3 mr-1" /> Cancel
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Edit form */}
-        {editId === game.id && (
-          <div className="mt-2 ml-0">
-            <GameForm
-              form={editForm} setForm={setEditForm}
-              onSave={handleEdit} onCancel={() => setEditId(null)}
-              saving={savingEdit} title="Edit" accentClass="border-amber-500/30"
-              isChild={isChild}
-            />
-          </div>
-        )}
-
-        {/* Competition children */}
-        {isCompetition && isExpanded && (
-          <div className="ml-6 mt-2 space-y-2 border-l-2 border-slate-800 pl-4">
-            {children.map((child) => (
-              <GameCard key={child.id} game={child} isChild />
-            ))}
-
-            {/* Add Match button / form */}
-            {addMatchParentId === game.id ? (
-              <div className="mt-2">
-                <GameForm
-                  form={childForm} setForm={setChildForm}
-                  onSave={() => handleAddMatch(game)} onCancel={() => { setAddMatchParentId(null); setChildForm({ ...EMPTY_SINGLE }); }}
-                  saving={savingChild} title={`Add Match to "${game.playerA}"`}
-                  accentClass="border-teal-500/30" isChild parentGame={game}
-                />
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setAddMatchParentId(game.id);
-                  setChildForm({ ...EMPTY_SINGLE, sport: game.sport, city: game.city || '', country: game.country || '' });
-                }}
-                className="w-full py-2 px-4 rounded-lg border border-dashed border-slate-700 text-slate-500 hover:text-teal-400 hover:border-teal-500/40 text-sm transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus className="h-4 w-4" /> Add Match
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    );
+  const ctx: GameCardCtx = {
+    childrenByParent, expanded, toggleExpand,
+    editId, setEditId, editForm, setEditForm, handleEdit, savingEdit,
+    settleId, setSettleId,
+    addMatchParentId, setAddMatchParentId, childForm, setChildForm, handleAddMatch, savingChild,
+    handleCancel, startEdit, formatDateRange,
   };
 
   return (
@@ -530,7 +566,7 @@ export default function AdminGames() {
         </div>
       ) : (
         <div className="space-y-3">
-          {topLevel.map((game) => <GameCard key={game.id} game={game} />)}
+          {topLevel.map((game) => <GameCard key={game.id} game={game} ctx={ctx} />)}
           {topLevel.length === 0 && (
             <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
               No games yet. Create a single match or a competition above.

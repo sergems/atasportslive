@@ -1,42 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useGetWallet, useListTransactions } from '@workspace/api-client-react';
+import { useGetWallet } from '@workspace/api-client-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wallet as WalletIcon, ArrowDownLeft, ArrowUpRight, History, Ticket } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
-import { getGetWalletQueryKey, getListTransactionsQueryKey } from '@workspace/api-client-react';
+import { getGetWalletQueryKey } from '@workspace/api-client-react';
 import { useAuthStore } from '@/lib/auth-store';
-
-const TX_COLORS: Record<string, string> = {
-  deposit: 'text-teal-400',
-  withdrawal: 'text-red-400',
-  bet_stake: 'text-amber-400',
-  bet_win: 'text-teal-400',
-  bet_refund: 'text-blue-400',
-  brokerage_fee: 'text-slate-400',
-  stream_access: 'text-purple-400',
-  voucher_redeem: 'text-teal-400',
-  admin_credit: 'text-teal-400',
-  admin_debit: 'text-red-400',
-};
-
-const TX_SIGN: Record<string, string> = {
-  deposit: '+', withdrawal: '-', bet_stake: '-', bet_win: '+',
-  bet_refund: '+', stream_access: '-', brokerage_fee: '-',
-  voucher_redeem: '+', admin_credit: '+', admin_debit: '-',
-};
-
-const TX_LABELS: Record<string, string> = {
-  deposit: 'Deposit', withdrawal: 'Withdrawal', bet_stake: 'Bet Placed',
-  bet_win: 'Bet Won', bet_refund: 'Bet Refund', stream_access: 'Stream Access',
-  brokerage_fee: 'Brokerage Fee', voucher_redeem: 'Voucher Redeemed',
-  admin_credit: 'Admin Credit', admin_debit: 'Admin Debit',
-};
 
 function authHeaders() {
   const token = useAuthStore.getState().token;
@@ -78,7 +51,6 @@ export default function Wallet() {
 
   const queryClient = useQueryClient();
   const { data: wallet, isLoading: loadingWallet } = useGetWallet();
-  const { data: txData, isLoading: loadingTx } = useListTransactions({ limit: 20 });
 
   const [voucherCode, setVoucherCode] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -87,7 +59,6 @@ export default function Wallet() {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
-    queryClient.invalidateQueries({ queryKey: getListTransactionsQueryKey() });
   };
 
   const redeemMutation = useMutation({
@@ -231,42 +202,12 @@ export default function Wallet() {
         </Card>
       </div>
 
-      {/* Transaction History — full width */}
-      <Card className="bg-slate-900 border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <History className="h-5 w-5" /> Transaction History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingTx ? (
-            <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 bg-slate-800" />)}</div>
-          ) : !txData?.transactions?.length ? (
-            <p className="text-slate-500 text-sm text-center py-8">No transactions yet.</p>
-          ) : (
-            <div className="divide-y divide-slate-800">
-              {txData.transactions.map((tx: any) => (
-                <div key={tx.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <div className="text-sm text-white">{TX_LABELS[tx.type] || tx.type.replace(/_/g, ' ')}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      {new Date(tx.createdAt).toLocaleDateString('en-UG', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-mono font-semibold text-sm ${TX_COLORS[tx.type] || 'text-white'}`}>
-                      {TX_SIGN[tx.type] || ''}${tx.amount.toFixed(2)}
-                    </div>
-                    <Badge variant="outline" className={`text-[10px] border-slate-700 mt-0.5 ${tx.status === 'completed' ? 'text-teal-400' : tx.status === 'pending' ? 'text-amber-400' : 'text-red-400'}`}>
-                      {tx.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="rounded-lg bg-slate-800/50 border border-slate-700 px-5 py-4 flex items-center justify-between">
+        <span className="text-sm text-slate-400">View your full deposit, withdrawal, and betting transaction history.</span>
+        <a href="/transactions" className="text-sm font-semibold text-teal-400 hover:text-teal-300 transition-colors">
+          View Transactions →
+        </a>
+      </div>
     </div>
   );
 }

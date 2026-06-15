@@ -16,6 +16,7 @@ import StreamDetail from "@/pages/streams/[id]";
 import Games from "@/pages/games/index";
 import GameDetail from "@/pages/games/[id]";
 import Wallet from "@/pages/wallet";
+import Transactions from "@/pages/transactions";
 import Bets from "@/pages/bets";
 import Notifications from "@/pages/notifications";
 import AdminDashboard from "@/pages/admin/index";
@@ -70,6 +71,9 @@ function Router() {
         </Route>
         <Route path="/wallet">
           {() => <ProtectedRoute component={Wallet} />}
+        </Route>
+        <Route path="/transactions">
+          {() => <ProtectedRoute component={Transactions} />}
         </Route>
         <Route path="/bets">
           {() => <ProtectedRoute component={Bets} />}

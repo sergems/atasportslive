@@ -21,7 +21,7 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
   const items = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/bets', label: 'My Bets', icon: Trophy },
-    { href: '/wallet', label: 'Transactions', icon: History },
+    { href: '/transactions', label: 'Transactions', icon: History },
   ];
 
   return (
