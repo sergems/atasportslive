@@ -45,110 +45,163 @@ function useHeroSlides() {
   });
 }
 
+const SLIDE_HEIGHT = 520;
+const SLIDE_DURATION = 6000;
+
+const sliderStyles = `
+  @keyframes kenBurns {
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(6%); opacity: 0; }
+    to   { transform: translateX(0);  opacity: 1; }
+  }
+  @keyframes slideInLeft {
+    from { transform: translateX(-6%); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+  }
+  @keyframes slideOutLeft {
+    from { transform: translateX(0);   opacity: 1; }
+    to   { transform: translateX(-6%); opacity: 0; }
+  }
+  @keyframes slideOutRight {
+    from { transform: translateX(0);  opacity: 1; }
+    to   { transform: translateX(6%); opacity: 0; }
+  }
+  @keyframes contentFadeUp {
+    from { transform: translateY(14px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+`;
+
 function HeroSlider({ slides }: { slides: Slide[] }) {
   const [current, setCurrent] = useState(0);
-  const [animating, setAnimating] = useState(false);
+  const [leaving, setLeaving] = useState<number | null>(null);
+  const [transitioning, setTransitioning] = useState(false);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
 
   const goTo = useCallback((index: number, dir: 'next' | 'prev' = 'next') => {
-    if (animating) return;
+    if (transitioning || index === current) return;
     setDirection(dir);
-    setAnimating(true);
+    setLeaving(current);
+    setTransitioning(true);
+    setCurrent(index);
     setTimeout(() => {
-      setCurrent(index);
-      setAnimating(false);
-    }, 400);
-  }, [animating]);
+      setLeaving(null);
+      setTransitioning(false);
+    }, 750);
+  }, [transitioning, current]);
 
   const next = useCallback(() => {
     goTo((current + 1) % slides.length, 'next');
   }, [current, slides.length, goTo]);
 
-  const prev = useCallback(() => {
+  const prevSlide = useCallback(() => {
     goTo((current - 1 + slides.length) % slides.length, 'prev');
   }, [current, slides.length, goTo]);
 
   useEffect(() => {
     if (slides.length <= 1) return;
-    const t = setInterval(next, 5000);
+    const t = setInterval(next, SLIDE_DURATION);
     return () => clearInterval(t);
   }, [next, slides.length]);
 
   const slide = slides[current];
+  const enterAnim = direction === 'next' ? 'slideInRight' : 'slideInLeft';
+  const exitAnim  = direction === 'next' ? 'slideOutLeft' : 'slideOutRight';
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-primary/20" style={{ minHeight: 420 }}>
-      {slides.map((s, i) => (
-        <div
-          key={s.id}
-          className="absolute inset-0 transition-all duration-700"
-          style={{
-            opacity: i === current ? 1 : 0,
-            transform: i === current
-              ? 'scale(1) translateX(0)'
-              : animating && direction === 'next'
-                ? (i === (current - 1 + slides.length) % slides.length ? 'scale(1.04) translateX(-3%)' : 'scale(0.98) translateX(3%)')
-                : 'scale(0.98)',
-            zIndex: i === current ? 1 : 0,
-            pointerEvents: i === current ? 'auto' : 'none',
-          }}
-        >
-          {s.imageUrl ? (
-            <img
-              src={s.imageUrl}
-              alt={s.title}
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ opacity: 0.96 }}
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-primary/50 to-slate-900" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/10 via-transparent to-transparent" />
-        </div>
-      ))}
+    <section
+      className="relative overflow-hidden rounded-3xl border border-primary/20"
+      style={{ height: SLIDE_HEIGHT }}
+    >
+      <style>{sliderStyles}</style>
+
+      {slides.map((s, i) => {
+        const isActive = i === current;
+        const isLeaving = i === leaving;
+        if (!isActive && !isLeaving) return null;
+        return (
+          <div
+            key={s.id}
+            className="absolute inset-0"
+            style={{
+              zIndex: isActive ? 2 : 1,
+              animation: isActive && transitioning
+                ? `${enterAnim} 0.75s cubic-bezier(0.4,0,0.2,1) forwards`
+                : isLeaving
+                  ? `${exitAnim} 0.75s cubic-bezier(0.4,0,0.2,1) forwards`
+                  : undefined,
+            }}
+          >
+            {s.imageUrl ? (
+              <img
+                key={isActive ? 'active' : 'leaving'}
+                src={s.imageUrl}
+                alt={s.title}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{
+                  opacity: 0.96,
+                  transformOrigin: 'center center',
+                  animation: isActive
+                    ? `kenBurns ${SLIDE_DURATION}ms ease-in-out forwards`
+                    : undefined,
+                }}
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-primary/50 to-slate-900" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/10 via-transparent to-transparent" />
+          </div>
+        );
+      })}
 
       <div
-        className="relative z-10 px-6 py-24 sm:px-12 sm:py-32 lg:px-20 flex flex-col items-center text-center transition-all duration-500"
-        style={{
-          opacity: animating ? 0 : 1,
-          transform: animating ? `translateY(${direction === 'next' ? '12px' : '-12px'})` : 'translateY(0)',
-        }}
+        className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 sm:px-12 lg:px-20"
+        style={{ zIndex: 10 }}
       >
-        <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl leading-tight drop-shadow-lg">
-          {slide.title.split(' ').map((word, wi) => (
-            wi % 3 === 2
-              ? <span key={wi} className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-amber-500"> {word}</span>
-              : <span key={wi}> {word}</span>
-          ))}
-        </h1>
+        <div
+          key={current}
+          style={{ animation: 'contentFadeUp 0.6s cubic-bezier(0.4,0,0.2,1) forwards' }}
+          className="flex flex-col items-center"
+        >
+          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl leading-tight drop-shadow-lg">
+            {slide.title.split(' ').map((word, wi) => (
+              wi % 3 === 2
+                ? <span key={wi} className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-amber-500"> {word}</span>
+                : <span key={wi}> {word}</span>
+            ))}
+          </h1>
 
-        {slide.subtitle && (
-          <p className="mt-6 max-w-2xl text-lg text-slate-300 sm:text-xl drop-shadow">
-            {slide.subtitle}
-          </p>
-        )}
+          {slide.subtitle && (
+            <p className="mt-6 max-w-2xl text-lg text-slate-300 sm:text-xl drop-shadow">
+              {slide.subtitle}
+            </p>
+          )}
 
-        {slide.buttonText && slide.buttonUrl && (
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Link href={slide.buttonUrl}>
-              <Button size="lg" className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 shadow-lg shadow-amber-500/20 transition-all hover:scale-105">
-                {slide.buttonText}
-              </Button>
-            </Link>
-            <Link href="/streams">
-              <Button size="lg" variant="outline" className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10 transition-all hover:scale-105">
-                <Play className="mr-2 h-4 w-4" /> Live Streams
-              </Button>
-            </Link>
-          </div>
-        )}
+          {slide.buttonText && slide.buttonUrl && (
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <Link href={slide.buttonUrl}>
+                <Button size="lg" className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 shadow-lg shadow-amber-500/20 transition-all hover:scale-105">
+                  {slide.buttonText}
+                </Button>
+              </Link>
+              <Link href="/streams">
+                <Button size="lg" variant="outline" className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10 transition-all hover:scale-105">
+                  <Play className="mr-2 h-4 w-4" /> Live Streams
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {slides.length > 1 && (
-        <>
+        <div>
           <button
-            onClick={prev}
+            onClick={prevSlide}
             className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 border border-white/10 backdrop-blur flex items-center justify-center text-white hover:bg-black/70 transition-all hover:scale-110"
             aria-label="Previous slide"
           >
@@ -161,7 +214,6 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
             {slides.map((_, i) => (
               <button
@@ -177,11 +229,10 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
               />
             ))}
           </div>
-
           <div className="absolute top-5 right-5 z-20 text-xs font-mono text-white/40">
             {current + 1} / {slides.length}
           </div>
-        </>
+        </div>
       )}
     </section>
   );
