@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict wq7w17hAY7HaGv1NBwrLRdywcK2r8jpz5zPHlCkByh7zeGBzxYZUK8jgIMaEfi3
+\restrict 2HQPcdV7gXQJgQI1EiB64cl4vsy464Sn0atQncbxtOcXuIA5yeHQliG2NlHON5Y
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1038,7 +1038,7 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 
 COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at) FROM stdin;
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NjQyODgsImV4cCI6MTc4NDE1NjI4OH0.7qRVT7inZXh3364gI22wPFlGueHKD3KxNeeKAvUjcbg	2026-06-15 16:31:06.605107+00	2026-06-15 22:58:08.086+00
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyNDE3NDEyLCJleHAiOjE3ODUwMDk0MTJ9.q8ubtpB5jCv8z1HNyvfErLIzXXKx06oeo3hx74EV-Js	2026-06-15 16:31:06.226579+00	2026-06-25 19:56:52.321+00
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyNDIxNTcxLCJleHAiOjE3ODUwMTM1NzF9.q7u7zYXPZoiLbeYKZml5GVWtjzLRya_GGOulLvE_Xd8	2026-06-15 16:31:06.226579+00	2026-06-25 21:06:11.468+00
 \.
 
 
@@ -1394,5 +1394,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict wq7w17hAY7HaGv1NBwrLRdywcK2r8jpz5zPHlCkByh7zeGBzxYZUK8jgIMaEfi3
+\unrestrict 2HQPcdV7gXQJgQI1EiB64cl4vsy464Sn0atQncbxtOcXuIA5yeHQliG2NlHON5Y
 

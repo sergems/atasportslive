@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, Users, Wallet } from 'lucide-react';
+import { Lock, Radio, Users, Wallet, ArrowUpCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
