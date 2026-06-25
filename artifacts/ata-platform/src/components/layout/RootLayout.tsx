@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
-import { MapPin, Phone, Mail, Home, Radio, CalendarClock, Film, Swords, Wallet, User } from 'lucide-react';
+import { MapPin, Phone, Mail, Home, Radio, CalendarClock, Film, Swords, Wallet } from 'lucide-react';
 import { FaFacebook, FaYoutube, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth';
 
 function MobileBottomNav() {
   const [location] = useLocation();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const tabs = [
     { href: '/',          label: 'Home',     icon: Home },
@@ -21,10 +21,11 @@ function MobileBottomNav() {
       ? [
           { href: '/games',  label: 'Games',  icon: Swords },
           { href: '/wallet', label: 'Wallet', icon: Wallet },
-          { href: '/dashboard', label: 'Me',  icon: User },
         ]
       : []),
   ];
+
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
@@ -32,7 +33,7 @@ function MobileBottomNav() {
         {tabs.map(({ href, label, icon: Icon, pulse }) => {
           const active = href === '/' ? location === '/' : location.startsWith(href);
           return (
-            <Link key={href} href={href}>
+            <Link key={href} href={href} onClick={scrollTop}>
               <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-colors ${active ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
                 <div className="relative">
                   <Icon className="h-5 w-5" />
