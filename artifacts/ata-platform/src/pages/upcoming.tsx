@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarClock, Clock, MapPin, Users, ChevronRight } from 'lucide-react';
+import { CalendarClock, MapPin, ChevronRight, Tv, Swords } from 'lucide-react';
 
 interface UpcomingStream {
   id: number;
@@ -15,7 +15,6 @@ interface UpcomingStream {
   accessPrice: number;
   city: string | null;
   country: string | null;
-  viewerCount: number | null;
 }
 
 interface UpcomingGame {
@@ -43,22 +42,22 @@ interface UnifiedEvent {
   id: number;
 }
 
-const sportColor: Record<string, string> = {
-  pool: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
-  boxing: 'text-red-400 bg-red-500/10 border-red-500/20',
-  football: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-  athletics: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
-  basketball: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+const sportColor: Record<string, { pill: string; dot: string }> = {
+  pool:       { pill: 'text-teal-400 bg-teal-500/10 border-teal-500/30',       dot: 'bg-teal-400' },
+  boxing:     { pill: 'text-red-400 bg-red-500/10 border-red-500/30',          dot: 'bg-red-400' },
+  football:   { pill: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', dot: 'bg-emerald-400' },
+  athletics:  { pill: 'text-orange-400 bg-orange-500/10 border-orange-500/30', dot: 'bg-orange-400' },
+  basketball: { pill: 'text-amber-400 bg-amber-500/10 border-amber-500/30',    dot: 'bg-amber-400' },
 };
 
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
+function formatCountdown(seconds: number): string {
+  if (seconds <= 0) return 'Now';
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 }
 
 function useUpcomingEvents() {
@@ -67,7 +66,6 @@ function useUpcomingEvents() {
     queryFn: () => fetch('/api/streams/upcoming').then((r) => r.json()),
     refetchInterval: 60000,
   });
-
   const games = useQuery<UpcomingGame[]>({
     queryKey: ['games', 'upcoming'],
     queryFn: () => fetch('/api/games/upcoming').then((r) => r.json()),
@@ -75,7 +73,6 @@ function useUpcomingEvents() {
   });
 
   const events: UnifiedEvent[] = [];
-
   (streams.data || []).forEach((s) => {
     events.push({
       key: `stream-${s.id}`,
@@ -90,13 +87,11 @@ function useUpcomingEvents() {
       id: s.id,
     });
   });
-
   (games.data || []).forEach((g) => {
-    const dt = new Date(`${g.eventDate}T${g.eventTime}`);
     events.push({
       key: `game-${g.id}`,
       type: 'game',
-      date: dt,
+      date: new Date(`${g.eventDate}T${g.eventTime}`),
       sport: g.sport,
       title: `${g.playerA} vs ${g.playerB}`,
       description: `${g.sport.charAt(0).toUpperCase() + g.sport.slice(1)} match`,
@@ -105,13 +100,8 @@ function useUpcomingEvents() {
       id: g.id,
     });
   });
-
   events.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  return {
-    events,
-    isLoading: streams.isLoading || games.isLoading,
-  };
+  return { events, isLoading: streams.isLoading || games.isLoading };
 }
 
 function groupByDate(events: UnifiedEvent[]): [string, UnifiedEvent[]][] {
@@ -124,92 +114,254 @@ function groupByDate(events: UnifiedEvent[]): [string, UnifiedEvent[]][] {
   return Array.from(map.entries());
 }
 
+const AD_SLOTS_LEFT = [
+  {
+    id: 'left-1',
+    label: 'SPONSOR',
+    bg: 'from-teal-900/80 via-slate-900 to-slate-950',
+    accent: 'border-teal-500/20',
+    badge: 'bg-teal-500/20 text-teal-300',
+    tagline: 'Your brand here',
+    sub: 'Reach thousands of sports fans across Uganda and Africa.',
+    cta: 'Advertise with us',
+  },
+  {
+    id: 'left-2',
+    label: 'SPONSOR',
+    bg: 'from-amber-900/60 via-slate-900 to-slate-950',
+    accent: 'border-amber-500/20',
+    badge: 'bg-amber-500/20 text-amber-300',
+    tagline: 'Power the game',
+    sub: 'Connect with passionate fans at every match and stream.',
+    cta: 'Get exposure',
+  },
+];
+
+const AD_SLOTS_RIGHT = [
+  {
+    id: 'right-1',
+    label: 'SPONSOR',
+    bg: 'from-violet-900/60 via-slate-900 to-slate-950',
+    accent: 'border-violet-500/20',
+    badge: 'bg-violet-500/20 text-violet-300',
+    tagline: 'Be seen. Be heard.',
+    sub: 'Premium placement next to live sports content.',
+    cta: 'Book a slot',
+  },
+  {
+    id: 'right-2',
+    label: 'SPONSOR',
+    bg: 'from-red-900/60 via-slate-900 to-slate-950',
+    accent: 'border-red-500/20',
+    badge: 'bg-red-500/20 text-red-300',
+    tagline: 'Champion brands',
+    sub: 'Align your brand with Uganda\'s top sporting moments.',
+    cta: 'Learn more',
+  },
+];
+
+function AdCard({ ad }: { ad: typeof AD_SLOTS_LEFT[0] }) {
+  return (
+    <div className={`rounded-2xl border ${ad.accent} bg-gradient-to-b ${ad.bg} overflow-hidden flex flex-col items-center text-center`}>
+      <div className={`w-full py-1 text-[9px] font-bold tracking-widest uppercase ${ad.badge}`}>
+        Advertisement
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-between p-4 gap-4 min-h-[260px]">
+        <div className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${ad.badge}`}>
+          {ad.label}
+        </div>
+        <div className="space-y-2">
+          <div className="text-white font-bold text-sm leading-tight">{ad.tagline}</div>
+          <p className="text-slate-400 text-[11px] leading-relaxed">{ad.sub}</p>
+        </div>
+        <a
+          href="mailto:info@atasportslive.com"
+          className="text-xs font-semibold text-teal-400 hover:text-teal-300 underline underline-offset-2 transition-colors"
+        >
+          {ad.cta} →
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function HorizontalAdBanner({ ad }: { ad: typeof AD_SLOTS_LEFT[0] }) {
+  return (
+    <div className={`rounded-xl border ${ad.accent} bg-gradient-to-r ${ad.bg} flex items-center gap-3 px-4 py-3`}>
+      <div className={`shrink-0 text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded ${ad.badge}`}>
+        AD
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-semibold text-xs truncate">{ad.tagline}</p>
+        <p className="text-slate-400 text-[10px] truncate">{ad.sub}</p>
+      </div>
+      <a
+        href="mailto:info@atasportslive.com"
+        className="shrink-0 text-[10px] font-semibold text-teal-400 hover:text-teal-300 transition-colors whitespace-nowrap"
+      >
+        {ad.cta} →
+      </a>
+    </div>
+  );
+}
+
+function EventCard({ event, now }: { event: UnifiedEvent; now: Date }) {
+  const sc = sportColor[event.sport] ?? { pill: 'text-slate-400 bg-slate-500/10 border-slate-500/30', dot: 'bg-slate-400' };
+  const secsLeft = Math.max(0, Math.floor((event.date.getTime() - now.getTime()) / 1000));
+  const timeStr = event.date.toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' });
+  const isStream = event.type === 'stream';
+
+  return (
+    <Link href={event.href}>
+      <div className="group flex items-stretch gap-0 rounded-2xl border border-slate-800 bg-slate-900/70 hover:border-teal-500/40 hover:bg-slate-900 active:scale-[0.99] transition-all duration-150 cursor-pointer overflow-hidden">
+        {/* Left time strip */}
+        <div className="flex flex-col items-center justify-center px-3 sm:px-4 py-4 bg-slate-950/60 min-w-[64px] shrink-0 border-r border-slate-800">
+          <div className="text-white font-bold text-sm font-mono leading-none">{timeStr}</div>
+          <div className="text-teal-400 text-[10px] font-mono mt-1.5 font-semibold">
+            {formatCountdown(secsLeft)}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 px-3 sm:px-4 py-3.5 flex flex-col justify-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${sc.pill}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
+              {event.sport}
+            </span>
+            <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+              isStream
+                ? 'text-violet-400 bg-violet-500/10 border-violet-500/30'
+                : 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+            }`}>
+              {isStream ? <Tv className="h-2.5 w-2.5" /> : <Swords className="h-2.5 w-2.5" />}
+              {isStream ? 'Stream' : 'Match'}
+            </span>
+            {isStream && event.accessPrice != null && (
+              <span className="text-amber-400 font-mono font-bold text-[10px]">
+                ${event.accessPrice.toFixed(2)}
+              </span>
+            )}
+          </div>
+
+          <h3 className="text-white font-semibold text-sm leading-snug group-hover:text-teal-300 transition-colors line-clamp-1">
+            {event.title}
+          </h3>
+
+          {event.location && (
+            <p className="flex items-center gap-1 text-slate-500 text-[10px]">
+              <MapPin className="h-2.5 w-2.5 shrink-0" /> {event.location}
+            </p>
+          )}
+        </div>
+
+        {/* Right arrow */}
+        <div className="flex items-center pr-3 sm:pr-4 shrink-0">
+          <ChevronRight className="h-4 w-4 text-slate-700 group-hover:text-teal-400 transition-colors" />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function Upcoming() {
-  useEffect(() => { document.title = 'Upcoming Events - ATA Platform'; }, []);
+  useEffect(() => { document.title = 'Upcoming Events — ATA Sports Live'; }, []);
 
   const { events, isLoading } = useUpcomingEvents();
   const now = new Date();
   const grouped = groupByDate(events);
 
-  return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Upcoming Events</h1>
+  const mainContent = (
+    <div className="space-y-6">
+      {/* Mobile top ad */}
+      <div className="lg:hidden space-y-2">
+        <HorizontalAdBanner ad={AD_SLOTS_LEFT[0]} />
       </div>
 
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <CalendarClock className="h-5 w-5 text-teal-400 shrink-0" />
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Upcoming Events</h1>
+      </div>
+
+      {/* Event list */}
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl bg-slate-800" />)}
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-2xl bg-slate-800" />
+          ))}
         </div>
       ) : events.length === 0 ? (
-        <div className="py-20 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-          No upcoming events scheduled right now. Check back soon.
+        <div className="py-20 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
+          <CalendarClock className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No upcoming events right now. Check back soon.</p>
         </div>
       ) : (
         <div className="space-y-8">
-          {grouped.map(([dateLabel, dayEvents]) => (
+          {grouped.map(([dateLabel, dayEvents], gi) => (
             <div key={dateLabel}>
+              {/* Date separator */}
               <div className="flex items-center gap-3 mb-3">
                 <div className="h-px flex-1 bg-slate-800" />
-                <span className="text-xs font-semibold uppercase tracking-widest text-slate-500 whitespace-nowrap">{dateLabel}</span>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap px-1">
+                  {dateLabel}
+                </span>
                 <div className="h-px flex-1 bg-slate-800" />
               </div>
-              <div className="space-y-3">
-                {dayEvents.map((event) => {
-                  const sc = sportColor[event.sport] ?? 'text-slate-400 bg-slate-500/10 border-slate-500/20';
-                  const secsLeft = Math.max(0, Math.floor((event.date.getTime() - now.getTime()) / 1000));
-                  return (
-                    <Link key={event.key} href={event.href}>
-                      <div className="group flex items-start gap-4 p-4 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-teal-500/40 hover:bg-slate-900 transition-all cursor-pointer">
-                        {/* Time column */}
-                        <div className="shrink-0 w-16 text-center pt-0.5">
-                          <div className="text-white font-mono font-bold text-base">
-                            {event.date.toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                          <div className="text-teal-400 text-xs font-mono mt-0.5">
-                            in {formatDuration(secsLeft)}
-                          </div>
-                        </div>
 
-                        {/* Divider */}
-                        <div className="shrink-0 w-px self-stretch bg-slate-800 mx-1" />
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${sc}`}>
-                              {event.sport}
-                            </span>
-                            <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${event.type === 'stream' ? 'text-violet-400 bg-violet-500/10 border-violet-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>
-                              {event.type === 'stream' ? 'Stream' : 'Match'}
-                            </span>
-                          </div>
-                          <h3 className="text-white font-semibold text-sm group-hover:text-teal-300 transition-colors">{event.title}</h3>
-                          {event.description && (
-                            <p className="text-slate-400 text-xs mt-0.5 line-clamp-2">{event.description}</p>
-                          )}
-                          <div className="flex items-center gap-3 mt-1.5 text-[10px] text-slate-500">
-                            {event.location && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-2.5 w-2.5" /> {event.location}
-                              </span>
-                            )}
-                            {event.type === 'stream' && event.accessPrice != null && (
-                              <span className="text-amber-400 font-mono font-semibold">${event.accessPrice.toFixed(2)} access</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-teal-400 shrink-0 mt-1 transition-colors" />
-                      </div>
-                    </Link>
-                  );
-                })}
+              {/* Events for this day */}
+              <div className="space-y-2.5">
+                {dayEvents.map((event) => (
+                  <EventCard key={event.key} event={event} now={now} />
+                ))}
               </div>
+
+              {/* Mobile mid-content ad every 2 groups */}
+              {gi % 2 === 1 && (
+                <div className="lg:hidden mt-4">
+                  <HorizontalAdBanner ad={AD_SLOTS_RIGHT[gi % AD_SLOTS_RIGHT.length]} />
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
+
+      {/* Mobile bottom ad */}
+      <div className="lg:hidden space-y-2 pt-2">
+        <HorizontalAdBanner ad={AD_SLOTS_LEFT[1]} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="relative">
+      {/* Desktop 3-column layout */}
+      <div className="hidden lg:flex items-start gap-4 xl:gap-6">
+        {/* Left ad column */}
+        <aside className="w-44 xl:w-52 shrink-0 sticky top-8 space-y-4">
+          {AD_SLOTS_LEFT.map((ad) => (
+            <AdCard key={ad.id} ad={ad} />
+          ))}
+        </aside>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          {mainContent}
+        </div>
+
+        {/* Right ad column */}
+        <aside className="w-44 xl:w-52 shrink-0 sticky top-8 space-y-4">
+          {AD_SLOTS_RIGHT.map((ad) => (
+            <AdCard key={ad.id} ad={ad} />
+          ))}
+        </aside>
+      </div>
+
+      {/* Mobile layout — full width */}
+      <div className="lg:hidden">
+        {mainContent}
+      </div>
     </div>
   );
 }
