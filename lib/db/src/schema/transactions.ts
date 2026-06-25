@@ -28,6 +28,7 @@ export const paymentMethodEnum = pgEnum("payment_method", [
   "airtel_money",
   "btc_binance",
   "internal",
+  "pesapal",
 ]);
 
 export const transactionsTable = pgTable("transactions", {

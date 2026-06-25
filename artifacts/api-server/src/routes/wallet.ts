@@ -4,6 +4,14 @@ import { db, walletsTable, transactionsTable, usersTable, vouchersTable } from "
 import { eq, sql, desc } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
+import { logger } from "../lib/logger";
+import {
+  getPesapalConfig,
+  getAccessToken,
+  ensureIPN,
+  submitOrder,
+  getTransactionStatus,
+} from "../lib/pesapal";
 
 const router = Router();
 
@@ -232,6 +240,152 @@ router.get("/admin/wallets", authMiddleware, requireRole("admin"), async (req: A
   const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(walletsTable);
   const wallets = await db.select().from(walletsTable).limit(limit).offset(offset);
   res.json({ wallets: wallets.map(toWalletResponse), total: Number(count), page, limit });
+});
+
+// ── PESAPAL ──────────────────────────────────────────────────────────────────
+
+router.post("/pesapal/initiate", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { amount } = req.body;
+  if (!amount || Number(amount) <= 0) {
+    res.status(400).json({ error: "Invalid amount" });
+    return;
+  }
+
+  const config = await getPesapalConfig();
+  if (!config) {
+    res.status(503).json({ error: "Pesapal payment gateway is not configured. Contact admin." });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+  const merchantRef = `DEP-${uuidv4().split("-")[0].toUpperCase()}`;
+
+  const [tx] = await db
+    .insert(transactionsTable)
+    .values({
+      transactionId: merchantRef,
+      userId: req.userId!,
+      type: "deposit",
+      amount: Number(amount).toFixed(2),
+      status: "pending",
+      paymentMethod: "pesapal",
+      description: `Pesapal deposit of ${config.currency} ${amount}`,
+    })
+    .returning();
+
+  try {
+    const token = await getAccessToken(config);
+    const host = `${req.protocol}://${req.get("host")}`;
+    const ipnUrl = `${host}/api/wallet/pesapal/ipn`;
+    const callbackUrl = `${host}/api/wallet/pesapal/callback`;
+    const ipnId = await ensureIPN(config, token, ipnUrl);
+
+    const order = await submitOrder(config, token, {
+      merchantRef,
+      amount: Number(amount),
+      currency: config.currency,
+      callbackUrl,
+      notificationId: ipnId,
+      firstName: user.fullName?.split(" ")[0] || "",
+      lastName: user.fullName?.split(" ").slice(1).join(" ") || "",
+      email: user.email,
+      phone: user.phone || "",
+    });
+
+    await db
+      .update(transactionsTable)
+      .set({ reference: order.orderTrackingId, metadata: JSON.stringify({ orderTrackingId: order.orderTrackingId }) })
+      .where(eq(transactionsTable.id, tx.id));
+
+    res.status(201).json({ redirectUrl: order.redirectUrl, transactionId: merchantRef, orderTrackingId: order.orderTrackingId });
+  } catch (err: any) {
+    await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+    req.log.error({ err }, "Pesapal initiate error");
+    res.status(502).json({ error: err.message || "Payment gateway error" });
+  }
+});
+
+async function confirmPesapalPayment(orderTrackingId: string, merchantRef: string): Promise<boolean> {
+  const config = await getPesapalConfig();
+  if (!config) return false;
+
+  const [tx] = await db
+    .select()
+    .from(transactionsTable)
+    .where(eq(transactionsTable.transactionId, merchantRef))
+    .limit(1);
+
+  if (!tx || tx.status !== "pending") return false;
+
+  try {
+    const token = await getAccessToken(config);
+    const status = await getTransactionStatus(config, token, orderTrackingId);
+
+    if (status.statusCode === 1) {
+      await db.update(transactionsTable).set({ status: "completed", reference: orderTrackingId }).where(eq(transactionsTable.id, tx.id));
+      const amt = parseFloat(tx.amount as string);
+      await db.update(walletsTable).set({
+        balance: sql`balance + ${amt}`,
+        availableBalance: sql`available_balance + ${amt}`,
+        withdrawableBalance: sql`withdrawable_balance + ${amt}`,
+      }).where(eq(walletsTable.userId, tx.userId));
+
+      await notify(tx.userId, "deposit_received", "Deposit Confirmed", `${config.currency} ${amt.toFixed(2)} has been added to your wallet via Pesapal.`);
+      logger.info({ merchantRef, orderTrackingId }, "Pesapal deposit confirmed");
+      return true;
+    } else if (status.statusCode === 2 || status.statusCode === 3) {
+      await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+    }
+    return false;
+  } catch (err) {
+    logger.error({ err, orderTrackingId }, "Pesapal confirmation error");
+    return false;
+  }
+}
+
+router.get("/pesapal/callback", async (req, res): Promise<void> => {
+  const orderTrackingId = req.query["OrderTrackingId"] as string;
+  const merchantRef = req.query["OrderMerchantReference"] as string;
+
+  if (!orderTrackingId || !merchantRef) {
+    res.redirect("/?payment=error");
+    return;
+  }
+
+  const success = await confirmPesapalPayment(orderTrackingId, merchantRef);
+  res.redirect(`/wallet?payment=${success ? "success" : "pending"}&ref=${merchantRef}`);
+});
+
+router.get("/pesapal/ipn", async (req, res): Promise<void> => {
+  const orderTrackingId = req.query["orderTrackingId"] as string;
+  const merchantRef = req.query["orderMerchantReference"] as string;
+
+  if (orderTrackingId && merchantRef) {
+    await confirmPesapalPayment(orderTrackingId, merchantRef).catch((err) =>
+      logger.error({ err }, "IPN confirmation error")
+    );
+  }
+
+  res.json({ orderNotificationType: "IPNCHANGE", orderTrackingId, orderMerchantReference: merchantRef, status: 200 });
+});
+
+router.get("/pesapal/status", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { ref } = req.query;
+  if (!ref) { res.status(400).json({ error: "ref required" }); return; }
+
+  const [tx] = await db
+    .select()
+    .from(transactionsTable)
+    .where(eq(transactionsTable.transactionId, ref as string))
+    .limit(1);
+
+  if (!tx || tx.userId !== req.userId) {
+    res.status(404).json({ error: "Transaction not found" });
+    return;
+  }
+  res.json({ status: tx.status, amount: parseFloat(tx.amount as string) });
 });
 
 export default router;
