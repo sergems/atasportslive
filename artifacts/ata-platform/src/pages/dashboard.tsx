@@ -21,11 +21,11 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Welcome back, {user?.fullName}</h1>
-        <p className="text-slate-400 mt-1">Here's your account overview</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Welcome back, {user?.fullName}</h1>
+        <p className="text-slate-400 mt-1 text-sm sm:text-base">Here's your account overview</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <Card className="bg-slate-900 border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-400">Total Balance</CardTitle>

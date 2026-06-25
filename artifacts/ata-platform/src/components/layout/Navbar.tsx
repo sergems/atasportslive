@@ -99,7 +99,7 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Nav links - centered */}
+        {/* Nav links - centered (desktop only) */}
         <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 text-sm font-medium">
           {navLinks.map(({ href, label, pulse }) => (
             <Link
@@ -120,6 +120,9 @@ export function Navbar() {
             </Link>
           )}
         </nav>
+
+        {/* Spacer on mobile to push auth actions to the right */}
+        <div className="flex-1 md:hidden" />
 
         {/* Auth actions - right */}
         <div className="flex items-center space-x-2 shrink-0">
@@ -145,9 +148,11 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login">
+              {/* Desktop: show both Login + Join Now */}
+              <Link href="/login" className="hidden md:inline-flex">
                 <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">Login</Button>
               </Link>
+              {/* Mobile: Join Now only */}
               <Link href="/register">
                 <Button size="sm" className="bg-teal-500 text-slate-950 hover:bg-teal-400 font-semibold">
                   Join Now

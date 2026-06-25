@@ -177,9 +177,9 @@ export default function Live() {
   const isLoading = loadingStream || loadingSettings || (!!stream && isAuthenticated && loadingAccess);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 min-w-0">
       {/* Player area */}
-      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
+      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
         {isLoading ? (
           <Skeleton className="absolute inset-0 bg-slate-800" />
         ) : !stream || !liveStreamUrl ? (

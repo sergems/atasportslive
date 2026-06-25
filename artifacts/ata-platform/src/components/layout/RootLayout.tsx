@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
-import { MapPin, Phone, Mail, Home, Radio, CalendarClock, Film, Swords, Wallet } from 'lucide-react';
+import { MapPin, Phone, Mail, Home, Radio, Film, Swords, Wallet, LogIn, LogOut, Gamepad2 } from 'lucide-react';
 import { FaFacebook, FaYoutube, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
@@ -10,27 +10,62 @@ import { useAuth } from '@/lib/auth';
 
 function MobileBottomNav() {
   const [location] = useLocation();
-  const { isAuthenticated } = useAuth();
-
-  const tabs = [
-    { href: '/',          label: 'Home',     icon: Home },
-    { href: '/live',      label: 'Live',     icon: Radio,         pulse: true },
-    { href: '/upcoming',  label: 'Upcoming', icon: CalendarClock },
-    { href: '/streams',   label: 'Streams',  icon: Film },
-    ...(isAuthenticated
-      ? [
-          { href: '/games',  label: 'Games',  icon: Swords },
-          { href: '/wallet', label: 'Wallet', icon: Wallet },
-        ]
-      : []),
-  ];
+  const { isAuthenticated, logout } = useAuth();
 
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
+
+  const authTabs = [
+    { href: '/',        label: 'Home',    icon: Home },
+    { href: '/live',    label: 'Live',    icon: Radio,   pulse: true },
+    { href: '/streams', label: 'Streams', icon: Film },
+    { href: '/games',   label: 'Games',   icon: Swords },
+    { href: '/wallet',  label: 'Wallet',  icon: Wallet },
+  ];
+
+  const guestTabs = [
+    { href: '/',        label: 'Home',    icon: Home },
+    { href: '/live',    label: 'Live',    icon: Radio,   pulse: true },
+    { href: '/streams', label: 'Streams', icon: Film },
+  ];
+
+  if (isAuthenticated) {
+    return (
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
+        <div className="flex items-stretch justify-around h-16">
+          {authTabs.map(({ href, label, icon: Icon, pulse }) => {
+            const active = href === '/' ? location === '/' : location.startsWith(href);
+            return (
+              <Link key={href} href={href} onClick={scrollTop}>
+                <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-colors ${active ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
+                  <div className="relative">
+                    <Icon className="h-5 w-5" />
+                    {pulse && (
+                      <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                    )}
+                  </div>
+                  <span className="text-[9px] font-semibold tracking-wide leading-none">{label}</span>
+                  {active && <span className="mt-0.5 h-0.5 w-4 rounded-full bg-teal-400" />}
+                </div>
+              </Link>
+            );
+          })}
+          {/* Logout button */}
+          <button
+            onClick={() => { scrollTop(); logout(); }}
+            className="flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] text-slate-500 active:text-red-400 transition-colors"
+          >
+            <LogOut className="h-5 w-5" />
+            <span className="text-[9px] font-semibold tracking-wide leading-none">Logout</span>
+          </button>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
       <div className="flex items-stretch justify-around h-16">
-        {tabs.map(({ href, label, icon: Icon, pulse }) => {
+        {guestTabs.map(({ href, label, icon: Icon, pulse }) => {
           const active = href === '/' ? location === '/' : location.startsWith(href);
           return (
             <Link key={href} href={href} onClick={scrollTop}>
@@ -47,6 +82,14 @@ function MobileBottomNav() {
             </Link>
           );
         })}
+        {/* Login button */}
+        <Link href="/login" onClick={scrollTop}>
+          <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-colors ${location === '/login' ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
+            <LogIn className="h-5 w-5" />
+            <span className="text-[9px] font-semibold tracking-wide leading-none">Login</span>
+            {location === '/login' && <span className="mt-0.5 h-0.5 w-4 rounded-full bg-teal-400" />}
+          </div>
+        </Link>
       </div>
     </nav>
   );
