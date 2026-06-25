@@ -158,14 +158,16 @@ export default function Games() {
 
   const allGames: Game[] = (gamesData?.games || []) as Game[];
 
-  const competitionMap = new Map<number, string>();
+  const containerTypes = new Set(['competition', 'tour']);
+
+  const containerMap = new Map<number, string>();
   allGames.forEach((g) => {
-    if (g.type === 'competition') competitionMap.set(g.id, g.playerA);
+    if (containerTypes.has(g.type ?? '')) containerMap.set(g.id, g.playerA);
   });
 
-  const nonCompetition = allGames.filter((g) => g.type !== 'competition');
-  const bettingGames = nonCompetition.filter((g) => g.status === 'upcoming');
-  const resultGames = nonCompetition.filter((g) => g.status === 'live' || g.status === 'completed');
+  const singleMatches = allGames.filter((g) => !containerTypes.has(g.type ?? ''));
+  const bettingGames = singleMatches.filter((g) => g.status === 'upcoming');
+  const resultGames = singleMatches.filter((g) => g.status === 'live' || g.status === 'completed');
 
   const displayed = tab === 'betting' ? bettingGames : resultGames;
 
@@ -239,7 +241,7 @@ export default function Games() {
               <GameCard
                 key={game.id}
                 game={game}
-                competitionName={game.parentId ? competitionMap.get(game.parentId) : null}
+                competitionName={game.parentId ? containerMap.get(game.parentId) : null}
                 showResult={tab === 'results'}
               />
             ))
