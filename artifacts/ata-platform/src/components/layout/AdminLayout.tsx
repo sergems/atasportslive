@@ -11,10 +11,12 @@ import {
   Megaphone,
   Clapperboard,
   Settings,
+  GalleryHorizontalEnd,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/admin',                  label: 'Dashboard',     icon: LayoutDashboard, exact: true },
+  { href: '/admin/slides',           label: 'Hero Slides',   icon: GalleryHorizontalEnd },
   { href: '/admin/streams',          label: 'Streams',       icon: Radio },
   { href: '/admin/games',            label: 'Games',         icon: Trophy },
   { href: '/admin/highlights',       label: 'Highlights',    icon: Clapperboard },
