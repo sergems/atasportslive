@@ -84,20 +84,59 @@ function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (!videoRef.current) return;
+    const video = videoRef.current;
+    if (!video) return;
     if (Hls.isSupported()) {
       const hls = new Hls();
       hls.loadSource(hlsUrl);
-      hls.attachMedia(videoRef.current);
+      hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        videoRef.current?.play().catch(() => {});
+        video.play().catch(() => {});
       });
       return () => hls.destroy();
-    } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-      videoRef.current.src = hlsUrl;
-      videoRef.current.play().catch(() => {});
     }
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = hlsUrl;
+      video.play().catch(() => {});
+    }
+    return undefined;
   }, [hlsUrl]);
+
+  // Auto-fullscreen when phone rotates to landscape
+  useEffect(() => {
+    const handleOrientationChange = () => {
+      const video = videoRef.current;
+      if (!video) return;
+      const isLandscape = window.innerWidth > window.innerHeight;
+      if (isLandscape) {
+        if (video.requestFullscreen) {
+          video.requestFullscreen().catch(() => {});
+        } else if ((video as any).webkitEnterFullscreen) {
+          (video as any).webkitEnterFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen && document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        }
+      }
+    };
+
+    const orientationApi = window.screen?.orientation;
+    if (orientationApi) {
+      orientationApi.addEventListener('change', handleOrientationChange);
+    } else {
+      window.addEventListener('orientationchange', handleOrientationChange);
+    }
+    return () => {
+      if (orientationApi) {
+        orientationApi.removeEventListener('change', handleOrientationChange);
+      } else {
+        window.removeEventListener('orientationchange', handleOrientationChange);
+      }
+    };
+  }, []);
 
   return (
     <video

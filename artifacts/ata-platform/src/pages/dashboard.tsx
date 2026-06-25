@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'wouter';
 import {
   Wallet, Activity, TrendingUp, History, Radio, Swords,
-  Film, ArrowDownCircle, Bell, ChevronRight, Trophy, Clock,
+  Film, ArrowDownCircle, ChevronRight, Trophy, Clock,
   Zap, Star, Target
 } from 'lucide-react';
 
@@ -58,7 +58,7 @@ const BET_STATUS_STYLES: Record<string, string> = {
 const TX_CREDIT = new Set(['deposit', 'bet_win', 'bet_refund', 'admin_credit']);
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => { document.title = 'Dashboard — ATA Sports Live'; }, []);
 
@@ -108,29 +108,26 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick action buttons */}
-        <div className="relative mt-6 flex flex-wrap gap-2">
-          <Link href="/wallet">
-            <div className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-semibold text-xs px-3.5 py-2 transition-all cursor-pointer">
-              <ArrowDownCircle className="h-3.5 w-3.5" /> Deposit
-            </div>
-          </Link>
-          <Link href="/live">
-            <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3.5 py-2 border border-slate-700 transition-all cursor-pointer">
-              <Radio className="h-3.5 w-3.5 text-red-400" /> Watch Live
-            </div>
-          </Link>
-          <Link href="/games">
-            <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3.5 py-2 border border-slate-700 transition-all cursor-pointer">
-              <Swords className="h-3.5 w-3.5 text-amber-400" /> Place Bet
-            </div>
-          </Link>
-          <Link href="/notifications">
-            <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3.5 py-2 border border-slate-700 transition-all cursor-pointer">
-              <Bell className="h-3.5 w-3.5 text-violet-400" /> Alerts
-            </div>
-          </Link>
-        </div>
+        {/* Quick action buttons — hidden for admin */}
+        {!isAdmin && (
+          <div className="relative mt-6 flex flex-wrap gap-2">
+            <Link href="/wallet">
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-semibold text-xs px-3.5 py-2 transition-all cursor-pointer">
+                <ArrowDownCircle className="h-3.5 w-3.5" /> Deposit
+              </div>
+            </Link>
+            <Link href="/live">
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3.5 py-2 border border-slate-700 transition-all cursor-pointer">
+                <Radio className="h-3.5 w-3.5 text-red-400" /> Watch Live
+              </div>
+            </Link>
+            <Link href="/games">
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3.5 py-2 border border-slate-700 transition-all cursor-pointer">
+                <Swords className="h-3.5 w-3.5 text-amber-400" /> Place Bet
+              </div>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* ── Live now banner ───────────────────────────────────── */}
