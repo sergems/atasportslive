@@ -86,10 +86,11 @@ export function Navbar() {
   const unreadCount = notificationsData?.unreadCount || 0;
 
   const navLinks = [
-    { href: '/live', label: 'Live', pulse: true },
+    { href: '/live', label: 'Live', pulse: true, mobileHide: true },
     { href: '/streams', label: 'Streams' },
     { href: '/upcoming', label: 'Upcoming' },
     { href: '/highlights', label: 'Highlights' },
+    { href: '/fixtures', label: 'Fixtures' },
     ...(isAuthenticated ? [{ href: '/games', label: 'Games' }] : []),
   ];
 
@@ -178,7 +179,7 @@ export function Navbar() {
       {/* Mobile guest dropdown menu */}
       {!isAuthenticated && mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur px-4 py-3 space-y-1">
-          {navLinks.map(({ href, label, pulse }) => {
+          {navLinks.filter(l => !l.mobileHide).map(({ href, label, pulse }) => {
             const active = location.startsWith(href);
             return (
               <Link key={href} href={href} onClick={() => setMobileMenuOpen(false)}>

@@ -17,6 +17,7 @@ import Games from "@/pages/games/index";
 import GameDetail from "@/pages/games/[id]";
 import Live from "@/pages/live";
 import Upcoming from "@/pages/upcoming";
+import Fixtures from "@/pages/fixtures";
 import Highlights from "@/pages/highlights";
 import Wallet from "@/pages/wallet";
 import Transactions from "@/pages/transactions";
@@ -72,6 +73,7 @@ function Router() {
         <Route path="/streams/:id" component={StreamDetail} />
         <Route path="/live" component={Live} />
         <Route path="/upcoming" component={Upcoming} />
+        <Route path="/fixtures" component={Fixtures} />
         <Route path="/highlights" component={Highlights} />
         <Route path="/games">
           {() => <ProtectedRoute component={Games} />}
