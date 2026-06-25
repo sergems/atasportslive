@@ -281,6 +281,71 @@ export default function Live() {
         </div>
       )}
 
+      {/* ── Buy Access shortcut bar ─────────────────────────── */}
+      {stream && liveStreamUrl && !isLoading && !access?.hasAccess && (
+        isAuthenticated ? (
+          /* Authenticated but no access — one-tap buy strip */
+          <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-950/60 via-slate-900/80 to-slate-900 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            {/* Left: lock + info */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="shrink-0 h-10 w-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+                <Lock className="h-5 w-5 text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-white font-semibold text-sm leading-tight">Unlock Live Access</p>
+                <p className="text-slate-400 text-xs mt-0.5 truncate">
+                  24-hour access · charged from your wallet
+                </p>
+              </div>
+            </div>
+
+            {/* Right: price + button */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="text-right shrink-0">
+                <p className="text-amber-400 font-bold font-mono text-xl leading-none">
+                  ${stream.accessPrice.toFixed(2)}
+                </p>
+                <p className="text-slate-600 text-[10px] mt-0.5">one-time</p>
+              </div>
+              <Button
+                onClick={() => purchaseMutation.mutate(stream.id)}
+                disabled={purchaseMutation.isPending}
+                className="flex-1 sm:flex-none bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold h-11 px-6 text-sm transition-all"
+              >
+                {purchaseMutation.isPending ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
+                    Processing…
+                  </span>
+                ) : (
+                  'Buy Access & Watch'
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          /* Guest — sign-in prompt */
+          <div className="rounded-2xl border border-teal-500/30 bg-gradient-to-r from-teal-950/40 via-slate-900/80 to-slate-900 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="shrink-0 h-10 w-10 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center">
+                <Lock className="h-5 w-5 text-teal-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">Sign in to watch live</p>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  ${stream.accessPrice.toFixed(2)} for 24-hour access
+                </p>
+              </div>
+            </div>
+            <Link href="/login" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-bold h-11 px-6 text-sm transition-all">
+                Sign In to Watch
+              </Button>
+            </Link>
+          </div>
+        )
+      )}
+
       {/* Stream info bar */}
       {stream && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
