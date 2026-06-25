@@ -320,8 +320,8 @@ export default function Home() {
       {/* Upcoming Streams */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold tracking-tight text-white flex items-center">
-            <Zap className="mr-3 h-6 w-6 text-teal-400" /> Live & Upcoming Action
+          <h2 className="text-2xl font-bold tracking-tight text-white">
+            Upcoming Events
           </h2>
           <Link href="/streams">
             <Button variant="link" className="text-teal-400 hover:text-teal-300">View All</Button>

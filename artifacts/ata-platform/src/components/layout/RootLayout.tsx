@@ -1,11 +1,55 @@
 import React from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Phone, Mail, Home, Radio, CalendarClock, Film, Swords, Wallet, User } from 'lucide-react';
 import { FaFacebook, FaYoutube, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
+import { useAuth } from '@/lib/auth';
+
+function MobileBottomNav() {
+  const [location] = useLocation();
+  const { isAuthenticated, isAdmin } = useAuth();
+
+  const tabs = [
+    { href: '/',          label: 'Home',     icon: Home },
+    { href: '/live',      label: 'Live',     icon: Radio,         pulse: true },
+    { href: '/upcoming',  label: 'Upcoming', icon: CalendarClock },
+    { href: '/streams',   label: 'Streams',  icon: Film },
+    ...(isAuthenticated
+      ? [
+          { href: '/games',  label: 'Games',  icon: Swords },
+          { href: '/wallet', label: 'Wallet', icon: Wallet },
+          { href: '/dashboard', label: 'Me',  icon: User },
+        ]
+      : []),
+  ];
+
+  return (
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
+      <div className="flex items-stretch justify-around h-16">
+        {tabs.map(({ href, label, icon: Icon, pulse }) => {
+          const active = href === '/' ? location === '/' : location.startsWith(href);
+          return (
+            <Link key={href} href={href}>
+              <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-colors ${active ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
+                <div className="relative">
+                  <Icon className="h-5 w-5" />
+                  {pulse && (
+                    <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                  )}
+                </div>
+                <span className="text-[9px] font-semibold tracking-wide leading-none">{label}</span>
+                {active && <span className="mt-0.5 h-0.5 w-4 rounded-full bg-teal-400" />}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
 
 export function RootLayout({ children }: { children: React.ReactNode }) {
   useWebSocket();
@@ -13,10 +57,11 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-[100dvh] flex-col bg-background text-foreground">
       <Navbar />
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
         {children}
       </main>
-      <footer className="mt-16 border-t border-border/40 bg-primary/30">
+      <MobileBottomNav />
+      <footer className="mb-16 md:mb-0 mt-16 border-t border-border/40 bg-primary/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             {/* Brand */}
