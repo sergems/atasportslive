@@ -98,13 +98,13 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
               src={s.imageUrl}
               alt={s.title}
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: 'brightness(0.45)' }}
+              style={{ opacity: 0.96 }}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-primary/50 to-slate-900" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/10 via-transparent to-transparent" />
         </div>
       ))}
 
