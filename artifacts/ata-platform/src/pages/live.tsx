@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, CalendarClock, Users, Wallet } from 'lucide-react';
+import { Lock, Radio, Users, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
@@ -115,18 +115,18 @@ function NoLiveBroadcast() {
   const next = upcoming?.[0];
 
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-center px-6">
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 border border-slate-700 mb-6">
-        <Radio className="h-9 w-9 text-slate-600" />
+    <div className="flex flex-col items-center justify-center bg-slate-900 rounded-xl border border-slate-800 text-center px-6 py-10 w-full">
+      <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border border-slate-700 mb-4 sm:mb-6">
+        <Radio className="h-7 w-7 sm:h-9 sm:w-9 text-slate-600" />
       </div>
-      <h2 className="text-2xl font-bold text-white mb-2">No Live Broadcast</h2>
-      <p className="text-slate-400 text-sm mb-6 max-w-md">
+      <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">No Live Broadcast</h2>
+      <p className="text-slate-400 text-sm mb-5 max-w-md">
         There is no live event right now. Check the schedule below or come back when the next event starts.
       </p>
       {next && (
-        <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-6 py-4 inline-block">
+        <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-5 py-3 inline-block mb-4">
           <p className="text-slate-500 text-xs uppercase tracking-widest mb-1">Next up</p>
-          <p className="text-white font-semibold">{next.title}</p>
+          <p className="text-white font-semibold text-sm sm:text-base">{next.title}</p>
           <p className="text-amber-400 font-mono text-sm mt-1">
             {new Date(next.startTime).toLocaleDateString('en-UG', { weekday: 'short', month: 'short', day: 'numeric' })}
             {' · '}
@@ -134,7 +134,7 @@ function NoLiveBroadcast() {
           </p>
         </div>
       )}
-      <Link href="/upcoming" className="mt-6 text-teal-400 hover:text-teal-300 text-sm transition-colors">
+      <Link href="/upcoming" className="text-teal-400 hover:text-teal-300 text-sm transition-colors">
         View full schedule →
       </Link>
     </div>
@@ -178,29 +178,32 @@ export default function Live() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 min-w-0">
-      {/* Player area */}
-      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
-        {isLoading ? (
-          <Skeleton className="absolute inset-0 bg-slate-800" />
-        ) : !stream || !liveStreamUrl ? (
-          <NoLiveBroadcast />
-        ) : access?.hasAccess ? (
+      {/* Player / placeholder area */}
+      {isLoading ? (
+        <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-900">
+          <Skeleton className="w-full h-full bg-slate-800" />
+        </div>
+      ) : !stream || !liveStreamUrl ? (
+        /* No broadcast — render outside aspect-video so content is never clipped */
+        <NoLiveBroadcast />
+      ) : access?.hasAccess ? (
+        <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
           <HlsPlayer hlsUrl={liveStreamUrl} title={stream.title} />
-        ) : (
-          /* Paywall */
+        </div>
+      ) : (
+        /* Paywall */
+        <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
+          {stream.thumbnailUrl && (
+            <img src={stream.thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-10" />
+          )}
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur">
-            {stream.thumbnailUrl && (
-              <img src={stream.thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-10" />
-            )}
             <div className="relative z-10 text-center px-6 max-w-md">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 mb-5">
-                <Lock className="h-7 w-7 text-amber-400" />
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-amber-500/10 border border-amber-500/30 mb-3 sm:mb-5">
+                <Lock className="h-5 w-5 sm:h-7 sm:w-7 text-amber-400" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Premium Access Required</h3>
+              <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">Premium Access Required</h3>
               <p className="text-slate-400 text-sm mb-1">{stream.title}</p>
-              <p className="text-slate-500 text-xs mb-6">
-                Unlock this broadcast for 24 hours
-              </p>
+              <p className="text-slate-500 text-xs mb-4 sm:mb-6">Unlock this broadcast for 24 hours</p>
 
               {!isAuthenticated ? (
                 <div className="space-y-3">
@@ -212,10 +215,10 @@ export default function Live() {
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-6 py-4 inline-block">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 sm:px-6 sm:py-4 inline-block">
                     <p className="text-slate-400 text-xs mb-1">Access fee</p>
-                    <p className="text-amber-400 font-bold text-3xl font-mono">
+                    <p className="text-amber-400 font-bold text-2xl sm:text-3xl font-mono">
                       ${stream.accessPrice.toFixed(2)}
                     </p>
                     <p className="text-slate-500 text-xs mt-1">deducted from your wallet</p>
@@ -224,7 +227,7 @@ export default function Live() {
                     <Button
                       onClick={() => purchaseMutation.mutate(stream.id)}
                       disabled={purchaseMutation.isPending}
-                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-10 h-11 text-base"
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 sm:px-10 h-10 sm:h-11 text-sm sm:text-base"
                     >
                       {purchaseMutation.isPending ? 'Processing…' : `Pay $${stream.accessPrice.toFixed(2)} & Watch`}
                     </Button>
@@ -236,8 +239,8 @@ export default function Live() {
               )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Stream info bar */}
       {stream && (
@@ -254,7 +257,7 @@ export default function Live() {
                 </span>
               )}
             </div>
-            <h1 className="text-xl font-bold text-white">{stream.title}</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-white">{stream.title}</h1>
             {stream.description && (
               <p className="text-slate-400 text-sm mt-1 max-w-2xl">{stream.description}</p>
             )}

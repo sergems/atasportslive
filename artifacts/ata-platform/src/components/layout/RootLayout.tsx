@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
-import { MapPin, Phone, Mail, Home, Radio, Film, Swords, Wallet, LogIn, LogOut, Gamepad2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Home, Radio, Film, Swords, Wallet, LogIn, LogOut, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { FaFacebook, FaYoutube, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
@@ -10,33 +10,30 @@ import { useAuth } from '@/lib/auth';
 
 function MobileBottomNav() {
   const [location] = useLocation();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, isAdmin } = useAuth();
 
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
 
-  const authTabs = [
-    { href: '/',        label: 'Home',    icon: Home },
-    { href: '/live',    label: 'Live',    icon: Radio,   pulse: true },
-    { href: '/streams', label: 'Streams', icon: Film },
-    { href: '/games',   label: 'Games',   icon: Swords },
-    { href: '/wallet',  label: 'Wallet',  icon: Wallet },
-  ];
-
-  const guestTabs = [
-    { href: '/',        label: 'Home',    icon: Home },
-    { href: '/live',    label: 'Live',    icon: Radio,   pulse: true },
-    { href: '/streams', label: 'Streams', icon: Film },
-  ];
-
   if (isAuthenticated) {
+    const tabs = [
+      { href: '/dashboard', label: 'Home',    icon: LayoutDashboard },
+      { href: '/live',      label: 'Live',    icon: Radio,   pulse: true },
+      { href: '/streams',   label: 'Streams', icon: Film },
+      { href: '/games',     label: 'Games',   icon: Swords },
+      { href: '/wallet',    label: 'Wallet',  icon: Wallet },
+      ...(isAdmin ? [{ href: '/admin', label: 'Admin', icon: ShieldCheck }] : []),
+    ];
+
     return (
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
         <div className="flex items-stretch justify-around h-16">
-          {authTabs.map(({ href, label, icon: Icon, pulse }) => {
-            const active = href === '/' ? location === '/' : location.startsWith(href);
+          {tabs.map(({ href, label, icon: Icon, pulse }) => {
+            const active = href === '/dashboard'
+              ? location === '/dashboard'
+              : location.startsWith(href);
             return (
               <Link key={href} href={href} onClick={scrollTop}>
-                <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-colors ${active ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
+                <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] transition-colors ${active ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
                   <div className="relative">
                     <Icon className="h-5 w-5" />
                     {pulse && (
@@ -49,10 +46,10 @@ function MobileBottomNav() {
               </Link>
             );
           })}
-          {/* Logout button */}
+          {/* Logout */}
           <button
             onClick={() => { scrollTop(); logout(); }}
-            className="flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] text-slate-500 active:text-red-400 transition-colors"
+            className="flex flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] text-slate-500 active:text-red-400 transition-colors"
           >
             <LogOut className="h-5 w-5" />
             <span className="text-[9px] font-semibold tracking-wide leading-none">Logout</span>
@@ -61,6 +58,13 @@ function MobileBottomNav() {
       </nav>
     );
   }
+
+  // Guest tabs
+  const guestTabs = [
+    { href: '/',        label: 'Home',    icon: Home },
+    { href: '/live',    label: 'Live',    icon: Radio,   pulse: true },
+    { href: '/streams', label: 'Streams', icon: Film },
+  ];
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
@@ -82,7 +86,7 @@ function MobileBottomNav() {
             </Link>
           );
         })}
-        {/* Login button */}
+        {/* Login */}
         <Link href="/login" onClick={scrollTop}>
           <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-colors ${location === '/login' ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
             <LogIn className="h-5 w-5" />
@@ -180,6 +184,7 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
             </div>
+
             {/* Join the Community */}
             <div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Join the Community</h3>
