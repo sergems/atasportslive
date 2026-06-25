@@ -34,6 +34,7 @@ import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminHighlights from "@/pages/admin/highlights";
 import AdminSettings from "@/pages/admin/settings";
 import AdminSlides from "@/pages/admin/slides";
+import AdminWithdrawals from "@/pages/admin/withdrawals";
 import NotFound from "@/pages/not-found";
 import RefundPolicy from "@/pages/refund-policy";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -128,6 +129,9 @@ function Router() {
         </Route>
         <Route path="/admin/settings">
           {() => <ProtectedRoute component={() => <AdminLayout><AdminSettings /></AdminLayout>} adminOnly />}
+        </Route>
+        <Route path="/admin/withdrawals">
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminWithdrawals /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/terms" component={Terms} />
         <Route path="/privacy-policy" component={PrivacyPolicy} />

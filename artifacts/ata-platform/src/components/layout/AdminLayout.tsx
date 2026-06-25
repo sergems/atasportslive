@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { useAuthStore } from '@/lib/auth-store';
 import {
   LayoutDashboard,
   Radio,
@@ -12,9 +14,28 @@ import {
   Clapperboard,
   Settings,
   GalleryHorizontalEnd,
+  ArrowUpRight,
   Menu,
   X,
 } from 'lucide-react';
+
+function usePendingWithdrawalCount() {
+  const token = useAuthStore.getState().token;
+  return useQuery({
+    queryKey: ['admin-withdrawals-count'],
+    queryFn: async () => {
+      if (!token) return 0;
+      const res = await fetch('/api/admin/pending-withdrawals', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return Array.isArray(data) ? data.length : 0;
+    },
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
 
 const navItems = [
   { href: '/admin',                  label: 'Dashboard',     icon: LayoutDashboard, exact: true },
@@ -25,6 +46,7 @@ const navItems = [
   { href: '/admin/announcements',    label: 'Announcements', icon: Megaphone },
   { href: '/admin/users',            label: 'Users',         icon: Users },
   { href: '/admin/wallets',          label: 'Wallets',       icon: Wallet },
+  { href: '/admin/withdrawals',      label: 'Withdrawals',   icon: ArrowUpRight, badge: true },
   { href: '/admin/vouchers',         label: 'Vouchers',      icon: Ticket },
   { href: '/admin/reports',          label: 'Reports',       icon: BarChart2 },
   { href: '/admin/settings',         label: 'Settings',      icon: Settings },
@@ -33,14 +55,16 @@ const navItems = [
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { data: pendingCount = 0 } = usePendingWithdrawalCount();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location === href : location.startsWith(href);
 
   const NavContent = ({ onNav }: { onNav?: () => void }) => (
     <nav className="flex flex-col gap-1">
-      {navItems.map(({ href, label, icon: Icon, exact }) => {
+      {navItems.map(({ href, label, icon: Icon, exact, badge }) => {
         const active = isActive(href, exact);
+        const showBadge = badge && pendingCount > 0;
         return (
           <Link key={href} href={href} onClick={onNav}>
             <div
@@ -51,7 +75,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 }`}
             >
               <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-teal-400' : ''}`} />
-              {label}
+              <span className="flex-1">{label}</span>
+              {showBadge && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold flex items-center justify-center leading-none">
+                  {pendingCount > 99 ? '99+' : pendingCount}
+                </span>
+              )}
             </div>
           </Link>
         );

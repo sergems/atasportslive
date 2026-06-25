@@ -214,6 +214,7 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
 
 router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
+  const { note } = req.body as { note?: string };
   const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   if (!tx || tx.type !== "withdrawal" || tx.status !== "pending") {
     res.status(400).json({ error: "Invalid withdrawal" });
@@ -227,7 +228,8 @@ router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"
     pendingBalance: sql`pending_balance - ${parseFloat(tx.amount as string)}`,
   }).where(eq(walletsTable.userId, tx.userId));
 
-  await notify(tx.userId, "withdrawal_rejected", "Withdrawal Rejected", `Your withdrawal of $${tx.amount} has been rejected.`);
+  const reason = note?.trim() ? ` Reason: ${note.trim()}` : "";
+  await notify(tx.userId, "withdrawal_rejected", "Withdrawal Rejected", `Your withdrawal of $${tx.amount} has been rejected.${reason}`);
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
 });
