@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown } from 'lucide-react';
+import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
@@ -60,8 +60,12 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
 }
 
 export function Navbar() {
-  const { isAuthenticated, user, logout, isAdmin } = useAuth();
+  const { isAuthenticated, logout, isAdmin } = useAuth();
   const [location] = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on navigation
+  useEffect(() => { setMobileMenuOpen(false); }, [location]);
 
   const { data: notificationsData } = useListNotifications({ unreadOnly: true }, {
     query: {
@@ -121,7 +125,7 @@ export function Navbar() {
           )}
         </nav>
 
-        {/* Spacer on mobile to push auth actions to the right */}
+        {/* Spacer on mobile */}
         <div className="flex-1 md:hidden" />
 
         {/* Auth actions - right */}
@@ -148,20 +152,53 @@ export function Navbar() {
             </>
           ) : (
             <>
-              {/* Desktop: show both Login + Join Now */}
+              {/* Desktop: Login + Join Now */}
               <Link href="/login" className="hidden md:inline-flex">
                 <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">Login</Button>
               </Link>
-              {/* Mobile: Join Now only */}
+              {/* Mobile + Desktop: Join Now */}
               <Link href="/register">
                 <Button size="sm" className="bg-teal-500 text-slate-950 hover:bg-teal-400 font-semibold">
                   Join Now
                 </Button>
               </Link>
+              {/* Mobile only: hamburger */}
+              <button
+                onClick={() => setMobileMenuOpen((o) => !o)}
+                className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1"
+                aria-label="Open menu"
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
             </>
           )}
         </div>
       </div>
+
+      {/* Mobile guest dropdown menu */}
+      {!isAuthenticated && mobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur px-4 py-3 space-y-1">
+          {navLinks.map(({ href, label, pulse }) => {
+            const active = location.startsWith(href);
+            return (
+              <Link key={href} href={href} onClick={() => setMobileMenuOpen(false)}>
+                <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer
+                  ${active ? 'text-white bg-slate-800' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'}`}>
+                  {pulse && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse shrink-0" />}
+                  {label}
+                </div>
+              </Link>
+            );
+          })}
+          <div className="pt-1 border-t border-slate-800 mt-1">
+            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-teal-400 hover:text-teal-300 hover:bg-slate-800/60 transition-colors cursor-pointer">
+                Login
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
