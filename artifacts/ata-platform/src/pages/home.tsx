@@ -158,7 +158,7 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
       })}
 
       <div
-        className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 sm:px-12 lg:px-20"
+        className="absolute inset-0 flex flex-col items-center justify-end text-center px-6 sm:px-12 lg:px-20 pb-10 sm:pb-16"
         style={{ zIndex: 10 }}
       >
         <div
@@ -181,14 +181,14 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
           )}
 
           {slide.buttonText && slide.buttonUrl && (
-            <div className="mt-4 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-x-6 w-full px-4">
-              <Link href={slide.buttonUrl} className="w-full sm:w-auto">
-                <Button size="sm" className="w-full sm:w-auto sm:size-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 shadow-lg shadow-amber-500/20 transition-all hover:scale-105">
+            <div className="mt-4 sm:mt-8 flex flex-row items-center justify-center gap-3 sm:gap-x-6">
+              <Link href={slide.buttonUrl}>
+                <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 sm:px-8 shadow-lg shadow-amber-500/20 transition-all hover:scale-105">
                   {slide.buttonText}
                 </Button>
               </Link>
-              <Link href="/streams" className="w-full sm:w-auto">
-                <Button size="sm" variant="outline" className="w-full sm:w-auto sm:size-lg border-teal-500/50 text-teal-400 hover:bg-teal-500/10 transition-all hover:scale-105">
+              <Link href="/streams">
+                <Button size="sm" variant="outline" className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10 transition-all hover:scale-105 px-4 sm:px-6">
                   <Play className="mr-2 h-4 w-4" /> Live Streams
                 </Button>
               </Link>
@@ -239,25 +239,28 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
 
 function DefaultHero() {
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-primary/50 to-slate-900 border border-primary/20">
+    <section
+      className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-primary/50 to-slate-900 border border-primary/20 flex flex-col items-center justify-end text-center"
+      style={{ height: 'clamp(280px, 55vw, 520px)' }}
+    >
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=2090&auto=format&fit=crop')] bg-cover bg-center opacity-10 mix-blend-overlay" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-      <div className="relative px-6 py-14 sm:px-12 sm:py-32 lg:px-16 flex flex-col items-center text-center">
-        <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl">
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+      <div className="relative px-6 sm:px-12 lg:px-16 pb-10 sm:pb-16 flex flex-col items-center">
+        <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl leading-tight drop-shadow-lg">
           The Nerve Center of{' '}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-amber-500">African Sports</span>
         </h1>
-        <p className="mt-4 sm:mt-6 max-w-2xl text-sm sm:text-xl text-slate-300">
+        <p className="mt-4 sm:mt-6 max-w-2xl text-sm sm:text-xl text-slate-300 drop-shadow">
           Watch live grassroots Pool and Boxing matches. Bet peer-to-peer in real-time. High stakes, zero clutter.
         </p>
-        <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-x-6 w-full max-w-xs sm:max-w-none">
-          <Link href="/register" className="w-full sm:w-auto">
-            <Button size="sm" className="w-full sm:w-auto sm:size-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8">
-              Join the Exchange
+        <div className="mt-5 sm:mt-8 flex flex-row items-center justify-center gap-3 sm:gap-x-6">
+          <Link href="/register">
+            <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 sm:px-8 shadow-lg shadow-amber-500/20 transition-all hover:scale-105">
+              Join the movement
             </Button>
           </Link>
-          <Link href="/streams" className="w-full sm:w-auto">
-            <Button size="sm" variant="outline" className="w-full sm:w-auto sm:size-lg border-teal-500/50 text-teal-400 hover:bg-teal-500/10">
+          <Link href="/streams">
+            <Button size="sm" variant="outline" className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10 transition-all hover:scale-105 px-4 sm:px-6">
               <Play className="mr-2 h-4 w-4" /> Live Streams
             </Button>
           </Link>
