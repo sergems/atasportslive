@@ -201,13 +201,28 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
     res.status(400).json({ error: "Invalid withdrawal" });
     return;
   }
+  // Move to "approved" — funds stay locked in pendingBalance until finance confirms payment
+  await db.update(transactionsTable).set({ status: "approved" }).where(eq(transactionsTable.id, id));
+  await notify(tx.userId, "withdrawal_approved", "Withdrawal Approved", `Your withdrawal of $${tx.amount} has been approved and is being processed by our finance team.`);
+  const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+  res.json(toTxResponse(updated));
+});
+
+// Finance: mark approved withdrawal as paid (actual payment confirmed)
+router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("finance", "admin"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+  if (!tx || tx.type !== "withdrawal" || tx.status !== "approved") {
+    res.status(400).json({ error: "Invalid or not yet approved withdrawal" });
+    return;
+  }
   await db.update(transactionsTable).set({ status: "completed" }).where(eq(transactionsTable.id, id));
+  // Now actually deduct from balance
   await db.update(walletsTable).set({
     balance: sql`balance - ${parseFloat(tx.amount as string)}`,
     pendingBalance: sql`pending_balance - ${parseFloat(tx.amount as string)}`,
   }).where(eq(walletsTable.userId, tx.userId));
-
-  await notify(tx.userId, "withdrawal_approved", "Withdrawal Approved", `Your withdrawal of $${tx.amount} has been approved.`);
+  await notify(tx.userId, "withdrawal_approved", "Payment Sent", `Your withdrawal of $${tx.amount} has been paid. Please check your ${tx.paymentMethod?.replace("_", " ")} account.`);
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
 });

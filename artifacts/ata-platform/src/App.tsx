@@ -35,6 +35,9 @@ import AdminHighlights from "@/pages/admin/highlights";
 import AdminSettings from "@/pages/admin/settings";
 import AdminSlides from "@/pages/admin/slides";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
+import FinanceDashboard from "@/pages/finance/dashboard";
+import FinanceWithdrawals from "@/pages/finance/withdrawals";
+import { FinanceLayout } from "@/components/layout/FinanceLayout";
 import NotFound from "@/pages/not-found";
 import RefundPolicy from "@/pages/refund-policy";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -49,17 +52,27 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ component: Component, adminOnly = false }: { component: React.ComponentType; adminOnly?: boolean }) {
-  const { isAuthenticated, isAdmin } = useAuth();
+function ProtectedRoute({
+  component: Component,
+  adminOnly = false,
+  financeOnly = false,
+}: {
+  component: React.ComponentType;
+  adminOnly?: boolean;
+  financeOnly?: boolean;
+}) {
+  const { isAuthenticated, isAdmin, isFinance } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isAuthenticated) setLocation("/login");
-    else if (adminOnly && !isAdmin) setLocation("/dashboard");
-  }, [isAuthenticated, isAdmin, setLocation, adminOnly]);
+    if (!isAuthenticated) { setLocation("/login"); return; }
+    if (adminOnly && !isAdmin) setLocation("/dashboard");
+    if (financeOnly && !isFinance && !isAdmin) setLocation("/dashboard");
+  }, [isAuthenticated, isAdmin, isFinance, setLocation, adminOnly, financeOnly]);
 
   if (!isAuthenticated) return null;
   if (adminOnly && !isAdmin) return null;
+  if (financeOnly && !isFinance && !isAdmin) return null;
   return <Component />;
 }
 
@@ -132,6 +145,12 @@ function Router() {
         </Route>
         <Route path="/admin/withdrawals">
           {() => <ProtectedRoute component={() => <AdminLayout><AdminWithdrawals /></AdminLayout>} adminOnly />}
+        </Route>
+        <Route path="/finance/dashboard">
+          {() => <ProtectedRoute component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} financeOnly />}
+        </Route>
+        <Route path="/finance/withdrawals">
+          {() => <ProtectedRoute component={() => <FinanceLayout><FinanceWithdrawals /></FinanceLayout>} financeOnly />}
         </Route>
         <Route path="/terms" component={Terms} />
         <Route path="/privacy-policy" component={PrivacyPolicy} />

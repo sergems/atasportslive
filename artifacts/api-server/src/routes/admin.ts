@@ -116,18 +116,64 @@ router.get("/pending-withdrawals", authMiddleware, requireRole("admin"), async (
     .orderBy(desc(transactionsTable.createdAt));
 
   res.json(txs.map(({ tx, user }) => ({
-    id: tx.id,
-    transactionId: tx.transactionId,
-    userId: tx.userId,
-    userFullName: user?.fullName || null,
-    type: tx.type,
-    amount: parseFloat(tx.amount as string),
-    status: tx.status,
-    paymentMethod: tx.paymentMethod,
-    reference: tx.reference,
-    description: tx.description,
-    createdAt: tx.createdAt,
+    id: tx.id, transactionId: tx.transactionId, userId: tx.userId,
+    userFullName: user?.fullName || null, type: tx.type,
+    amount: parseFloat(tx.amount as string), status: tx.status,
+    paymentMethod: tx.paymentMethod, reference: tx.reference,
+    description: tx.description, createdAt: tx.createdAt,
   })));
+});
+
+// Approved withdrawals waiting for finance to pay
+router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "finance"), async (req: AuthRequest, res): Promise<void> => {
+  const txs = await db
+    .select({ tx: transactionsTable, user: usersTable })
+    .from(transactionsTable)
+    .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
+    .where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved")))
+    .orderBy(desc(transactionsTable.createdAt));
+
+  res.json(txs.map(({ tx, user }) => ({
+    id: tx.id, transactionId: tx.transactionId, userId: tx.userId,
+    userFullName: user?.fullName || null, userEmail: user?.email || null,
+    type: tx.type, amount: parseFloat(tx.amount as string), status: tx.status,
+    paymentMethod: tx.paymentMethod, reference: tx.reference,
+    description: tx.description, createdAt: tx.createdAt,
+  })));
+});
+
+// Finance dashboard stats
+router.get("/finance-stats", authMiddleware, requireRole("admin", "finance"), async (req: AuthRequest, res): Promise<void> => {
+  const [{ pendingCount }] = await db.select({ pendingCount: sql<number>`count(*)` })
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved")));
+  const [{ pendingValue }] = await db.select({ pendingValue: sql<number>`coalesce(sum(amount::numeric),0)` })
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved")));
+  const [{ paidToday }] = await db.select({ paidToday: sql<number>`coalesce(sum(amount::numeric),0)` })
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed"), gte(transactionsTable.createdAt, new Date(new Date().setHours(0,0,0,0)))));
+  const [{ paidTotal }] = await db.select({ paidTotal: sql<number>`coalesce(sum(amount::numeric),0)` })
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed")));
+  const [{ paidCount }] = await db.select({ paidCount: sql<number>`count(*)` })
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed")));
+
+  // Recent paid (last 10)
+  const recent = await db.select({ tx: transactionsTable, user: usersTable })
+    .from(transactionsTable)
+    .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
+    .where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed")))
+    .orderBy(desc(transactionsTable.createdAt)).limit(10);
+
+  res.json({
+    pendingCount: Number(pendingCount),
+    pendingValue: parseFloat(pendingValue as any) || 0,
+    paidToday: parseFloat(paidToday as any) || 0,
+    paidTotal: parseFloat(paidTotal as any) || 0,
+    paidCount: Number(paidCount),
+    recentPaid: recent.map(({ tx, user }) => ({
+      id: tx.id, transactionId: tx.transactionId,
+      userFullName: user?.fullName || null, amount: parseFloat(tx.amount as string),
+      paymentMethod: tx.paymentMethod, reference: tx.reference, createdAt: tx.createdAt,
+    })),
+  });
 });
 
 // ── Vouchers ────────────────────────────────────────────────────────────────

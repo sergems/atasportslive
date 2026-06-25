@@ -8,6 +8,7 @@ interface AuthContextType {
   user: any;
   isAdmin: boolean;
   isModerator: boolean;
+  isFinance: boolean;
   login: (token: string, user: any) => void;
   logout: () => void;
 }
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     isAdmin: user?.role === 'admin',
     isModerator: user?.role === 'moderator' || user?.role === 'admin',
+    isFinance: user?.role === 'finance',
     login,
     logout,
   };
