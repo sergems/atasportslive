@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2HQPcdV7gXQJgQI1EiB64cl4vsy464Sn0atQncbxtOcXuIA5yeHQliG2NlHON5Y
+\restrict iN7Vf1utfDaw7uSevMUxXE58wJqOWLROSOR5gqHmihkCAGBIFfkie30iObW8TgY
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -134,7 +134,8 @@ CREATE TYPE public.payment_method AS ENUM (
     'mtn_momo',
     'airtel_money',
     'btc_binance',
-    'internal'
+    'internal',
+    'pesapal'
 );
 
 
@@ -179,7 +180,8 @@ CREATE TYPE public.transaction_status AS ENUM (
     'pending',
     'completed',
     'failed',
-    'rejected'
+    'rejected',
+    'approved'
 );
 
 
@@ -213,7 +215,8 @@ CREATE TYPE public.user_role AS ENUM (
     'guest',
     'user',
     'moderator',
-    'admin'
+    'admin',
+    'finance'
 );
 
 
@@ -690,7 +693,10 @@ CREATE TABLE public.users (
     avatar_url text,
     refresh_token text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    payout_method text,
+    payout_account text,
+    payout_method_set_at timestamp with time zone
 );
 
 
@@ -895,7 +901,7 @@ ALTER TABLE ONLY public.wallets ALTER COLUMN id SET DEFAULT nextval('public.wall
 --
 
 COPY public.announcements (id, title, content, is_active, priority, created_at, updated_at) FROM stdin;
-1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	f	10	2026-06-15 19:17:47.184937+00	2026-06-15 23:01:43.041+00
+1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	t	10	2026-06-15 19:17:47.184937+00	2026-06-25 22:55:36.08+00
 \.
 
 
@@ -914,6 +920,7 @@ COPY public.audit_logs (id, user_id, action, entity_type, entity_id, details, ip
 COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_return, status, matched_bet_id, settled_at, created_at, updated_at) FROM stdin;
 1	TKT-80CBCB97	2	2	player_b_wins	40.00	0.00	pending	\N	\N	2026-06-15 16:42:22.409097+00	2026-06-15 16:42:22.409097+00
 2	TKT-94544E67	2	3	player_a_wins	2.00	0.00	pending	\N	\N	2026-06-15 21:22:49.715996+00	2026-06-15 21:22:49.715996+00
+3	TKT-F426B032	1	3	player_a_wins	2.00	0.00	pending	\N	\N	2026-06-25 22:53:12.644571+00	2026-06-25 22:53:12.644571+00
 \.
 
 
@@ -933,7 +940,7 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 11	pool	Jacob	Caesar Chandinga	2026-06-20	20:00	upcoming	\N	0.00	0	0	2026-06-15 19:54:24.775026+00	2026-06-15 20:52:16.387+00	\N	\N	Lagos	Nigeria	single	8	TZ	UG
 10	pool	Siyabonga Shezi	Caesar Chandinga	2026-06-19	18:00	upcoming	\N	0.00	0	0	2026-06-15 19:53:28.784467+00	2026-06-15 20:53:34.678+00	\N	\N	Lagos	Nigeria	single	8	ZA	UG
 1	pool	Hassan Mukasa	David Ssemwanga	2026-06-15	19:00	completed	player_b_wins	90.00	5	3	2026-06-15 16:31:06.632179+00	2026-06-15 21:17:47.146+00	\N	\N	\N	\N	single	\N	\N	\N
-3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	upcoming	\N	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-15 21:22:49.722+00	\N	\N	\N	\N	single	\N	\N	\N
+3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	upcoming	\N	0.00	2	0	2026-06-15 16:31:06.632179+00	2026-06-25 22:53:12.651+00	\N	\N	\N	\N	single	\N	\N	\N
 \.
 
 
@@ -969,6 +976,9 @@ COPY public.notifications (id, user_id, type, title, message, read, created_at) 
 2	2	deposit_received	Deposit Confirmed	$21 has been added to your wallet.	t	2026-06-15 17:55:45.156587+00
 3	2	withdrawal_approved	Withdrawal Approved	Your withdrawal of $12.00 has been approved.	t	2026-06-15 17:57:53.644799+00
 4	2	deposit_received	Voucher Redeemed	$10.00 has been added to your wallet.	t	2026-06-15 18:04:53.735599+00
+5	2	withdrawal_approved	Withdrawal Approved	Your withdrawal of $5.00 has been approved.	f	2026-06-25 22:34:52.658949+00
+6	2	withdrawal_approved	Withdrawal Approved	Your withdrawal of $3.00 has been approved and is being processed by our finance team.	f	2026-06-25 22:48:21.687562+00
+7	2	withdrawal_approved	Payment Sent	Your withdrawal of $3.00 has been paid. Please check your airtel money account.	f	2026-06-25 22:48:21.827435+00
 \.
 
 
@@ -978,6 +988,11 @@ COPY public.notifications (id, user_id, type, title, message, read, created_at) 
 
 COPY public.settings (key, value, updated_at) FROM stdin;
 liveStreamUrl		2026-06-15 23:01:56.521376+00
+pesapal_consumer_key	n8oH1EgY3l+BI9ax/Lz9viA9DSLLVNSR	2026-06-25 22:14:02.252672+00
+pesapal_consumer_secret	y6frhAV12Vl7JJLIvLQiF8FJDkU=	2026-06-25 22:14:02.252672+00
+pesapal_environment	live	2026-06-25 22:14:02.252672+00
+pesapal_ipn_id	d7c51ff3-b23f-44f2-8e7e-da3722300b9a	2026-06-25 22:14:12.016673+00
+pesapal_currency	USD	2026-06-25 22:18:38.344018+00
 \.
 
 
@@ -1029,6 +1044,13 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 7	STR-D7A0AA77	2	stream_access	1.50	completed	internal	\N	24h access to: Test Pool Match	\N	2026-06-15 20:15:23.309961+00	2026-06-15 20:15:23.309961+00
 8	BET-9312F53B	2	bet_stake	2.00	completed	internal	\N	Bet stake on game #3	\N	2026-06-15 21:22:49.701492+00	2026-06-15 21:22:49.701492+00
 9	STR-1F420619	2	stream_access	1.50	completed	internal	\N	24h access to: Kyebando Pool League - Finals	\N	2026-06-15 22:11:37.437814+00	2026-06-15 22:11:37.437814+00
+10	DEP-46AE2553	1	deposit	5000.00	failed	pesapal	\N	Pesapal deposit of UGX 5000	\N	2026-06-25 22:14:10.799392+00	2026-06-25 22:14:12.166+00
+11	DEP-9E1F8910	1	deposit	5000.00	pending	pesapal	752c8a8b-1a4f-4b64-9a51-da3708d452e2	Pesapal deposit of UGX 5000	{"orderTrackingId":"752c8a8b-1a4f-4b64-9a51-da3708d452e2"}	2026-06-25 22:14:42.472359+00	2026-06-25 22:14:43.621+00
+12	DEP-9DADDC3E	2	deposit	5.00	pending	pesapal	24081945-5888-44d3-8d1a-da373e0665dd	Pesapal deposit of USD 5	{"orderTrackingId":"24081945-5888-44d3-8d1a-da373e0665dd"}	2026-06-25 22:19:02.22138+00	2026-06-25 22:19:03.451+00
+13	WIT-FA9B2DAB	2	withdrawal	5.00	completed	mtn_momo	0771234567	Withdrawal via mtn_momo to 0771234567	\N	2026-06-25 22:26:28.394759+00	2026-06-25 22:34:52.651+00
+14	WIT-E67E7CA6	2	withdrawal	3.00	completed	airtel_money	0751999888	Withdrawal via airtel_money to 0751999888	\N	2026-06-25 22:48:21.560621+00	2026-06-25 22:48:21.821+00
+15	DEP-526D3084	1	deposit	5.00	pending	pesapal	a1ccaf41-0474-4609-a481-da377f67c6b7	Pesapal deposit of USD 5	{"orderTrackingId":"a1ccaf41-0474-4609-a481-da377f67c6b7"}	2026-06-25 22:49:48.657561+00	2026-06-25 22:49:49.78+00
+16	BET-B4E6F1D0	1	bet_stake	2.00	completed	internal	\N	Bet stake on game #3	\N	2026-06-25 22:53:12.637187+00	2026-06-25 22:53:12.637187+00
 \.
 
 
@@ -1036,9 +1058,10 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at) FROM stdin;
-2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODE1NjQyODgsImV4cCI6MTc4NDE1NjI4OH0.7qRVT7inZXh3364gI22wPFlGueHKD3KxNeeKAvUjcbg	2026-06-15 16:31:06.605107+00	2026-06-15 22:58:08.086+00
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyNDIxNTcxLCJleHAiOjE3ODUwMTM1NzF9.q7u7zYXPZoiLbeYKZml5GVWtjzLRya_GGOulLvE_Xd8	2026-06-15 16:31:06.226579+00	2026-06-25 21:06:11.468+00
+COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at, payout_method, payout_account, payout_method_set_at) FROM stdin;
+2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI0Mjc3MDEsImV4cCI6MTc4NTAxOTcwMX0.ZzzHYHGDssRFUD4lXVjVYlGxNgCmj9t1r-zakywDWe8	2026-06-15 16:31:06.605107+00	2026-06-25 22:48:21.209+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00
+3	finance@atasportslive.com	$2b$10$kYls7fiDwBZGh/f3VZu9a.MMXOYhby4Q/.TXly/IMin3.ioz1rE2.	Finance Officer	\N	finance	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInJvbGUiOiJmaW5hbmNlIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI0Mjc3MDEsImV4cCI6MTc4NTAxOTcwMX0.VRS8oDZ1cOwOB9sD7sUh_rkmDOO_MPstMrtbxX-1eWg	2026-06-25 22:43:39.335176+00	2026-06-25 22:48:21.489+00	\N	\N	\N
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyNDI3OTI4LCJleHAiOjE3ODUwMTk5Mjh9.qTW2b4UwCmMvYp4V4KqdY-MR7jG8hzJA6kcbz1c5588	2026-06-15 16:31:06.226579+00	2026-06-25 22:52:08.319+00	\N	\N	\N
 \.
 
 
@@ -1063,8 +1086,8 @@ COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, c
 --
 
 COPY public.wallets (id, user_id, balance, available_balance, pending_balance, withdrawable_balance, currency, created_at, updated_at) FROM stdin;
-1	1	10000.00	10000.00	0.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-15 16:31:06.51595+00
-2	2	74.50	32.50	42.00	74.50	USD	2026-06-15 16:31:06.612958+00	2026-06-15 22:11:37.428+00
+2	2	66.50	24.50	42.00	66.50	USD	2026-06-15 16:31:06.612958+00	2026-06-25 22:48:21.824+00
+1	1	10000.00	9998.00	2.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-25 22:53:12.603+00
 \.
 
 
@@ -1086,7 +1109,7 @@ SELECT pg_catalog.setval('public.audit_logs_id_seq', 1, false);
 -- Name: bets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.bets_id_seq', 2, true);
+SELECT pg_catalog.setval('public.bets_id_seq', 3, true);
 
 
 --
@@ -1114,7 +1137,7 @@ SELECT pg_catalog.setval('public.highlights_id_seq', 5, true);
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 4, true);
+SELECT pg_catalog.setval('public.notifications_id_seq', 7, true);
 
 
 --
@@ -1135,14 +1158,14 @@ SELECT pg_catalog.setval('public.streams_id_seq', 15, true);
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 9, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 16, true);
 
 
 --
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 2, true);
+SELECT pg_catalog.setval('public.users_id_seq', 3, true);
 
 
 --
@@ -1394,5 +1417,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2HQPcdV7gXQJgQI1EiB64cl4vsy464Sn0atQncbxtOcXuIA5yeHQliG2NlHON5Y
+\unrestrict iN7Vf1utfDaw7uSevMUxXE58wJqOWLROSOR5gqHmihkCAGBIFfkie30iObW8TgY
 
