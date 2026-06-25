@@ -108,6 +108,7 @@ export interface SubmitOrderInput {
   callbackUrl: string;
   notificationId: string;
   currency: string;
+  description?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -137,6 +138,7 @@ export async function submitOrder(
       id: input.merchantRef,
       currency: input.currency,
       amount: input.amount,
+      description: input.description || `ATA wallet deposit ${input.merchantRef}`,
       callback_url: input.callbackUrl,
       redirect_mode: "TOP_WINDOW",
       notification_id: input.notificationId,
