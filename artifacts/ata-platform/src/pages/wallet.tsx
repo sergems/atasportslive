@@ -222,21 +222,24 @@ export default function Wallet() {
                   Pay securely via <strong>MTN MoMo, Airtel Money, Visa/Mastercard</strong> and more — powered by Pesapal.
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-xs sm:text-sm">Amount (UGX)</Label>
-                  <Input
-                    type="number"
-                    min="1000"
-                    step="500"
-                    placeholder="e.g. 10000"
-                    value={depositAmount}
-                    onChange={e => setDepositAmount(e.target.value)}
-                    className="bg-slate-800 border-slate-700 text-white h-10 sm:h-11 text-base font-mono"
-                  />
-                  <p className="text-[10px] text-slate-500">Minimum deposit: UGX 1,000</p>
+                  <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-base">$</span>
+                    <Input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={depositAmount}
+                      onChange={e => setDepositAmount(e.target.value)}
+                      className="bg-slate-800 border-slate-700 text-white h-10 sm:h-11 text-base font-mono pl-7"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500">Minimum deposit: $1.00</p>
                 </div>
                 <Button
                   onClick={() => pesapalMutation.mutate()}
-                  disabled={!depositAmount || parseFloat(depositAmount) < 1000 || pesapalMutation.isPending}
+                  disabled={!depositAmount || parseFloat(depositAmount) < 1 || pesapalMutation.isPending}
                   className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold h-10 sm:h-11 gap-2"
                 >
                   <CreditCard className="h-4 w-4" />

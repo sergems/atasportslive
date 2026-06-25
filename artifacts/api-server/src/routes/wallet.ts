@@ -332,7 +332,7 @@ async function confirmPesapalPayment(orderTrackingId: string, merchantRef: strin
         withdrawableBalance: sql`withdrawable_balance + ${amt}`,
       }).where(eq(walletsTable.userId, tx.userId));
 
-      await notify(tx.userId, "deposit_received", "Deposit Confirmed", `${config.currency} ${amt.toFixed(2)} has been added to your wallet via Pesapal.`);
+      await notify(tx.userId, "deposit_received", "Deposit Confirmed", `$${amt.toFixed(2)} has been added to your wallet via Pesapal.`);
       logger.info({ merchantRef, orderTrackingId }, "Pesapal deposit confirmed");
       return true;
     } else if (status.statusCode === 2 || status.statusCode === 3) {
