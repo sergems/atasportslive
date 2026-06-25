@@ -96,4 +96,41 @@ router.patch("/:id/suspend", authMiddleware, requireRole("admin"), async (req: A
   res.json(toPublicUser(user));
 });
 
+router.patch("/:id/payout-method", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  const { payoutMethod, payoutAccount } = req.body;
+  const validMethods = ["mtn_momo", "airtel_money", "btc_binance"];
+  if (!validMethods.includes(payoutMethod)) {
+    res.status(400).json({ error: "Invalid payout method" });
+    return;
+  }
+  if (!payoutAccount || !payoutAccount.trim()) {
+    res.status(400).json({ error: "Payout account is required" });
+    return;
+  }
+  await db.execute(
+    sql`UPDATE users SET payout_method = ${payoutMethod}, payout_account = ${payoutAccount.trim()}, payout_method_set_at = NOW() WHERE id = ${id}`
+  );
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+  res.json({
+    ...toPublicUser(user),
+    payoutMethod,
+    payoutAccount: payoutAccount.trim(),
+  });
+});
+
+router.get("/:id/payout-method", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  const rows = await db.execute(
+    sql`SELECT payout_method, payout_account, payout_method_set_at FROM users WHERE id = ${id}`
+  );
+  const r = (rows.rows?.[0] as any) ?? null;
+  if (!r) { res.status(404).json({ error: "User not found" }); return; }
+  res.json({
+    payoutMethod: r.payout_method ?? null,
+    payoutAccount: r.payout_account ?? null,
+    payoutMethodSetAt: r.payout_method_set_at ?? null,
+  });
+});
+
 export default router;

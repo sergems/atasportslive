@@ -9,7 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import {
   ArrowDownLeft, ArrowUpRight, Ticket, Wallet as WalletIcon,
-  CreditCard, CheckCircle2, Clock, ExternalLink
+  CreditCard, Clock, ExternalLink, Lock, Smartphone, Bitcoin,
+  CheckCircle2, AlertTriangle, ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGetWalletQueryKey } from '@workspace/api-client-react';
@@ -21,6 +22,33 @@ function authHeaders() {
   return token
     ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
     : { 'Content-Type': 'application/json' };
+}
+
+async function fetchPayoutMethod() {
+  const res = await fetch('/api/wallet/payout-method', { headers: authHeaders() });
+  return res.json() as Promise<{ payoutMethod: string | null; payoutAccount: string | null; payoutMethodSetAt: string | null }>;
+}
+
+async function savePayoutMethod(payoutMethod: string, payoutAccount: string) {
+  const res = await fetch('/api/wallet/payout-method', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ payoutMethod, payoutAccount }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to save payout method');
+  return data;
+}
+
+async function initiateWithdrawal(amount: number) {
+  const res = await fetch('/api/wallet/withdraw', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ amount }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Withdrawal failed');
+  return data;
 }
 
 async function initiatePesapal(amount: number) {
@@ -45,27 +73,22 @@ async function redeemVoucher(code: string) {
   return data;
 }
 
-async function initiateWithdrawal(amount: number, paymentMethod: string, accountDetails: string) {
-  const res = await fetch('/api/wallet/withdraw', {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ amount, paymentMethod, accountDetails }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Withdrawal failed');
-  return data;
-}
-
 async function checkPesapalStatus(ref: string) {
   const res = await fetch(`/api/wallet/pesapal/status?ref=${ref}`, { headers: authHeaders() });
   return res.json() as Promise<{ status: string; amount: number }>;
 }
 
-const WITHDRAWAL_METHODS = [
-  { value: 'mtn_momo', label: 'MTN MoMo' },
-  { value: 'airtel_money', label: 'Airtel Money' },
-  { value: 'btc_binance', label: 'Bitcoin (Binance)' },
+const PAYOUT_METHODS = [
+  { value: 'mtn_momo',     label: 'MTN MoMo',           icon: Smartphone, placeholder: 'e.g. 0771234567',        hint: 'Enter your MTN mobile number' },
+  { value: 'airtel_money', label: 'Airtel Money',        icon: Smartphone, placeholder: 'e.g. 0751234567',        hint: 'Enter your Airtel mobile number' },
+  { value: 'btc_binance',  label: 'Bitcoin (Binance)',   icon: Bitcoin,    placeholder: 'e.g. 1A1zP1eP5QGef2nm…', hint: 'Enter your Bitcoin wallet address' },
 ];
+
+const METHOD_LABELS: Record<string, string> = {
+  mtn_momo: 'MTN MoMo',
+  airtel_money: 'Airtel Money',
+  btc_binance: 'Bitcoin (Binance)',
+};
 
 export default function Wallet() {
   useEffect(() => { document.title = 'Wallet - ATA Platform'; }, []);
@@ -77,15 +100,23 @@ export default function Wallet() {
 
   const queryClient = useQueryClient();
   const { data: wallet, isLoading: loadingWallet } = useGetWallet();
+  const { data: payoutData, isLoading: loadingPayout } = useQuery({
+    queryKey: ['payout-method'],
+    queryFn: fetchPayoutMethod,
+  });
 
   const [depositAmount, setDepositAmount] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
   const [depositTab, setDepositTab] = useState<'pesapal' | 'voucher'>('pesapal');
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawMethod, setWithdrawMethod] = useState('mtn_momo');
-  const [withdrawDetails, setWithdrawDetails] = useState('');
+
+  // Payout method setup state
+  const [newPayoutMethod, setNewPayoutMethod] = useState('mtn_momo');
+  const [newPayoutAccount, setNewPayoutAccount] = useState('');
+  const [confirmSetup, setConfirmSetup] = useState(false);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
+  const invalidatePayout = () => queryClient.invalidateQueries({ queryKey: ['payout-method'] });
 
   const { data: statusData } = useQuery({
     queryKey: ['pesapal-status', paymentRef],
@@ -105,16 +136,14 @@ export default function Wallet() {
 
   useEffect(() => {
     if (statusData?.status === 'completed') {
-      toast.success('Payment Confirmed!', { description: `UGX ${statusData.amount} credited to your wallet.` });
+      toast.success('Payment Confirmed!', { description: `$${statusData.amount} credited to your wallet.` });
       invalidate();
     }
   }, [statusData?.status]);
 
   const pesapalMutation = useMutation({
     mutationFn: () => initiatePesapal(parseFloat(depositAmount)),
-    onSuccess: (data) => {
-      window.location.href = data.redirectUrl;
-    },
+    onSuccess: (data) => { window.location.href = data.redirectUrl; },
     onError: (err: any) => toast.error(err.message),
   });
 
@@ -128,22 +157,29 @@ export default function Wallet() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const withdrawMutation = useMutation({
-    mutationFn: () => initiateWithdrawal(parseFloat(withdrawAmount), withdrawMethod, withdrawDetails),
+  const payoutSetupMutation = useMutation({
+    mutationFn: () => savePayoutMethod(newPayoutMethod, newPayoutAccount),
     onSuccess: () => {
-      invalidate();
-      toast.success('Withdrawal Requested', { description: 'Pending admin approval.' });
-      setWithdrawAmount('');
-      setWithdrawDetails('');
+      invalidatePayout();
+      toast.success('Payout method saved!', { description: 'Your withdrawal account is now set.' });
+      setNewPayoutAccount('');
+      setConfirmSetup(false);
     },
     onError: (err: any) => toast.error(err.message),
   });
 
-  const handleWithdraw = () => {
-    if (!parseFloat(withdrawAmount) || parseFloat(withdrawAmount) <= 0) { toast.error('Enter a valid amount'); return; }
-    if (!withdrawDetails.trim()) { toast.error('Enter account details'); return; }
-    withdrawMutation.mutate();
-  };
+  const withdrawMutation = useMutation({
+    mutationFn: () => initiateWithdrawal(parseFloat(withdrawAmount)),
+    onSuccess: () => {
+      invalidate();
+      toast.success('Withdrawal Requested', { description: 'Pending admin approval.' });
+      setWithdrawAmount('');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const selectedMethod = PAYOUT_METHODS.find(m => m.value === newPayoutMethod)!;
+  const hasPayoutMethod = !!payoutData?.payoutMethod;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -160,9 +196,7 @@ export default function Wallet() {
       {paymentStatus === 'pending' && (
         <div className="flex items-center gap-3 rounded-lg bg-amber-500/10 border border-amber-500/30 px-4 py-3">
           <Clock className="h-4 w-4 text-amber-400 shrink-0 animate-pulse" />
-          <div className="text-sm text-amber-300">
-            Verifying your payment… this may take a few seconds.
-          </div>
+          <span className="text-sm text-amber-300">Verifying your payment… this may take a few seconds.</span>
         </div>
       )}
 
@@ -226,12 +260,8 @@ export default function Wallet() {
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-base">$</span>
                     <Input
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={depositAmount}
-                      onChange={e => setDepositAmount(e.target.value)}
+                      type="number" min="1" step="0.01" placeholder="0.00"
+                      value={depositAmount} onChange={e => setDepositAmount(e.target.value)}
                       className="bg-slate-800 border-slate-700 text-white h-10 sm:h-11 text-base font-mono pl-7"
                     />
                   </div>
@@ -246,9 +276,7 @@ export default function Wallet() {
                   {pesapalMutation.isPending ? 'Redirecting to Pesapal…' : 'Pay with Pesapal'}
                   {!pesapalMutation.isPending && <ExternalLink className="h-3.5 w-3.5 ml-auto opacity-60" />}
                 </Button>
-                <p className="text-[10px] text-slate-500 text-center">
-                  You'll be redirected to Pesapal's secure payment page.
-                </p>
+                <p className="text-[10px] text-slate-500 text-center">You'll be redirected to Pesapal's secure payment page.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -258,10 +286,8 @@ export default function Wallet() {
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-xs sm:text-sm">Voucher Code</Label>
                   <Input
-                    placeholder="e.g. 228623"
-                    maxLength={6}
-                    value={voucherCode}
-                    onChange={e => setVoucherCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 228623" maxLength={6}
+                    value={voucherCode} onChange={e => setVoucherCode(e.target.value.replace(/\D/g, ''))}
                     className="bg-slate-800 border-slate-700 text-white font-mono text-xl tracking-[0.3em] text-center h-10 sm:h-11"
                   />
                   <p className="text-[10px] text-slate-500 text-center">6-digit code printed on your ATA Voucher</p>
@@ -279,56 +305,157 @@ export default function Wallet() {
           </CardContent>
         </Card>
 
-        {/* ── Withdraw ── */}
+        {/* ── Withdrawal ── */}
         <Card className="bg-slate-900 border-primary/20">
           <CardHeader className="pb-2 sm:pb-3 pt-4 sm:pt-6 px-4 sm:px-6">
             <CardTitle className="flex items-center gap-2 text-amber-400 text-base sm:text-lg">
               <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5" /> Withdrawal
             </CardTitle>
-            <p className="text-xs text-slate-500 mt-0.5">Request a payout to your mobile money or crypto account</p>
+            <p className="text-xs text-slate-500 mt-0.5">All withdrawals are reviewed and approved by admin</p>
           </CardHeader>
-          <CardContent className="space-y-3 px-4 sm:px-6 pb-4 sm:pb-6">
-            <div className="grid grid-cols-2 gap-2 sm:block sm:space-y-3">
-              <div className="space-y-1.5">
-                <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
-                <Input
-                  type="number" min="1" step="0.01" placeholder="0.00"
-                  value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)}
-                  className="bg-slate-800 border-slate-700 text-white h-9 sm:h-10"
-                />
-                <p className="text-[10px] text-slate-500 hidden sm:block">
-                  Withdrawable: <span className="text-green-400 font-mono font-semibold">${(wallet?.withdrawableBalance || 0).toFixed(2)}</span>
-                </p>
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            {loadingPayout ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 bg-slate-800 rounded-lg" />
+                <Skeleton className="h-10 bg-slate-800 rounded" />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-slate-300 text-xs sm:text-sm">Method</Label>
-                <select
-                  value={withdrawMethod} onChange={e => setWithdrawMethod(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-md px-2 py-2 text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 h-9 sm:h-10"
+            ) : !hasPayoutMethod ? (
+              /* ── No payout method — setup gate ── */
+              <div className="space-y-4">
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-3 flex gap-2.5">
+                  <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-amber-300 space-y-1">
+                    <p className="font-semibold">Payout method required</p>
+                    <p>You must add a withdrawal account before requesting payouts. This can only be set <strong>once</strong> — choose carefully.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 text-xs sm:text-sm">Payout Method</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {PAYOUT_METHODS.map(m => (
+                      <button
+                        key={m.value}
+                        onClick={() => { setNewPayoutMethod(m.value); setNewPayoutAccount(''); setConfirmSetup(false); }}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors ${
+                          newPayoutMethod === m.value
+                            ? 'bg-teal-500/10 border-teal-500/50 text-white'
+                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
+                        }`}
+                      >
+                        <m.icon className={`h-4 w-4 shrink-0 ${newPayoutMethod === m.value ? 'text-teal-400' : 'text-slate-500'}`} />
+                        <span className="text-sm font-medium">{m.label}</span>
+                        {newPayoutMethod === m.value && <CheckCircle2 className="h-3.5 w-3.5 text-teal-400 ml-auto" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 text-xs sm:text-sm">{selectedMethod.label} Account</Label>
+                  <Input
+                    placeholder={selectedMethod.placeholder}
+                    value={newPayoutAccount}
+                    onChange={e => { setNewPayoutAccount(e.target.value); setConfirmSetup(false); }}
+                    className="bg-slate-800 border-slate-700 text-white font-mono h-10"
+                  />
+                  <p className="text-[10px] text-slate-500">{selectedMethod.hint}</p>
+                </div>
+
+                {newPayoutAccount.trim() && !confirmSetup && (
+                  <Button
+                    onClick={() => setConfirmSetup(true)}
+                    className="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-semibold h-9"
+                    variant="outline"
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    Review & Confirm
+                  </Button>
+                )}
+
+                {confirmSetup && (
+                  <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-3">
+                    <p className="text-xs text-amber-300 font-semibold flex items-center gap-1.5">
+                      <Lock className="h-3.5 w-3.5" /> Confirm your payout account
+                    </p>
+                    <div className="text-xs text-slate-300 space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Method:</span>
+                        <span className="font-medium">{METHOD_LABELS[newPayoutMethod]}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Account:</span>
+                        <span className="font-mono font-medium">{newPayoutAccount.trim()}</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-amber-400/80">⚠ This cannot be changed after saving. Contact admin if you need to update it.</p>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => setConfirmSetup(false)}
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 text-slate-400 hover:text-white h-8 text-xs"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => payoutSetupMutation.mutate()}
+                        disabled={payoutSetupMutation.isPending}
+                        size="sm"
+                        className="flex-1 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold h-8 text-xs"
+                      >
+                        <Lock className="h-3 w-3 mr-1" />
+                        {payoutSetupMutation.isPending ? 'Saving…' : 'Save & Lock'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ── Payout method set — withdrawal form ── */
+              <div className="space-y-4">
+                {/* Locked payout method display */}
+                <div className="rounded-lg bg-slate-800 border border-slate-700 px-3 py-2.5 flex items-center gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-0.5">
+                      <Lock className="h-3 w-3" /> Payout account (locked)
+                    </div>
+                    <div className="text-white font-medium text-sm">{METHOD_LABELS[payoutData.payoutMethod!] ?? payoutData.payoutMethod}</div>
+                    <div className="text-slate-400 font-mono text-xs mt-0.5">{payoutData.payoutAccount}</div>
+                  </div>
+                  <ShieldCheck className="h-5 w-5 text-teal-400 shrink-0" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-base">$</span>
+                    <Input
+                      type="number" min="1" step="0.01" placeholder="0.00"
+                      value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)}
+                      className="bg-slate-800 border-slate-700 text-white h-10 font-mono pl-7"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    Withdrawable: <span className="text-green-400 font-mono font-semibold">${(wallet?.withdrawableBalance || 0).toFixed(2)}</span>
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => withdrawMutation.mutate()}
+                  disabled={withdrawMutation.isPending || !withdrawAmount || parseFloat(withdrawAmount) <= 0}
+                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold h-10"
                 >
-                  {WITHDRAWAL_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                </select>
+                  <ArrowUpRight className="h-4 w-4 mr-2" />
+                  {withdrawMutation.isPending ? 'Processing…' : 'Request Withdrawal'}
+                </Button>
+
+                <div className="rounded-md bg-slate-800/50 border border-slate-700/50 px-3 py-2 text-[10px] text-slate-500 flex items-start gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-slate-600 shrink-0 mt-0.5" />
+                  Withdrawals are manually reviewed and approved by admin before funds are sent. To change your payout account, contact support.
+                </div>
               </div>
-            </div>
-            <p className="text-[10px] text-slate-500 sm:hidden -mt-1">
-              Withdrawable: <span className="text-green-400 font-mono font-semibold">${(wallet?.withdrawableBalance || 0).toFixed(2)}</span>
-            </p>
-            <div className="space-y-1.5">
-              <Label className="text-slate-300 text-xs sm:text-sm">Account Details</Label>
-              <Input
-                placeholder="e.g. 0771234567 or crypto address"
-                value={withdrawDetails} onChange={e => setWithdrawDetails(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-white h-9 sm:h-10"
-              />
-            </div>
-            <Button
-              onClick={handleWithdraw}
-              disabled={withdrawMutation.isPending}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold h-9 sm:h-10"
-            >
-              <ArrowUpRight className="h-4 w-4 mr-2" />
-              {withdrawMutation.isPending ? 'Processing…' : 'Request Withdrawal'}
-            </Button>
+            )}
           </CardContent>
         </Card>
       </div>

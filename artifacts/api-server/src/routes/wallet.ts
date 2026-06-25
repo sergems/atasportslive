@@ -87,22 +87,74 @@ router.post("/deposit", authMiddleware, async (req: AuthRequest, res): Promise<v
   res.status(201).json(toTxResponse(updatedTx[0]));
 });
 
+router.get("/payout-method", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const rows = await db.execute(
+    sql`SELECT payout_method, payout_account, payout_method_set_at FROM users WHERE id = ${req.userId}`
+  );
+  const r = (rows.rows?.[0] as any) ?? null;
+  res.json({
+    payoutMethod: r?.payout_method ?? null,
+    payoutAccount: r?.payout_account ?? null,
+    payoutMethodSetAt: r?.payout_method_set_at ?? null,
+  });
+});
+
+router.post("/payout-method", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { payoutMethod, payoutAccount } = req.body;
+  const validMethods = ["mtn_momo", "airtel_money", "btc_binance"];
+  if (!validMethods.includes(payoutMethod)) {
+    res.status(400).json({ error: "Invalid payout method" });
+    return;
+  }
+  if (!payoutAccount || typeof payoutAccount !== "string" || !payoutAccount.trim()) {
+    res.status(400).json({ error: "Payout account details are required" });
+    return;
+  }
+
+  // Check if already set
+  const existing = await db.execute(
+    sql`SELECT payout_method_set_at FROM users WHERE id = ${req.userId}`
+  );
+  const row = (existing.rows?.[0] as any) ?? null;
+  if (row?.payout_method_set_at) {
+    res.status(400).json({ error: "Payout method already set. Contact admin to change it." });
+    return;
+  }
+
+  await db.execute(
+    sql`UPDATE users SET payout_method = ${payoutMethod}, payout_account = ${payoutAccount.trim()}, payout_method_set_at = NOW() WHERE id = ${req.userId}`
+  );
+  res.json({ ok: true, payoutMethod, payoutAccount: payoutAccount.trim() });
+});
+
 router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
-  const { amount, paymentMethod, accountDetails } = req.body;
-  if (!amount || amount <= 0) {
+  const { amount } = req.body;
+  if (!amount || Number(amount) <= 0) {
     res.status(400).json({ error: "Invalid amount" });
     return;
   }
+
+  // Must have a verified payout method
+  const userRows = await db.execute(
+    sql`SELECT payout_method, payout_account, payout_method_set_at FROM users WHERE id = ${req.userId}`
+  );
+  const userRow = (userRows.rows?.[0] as any) ?? null;
+  if (!userRow?.payout_method || !userRow?.payout_account) {
+    res.status(400).json({ error: "You must set a payout method before withdrawing." });
+    return;
+  }
+
   const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, req.userId!)).limit(1);
-  if (!wallet || parseFloat(wallet.withdrawableBalance as string) < amount) {
+  if (!wallet || parseFloat(wallet.withdrawableBalance as string) < Number(amount)) {
     res.status(400).json({ error: "Insufficient withdrawable balance" });
     return;
   }
+
   // Lock funds
   await db.update(walletsTable).set({
-    withdrawableBalance: sql`withdrawable_balance - ${amount}`,
-    availableBalance: sql`available_balance - ${amount}`,
-    pendingBalance: sql`pending_balance + ${amount}`,
+    withdrawableBalance: sql`withdrawable_balance - ${Number(amount)}`,
+    availableBalance: sql`available_balance - ${Number(amount)}`,
+    pendingBalance: sql`pending_balance + ${Number(amount)}`,
   }).where(eq(walletsTable.userId, req.userId!));
 
   const [tx] = await db
@@ -111,11 +163,11 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
       transactionId: `WIT-${uuidv4().split("-")[0].toUpperCase()}`,
       userId: req.userId!,
       type: "withdrawal",
-      amount: amount.toString(),
+      amount: Number(amount).toFixed(2),
       status: "pending",
-      paymentMethod,
-      reference: accountDetails,
-      description: `Withdrawal via ${paymentMethod}`,
+      paymentMethod: userRow.payout_method as any,
+      reference: userRow.payout_account,
+      description: `Withdrawal via ${userRow.payout_method} to ${userRow.payout_account}`,
     })
     .returning();
   res.status(201).json(toTxResponse(tx));
