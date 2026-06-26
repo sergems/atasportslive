@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
-  CheckCircle2, Pencil, X, ShieldCheck,
+  CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -120,6 +120,174 @@ function PayoutMethodEditor({ userId, onClose, onSaved }: { userId: number; onCl
   );
 }
 
+function ActivationEmailPanel() {
+  const [open, setOpen] = useState(false);
+  const [smtp, setSmtp] = useState({
+    smtpHost: '', smtpPort: '587', smtpUser: '', smtpPass: '', smtpFrom: '', siteUrl: 'https://atasportslive.com',
+  });
+  const [result, setResult] = useState<{ sent: number; failed: number; errors?: string[] } | null>(null);
+
+  const { data: pending, refetch: refetchPending } = useQuery({
+    queryKey: ['admin-pending-activation'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/pending-activation', { headers: authHeaders() });
+      return res.json() as Promise<{ count: number }>;
+    },
+    staleTime: 30_000,
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/notify-pending', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(smtp),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed');
+      return d as { sent: number; failed: number; errors?: string[] };
+    },
+    onSuccess: (d) => {
+      setResult(d);
+      refetchPending();
+      toast.success(`Sent ${d.sent} activation email${d.sent !== 1 ? 's' : ''}${d.failed ? `, ${d.failed} failed` : ''}`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const count = pending?.count ?? 0;
+
+  return (
+    <Card className="bg-slate-900 border-amber-500/30">
+      <CardContent className="p-4">
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+              <Mail className="h-5 w-5 text-amber-400" />
+            </div>
+            <div>
+              <div className="text-white font-semibold text-sm">Activation Emails</div>
+              <div className="text-slate-400 text-xs">
+                {count === 0
+                  ? 'All imported users have activated their accounts'
+                  : <><span className="text-amber-400 font-semibold">{count.toLocaleString()}</span> imported users haven't set a password yet</>}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {count > 0 && (
+              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 border text-xs">
+                {count.toLocaleString()} pending
+              </Badge>
+            )}
+            {open ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+          </div>
+        </button>
+
+        {open && (
+          <div className="mt-4 pt-4 border-t border-slate-800 space-y-4">
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Send each pending user a personalised email with a one-click link to{' '}
+              <code className="bg-slate-800 px-1 py-0.5 rounded text-teal-400">/set-password</code>.
+              Enter your outgoing mail (SMTP) credentials below — they are sent directly to the server and never stored.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-slate-400 text-xs">SMTP Host</Label>
+                <Input
+                  value={smtp.smtpHost}
+                  onChange={e => setSmtp(s => ({ ...s, smtpHost: e.target.value }))}
+                  placeholder="smtp.gmail.com"
+                  className="bg-slate-800 border-slate-700 text-white text-sm h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-slate-400 text-xs">Port</Label>
+                <Input
+                  value={smtp.smtpPort}
+                  onChange={e => setSmtp(s => ({ ...s, smtpPort: e.target.value }))}
+                  placeholder="587"
+                  className="bg-slate-800 border-slate-700 text-white text-sm h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-slate-400 text-xs">SMTP Username</Label>
+                <Input
+                  value={smtp.smtpUser}
+                  onChange={e => setSmtp(s => ({ ...s, smtpUser: e.target.value }))}
+                  placeholder="your@email.com"
+                  className="bg-slate-800 border-slate-700 text-white text-sm h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-slate-400 text-xs">SMTP Password</Label>
+                <Input
+                  type="password"
+                  value={smtp.smtpPass}
+                  onChange={e => setSmtp(s => ({ ...s, smtpPass: e.target.value }))}
+                  placeholder="App password"
+                  className="bg-slate-800 border-slate-700 text-white text-sm h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-slate-400 text-xs">From Address</Label>
+                <Input
+                  value={smtp.smtpFrom}
+                  onChange={e => setSmtp(s => ({ ...s, smtpFrom: e.target.value }))}
+                  placeholder='"ATA Sports" <no-reply@atasportslive.com>'
+                  className="bg-slate-800 border-slate-700 text-white text-sm h-8"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-slate-400 text-xs">Site URL (in email links)</Label>
+                <Input
+                  value={smtp.siteUrl}
+                  onChange={e => setSmtp(s => ({ ...s, siteUrl: e.target.value }))}
+                  placeholder="https://atasportslive.com"
+                  className="bg-slate-800 border-slate-700 text-white text-sm h-8"
+                />
+              </div>
+            </div>
+
+            {result && (
+              <div className="bg-slate-800 rounded-lg p-3 text-sm space-y-1">
+                <div className="flex gap-4">
+                  <span className="text-teal-400 font-semibold">{result.sent} sent</span>
+                  {result.failed > 0 && <span className="text-red-400 font-semibold">{result.failed} failed</span>}
+                </div>
+                {result.errors && result.errors.length > 0 && (
+                  <ul className="text-red-400 text-xs space-y-0.5 mt-1">
+                    {result.errors.map((e, i) => <li key={i}>{e}</li>)}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                onClick={() => sendMutation.mutate()}
+                disabled={sendMutation.isPending || count === 0 || !smtp.smtpHost || !smtp.smtpUser || !smtp.smtpPass || !smtp.smtpFrom}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold gap-2 h-9"
+              >
+                <Send className="h-4 w-4" />
+                {sendMutation.isPending
+                  ? 'Sending…'
+                  : count === 0
+                    ? 'No pending users'
+                    : `Send to ${count.toLocaleString()} users`}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminUsers() {
   useEffect(() => { document.title = 'Manage Users - Admin'; }, []);
 
@@ -166,6 +334,8 @@ export default function AdminUsers() {
           />
         </div>
       </div>
+
+      <ActivationEmailPanel />
 
       <Card className="bg-slate-900 border-primary/20">
         <CardContent className="p-0">

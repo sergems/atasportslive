@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
+import nodemailer from "nodemailer";
 import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable } from "@workspace/db";
 import { eq, sql, desc, and, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
@@ -268,6 +269,102 @@ router.post("/wallets/:userId/adjust", authMiddleware, requireRole("admin"), asy
     `${type === "credit" ? "+" : "-"}$${amt} — ${note || `Admin ${type}`}`);
 
   res.json({ success: true, transaction: tx });
+});
+
+// ── Imported-user activation emails ──────────────────────────────────────────
+
+router.get("/pending-activation", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(usersTable)
+    .where(eq(usersTable.mustSetPassword, true));
+  res.json({ count: Number(count) });
+});
+
+router.post("/notify-pending", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const { smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, siteUrl } = req.body as Record<string, string>;
+
+  if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
+    res.status(400).json({ error: "SMTP configuration is required (host, user, password, from)" });
+    return;
+  }
+
+  const site = (siteUrl || "https://atasportslive.com").replace(/\/$/, "");
+
+  const pending = await db
+    .select({ id: usersTable.id, email: usersTable.email, fullName: usersTable.fullName })
+    .from(usersTable)
+    .where(eq(usersTable.mustSetPassword, true));
+
+  if (pending.length === 0) {
+    res.json({ sent: 0, failed: 0, message: "No pending users found" });
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: parseInt(smtpPort || "587", 10),
+    secure: parseInt(smtpPort || "587", 10) === 465,
+    auth: { user: smtpUser, pass: smtpPass },
+  });
+
+  let sent = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const user of pending) {
+    const setPasswordUrl = `${site}/set-password?email=${encodeURIComponent(user.email)}`;
+    const firstName = (user.fullName || "").split(" ")[0] || "there";
+
+    try {
+      await transporter.sendMail({
+        from: smtpFrom,
+        to: user.email,
+        subject: "Welcome to ATA Sports Live — Activate your account",
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1e293b">
+            <div style="background:#0f172a;padding:24px 32px;border-radius:8px 8px 0 0">
+              <h1 style="color:#14b8a6;margin:0;font-size:20px">ATA Sports Live</h1>
+            </div>
+            <div style="background:#f8fafc;padding:32px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;border-top:none">
+              <p style="margin:0 0 16px">Hi ${firstName},</p>
+              <p style="margin:0 0 16px">
+                Your ATA Sports Live account is ready. We've migrated your details from our
+                previous platform — you just need to set a new password to get started.
+              </p>
+              <div style="text-align:center;margin:32px 0">
+                <a href="${setPasswordUrl}"
+                   style="background:#14b8a6;color:#fff;padding:14px 32px;border-radius:6px;
+                          text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+                  Set My Password &amp; Sign In
+                </a>
+              </div>
+              <p style="color:#64748b;font-size:13px;margin:0 0 8px">
+                Or copy this link into your browser:
+              </p>
+              <p style="color:#0891b2;font-size:12px;word-break:break-all;margin:0 0 24px">${setPasswordUrl}</p>
+              <p style="color:#64748b;font-size:13px;margin:0">
+                Once set, you can watch live Pool &amp; Boxing streams and place bets on the platform.
+              </p>
+              <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0" />
+              <p style="color:#94a3b8;font-size:12px;margin:0;text-align:center">
+                ATA Sports Live · Kampala, Uganda<br/>
+                If you didn't expect this email, you can safely ignore it.
+              </p>
+            </div>
+          </div>
+        `,
+        text: `Hi ${firstName},\n\nYour ATA Sports Live account is ready. Set your password here:\n${setPasswordUrl}\n\nATA Sports Live · Kampala, Uganda`,
+      });
+      sent++;
+    } catch (e: any) {
+      failed++;
+      errors.push(`${user.email}: ${e.message}`);
+    }
+  }
+
+  req.log.info({ sent, failed }, "Activation emails dispatched");
+  res.json({ sent, failed, errors: errors.slice(0, 10) });
 });
 
 export default router;
