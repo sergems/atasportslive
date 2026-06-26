@@ -280,8 +280,7 @@ export default function Upcoming() {
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <CalendarClock className="h-5 w-5 text-teal-400 shrink-0" />
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Upcoming Events</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase">Upcoming Events</h1>
       </div>
 
       {/* Event list */}

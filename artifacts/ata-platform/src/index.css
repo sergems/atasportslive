@@ -5,6 +5,32 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Brand green #19a659 — replaces teal scale */
+  --color-teal-50: #f0faf4;
+  --color-teal-100: #d9f2e3;
+  --color-teal-200: #b2e4c6;
+  --color-teal-300: #6dcb97;
+  --color-teal-400: #19a659;
+  --color-teal-500: #148a4a;
+  --color-teal-600: #10703c;
+  --color-teal-700: #0d5930;
+  --color-teal-800: #0a4224;
+  --color-teal-900: #072e19;
+  --color-teal-950: #031509;
+
+  /* Brand yellow #ffb132 — replaces amber scale */
+  --color-amber-50: #fffbf0;
+  --color-amber-100: #fff3d4;
+  --color-amber-200: #ffe6a8;
+  --color-amber-300: #ffd172;
+  --color-amber-400: #ffb132;
+  --color-amber-500: #e8920a;
+  --color-amber-600: #c27408;
+  --color-amber-700: #9a5b06;
+  --color-amber-800: #724208;
+  --color-amber-900: #4a2c07;
+  --color-amber-950: #261503;
+
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-border: hsl(var(--border));

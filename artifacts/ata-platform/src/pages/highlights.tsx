@@ -124,13 +124,6 @@ export default function Highlights() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-          <Clapperboard className="h-6 w-6 text-amber-400" /> Highlights
-        </h1>
-        <p className="text-slate-400 text-sm mt-1">Match highlights and recap videos</p>
-      </div>
-
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[...Array(6)].map((_, i) => (

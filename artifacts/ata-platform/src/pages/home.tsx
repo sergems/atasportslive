@@ -13,6 +13,7 @@ import airtelMoney from '@assets/airtel-money-copy_1782470222583.png';
 import mastercard from '@assets/mastercard-symbol_transparentbg_1782470222583.png';
 import mpesa from '@assets/m-pesa-seeklogo_1782470222583.png';
 import visa from '@assets/Visa_Brandmark_Blue_RGB_2021_1782470222584.png';
+import ataLogo from '@assets/cropped-ATA_logo-removebg-preview_1782471649356.png';
 
 interface Announcement { id: number; title: string; content: string; priority: number; }
 interface Slide {
@@ -399,6 +400,7 @@ export default function Home() {
       {/* Payment Partners */}
       <section className="flex flex-wrap items-center justify-center gap-6 py-2">
         {[
+          { src: ataLogo,     alt: 'ATA Sports Live' },
           { src: mastercard,  alt: 'Mastercard' },
           { src: visa,        alt: 'Visa' },
           { src: airtelMoney, alt: 'Airtel Money' },

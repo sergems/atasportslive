@@ -104,8 +104,8 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Nav links - centered (desktop only) */}
-        <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 text-sm font-medium">
+        {/* Nav links - close to logo (desktop only) */}
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium ml-4">
           {navLinks.map(({ href, label, pulse }) => (
             <Link
               key={href}
@@ -126,8 +126,8 @@ export function Navbar() {
           )}
         </nav>
 
-        {/* Spacer on mobile */}
-        <div className="flex-1 md:hidden" />
+        {/* Spacer */}
+        <div className="flex-1" />
 
         {/* Auth actions - right */}
         <div className="flex items-center space-x-2 shrink-0">

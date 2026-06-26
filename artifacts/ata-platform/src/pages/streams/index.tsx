@@ -186,21 +186,8 @@ export default function Streams() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            {liveCount > 0 && (
-              <Radio className="h-5 w-5 text-red-400 animate-pulse" />
-            )}
-            Live Streams
-          </h1>
-          <p className="text-slate-400 text-sm mt-0.5">
-            {liveCount > 0
-              ? <span className="text-red-400 font-semibold">{liveCount} live now</span>
-              : 'Premium African sports action'}
-          </p>
-        </div>
+      {/* Filter */}
+      <div className="flex justify-end">
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-[160px] bg-slate-900 border-slate-800 text-white text-sm h-8">
             <SelectValue placeholder="Filter by status" />
