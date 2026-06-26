@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, Users, Wallet, LogIn, Calendar } from 'lucide-react';
+import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
@@ -147,11 +147,76 @@ function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) {
   );
 }
 
+// ─── Countdown hook ───────────────────────────────────────────────────────────
+
+interface Countdown { days: number; hours: number; minutes: number; seconds: number; total: number }
+
+function useCountdown(targetIso: string | undefined): Countdown | null {
+  const calc = (): Countdown | null => {
+    if (!targetIso) return null;
+    const diff = Math.max(0, Math.floor((new Date(targetIso).getTime() - Date.now()) / 1000));
+    if (diff <= 0) return null;
+    return {
+      total: diff,
+      days:    Math.floor(diff / 86400),
+      hours:   Math.floor((diff % 86400) / 3600),
+      minutes: Math.floor((diff % 3600) / 60),
+      seconds: diff % 60,
+    };
+  };
+  const [countdown, setCountdown] = useState<Countdown | null>(calc);
+  useEffect(() => {
+    if (!targetIso) return;
+    setCountdown(calc());
+    const id = setInterval(() => setCountdown(calc()), 1000);
+    return () => clearInterval(id);
+  }, [targetIso]);
+  return countdown;
+}
+
+// ─── Countdown display component ─────────────────────────────────────────────
+
+function CountdownBlock({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-3xl sm:text-4xl font-bold font-mono text-white tabular-nums leading-none">
+        {String(value).padStart(2, '0')}
+      </span>
+      <span className="text-slate-500 text-[10px] uppercase tracking-widest mt-1">{label}</span>
+    </div>
+  );
+}
+
+function CountdownTimer({ targetIso, label }: { targetIso: string; label?: string }) {
+  const cd = useCountdown(targetIso);
+  if (!cd) return null;
+  return (
+    <div className="space-y-3">
+      {label && (
+        <p className="text-slate-400 text-xs uppercase tracking-widest flex items-center justify-center gap-1.5">
+          <Timer className="h-3.5 w-3.5 text-teal-400" />
+          {label}
+        </p>
+      )}
+      <div className="flex items-center justify-center gap-3 sm:gap-5">
+        {cd.days > 0 && <CountdownBlock label="days" value={cd.days} />}
+        {cd.days > 0 && <span className="text-slate-600 font-bold text-2xl mb-3">:</span>}
+        <CountdownBlock label="hours" value={cd.hours} />
+        <span className="text-slate-600 font-bold text-2xl mb-3">:</span>
+        <CountdownBlock label="min" value={cd.minutes} />
+        <span className="text-slate-600 font-bold text-2xl mb-3">:</span>
+        <CountdownBlock label="sec" value={cd.seconds} />
+      </div>
+    </div>
+  );
+}
+
 // ─── No broadcast state ───────────────────────────────────────────────────────
 
 function NoLiveBroadcast() {
   const { data: upcoming } = useNextUpcoming();
   const next = upcoming?.[0];
+  const nextCountdown = useCountdown(next?.startTime);
 
   return (
     <div className="flex flex-col items-center justify-center bg-slate-900 rounded-xl border border-slate-800 text-center px-6 py-14 w-full">
@@ -159,20 +224,33 @@ function NoLiveBroadcast() {
         <Radio className="h-7 w-7 sm:h-9 sm:w-9 text-slate-600" />
       </div>
       <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">No Live Broadcast</h2>
-      <p className="text-slate-400 text-sm mb-5 max-w-md">
-        There is no live event right now. Check the schedule below or come back when the next event starts.
+      <p className="text-slate-400 text-sm mb-6 max-w-md">
+        There is no live event right now. Come back when the next event starts.
       </p>
+
       {next && (
-        <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-5 py-3 inline-block mb-4">
-          <p className="text-slate-500 text-xs uppercase tracking-widest mb-1">Next up</p>
-          <p className="text-white font-semibold text-sm sm:text-base">{next.title}</p>
-          <p className="text-amber-400 font-mono text-sm mt-1">
-            {new Date(next.startTime).toLocaleDateString('en-UG', { weekday: 'short', month: 'short', day: 'numeric' })}
-            {' · '}
-            {new Date(next.startTime).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
-          </p>
+        <div className="w-full max-w-sm space-y-4 mb-6">
+          {/* Next event card */}
+          <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-5 py-4">
+            <p className="text-slate-500 text-xs uppercase tracking-widest mb-2">Next up</p>
+            <p className="text-white font-bold text-base sm:text-lg mb-0.5">{next.title}</p>
+            <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{next.sport}</p>
+            <p className="text-amber-400 font-mono text-sm">
+              {new Date(next.startTime).toLocaleDateString('en-UG', { weekday: 'long', month: 'long', day: 'numeric' })}
+              {' · '}
+              {new Date(next.startTime).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
+
+          {/* Live countdown — only when the event is still in the future */}
+          {nextCountdown && (
+            <div className="bg-slate-800/50 border border-slate-700/60 rounded-xl px-5 py-5">
+              <CountdownTimer targetIso={next.startTime} label="Starts in" />
+            </div>
+          )}
         </div>
       )}
+
       <Link href="/upcoming" className="text-teal-400 hover:text-teal-300 text-sm transition-colors">
         View full schedule →
       </Link>
@@ -446,6 +524,41 @@ export default function Live() {
   );
 }
 
+function UpcomingRow({ ev }: { ev: UpcomingStream }) {
+  const cd = useCountdown(ev.startTime);
+
+  // Format a compact "Xd Xh" or "Xh Xm" or "Xm Xs" label
+  const label = cd
+    ? cd.days > 0
+      ? `${cd.days}d ${cd.hours}h`
+      : cd.hours > 0
+        ? `${cd.hours}h ${String(cd.minutes).padStart(2, '0')}m`
+        : `${cd.minutes}m ${String(cd.seconds).padStart(2, '0')}s`
+    : null;
+
+  return (
+    <div className="flex items-center justify-between gap-3 py-3 border-b border-slate-800 last:border-0">
+      <div className="min-w-0">
+        <p className="text-white text-sm font-medium leading-tight truncate">{ev.title}</p>
+        <p className="text-slate-500 text-xs mt-0.5 uppercase tracking-wide">{ev.sport}</p>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-amber-400 font-mono text-xs">
+          {new Date(ev.startTime).toLocaleDateString('en-UG', { weekday: 'short', day: 'numeric', month: 'short' })}
+          {' · '}
+          {new Date(ev.startTime).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
+        </p>
+        {label && (
+          <p className="text-teal-400 font-mono text-[11px] mt-0.5 flex items-center justify-end gap-1">
+            <Timer className="h-3 w-3" />
+            in {label}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function UpcomingSchedule() {
   const { data: upcoming } = useNextUpcoming();
   if (!upcoming?.length) return null;
@@ -455,22 +568,9 @@ function UpcomingSchedule() {
         <Calendar className="h-4 w-4 text-teal-500" />
         <h3 className="text-sm font-semibold text-white">Upcoming Events</h3>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-0">
         {upcoming.slice(0, 3).map((ev) => (
-          <div key={ev.id} className="flex items-center justify-between gap-3 py-2 border-b border-slate-800 last:border-0">
-            <div>
-              <p className="text-white text-sm font-medium leading-tight">{ev.title}</p>
-              <p className="text-slate-500 text-xs mt-0.5 uppercase tracking-wide">{ev.sport}</p>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-amber-400 font-mono text-xs">
-                {new Date(ev.startTime).toLocaleDateString('en-UG', { weekday: 'short', day: 'numeric', month: 'short' })}
-              </p>
-              <p className="text-slate-400 font-mono text-xs">
-                {new Date(ev.startTime).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
-              </p>
-            </div>
-          </div>
+          <UpcomingRow key={ev.id} ev={ev} />
         ))}
       </div>
       <Link href="/upcoming" className="text-teal-400 hover:text-teal-300 text-xs mt-3 inline-block transition-colors">
