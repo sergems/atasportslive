@@ -34,6 +34,7 @@ import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminHighlights from "@/pages/admin/highlights";
 import AdminSettings from "@/pages/admin/settings";
 import AdminSlides from "@/pages/admin/slides";
+import AdminAds from "@/pages/admin/ads";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
 import FinanceDashboard from "@/pages/finance/dashboard";
 import FinanceWithdrawals from "@/pages/finance/withdrawals";
@@ -145,6 +146,9 @@ function Router() {
         </Route>
         <Route path="/admin/withdrawals">
           {() => <ProtectedRoute component={() => <AdminLayout><AdminWithdrawals /></AdminLayout>} adminOnly />}
+        </Route>
+        <Route path="/admin/ads">
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminAds /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/finance/dashboard">
           {() => <ProtectedRoute component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} financeOnly />}

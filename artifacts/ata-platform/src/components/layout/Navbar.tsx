@@ -64,7 +64,6 @@ export function Navbar() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Close mobile menu on navigation
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
 
   const { data: notificationsData } = useListNotifications({ unreadOnly: true }, {
@@ -96,7 +95,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-7xl mx-auto px-4 items-center">
+      <div className="container flex h-16 max-w-7xl mx-auto px-4 items-center relative">
         {/* Logo - left */}
         <div className="flex items-center shrink-0">
           <Link href="/" className="flex items-center">
@@ -104,8 +103,8 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Nav links - close to logo (desktop only) */}
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium ml-4">
+        {/* Nav links - centered absolutely (desktop only) */}
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium absolute left-1/2 -translate-x-1/2">
           {navLinks.map(({ href, label, pulse }) => (
             <Link
               key={href}
@@ -153,17 +152,14 @@ export function Navbar() {
             </>
           ) : (
             <>
-              {/* Desktop: Login + Join Now */}
               <Link href="/login" className="hidden md:inline-flex">
                 <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">Login</Button>
               </Link>
-              {/* Mobile + Desktop: Join Now */}
               <Link href="/register">
                 <Button size="sm" className="bg-teal-500 text-slate-950 hover:bg-teal-400 font-semibold">
                   Join Now
                 </Button>
               </Link>
-              {/* Mobile only: hamburger */}
               <button
                 onClick={() => setMobileMenuOpen((o) => !o)}
                 className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-1"
