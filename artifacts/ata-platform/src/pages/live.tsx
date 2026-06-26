@@ -80,6 +80,22 @@ function useNextUpcoming() {
   });
 }
 
+const DEFAULT_MUX_PLAYBACK_ID = 'QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00';
+
+function MuxPlayer({ title }: { title: string }) {
+  return (
+    <div className="relative w-full h-full">
+      <iframe
+        src={`https://player.mux.com/${DEFAULT_MUX_PLAYBACK_ID}`}
+        title={title}
+        className="absolute inset-0 w-full h-full border-0"
+        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -215,28 +231,28 @@ export default function Live() {
 
   const isLoading = loadingStream || loadingSettings || (!!stream && isAuthenticated && loadingAccess);
 
+  const showPaywall = !isLoading && !!stream && !access?.hasAccess;
+
   return (
     <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 min-w-0">
-      {/* Player / placeholder area */}
-      {isLoading ? (
-        <div className="aspect-video w-full rounded-xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-900">
-          <Skeleton className="w-full h-full bg-slate-800" />
-        </div>
-      ) : !stream || !liveStreamUrl ? (
-        /* No broadcast — render outside aspect-video so content is never clipped */
-        <NoLiveBroadcast />
-      ) : access?.hasAccess ? (
-        <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
-          <HlsPlayer hlsUrl={liveStreamUrl} title={stream.title} />
-        </div>
-      ) : (
-        /* Paywall */
-        <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
-          {stream.thumbnailUrl && (
-            <img src={stream.thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-10" />
-          )}
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur">
-            <div className="relative z-10 text-center px-6 max-w-md">
+      {/* ── Player area — always visible ─────────────────────── */}
+      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
+        {isLoading ? (
+          <Skeleton className="absolute inset-0 w-full h-full bg-slate-800" />
+        ) : (
+          /* Always show a feed — Mux default unless a URL is configured in settings */
+          liveStreamUrl
+            ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? 'ATA Live'} />
+            : <MuxPlayer title={stream?.title ?? 'ATA Live'} />
+        )}
+
+        {/* Paywall overlay — only when a live DB stream requires purchase */}
+        {showPaywall && stream && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-sm z-10">
+            {stream.thumbnailUrl && (
+              <img src={stream.thumbnailUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-10 -z-10" />
+            )}
+            <div className="relative text-center px-6 max-w-md">
               <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-amber-500/10 border border-amber-500/30 mb-3 sm:mb-5">
                 <Lock className="h-5 w-5 sm:h-7 sm:w-7 text-amber-400" />
               </div>
@@ -278,33 +294,25 @@ export default function Live() {
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* ── Buy Access shortcut bar ─────────────────────────── */}
-      {stream && liveStreamUrl && !isLoading && !access?.hasAccess && (
+      {/* ── Buy Access shortcut bar (below player) ───────────── */}
+      {showPaywall && stream && (
         isAuthenticated ? (
-          /* Authenticated but no access — one-tap buy strip */
           <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-950/60 via-slate-900/80 to-slate-900 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {/* Left: lock + info */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="shrink-0 h-10 w-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
                 <Lock className="h-5 w-5 text-amber-400" />
               </div>
               <div className="min-w-0">
                 <p className="text-white font-semibold text-sm leading-tight">Unlock Live Access</p>
-                <p className="text-slate-400 text-xs mt-0.5 truncate">
-                  24-hour access · charged from your wallet
-                </p>
+                <p className="text-slate-400 text-xs mt-0.5 truncate">24-hour access · charged from your wallet</p>
               </div>
             </div>
-
-            {/* Right: price + button */}
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="text-right shrink-0">
-                <p className="text-amber-400 font-bold font-mono text-xl leading-none">
-                  ${stream.accessPrice.toFixed(2)}
-                </p>
+                <p className="text-amber-400 font-bold font-mono text-xl leading-none">${stream.accessPrice.toFixed(2)}</p>
                 <p className="text-slate-600 text-[10px] mt-0.5">one-time</p>
               </div>
               <Button
@@ -317,14 +325,11 @@ export default function Live() {
                     <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
                     Processing…
                   </span>
-                ) : (
-                  'Buy Access & Watch'
-                )}
+                ) : 'Buy Access & Watch'}
               </Button>
             </div>
           </div>
         ) : (
-          /* Guest — sign-in prompt */
           <div className="rounded-2xl border border-teal-500/30 bg-gradient-to-r from-teal-950/40 via-slate-900/80 to-slate-900 px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="shrink-0 h-10 w-10 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center">
@@ -332,9 +337,7 @@ export default function Live() {
               </div>
               <div>
                 <p className="text-white font-semibold text-sm">Sign in to watch live</p>
-                <p className="text-slate-400 text-xs mt-0.5">
-                  ${stream.accessPrice.toFixed(2)} for 24-hour access
-                </p>
+                <p className="text-slate-400 text-xs mt-0.5">${stream.accessPrice.toFixed(2)} for 24-hour access</p>
               </div>
             </div>
             <Link href="/login" className="w-full sm:w-auto">
@@ -345,6 +348,9 @@ export default function Live() {
           </div>
         )
       )}
+
+      {/* ── No active event — upcoming schedule nudge ─────────── */}
+      {!isLoading && !stream && <NoLiveBroadcast />}
 
       {/* Stream info bar */}
       {stream && (
