@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict upenJAyoHogURcXqSmKHHEBi7b0S6pE8IzFgEAPQFR1m1bQnEXrBNKG9bKaGyJk
+\restrict bZ4BFYk80Qsj3iTar8J2ZnEmUocO3H4widd0Tr25g8ckaivYmJaFIaFW6EsfF7g
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -901,7 +901,7 @@ ALTER TABLE ONLY public.wallets ALTER COLUMN id SET DEFAULT nextval('public.wall
 --
 
 COPY public.announcements (id, title, content, is_active, priority, created_at, updated_at) FROM stdin;
-1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	t	10	2026-06-15 19:17:47.184937+00	2026-06-25 22:55:36.08+00
+1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	f	10	2026-06-15 19:17:47.184937+00	2026-06-26 12:27:45.663+00
 \.
 
 
@@ -1014,19 +1014,19 @@ COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, creat
 COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stream_key, status, start_time, end_time, viewer_count, access_price, created_at, updated_at, city, country) FROM stdin;
 4	Nakawa Boxing Club Showcase	Young boxing talents from Nakawa show what they've got.	boxing	https://images.unsplash.com/photo-1565846930803-a7e4a6b7e5e4?w=800&q=80	\N	\N	ended	2026-06-12 16:31:06.62+00	2026-06-13 16:31:06.62+00	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:31:06.623709+00	\N	\N
 1	Kampala Pool Championship - Quarter Finals	Top pool players from Kampala face off in the quarter final round.	pool	https://images.unsplash.com/photo-1615672968435-75e0c291cd6e?w=800&q=80	https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8	\N	ended	2026-06-14 16:31:06.62+00	2026-06-15 16:34:42.477+00	142	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 16:34:42.477+00	\N	\N
-5	Test Pool Match	\N	pool	\N	\N	\N	upcoming	2026-06-20 15:00:00+00	\N	0	1.50	2026-06-15 19:06:10.910462+00	2026-06-15 19:06:10.910462+00	\N	\N
-2	Lugogo Boxing Night - Main Event	Heavyweight showdown at Lugogo Arena. The main event you've been waiting for.	boxing	https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&q=80	\N	\N	upcoming	2026-06-16 18:31:00+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 21:53:28.67+00	Lusaka	Zambia
-11	Matavu Ukasha VS Kasasa Isaac	\N	boxing	\N	\N	\N	upcoming	2026-06-20 11:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:14:13.462438+00	\N	\N
-12	Ali Hassan VS John Doe	\N	pool	\N	\N	\N	upcoming	2026-06-20 12:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:14:13.462438+00	\N	\N
-6	Musuna Jule VS Alex Ambo		tournament	/uploads/thumb-1781565397631-khwqz5.png	\N	\N	upcoming	2026-06-25 16:00:00+00	\N	0	1.50	2026-06-15 19:06:11.15375+00	2026-06-15 23:16:38.779+00	\N	\N
-15	Joseph Kato VS Richard Wanyama		boxing	/uploads/thumb-1781565449802-31q8lm.jpg	\N	\N	upcoming	2026-06-22 17:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:30.071+00	\N	\N
-14	Caesar Chandinga VS Jabulani		pool	/uploads/thumb-1781565468263-x84aol.jpg	\N	\N	upcoming	2026-06-21 15:54:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:48.614+00	Lagos	Nigeria
-13	Jacob VS Caesar Chandinga		pool	/uploads/thumb-1781565483093-ej4d6o.jpeg	\N	\N	upcoming	2026-06-20 19:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:18:03.377+00	Lagos	Nigeria
-3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	/uploads/thumb-1781565511893-cf2kgm.png	\N	\N	upcoming	2026-06-17 20:31:00+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 23:18:32.232+00	Kampala	Uganda
-8	Moses Nkosi VS Emmanuel Atiku		boxing	/uploads/thumb-1781565578428-k8dj0x.jpg	\N	\N	upcoming	2026-06-16 19:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:19:39.043+00	\N	\N
-7	Brian Lubega VS Patrick Okello		pool	/uploads/thumb-1781565625295-0oehmv.jpg	\N	\N	upcoming	2026-06-16 14:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:25.592+00	\N	\N
-9	Caesar Chandinga VS Serge		pool	/uploads/thumb-1781565653292-8uuyff.jpeg	\N	\N	upcoming	2026-06-18 17:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:53.647+00	Lagos	Nigeria
-10	Siyabonga Shezi VS Caesar Chandinga		pool	/uploads/thumb-1781565717628-74qmou.jpg	\N	\N	upcoming	2026-06-19 17:00:00+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:21:57.935+00	Lagos	Nigeria
+5	Test Pool Match	\N	pool	\N	\N	\N	upcoming	2026-07-05 12:13:24.231916+00	\N	0	1.50	2026-06-15 19:06:10.910462+00	2026-06-15 19:06:10.910462+00	\N	\N
+2	Lugogo Boxing Night - Main Event	Heavyweight showdown at Lugogo Arena. The main event you've been waiting for.	boxing	https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&q=80	\N	\N	upcoming	2026-06-29 12:13:24.231916+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 21:53:28.67+00	Lusaka	Zambia
+11	Matavu Ukasha VS Kasasa Isaac	\N	boxing	\N	\N	\N	upcoming	2026-07-23 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:14:13.462438+00	\N	\N
+12	Ali Hassan VS John Doe	\N	pool	\N	\N	\N	upcoming	2026-07-26 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:14:13.462438+00	\N	\N
+6	Musuna Jule VS Alex Ambo		tournament	/uploads/thumb-1781565397631-khwqz5.png	\N	\N	upcoming	2026-07-08 12:13:24.231916+00	\N	0	1.50	2026-06-15 19:06:11.15375+00	2026-06-15 23:16:38.779+00	\N	\N
+15	Joseph Kato VS Richard Wanyama		boxing	/uploads/thumb-1781565449802-31q8lm.jpg	\N	\N	upcoming	2026-08-04 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:30.071+00	\N	\N
+14	Caesar Chandinga VS Jabulani		pool	/uploads/thumb-1781565468263-x84aol.jpg	\N	\N	upcoming	2026-08-01 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:48.614+00	Lagos	Nigeria
+13	Jacob VS Caesar Chandinga		pool	/uploads/thumb-1781565483093-ej4d6o.jpeg	\N	\N	upcoming	2026-07-29 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:18:03.377+00	Lagos	Nigeria
+3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	/uploads/thumb-1781565511893-cf2kgm.png	\N	\N	upcoming	2026-07-02 12:13:24.231916+00	\N	0	1.50	2026-06-15 16:31:06.623709+00	2026-06-15 23:18:32.232+00	Kampala	Uganda
+8	Moses Nkosi VS Emmanuel Atiku		boxing	/uploads/thumb-1781565578428-k8dj0x.jpg	\N	\N	upcoming	2026-07-14 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:19:39.043+00	\N	\N
+7	Brian Lubega VS Patrick Okello		pool	/uploads/thumb-1781565625295-0oehmv.jpg	\N	\N	upcoming	2026-07-11 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:25.592+00	\N	\N
+9	Caesar Chandinga VS Serge		pool	/uploads/thumb-1781565653292-8uuyff.jpeg	\N	\N	upcoming	2026-07-17 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:53.647+00	Lagos	Nigeria
+10	Siyabonga Shezi VS Caesar Chandinga		pool	/uploads/thumb-1781565717628-74qmou.jpg	\N	\N	upcoming	2026-07-20 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:21:57.935+00	Lagos	Nigeria
 \.
 
 
@@ -1061,7 +1061,7 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at, payout_method, payout_account, payout_method_set_at) FROM stdin;
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI0Mjc3MDEsImV4cCI6MTc4NTAxOTcwMX0.ZzzHYHGDssRFUD4lXVjVYlGxNgCmj9t1r-zakywDWe8	2026-06-15 16:31:06.605107+00	2026-06-25 22:48:21.209+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00
 3	finance@atasportslive.com	$2b$10$kYls7fiDwBZGh/f3VZu9a.MMXOYhby4Q/.TXly/IMin3.ioz1rE2.	Finance Officer	\N	finance	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInJvbGUiOiJmaW5hbmNlIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI0Mjc3MDEsImV4cCI6MTc4NTAxOTcwMX0.VRS8oDZ1cOwOB9sD7sUh_rkmDOO_MPstMrtbxX-1eWg	2026-06-25 22:43:39.335176+00	2026-06-25 22:48:21.489+00	\N	\N	\N
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyNDcwOTk3LCJleHAiOjE3ODUwNjI5OTd9.SCyTSUyYr_--2y2uvpYP_FCT2SqtkDsSHiho3WqWH_c	2026-06-15 16:31:06.226579+00	2026-06-26 10:49:57.551+00	\N	\N	\N
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyNDc2OTA5LCJleHAiOjE3ODUwNjg5MDl9.0z8z0lj_6KSxaF4q_Q-PXoX18oLg48xMm6-wKiRiDw0	2026-06-15 16:31:06.226579+00	2026-06-26 12:28:29.438+00	\N	\N	\N
 \.
 
 
@@ -1418,5 +1418,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict upenJAyoHogURcXqSmKHHEBi7b0S6pE8IzFgEAPQFR1m1bQnEXrBNKG9bKaGyJk
+\unrestrict bZ4BFYk80Qsj3iTar8J2ZnEmUocO3H4widd0Tr25g8ckaivYmJaFIaFW6EsfF7g
 
