@@ -37,6 +37,24 @@ function usePendingWithdrawalCount() {
   });
 }
 
+function useApprovedWithdrawalCount() {
+  const token = useAuthStore.getState().token;
+  return useQuery({
+    queryKey: ['admin-approved-count'],
+    queryFn: async () => {
+      if (!token) return 0;
+      const res = await fetch('/api/admin/approved-withdrawals', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return Array.isArray(data) ? data.length : 0;
+    },
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
+
 const navItems = [
   { href: '/admin',                  label: 'Dashboard',     icon: LayoutDashboard, exact: true },
   { href: '/admin/slides',           label: 'Hero Slides',   icon: GalleryHorizontalEnd },
@@ -56,6 +74,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { data: pendingCount = 0 } = usePendingWithdrawalCount();
+  const { data: approvedCount = 0 } = useApprovedWithdrawalCount();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location === href : location.startsWith(href);
@@ -64,7 +83,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     <nav className="flex flex-col gap-1">
       {navItems.map(({ href, label, icon: Icon, exact, badge }) => {
         const active = isActive(href, exact);
-        const showBadge = badge && pendingCount > 0;
+        const isWithdrawals = badge;
         return (
           <Link key={href} href={href} onClick={onNav}>
             <div
@@ -76,9 +95,24 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             >
               <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-teal-400' : ''}`} />
               <span className="flex-1">{label}</span>
-              {showBadge && (
-                <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold flex items-center justify-center leading-none">
-                  {pendingCount > 99 ? '99+' : pendingCount}
+              {isWithdrawals && (
+                <span className="flex items-center gap-1">
+                  {pendingCount > 0 && (
+                    <span
+                      title={`${pendingCount} pending — needs your review`}
+                      className="min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold flex items-center justify-center leading-none"
+                    >
+                      {pendingCount > 99 ? '99+' : pendingCount}
+                    </span>
+                  )}
+                  {approvedCount > 0 && (
+                    <span
+                      title={`${approvedCount} approved — awaiting finance payment`}
+                      className="min-w-[20px] h-5 px-1.5 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center leading-none"
+                    >
+                      {approvedCount > 99 ? '99+' : approvedCount}
+                    </span>
+                  )}
                 </span>
               )}
             </div>
