@@ -3,7 +3,10 @@ import jwt from "jsonwebtoken";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
-const JWT_SECRET = process.env.JWT_SECRET || "ata-platform-secret-2024";
+const JWT_SECRET = process.env.SESSION_SECRET || process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("SESSION_SECRET environment variable is required but was not set.");
+}
 
 export interface AuthRequest extends Request {
   userId?: number;
