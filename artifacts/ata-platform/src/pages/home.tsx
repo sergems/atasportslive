@@ -8,6 +8,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Countdown } from '@/components/ui/countdown';
 import { Play, Trophy, Zap, Megaphone, MapPin, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import tigoPesa from '@assets/6491beebed5bfcd9b9608baf_tigo_pesa_1782470222582.webp';
+import airtelMoney from '@assets/airtel-money-copy_1782470222583.png';
+import mastercard from '@assets/mastercard-symbol_transparentbg_1782470222583.png';
+import mpesa from '@assets/m-pesa-seeklogo_1782470222583.png';
+import visa from '@assets/Visa_Brandmark_Blue_RGB_2021_1782470222584.png';
 
 interface Announcement { id: number; title: string; content: string; priority: number; }
 interface Slide {
@@ -388,6 +393,29 @@ export default function Home() {
               No upcoming streams scheduled.
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Payment Partners */}
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/40 px-6 py-5">
+        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 text-center mb-4">
+          Accepted payment methods
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {[
+            { src: airtelMoney, alt: 'Airtel Money', bg: 'bg-black' },
+            { src: mpesa,       alt: 'M-Pesa',       bg: 'bg-black' },
+            { src: tigoPesa,    alt: 'Tigo Pesa',    bg: 'bg-[#002d6e]' },
+            { src: visa,        alt: 'Visa',          bg: 'bg-black' },
+            { src: mastercard,  alt: 'Mastercard',   bg: 'bg-black' },
+          ].map(({ src, alt, bg }) => (
+            <div
+              key={alt}
+              className={`${bg} rounded-xl flex items-center justify-center px-4 py-2.5 h-12 w-28 border border-white/5 shadow-sm`}
+            >
+              <img src={src} alt={alt} className="max-h-7 max-w-full object-contain" />
+            </div>
+          ))}
         </div>
       </section>
 
