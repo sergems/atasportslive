@@ -27,10 +27,16 @@ export default function Login() {
 
   const { user } = useAuth();
 
+  const roleRedirect = (role?: string) => {
+    if (role === 'admin') return '/admin';
+    if (role === 'finance') return '/finance/dashboard';
+    return '/streams';
+  };
+
   useEffect(() => {
     document.title = 'Login - ATA Platform';
     if (isAuthenticated) {
-      setLocation(user?.role === 'admin' ? '/admin' : '/streams');
+      setLocation(roleRedirect(user?.role));
     }
   }, [isAuthenticated, user, setLocation]);
 
@@ -39,7 +45,7 @@ export default function Login() {
       onSuccess: (res) => {
         login(res.accessToken, res.user);
         toast.success('Logged in successfully');
-        setLocation(res.user.role === 'admin' ? '/admin' : '/streams');
+        setLocation(roleRedirect(res.user.role));
       },
       onError: (err: any) => {
         toast.error('Login failed', { description: err?.message || 'Invalid credentials' });
