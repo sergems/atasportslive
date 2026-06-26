@@ -399,13 +399,13 @@ export default function Home() {
       {/* Payment Partners */}
       <section className="flex flex-wrap items-center justify-center gap-6 py-2">
         {[
+          { src: mastercard,  alt: 'Mastercard' },
+          { src: visa,        alt: 'Visa' },
           { src: airtelMoney, alt: 'Airtel Money' },
           { src: mpesa,       alt: 'M-Pesa' },
           { src: tigoPesa,    alt: 'Tigo Pesa' },
-          { src: visa,        alt: 'Visa' },
-          { src: mastercard,  alt: 'Mastercard' },
         ].map(({ src, alt }) => (
-          <img key={alt} src={src} alt={alt} className="h-8 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
+          <img key={alt} src={src} alt={alt} className="h-[45px] w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
         ))}
       </section>
 
