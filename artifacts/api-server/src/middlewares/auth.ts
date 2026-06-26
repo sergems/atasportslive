@@ -8,6 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "ata-platform-secret-2024";
 export interface AuthRequest extends Request {
   userId?: number;
   userRole?: string;
+  userEmail?: string;
 }
 
 export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {

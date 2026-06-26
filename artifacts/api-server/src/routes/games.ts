@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, gamesTable, streamsTable, betsTable, walletsTable, transactionsTable } from "@workspace/db";
+import { db, gamesTable, streamsTable, betsTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
 import { eq, desc, asc, sql, and } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
+import { sendMail, templates } from "../lib/mailer";
 
 const router = Router();
 
@@ -173,6 +174,19 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
         description: `Bet win payout for game #${id}`,
       });
       await notify(bet.userId, "bet_won", "You Won!", `Congratulations! You won $${payout.toFixed(2)} on your bet.`);
+      const [winUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
+      if (winUser?.email) {
+        sendMail({
+          to: winUser.email,
+          subject: `You Won $${payout.toFixed(2)}! – ATA Sports Live`,
+          html: templates.betWon({
+            name: winUser.fullName ?? winUser.email,
+            stake: parseFloat(bet.stake as string),
+            payout,
+            gameName: `${game.playerA} vs ${game.playerB}`,
+          }),
+        }).catch(() => {});
+      }
     } else if (newStatus === "refunded") {
       const refund = parseFloat(bet.stake as string);
       await db.update(walletsTable).set({
@@ -192,6 +206,18 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
       await notify(bet.userId, "bet_refunded", "Bet Refunded", `Your bet was refunded due to a draw.`);
     } else {
       await notify(bet.userId, "bet_lost", "Bet Lost", `Your bet on game #${id} did not win.`);
+      const [lostUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
+      if (lostUser?.email) {
+        sendMail({
+          to: lostUser.email,
+          subject: `Bet Result – ATA Sports Live`,
+          html: templates.betLost({
+            name: lostUser.fullName ?? lostUser.email,
+            stake: parseFloat(bet.stake as string),
+            gameName: `${game.playerA} vs ${game.playerB}`,
+          }),
+        }).catch(() => {});
+      }
     }
     await notify(bet.userId, "match_result", "Match Result", `Game #${id} result: ${result.replace(/_/g, " ")}`);
   }

@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, betsTable, gamesTable, walletsTable, transactionsTable } from "@workspace/db";
+import { db, betsTable, gamesTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
 import { eq, desc, sql, and, ne } from "drizzle-orm";
 import { authMiddleware, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
+import { sendMail, templates } from "../lib/mailer";
 
 const router = Router();
 
@@ -121,6 +122,32 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
 
     await notify(userId, "bet_matched", "Bet Matched!", `Your bet of $${stake} has been matched!`);
     await notify(opponent.userId, "bet_matched", "Bet Matched!", `Your bet of $${stake} has been matched!`);
+
+    // Email both users
+    const [betUser, oppUser] = await Promise.all([
+      db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1).then((r: typeof usersTable.$inferSelect[]) => r[0]),
+      db.select().from(usersTable).where(eq(usersTable.id, opponent.userId)).limit(1).then((r: typeof usersTable.$inferSelect[]) => r[0]),
+    ]);
+    const gameName = `${game.playerA} vs ${game.playerB}`;
+    const betEmailPairs: [typeof betUser, string][] = [
+      [betUser, outcome],
+      [oppUser, oppositeOutcome],
+    ];
+    for (const [u, betOutcome] of betEmailPairs) {
+      if (u?.email) {
+        sendMail({
+          to: u.email,
+          subject: "Bet Matched – ATA Sports Live",
+          html: templates.betMatched({
+            name: u.fullName ?? u.email,
+            stake,
+            outcome: betOutcome,
+            potentialReturn: winnerPayout,
+            gameName,
+          }),
+        }).catch(() => {});
+      }
+    }
 
     res.status(201).json({ bet: toBet(newBet), matchStatus: "exact_match", nearMatches: [] });
     return;

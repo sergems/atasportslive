@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   Settings, Radio, Save, ExternalLink, CheckCircle2, AlertCircle,
-  CreditCard, Eye, EyeOff, Shield, Globe
+  CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,6 +33,16 @@ export default function AdminSettings() {
   const [pesapalCurrency, setPesapalCurrency] = useState('UGX');
   const [showSecret, setShowSecret] = useState(false);
 
+  // SMTP
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState('587');
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPass, setSmtpPass] = useState('');
+  const [smtpFrom, setSmtpFrom] = useState('');
+  const [smtpSecure, setSmtpSecure] = useState(false);
+  const [showSmtpPass, setShowSmtpPass] = useState(false);
+  const [testingSmtp, setTestingSmtp] = useState(false);
+
   useEffect(() => {
     if (settings) {
       setLiveStreamUrl(settings.liveStreamUrl ?? '');
@@ -40,6 +50,12 @@ export default function AdminSettings() {
       setPesapalSecret(settings.pesapal_consumer_secret ?? '');
       setPesapalEnv((settings.pesapal_environment as 'sandbox' | 'live') ?? 'live');
       setPesapalCurrency(settings.pesapal_currency ?? 'UGX');
+      setSmtpHost(settings.smtp_host ?? '');
+      setSmtpPort(settings.smtp_port ?? '587');
+      setSmtpUser(settings.smtp_user ?? '');
+      setSmtpPass(settings.smtp_pass ?? '');
+      setSmtpFrom(settings.smtp_from ?? '');
+      setSmtpSecure(settings.smtp_secure === 'true');
     }
   }, [settings]);
 
@@ -70,6 +86,39 @@ export default function AdminSettings() {
   const pesapalIpnId = settings?.pesapal_ipn_id;
 
   const saveStreamSettings = () => saveMutation.mutate({ liveStreamUrl });
+
+  const saveSmtpSettings = () => {
+    if (!smtpHost.trim() || !smtpUser.trim() || !smtpPass.trim()) {
+      toast.error('Host, Username and Password are required');
+      return;
+    }
+    saveMutation.mutate({
+      smtp_host: smtpHost.trim(),
+      smtp_port: smtpPort.trim() || '587',
+      smtp_user: smtpUser.trim(),
+      smtp_pass: smtpPass.trim(),
+      smtp_from: smtpFrom.trim(),
+      smtp_secure: smtpSecure ? 'true' : 'false',
+    });
+  };
+
+  const sendTestEmail = async () => {
+    setTestingSmtp(true);
+    try {
+      const r = await fetch('/api/settings/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      const d = await r.json();
+      if (r.ok) toast.success('Test email sent — check your inbox.');
+      else toast.error(d.error || 'Failed to send test email');
+    } catch {
+      toast.error('Failed to send test email');
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
+
   const savePesapalSettings = () => {
     if (!pesapalKey.trim() || !pesapalSecret.trim()) {
       toast.error('Consumer Key and Secret are required');
@@ -84,6 +133,14 @@ export default function AdminSettings() {
     });
   };
 
+  const isSmtpConfigured = !!(settings?.smtp_host && settings?.smtp_user && settings?.smtp_pass);
+  const smtpDirty = smtpHost !== (settings?.smtp_host ?? '') ||
+    smtpPort !== (settings?.smtp_port ?? '587') ||
+    smtpUser !== (settings?.smtp_user ?? '') ||
+    smtpPass !== (settings?.smtp_pass ?? '') ||
+    smtpFrom !== (settings?.smtp_from ?? '') ||
+    smtpSecure !== (settings?.smtp_secure === 'true');
+
   return (
     <div className="space-y-8 max-w-2xl">
       <div className="flex items-center gap-3">
@@ -93,6 +150,155 @@ export default function AdminSettings() {
           <p className="text-slate-400 text-sm mt-0.5">Global platform configuration</p>
         </div>
       </div>
+
+      {/* ── Email / SMTP ── */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Mail className="h-4 w-4 text-teal-400" /> Email Notifications (SMTP)
+            </CardTitle>
+            {isSmtpConfigured ? (
+              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 gap-1">
+                <CheckCircle2 className="h-3 w-3" /> Configured
+              </Badge>
+            ) : (
+              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1">
+                <AlertCircle className="h-3 w-3" /> Not set
+              </Badge>
+            )}
+          </div>
+          <CardDescription className="text-slate-400">
+            SMTP credentials for sending email notifications to users and the finance team.
+            Emails are sent for: withdrawal approved/paid/rejected, bet matched, bet won/lost.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Host + Port */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-slate-300 text-sm flex items-center gap-1.5">
+                <Server className="h-3.5 w-3.5" /> SMTP Host
+              </Label>
+              <Input
+                value={smtpHost}
+                onChange={e => setSmtpHost(e.target.value)}
+                placeholder="mail.example.com"
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-sm"
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-slate-300 text-sm">Port</Label>
+              <Input
+                value={smtpPort}
+                onChange={e => setSmtpPort(e.target.value)}
+                placeholder="587"
+                className="bg-slate-800 border-slate-700 text-white font-mono text-sm"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* User */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5" /> Username / Email
+            </Label>
+            <Input
+              value={smtpUser}
+              onChange={e => setSmtpUser(e.target.value)}
+              placeholder="noreply@atasportslive.com"
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-sm"
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm flex items-center gap-1.5">
+              <Lock className="h-3.5 w-3.5" /> Password / App Password
+            </Label>
+            <div className="relative">
+              <Input
+                type={showSmtpPass ? 'text' : 'password'}
+                value={smtpPass}
+                onChange={e => setSmtpPass(e.target.value)}
+                placeholder="••••••••••••"
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-sm pr-10"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowSmtpPass(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {showSmtpPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* From address */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">From Address (optional)</Label>
+            <Input
+              value={smtpFrom}
+              onChange={e => setSmtpFrom(e.target.value)}
+              placeholder='ATA Sports Live <noreply@atasportslive.com>'
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 text-sm"
+              disabled={isLoading}
+            />
+            <p className="text-xs text-slate-500">Leave blank to use the username as the From address.</p>
+          </div>
+
+          {/* SSL toggle */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSmtpSecure(v => !v)}
+              className={`relative w-10 h-5 rounded-full transition-colors ${smtpSecure ? 'bg-teal-500' : 'bg-slate-700'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${smtpSecure ? 'translate-x-5' : ''}`} />
+            </button>
+            <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => setSmtpSecure(v => !v)}>
+              Use SSL/TLS (port 465) — disable for STARTTLS (port 587)
+            </Label>
+          </div>
+
+          <div className="pt-1 flex flex-wrap items-center gap-3">
+            <Button
+              onClick={saveSmtpSettings}
+              disabled={saveMutation.isPending || isLoading}
+              className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {saveMutation.isPending ? 'Saving…' : 'Save Email Settings'}
+            </Button>
+            {isSmtpConfigured && !smtpDirty && (
+              <Button
+                variant="outline"
+                onClick={sendTestEmail}
+                disabled={testingSmtp}
+                className="border-slate-700 text-slate-300 hover:text-white gap-2"
+              >
+                <Send className="h-4 w-4" />
+                {testingSmtp ? 'Sending…' : 'Send Test Email'}
+              </Button>
+            )}
+            {smtpDirty && <span className="text-amber-400 text-xs">Unsaved changes — save before testing</span>}
+          </div>
+
+          <div className="rounded-md bg-slate-800/50 border border-slate-700 px-3 py-2.5 text-xs text-slate-500 space-y-1">
+            <p className="font-semibold text-slate-400">When emails are sent</p>
+            <ul className="space-y-0.5 list-disc list-inside">
+              <li>User: withdrawal approved, paid, or rejected</li>
+              <li>Finance team: every time admin approves a withdrawal (payment queue alert)</li>
+              <li>User: bet matched with opponent</li>
+              <li>User: bet won (with payout amount) or lost</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── Pesapal Payment Gateway ── */}
       <Card className="bg-slate-900 border-slate-700">

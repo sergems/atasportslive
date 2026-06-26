@@ -4,6 +4,7 @@ import { db, walletsTable, transactionsTable, usersTable, vouchersTable } from "
 import { eq, sql, desc } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
+import { sendMail, templates } from "../lib/mailer";
 import { logger } from "../lib/logger";
 import {
   getPesapalConfig,
@@ -203,7 +204,49 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
   }
   // Move to "approved" — funds stay locked in pendingBalance until finance confirms payment
   await db.update(transactionsTable).set({ status: "approved" }).where(eq(transactionsTable.id, id));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, tx.userId)).limit(1);
   await notify(tx.userId, "withdrawal_approved", "Withdrawal Approved", `Your withdrawal of $${tx.amount} has been approved and is being processed by our finance team.`);
+
+  // Email user
+  if (user?.email) {
+    sendMail({
+      to: user.email,
+      subject: "Withdrawal Approved – ATA Sports Live",
+      html: templates.withdrawalApprovedUser({
+        name: user.fullName ?? user.email,
+        amount: parseFloat(tx.amount as string),
+        method: tx.paymentMethod?.replace(/_/g, " ") ?? "",
+        account: tx.reference ?? "",
+      }),
+    }).catch(() => {});
+  }
+
+  // Email all finance users
+  const financeUsers = await db.select().from(usersTable).where(eq(usersTable.role as any, "finance" as any));
+  const approvedList = await db.select().from(transactionsTable).where(
+    eq(transactionsTable.status, "approved")
+  );
+  const approvedCount = approvedList.filter((t) => t.type === "withdrawal").length;
+  const approvedValue = approvedList.filter((t) => t.type === "withdrawal")
+    .reduce((s, t) => s + parseFloat(t.amount as string), 0);
+
+  for (const fu of financeUsers) {
+    if (fu.email) {
+      sendMail({
+        to: fu.email,
+        subject: `New Withdrawal to Pay – $${parseFloat(tx.amount as string).toFixed(2)} via ${tx.paymentMethod ?? ""}`,
+        html: templates.withdrawalFinanceAlert({
+          count: approvedCount,
+          totalValue: approvedValue,
+          userName: user?.fullName ?? `User #${tx.userId}`,
+          amount: parseFloat(tx.amount as string),
+          method: tx.paymentMethod?.replace(/_/g, " ") ?? "",
+          account: tx.reference ?? "",
+        }),
+      }).catch(() => {});
+    }
+  }
+
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
 });
@@ -222,7 +265,23 @@ router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("finance", "a
     balance: sql`balance - ${parseFloat(tx.amount as string)}`,
     pendingBalance: sql`pending_balance - ${parseFloat(tx.amount as string)}`,
   }).where(eq(walletsTable.userId, tx.userId));
+  const [paidUser] = await db.select().from(usersTable).where(eq(usersTable.id, tx.userId)).limit(1);
   await notify(tx.userId, "withdrawal_approved", "Payment Sent", `Your withdrawal of $${tx.amount} has been paid. Please check your ${tx.paymentMethod?.replace("_", " ")} account.`);
+
+  // Email user
+  if (paidUser?.email) {
+    sendMail({
+      to: paidUser.email,
+      subject: "Payment Sent – ATA Sports Live",
+      html: templates.withdrawalPaidUser({
+        name: paidUser.fullName ?? paidUser.email,
+        amount: parseFloat(tx.amount as string),
+        method: tx.paymentMethod?.replace(/_/g, " ") ?? "",
+        account: tx.reference ?? "",
+      }),
+    }).catch(() => {});
+  }
+
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
 });
@@ -245,6 +304,18 @@ router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"
 
   const reason = note?.trim() ? ` Reason: ${note.trim()}` : "";
   await notify(tx.userId, "withdrawal_rejected", "Withdrawal Rejected", `Your withdrawal of $${tx.amount} has been rejected.${reason}`);
+  const [rejUser] = await db.select().from(usersTable).where(eq(usersTable.id, tx.userId)).limit(1);
+  if (rejUser?.email) {
+    sendMail({
+      to: rejUser.email,
+      subject: "Withdrawal Request Rejected – ATA Sports Live",
+      html: templates.withdrawalRejectedUser({
+        name: rejUser.fullName ?? rejUser.email,
+        amount: parseFloat(tx.amount as string),
+        note: note?.trim(),
+      }),
+    }).catch(() => {});
+  }
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
 });
