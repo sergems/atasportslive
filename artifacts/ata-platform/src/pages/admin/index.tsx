@@ -1,15 +1,45 @@
 import React, { useEffect } from 'react';
 import { useGetAdminStats, useGetRecentActivity } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, Wallet, TrendingUp, Radio, Trophy, ArrowUpRight, ArrowDownLeft, Clock } from 'lucide-react';
+import { Link } from 'wouter';
+import { Users, Wallet, TrendingUp, Radio, Trophy, ArrowUpRight, Clock, ChevronRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { useAuthStore } from '@/lib/auth-store';
+
+function useWithdrawalPipeline() {
+  const token = useAuthStore.getState().token;
+  return useQuery({
+    queryKey: ['admin-withdrawal-pipeline'],
+    queryFn: async () => {
+      const headers = { Authorization: `Bearer ${token}` };
+      const [approvedRes, statsRes] = await Promise.all([
+        fetch('/api/admin/approved-withdrawals', { headers }),
+        fetch('/api/admin/finance-stats', { headers }),
+      ]);
+      const approved = approvedRes.ok ? await approvedRes.json() : [];
+      const finStats = statsRes.ok ? await statsRes.json() : {};
+      return {
+        approvedCount: Array.isArray(approved) ? approved.length : 0,
+        approvedValue: Array.isArray(approved)
+          ? approved.reduce((s: number, t: any) => s + Number(t.amount), 0)
+          : 0,
+        paidToday: finStats.paidToday ?? 0,
+        paidCount: finStats.paidCount ?? 0,
+      };
+    },
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+}
 
 export default function AdminDashboard() {
   useEffect(() => { document.title = 'Admin Dashboard - ATA Platform'; }, []);
 
   const { data: stats, isLoading } = useGetAdminStats();
   const { data: activity } = useGetRecentActivity({ limit: 10 });
+  const { data: pipeline, isLoading: pipelineLoading } = useWithdrawalPipeline();
 
   const statCards = [
     { label: 'Total Users', value: stats?.totalUsers, icon: Users, color: 'text-teal-400', sub: `${stats?.activeUsers || 0} active` },
@@ -48,6 +78,104 @@ export default function AdminDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Withdrawal Pipeline */}
+      <Card className="bg-slate-900 border-primary/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white text-base sm:text-lg flex items-center gap-2">
+              <ArrowUpRight className="h-4 w-4 text-amber-400" /> Withdrawal Pipeline
+            </CardTitle>
+            <Link href="/admin/withdrawals">
+              <span className="text-xs text-teal-400 hover:text-teal-300 transition-colors flex items-center gap-0.5">
+                Manage <ChevronRight className="h-3.5 w-3.5" />
+              </span>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+
+            {/* Stage 1 — Pending */}
+            <Link href="/admin/withdrawals" className="flex-1">
+              <div className="group flex flex-col gap-1.5 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3.5 hover:bg-amber-500/10 transition-colors cursor-pointer">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider">
+                    <Clock className="h-3.5 w-3.5" /> Pending Review
+                  </div>
+                  {!pipelineLoading && (stats?.pendingWithdrawals ?? 0) > 0 && (
+                    <span className="min-w-[22px] h-5 px-1.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold flex items-center justify-center">
+                      {stats!.pendingWithdrawals}
+                    </span>
+                  )}
+                </div>
+                {pipelineLoading ? (
+                  <Skeleton className="h-7 w-16 bg-slate-800" />
+                ) : (
+                  <div className="text-2xl font-bold font-mono text-white leading-tight">
+                    {stats?.pendingWithdrawals ?? 0}
+                  </div>
+                )}
+                <p className="text-[11px] text-slate-500 leading-tight">Needs your approval before going to finance</p>
+              </div>
+            </Link>
+
+            <ChevronRight className="h-5 w-5 text-slate-700 shrink-0 self-center rotate-90 sm:rotate-0" />
+
+            {/* Stage 2 — At Finance */}
+            <Link href="/admin/withdrawals" className="flex-1">
+              <div className="group flex flex-col gap-1.5 rounded-xl border border-blue-500/25 bg-blue-500/5 px-4 py-3.5 hover:bg-blue-500/10 transition-colors cursor-pointer">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-wider">
+                    <ShieldCheck className="h-3.5 w-3.5" /> At Finance
+                  </div>
+                  {!pipelineLoading && (pipeline?.approvedCount ?? 0) > 0 && (
+                    <span className="min-w-[22px] h-5 px-1.5 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {pipeline!.approvedCount}
+                    </span>
+                  )}
+                </div>
+                {pipelineLoading ? (
+                  <Skeleton className="h-7 w-16 bg-slate-800" />
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold font-mono text-white leading-tight">
+                      {pipeline?.approvedCount ?? 0}
+                    </div>
+                    {(pipeline?.approvedValue ?? 0) > 0 && (
+                      <div className="text-xs text-slate-500 font-mono -mt-0.5">${(pipeline!.approvedValue).toFixed(2)} to pay</div>
+                    )}
+                  </>
+                )}
+                <p className="text-[11px] text-slate-500 leading-tight">Approved — finance team making payment</p>
+              </div>
+            </Link>
+
+            <ChevronRight className="h-5 w-5 text-slate-700 shrink-0 self-center rotate-90 sm:rotate-0" />
+
+            {/* Stage 3 — Paid Today */}
+            <div className="flex-1 flex flex-col gap-1.5 rounded-xl border border-teal-500/20 bg-teal-500/5 px-4 py-3.5">
+              <div className="flex items-center gap-2 text-xs font-semibold text-teal-400 uppercase tracking-wider">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Paid Today
+              </div>
+              {pipelineLoading ? (
+                <Skeleton className="h-7 w-16 bg-slate-800" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold font-mono text-teal-400 leading-tight">
+                    ${(pipeline?.paidToday ?? 0).toFixed(2)}
+                  </div>
+                  {(pipeline?.paidCount ?? 0) > 0 && (
+                    <div className="text-xs text-slate-500 font-mono -mt-0.5">{pipeline!.paidCount} total paid</div>
+                  )}
+                </>
+              )}
+              <p className="text-[11px] text-slate-500 leading-tight">Confirmed payments sent to users today</p>
+            </div>
+
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <Card className="bg-slate-900 border-primary/20">
