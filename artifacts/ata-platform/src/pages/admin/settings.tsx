@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   Settings, Radio, Save, ExternalLink, CheckCircle2, AlertCircle,
-  CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send,
+  CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Tv2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -27,6 +27,14 @@ export default function AdminSettings() {
   const { data: settings, isLoading } = useSettings();
 
   const [liveStreamUrl, setLiveStreamUrl] = useState('');
+  // Mux default stream settings
+  const [muxPlaybackId, setMuxPlaybackId] = useState('');
+  const [muxIsLive, setMuxIsLive] = useState(false);
+  const [muxIsFree, setMuxIsFree] = useState(false);
+  const [muxPrice, setMuxPrice] = useState('1.50');
+  const [muxTitle, setMuxTitle] = useState('');
+  const [syncingMux, setSyncingMux] = useState(false);
+
   const [pesapalKey, setPesapalKey] = useState('');
   const [pesapalSecret, setPesapalSecret] = useState('');
   const [pesapalEnv, setPesapalEnv] = useState<'sandbox' | 'live'>('live');
@@ -46,6 +54,11 @@ export default function AdminSettings() {
   useEffect(() => {
     if (settings) {
       setLiveStreamUrl(settings.liveStreamUrl ?? '');
+      setMuxPlaybackId(settings.mux_playback_id ?? '');
+      setMuxIsLive(settings.mux_is_live === 'true');
+      setMuxIsFree(settings.mux_is_free === 'true');
+      setMuxPrice(settings.mux_price ?? '1.50');
+      setMuxTitle(settings.mux_title ?? '');
       setPesapalKey(settings.pesapal_consumer_key ?? '');
       setPesapalSecret(settings.pesapal_consumer_secret ?? '');
       setPesapalEnv((settings.pesapal_environment as 'sandbox' | 'live') ?? 'live');
@@ -86,6 +99,33 @@ export default function AdminSettings() {
   const pesapalIpnId = settings?.pesapal_ipn_id;
 
   const saveStreamSettings = () => saveMutation.mutate({ liveStreamUrl });
+
+  const saveMuxSettings = async () => {
+    if (!muxPlaybackId.trim()) { toast.error('Mux Playback ID is required'); return; }
+    const priceNum = parseFloat(muxPrice);
+    if (isNaN(priceNum) || priceNum < 0) { toast.error('Enter a valid price (0 for free)'); return; }
+    await saveMutation.mutateAsync({
+      mux_playback_id: muxPlaybackId.trim(),
+      mux_is_live: muxIsLive ? 'true' : 'false',
+      mux_is_free: muxIsFree ? 'true' : 'false',
+      mux_price: priceNum.toFixed(2),
+      mux_title: muxTitle.trim() || 'ATA Live Stream',
+    });
+    setSyncingMux(true);
+    try {
+      const r = await fetch('/api/settings/sync-mux', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Sync failed'); }
+      qc.invalidateQueries({ queryKey: ['settings'] });
+      toast.success('Mux stream settings saved and synced.');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to sync Mux stream');
+    } finally {
+      setSyncingMux(false);
+    }
+  };
 
   const saveSmtpSettings = () => {
     if (!smtpHost.trim() || !smtpUser.trim() || !smtpPass.trim()) {
@@ -442,6 +482,129 @@ export default function AdminSettings() {
               <li>On payment, Pesapal sends an IPN notification and redirects back — wallet is credited automatically.</li>
               <li>Changing credentials clears the saved IPN ID so it re-registers on next payment.</li>
             </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Mux Default Stream ── */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Tv2 className="h-4 w-4 text-red-400" />
+              Mux Default Stream
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              {muxIsLive && (
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1 animate-pulse">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-400" /> LIVE
+                </Badge>
+              )}
+              {muxIsFree && (
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">FREE</Badge>
+              )}
+            </div>
+          </div>
+          <CardDescription className="text-slate-400">
+            The default Mux video feed shown on the Live page when no custom stream URL is set.
+            Toggle it live to activate the paywall — mark it free to let everyone watch without paying.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Playback ID */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">Mux Playback ID</Label>
+            <Input
+              value={muxPlaybackId}
+              onChange={e => setMuxPlaybackId(e.target.value)}
+              placeholder="QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00"
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-sm"
+              disabled={isLoading}
+            />
+            <p className="text-xs text-slate-500">
+              The ID from your Mux dashboard — e.g. <code className="text-teal-400">player.mux.com/<strong>YOUR_ID</strong></code>
+            </p>
+          </div>
+
+          {/* Stream title (shown in paywall) */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">Stream Title</Label>
+            <Input
+              value={muxTitle}
+              onChange={e => setMuxTitle(e.target.value)}
+              placeholder="ATA Live Stream"
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 text-sm"
+              disabled={isLoading}
+            />
+            <p className="text-xs text-slate-500">Shown in the paywall overlay and stream info bar.</p>
+          </div>
+
+          {/* Access price */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">Access Price (USD)</Label>
+            <div className="flex items-center gap-2 w-36">
+              <span className="text-slate-400 text-sm">$</span>
+              <Input
+                type="number"
+                min="0"
+                step="0.50"
+                value={muxPrice}
+                onChange={e => setMuxPrice(e.target.value)}
+                className="bg-slate-800 border-slate-700 text-white font-mono text-sm"
+                disabled={isLoading || muxIsFree}
+              />
+            </div>
+            <p className="text-xs text-slate-500">Charged from the user's wallet for 24-hour access.</p>
+          </div>
+
+          {/* Live toggle */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setMuxIsLive(v => !v)}
+                className={`relative w-10 h-5 rounded-full transition-colors ${muxIsLive ? 'bg-red-500' : 'bg-slate-700'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${muxIsLive ? 'translate-x-5' : ''}`} />
+              </button>
+              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => setMuxIsLive(v => !v)}>
+                Stream is <strong className={muxIsLive ? 'text-red-400' : 'text-slate-400'}>{muxIsLive ? 'LIVE' : 'offline'}</strong>
+                {muxIsLive ? ' — paywall is active' : ' — no paywall'}
+              </Label>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setMuxIsFree(v => !v)}
+                className={`relative w-10 h-5 rounded-full transition-colors ${muxIsFree ? 'bg-emerald-500' : 'bg-slate-700'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${muxIsFree ? 'translate-x-5' : ''}`} />
+              </button>
+              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => setMuxIsFree(v => !v)}>
+                Free stream — <span className={muxIsFree ? 'text-emerald-400' : 'text-slate-400'}>
+                  {muxIsFree ? 'anyone can watch without paying' : 'paywall applies when live'}
+                </span>
+              </Label>
+            </div>
+          </div>
+
+          {muxIsLive && !muxIsFree && (
+            <div className="rounded-md bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 text-xs text-amber-400 flex items-start gap-2">
+              <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <span>Paywall is <strong>ON</strong>. Users must pay ${muxPrice || '1.50'} from their wallet for 24-hour access. Toggle "Free stream" to let everyone watch for free.</span>
+            </div>
+          )}
+
+          <div className="pt-1">
+            <Button
+              onClick={saveMuxSettings}
+              disabled={saveMutation.isPending || syncingMux || isLoading}
+              className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {saveMutation.isPending || syncingMux ? 'Saving…' : 'Save Mux Settings'}
+            </Button>
           </div>
         </CardContent>
       </Card>

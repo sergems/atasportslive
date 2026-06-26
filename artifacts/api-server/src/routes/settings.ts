@@ -30,6 +30,47 @@ router.put("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, r
   res.json({ ok: true });
 });
 
+// Sync the Mux default stream record in the streams table so existing
+// stream-access infrastructure handles the paywall automatically.
+router.post("/sync-mux", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'mux_%'`);
+  const s: Record<string, string> = {};
+  for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
+
+  const isLive = s.mux_is_live === "true";
+  const price = s.mux_price || "1.50";
+  const title = s.mux_title || "ATA Live Stream";
+  const status = isLive ? "live" : "upcoming";
+
+  const existing = await db.execute(
+    sql`SELECT id FROM streams WHERE stream_key = '__mux_default__' ORDER BY id LIMIT 1`
+  );
+  const existingRow = (existing.rows as { id: number }[])[0];
+
+  let streamId: number;
+
+  if (existingRow) {
+    await db.execute(
+      sql`UPDATE streams SET title = ${title}, status = ${status}::stream_status, access_price = ${price}, updated_at = NOW() WHERE id = ${existingRow.id}`
+    );
+    streamId = existingRow.id;
+  } else {
+    const inserted = await db.execute(
+      sql`INSERT INTO streams (title, sport, status, start_time, access_price, stream_key, viewer_count, updated_at)
+          VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, '__mux_default__', 0, NOW())
+          RETURNING id`
+    );
+    streamId = (inserted.rows as { id: number }[])[0].id;
+  }
+
+  await db.execute(
+    sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_stream_db_id', ${streamId.toString()}, NOW())
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
+  );
+
+  res.json({ ok: true, streamId });
+});
+
 // Send a test email to the logged-in admin using saved SMTP settings
 router.post("/test-email", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'smtp_%'`);
