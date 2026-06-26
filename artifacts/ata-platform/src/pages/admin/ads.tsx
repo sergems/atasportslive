@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,15 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ImagePlus, Save, Trash2, ExternalLink, LayoutTemplate, CheckCircle2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import { FALLBACK_SLOTS } from '@/components/ads';
 
 const AD_SLOTS = [
-  { key: 'left_1',  label: 'Left Column — Top',    position: 'Desktop left sidebar, top slot' },
-  { key: 'left_2',  label: 'Left Column — Bottom',  position: 'Desktop left sidebar, bottom slot' },
-  { key: 'right_1', label: 'Right Column — Top',   position: 'Desktop right sidebar, top slot' },
-  { key: 'right_2', label: 'Right Column — Bottom', position: 'Desktop right sidebar, bottom slot' },
+  { key: 'left_1',  label: 'Left Column — Top',       position: 'Desktop left sidebar, slot 1 (top)' },
+  { key: 'left_2',  label: 'Left Column — Middle',     position: 'Desktop left sidebar, slot 2 (middle)' },
+  { key: 'left_3',  label: 'Left Column — Bottom',     position: 'Desktop left sidebar, slot 3 (bottom)' },
+  { key: 'right_1', label: 'Right Column — Top',       position: 'Desktop right sidebar, slot 1 (top)' },
+  { key: 'right_2', label: 'Right Column — Middle',    position: 'Desktop right sidebar, slot 2 (middle)' },
+  { key: 'right_3', label: 'Right Column — Bottom',    position: 'Desktop right sidebar, slot 3 (bottom)' },
 ] as const;
 
 type SlotKey = typeof AD_SLOTS[number]['key'];
@@ -22,10 +25,6 @@ interface AdSlotState {
   image: string;
   link: string;
   enabled: boolean;
-}
-
-function settingsKey(slot: SlotKey, field: 'image' | 'link' | 'enabled') {
-  return `ad_slot_${slot}_${field}`;
 }
 
 function useSettings() {
@@ -51,6 +50,7 @@ function AdSlotCard({
   const token = useAuthStore((s) => s.token);
   const [uploading, setUploading] = useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const fallback = FALLBACK_SLOTS[slot.key];
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -85,7 +85,7 @@ function AdSlotCard({
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-white text-sm flex items-center gap-2">
-              <LayoutTemplate className="h-4 w-4 text-teal-400" />
+              <LayoutTemplate className={`h-4 w-4`} style={{ color: fallback.badge.includes('teal') ? '#2dd4bf' : fallback.badge.includes('amber') ? '#fbbf24' : fallback.badge.includes('emerald') ? '#34d399' : fallback.badge.includes('violet') ? '#a78bfa' : fallback.badge.includes('red') ? '#f87171' : '#60a5fa' }} />
               {slot.label}
             </CardTitle>
             <CardDescription className="text-slate-500 text-xs mt-0.5">{slot.position}</CardDescription>
@@ -110,16 +110,11 @@ function AdSlotCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Image preview + upload */}
         <div className="space-y-2">
           <Label className="text-slate-300 text-sm">Ad Image</Label>
           {state.image ? (
             <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-800">
-              <img
-                src={state.image}
-                alt="Ad preview"
-                className="w-full h-40 object-cover"
-              />
+              <img src={state.image} alt="Ad preview" className="w-full h-36 object-cover" />
               <button
                 type="button"
                 onClick={() => onChange('image', '')}
@@ -131,37 +126,28 @@ function AdSlotCard({
             </div>
           ) : (
             <div
-              className="flex flex-col items-center justify-center gap-2 h-40 rounded-xl border-2 border-dashed border-slate-700 bg-slate-800/50 cursor-pointer hover:border-teal-500/40 hover:bg-slate-800 transition-colors"
+              className="flex flex-col items-center justify-center gap-2 h-36 rounded-xl border-2 border-dashed border-slate-700 bg-slate-800/50 cursor-pointer hover:border-teal-500/40 hover:bg-slate-800 transition-colors"
               onClick={() => fileRef.current?.click()}
             >
-              <ImagePlus className="h-8 w-8 text-slate-600" />
-              <p className="text-slate-500 text-sm">Click to upload an ad image</p>
+              <ImagePlus className="h-7 w-7 text-slate-600" />
+              <p className="text-slate-500 text-sm">Click to upload</p>
               <p className="text-slate-600 text-xs">JPEG, PNG, WebP · Max 5 MB</p>
             </div>
           )}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="hidden"
-            onChange={handleFileUpload}
-          />
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="border-slate-700 text-slate-300 hover:text-white gap-2 text-xs"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              {uploading ? 'Uploading…' : state.image ? 'Replace Image' : 'Upload Image'}
-            </Button>
-          </div>
+          <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileUpload} />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="border-slate-700 text-slate-300 hover:text-white gap-2 text-xs"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            {uploading ? 'Uploading…' : state.image ? 'Replace Image' : 'Upload Image'}
+          </Button>
         </div>
 
-        {/* Link URL */}
         <div className="space-y-1.5">
           <Label className="text-slate-300 text-sm flex items-center gap-1.5">
             <ExternalLink className="h-3.5 w-3.5" /> Click-through URL (optional)
@@ -172,7 +158,6 @@ function AdSlotCard({
             placeholder="https://advertiser.com"
             className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 text-sm"
           />
-          <p className="text-xs text-slate-500">Leave blank to make the ad non-clickable.</p>
         </div>
 
         <Button
@@ -195,20 +180,23 @@ export default function AdminAds() {
   const qc = useQueryClient();
   const { data: settings, isLoading } = useSettings();
 
+  const emptySlot = (): AdSlotState => ({ image: '', link: '', enabled: true });
+
   const [slotStates, setSlotStates] = useState<Record<SlotKey, AdSlotState>>({
-    left_1:  { image: '', link: '', enabled: true },
-    left_2:  { image: '', link: '', enabled: true },
-    right_1: { image: '', link: '', enabled: true },
-    right_2: { image: '', link: '', enabled: true },
+    left_1: emptySlot(), left_2: emptySlot(), left_3: emptySlot(),
+    right_1: emptySlot(), right_2: emptySlot(), right_3: emptySlot(),
   });
 
   useEffect(() => {
     if (!settings) return;
+    const parse = (key: string): AdSlotState => ({
+      image:   settings[`ad_slot_${key}_image`] ?? '',
+      link:    settings[`ad_slot_${key}_link`] ?? '',
+      enabled: settings[`ad_slot_${key}_enabled`] !== 'false',
+    });
     setSlotStates({
-      left_1:  { image: settings['ad_slot_left_1_image'] ?? '',  link: settings['ad_slot_left_1_link'] ?? '',  enabled: settings['ad_slot_left_1_enabled'] !== 'false' },
-      left_2:  { image: settings['ad_slot_left_2_image'] ?? '',  link: settings['ad_slot_left_2_link'] ?? '',  enabled: settings['ad_slot_left_2_enabled'] !== 'false' },
-      right_1: { image: settings['ad_slot_right_1_image'] ?? '', link: settings['ad_slot_right_1_link'] ?? '', enabled: settings['ad_slot_right_1_enabled'] !== 'false' },
-      right_2: { image: settings['ad_slot_right_2_image'] ?? '', link: settings['ad_slot_right_2_link'] ?? '', enabled: settings['ad_slot_right_2_enabled'] !== 'false' },
+      left_1: parse('left_1'), left_2: parse('left_2'), left_3: parse('left_3'),
+      right_1: parse('right_1'), right_2: parse('right_2'), right_3: parse('right_3'),
     });
   }, [settings]);
 
@@ -219,9 +207,9 @@ export default function AdminAds() {
     try {
       const s = slotStates[slotKey];
       const updates = {
-        [settingsKey(slotKey, 'image')]:   s.image,
-        [settingsKey(slotKey, 'link')]:    s.link,
-        [settingsKey(slotKey, 'enabled')]: s.enabled ? 'true' : 'false',
+        [`ad_slot_${slotKey}_image`]:   s.image,
+        [`ad_slot_${slotKey}_link`]:    s.link,
+        [`ad_slot_${slotKey}_enabled`]: s.enabled ? 'true' : 'false',
       };
       const res = await fetch('/api/settings', {
         method: 'PUT',
@@ -243,10 +231,7 @@ export default function AdminAds() {
   };
 
   const handleChange = (slotKey: SlotKey, field: keyof AdSlotState, value: string | boolean) => {
-    setSlotStates(prev => ({
-      ...prev,
-      [slotKey]: { ...prev[slotKey], [field]: value },
-    }));
+    setSlotStates(prev => ({ ...prev, [slotKey]: { ...prev[slotKey], [field]: value } }));
   };
 
   if (isLoading) {
@@ -257,38 +242,61 @@ export default function AdminAds() {
     );
   }
 
+  const leftSlots  = AD_SLOTS.filter(s => s.key.startsWith('left_'));
+  const rightSlots = AD_SLOTS.filter(s => s.key.startsWith('right_'));
+
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl">
       <div className="flex items-center gap-3">
         <ImagePlus className="h-6 w-6 text-teal-400" />
         <div>
           <h1 className="text-2xl font-bold text-white">Ad Slots</h1>
-          <p className="text-slate-400 text-sm mt-0.5">Manage the advertisement panels on the Upcoming Events page</p>
+          <p className="text-slate-400 text-sm mt-0.5">Manage the 6 advertisement panels on the Upcoming & Fixtures pages</p>
         </div>
       </div>
 
       <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 px-4 py-3 text-sm text-teal-300 flex items-start gap-2">
         <LayoutTemplate className="h-4 w-4 mt-0.5 shrink-0" />
         <div>
-          <p className="font-semibold">How it works</p>
+          <p className="font-semibold">6 slots — 3 left, 3 right</p>
           <p className="text-teal-400/80 text-xs mt-0.5">
-            Upload an image to each slot and optionally add a click-through URL. Enable/disable slots individually.
-            Changes appear immediately on the <strong>/upcoming</strong> page. Disabled or empty slots revert to the default placeholder.
+            Upload an image and optionally add a click-through URL. Toggle slots on/off individually.
+            Changes appear immediately on <strong>/upcoming</strong> and <strong>/fixtures</strong>.
+            Empty or disabled slots show a default sponsor placeholder.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {AD_SLOTS.map((slot) => (
-          <AdSlotCard
-            key={slot.key}
-            slot={slot}
-            state={slotStates[slot.key]}
-            onChange={(field, value) => handleChange(slot.key, field, value)}
-            onSave={() => saveSlot(slot.key)}
-            saving={saving === slot.key}
-          />
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left column */}
+        <div className="space-y-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 px-1">Left Sidebar</p>
+          {leftSlots.map((slot) => (
+            <AdSlotCard
+              key={slot.key}
+              slot={slot}
+              state={slotStates[slot.key]}
+              onChange={(field, value) => handleChange(slot.key, field, value)}
+              onSave={() => saveSlot(slot.key)}
+              saving={saving === slot.key}
+            />
+          ))}
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 px-1">Right Sidebar</p>
+          {rightSlots.map((slot) => (
+            <AdSlotCard
+              key={slot.key}
+              slot={slot}
+              state={slotStates[slot.key]}
+              onChange={(field, value) => handleChange(slot.key, field, value)}
+              onSave={() => saveSlot(slot.key)}
+              saving={saving === slot.key}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useLocation } from 'wouter';
@@ -7,15 +7,16 @@ import { useLogin } from '@workspace/api-client-react';
 import { loginSchema } from '@/lib/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Login() {
   const { isAuthenticated, login } = useAuth();
   const [, setLocation] = useLocation();
   const loginMutation = useLogin();
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -41,6 +42,7 @@ export default function Login() {
   }, [isAuthenticated, user, setLocation]);
 
   const onSubmit = (data: any) => {
+    setLoginError(null);
     loginMutation.mutate({ data }, {
       onSuccess: (res) => {
         login(res.accessToken, res.user);
@@ -48,7 +50,11 @@ export default function Login() {
         setLocation(roleRedirect(res.user.role));
       },
       onError: (err: any) => {
-        toast.error('Login failed', { description: err?.message || 'Invalid credentials' });
+        const msg = err?.response?.data?.error
+          || err?.response?.data?.message
+          || err?.message
+          || 'Invalid email or password. Please try again.';
+        setLoginError(msg);
       }
     });
   };
@@ -72,7 +78,13 @@ export default function Login() {
                   <FormItem>
                     <FormLabel className="text-white">Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="m@example.com" type="email" className="bg-background/50 border-input text-white" {...field} />
+                      <Input
+                        placeholder="m@example.com"
+                        type="email"
+                        className={`bg-background/50 border-input text-white ${loginError ? 'border-red-500/60' : ''}`}
+                        {...field}
+                        onChange={(e) => { field.onChange(e); setLoginError(null); }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -85,14 +97,32 @@ export default function Login() {
                   <FormItem>
                     <FormLabel className="text-white">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" className="bg-background/50 border-input text-white" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className={`bg-background/50 border-input text-white ${loginError ? 'border-red-500/60' : ''}`}
+                        {...field}
+                        onChange={(e) => { field.onChange(e); setLoginError(null); }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold" disabled={loginMutation.isPending}>
-                {loginMutation.isPending ? 'Signing in...' : 'Sign In'}
+
+              {loginError && (
+                <div className="flex items-start gap-2.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-3">
+                  <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
+                  <p className="text-sm text-red-300 leading-snug">{loginError}</p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
+                disabled={loginMutation.isPending}
+              >
+                {loginMutation.isPending ? 'Signing in…' : 'Sign In'}
               </Button>
             </form>
           </Form>

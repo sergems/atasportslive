@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, MapPin, Tv, Swords, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { useAdSlots, AdCard, HorizontalAdBanner } from '@/components/ads';
 
 interface UpcomingStream {
   id: number;
@@ -113,7 +114,6 @@ function useFixtures() {
   return { fixtures, sports, isLoading: streams.isLoading || games.isLoading };
 }
 
-// Get start of week (Monday)
 function startOfWeek(d: Date) {
   const date = new Date(d);
   const day = date.getDay();
@@ -152,31 +152,22 @@ function FixtureRow({ fixture }: { fixture: Fixture }) {
   return (
     <Link href={fixture.href}>
       <div className="group flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 rounded-xl border border-slate-800/60 bg-slate-900/50 hover:border-teal-500/40 hover:bg-slate-900 active:scale-[0.99] transition-all duration-150 cursor-pointer">
-        {/* Time */}
         <div className="shrink-0 text-center min-w-[48px]">
           <div className="text-white font-mono font-bold text-sm leading-none">{timeStr}</div>
         </div>
-
-        {/* Divider */}
         <div className="h-8 w-px bg-slate-800 shrink-0" />
-
-        {/* Sport badge */}
         <div className="shrink-0 hidden xs:flex">
           <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${sc.pill}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
             {fixture.sport}
           </span>
         </div>
-
-        {/* Type icon */}
         <div className="shrink-0">
           {isGame
             ? <Swords className="h-3.5 w-3.5 text-amber-400" />
             : <Tv className="h-3.5 w-3.5 text-violet-400" />
           }
         </div>
-
-        {/* Title */}
         <div className="flex-1 min-w-0">
           {isGame && fixture.teamA && fixture.teamB ? (
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -193,8 +184,6 @@ function FixtureRow({ fixture }: { fixture: Fixture }) {
             </p>
           )}
         </div>
-
-        {/* Price (stream only) */}
         {!isGame && fixture.accessPrice != null && (
           <div className="shrink-0 text-right hidden sm:block">
             <span className="text-amber-400 font-mono font-bold text-xs">${fixture.accessPrice.toFixed(2)}</span>
@@ -206,9 +195,7 @@ function FixtureRow({ fixture }: { fixture: Fixture }) {
   );
 }
 
-export default function Fixtures() {
-  useEffect(() => { document.title = 'Fixtures — ATA Sports Live'; }, []);
-
+function FixturesContent() {
   const { fixtures, sports, isLoading } = useFixtures();
   const [sportFilter, setSportFilter] = useState('all');
   const [weekOffset, setWeekOffset] = useState(0);
@@ -216,23 +203,17 @@ export default function Fixtures() {
   const now = new Date();
   const baseMonday = startOfWeek(now);
   const currentMonday = addDays(baseMonday, weekOffset * 7);
-
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentMonday, i));
 
   const filtered = useMemo(() => {
-    return fixtures.filter((f) => {
-      if (sportFilter !== 'all' && f.sport !== sportFilter) return false;
-      return true;
-    });
+    return fixtures.filter((f) => sportFilter === 'all' || f.sport === sportFilter);
   }, [fixtures, sportFilter]);
 
-  // Fixtures in this week
   const weekFixtures = useMemo(() => {
     const weekEnd = addDays(currentMonday, 7);
     return filtered.filter((f) => f.date >= currentMonday && f.date < weekEnd);
   }, [filtered, currentMonday]);
 
-  // Group by day index (0=Mon ... 6=Sun)
   const byDay = useMemo(() => {
     const map = new Map<number, Fixture[]>();
     weekDays.forEach((_, i) => map.set(i, []));
@@ -243,13 +224,11 @@ export default function Fixtures() {
     return map;
   }, [weekFixtures, weekDays]);
 
-  // All future fixtures beyond this week (for list view below)
   const laterFixtures = useMemo(() => {
     const weekEnd = addDays(currentMonday, 7);
     return filtered.filter((f) => f.date >= weekEnd);
   }, [filtered, currentMonday]);
 
-  // Group later fixtures by date string
   const laterGrouped = useMemo(() => {
     const map = new Map<string, Fixture[]>();
     laterFixtures.forEach((f) => {
@@ -263,7 +242,7 @@ export default function Fixtures() {
   const totalWeekFixtures = weekFixtures.length;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
         <div className="flex items-center gap-2.5">
@@ -275,8 +254,6 @@ export default function Fixtures() {
             </span>
           )}
         </div>
-
-        {/* Sport filter */}
         {sports.length > 2 && (
           <div className="flex items-center gap-1.5 flex-wrap">
             <Filter className="h-3.5 w-3.5 text-slate-500 shrink-0" />
@@ -327,9 +304,7 @@ export default function Fixtures() {
       {/* Day columns */}
       {isLoading ? (
         <div className="grid grid-cols-7 gap-1.5">
-          {DAYS.map((d) => (
-            <Skeleton key={d} className="h-20 rounded-xl bg-slate-800" />
-          ))}
+          {DAYS.map((d) => <Skeleton key={d} className="h-20 rounded-xl bg-slate-800" />)}
         </div>
       ) : (
         <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
@@ -337,32 +312,22 @@ export default function Fixtures() {
             const isToday = sameDay(day, now);
             const dayFixtures = byDay.get(i) || [];
             const hasFixtures = dayFixtures.length > 0;
-            const dateNum = day.getDate();
-            const monthShort = day.toLocaleDateString('en-UG', { month: 'short' });
-
             return (
               <div
                 key={i}
                 className={`rounded-xl border transition-colors ${
-                  isToday
-                    ? 'border-teal-500/40 bg-teal-500/5'
-                    : hasFixtures
-                    ? 'border-slate-700 bg-slate-900/60'
-                    : 'border-slate-800/50 bg-slate-900/20'
+                  isToday ? 'border-teal-500/40 bg-teal-500/5'
+                  : hasFixtures ? 'border-slate-700 bg-slate-900/60'
+                  : 'border-slate-800/50 bg-slate-900/20'
                 }`}
               >
-                {/* Day header */}
                 <div className={`text-center py-2 px-1 border-b ${isToday ? 'border-teal-500/30' : 'border-slate-800/60'}`}>
-                  <p className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-teal-400' : 'text-slate-500'}`}>
-                    {DAYS[i]}
-                  </p>
+                  <p className={`text-[10px] font-bold uppercase tracking-wider ${isToday ? 'text-teal-400' : 'text-slate-500'}`}>{DAYS[i]}</p>
                   <p className={`text-sm font-bold leading-none mt-0.5 ${isToday ? 'text-teal-300' : hasFixtures ? 'text-white' : 'text-slate-600'}`}>
-                    {dateNum}
+                    {day.getDate()}
                   </p>
-                  <p className="text-[9px] text-slate-600 leading-none">{monthShort}</p>
+                  <p className="text-[9px] text-slate-600 leading-none">{day.toLocaleDateString('en-UG', { month: 'short' })}</p>
                 </div>
-
-                {/* Fixture dots / count */}
                 <div className="py-2 px-1 flex flex-col items-center gap-1 min-h-[48px] justify-center">
                   {dayFixtures.length === 0 ? (
                     <span className="text-slate-700 text-[10px]">—</span>
@@ -376,13 +341,9 @@ export default function Fixtures() {
                       );
                     })
                   )}
-                  {dayFixtures.length > 3 && (
-                    <span className="text-[9px] text-slate-500">+{dayFixtures.length - 3}</span>
-                  )}
+                  {dayFixtures.length > 3 && <span className="text-[9px] text-slate-500">+{dayFixtures.length - 3}</span>}
                   {dayFixtures.length > 0 && (
-                    <span className={`text-[10px] font-bold ${isToday ? 'text-teal-400' : 'text-slate-400'}`}>
-                      {dayFixtures.length}
-                    </span>
+                    <span className={`text-[10px] font-bold ${isToday ? 'text-teal-400' : 'text-slate-400'}`}>{dayFixtures.length}</span>
                   )}
                 </div>
               </div>
@@ -391,7 +352,7 @@ export default function Fixtures() {
         </div>
       )}
 
-      {/* This week fixtures list */}
+      {/* This week list */}
       {!isLoading && weekFixtures.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">This week's fixtures</h2>
@@ -399,10 +360,7 @@ export default function Fixtures() {
             const dayFixtures = byDay.get(i) || [];
             if (dayFixtures.length === 0) return null;
             const isToday = sameDay(day, now);
-            const dayLabel = isToday
-              ? 'Today'
-              : day.toLocaleDateString('en-UG', { weekday: 'long', month: 'short', day: 'numeric' });
-
+            const dayLabel = isToday ? 'Today' : day.toLocaleDateString('en-UG', { weekday: 'long', month: 'short', day: 'numeric' });
             return (
               <div key={i}>
                 <div className="flex items-center gap-3 mb-2">
@@ -421,23 +379,19 @@ export default function Fixtures() {
         </div>
       )}
 
-      {/* No fixtures this week */}
       {!isLoading && weekFixtures.length === 0 && (
         <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl">
           <CalendarDays className="h-10 w-10 mx-auto mb-3 text-slate-700" />
           <p className="text-slate-500 text-sm">No fixtures scheduled for this week.</p>
           {weekOffset === 0 && (
-            <button
-              onClick={() => setWeekOffset(1)}
-              className="mt-3 text-teal-400 hover:text-teal-300 text-sm transition-colors"
-            >
+            <button onClick={() => setWeekOffset(1)} className="mt-3 text-teal-400 hover:text-teal-300 text-sm transition-colors">
               Check next week →
             </button>
           )}
         </div>
       )}
 
-      {/* Later fixtures */}
+      {/* Beyond this week */}
       {!isLoading && laterGrouped.length > 0 && (
         <div className="space-y-3 pt-2">
           <div className="flex items-center gap-3">
@@ -455,6 +409,57 @@ export default function Fixtures() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+export default function Fixtures() {
+  useEffect(() => { document.title = 'Fixtures — ATA Sports Live'; }, []);
+
+  const adSlots = useAdSlots();
+
+  return (
+    <div className="relative">
+      {/* Desktop 3-column layout */}
+      <div className="hidden lg:flex items-start gap-4 xl:gap-6">
+        {/* Left ads */}
+        <aside className="w-40 xl:w-44 shrink-0 sticky top-8 space-y-3">
+          <AdCard slotKey="left_1" slot={adSlots.left_1} />
+          <AdCard slotKey="left_2" slot={adSlots.left_2} />
+          <AdCard slotKey="left_3" slot={adSlots.left_3} />
+        </aside>
+
+        {/* Main */}
+        <div className="flex-1 min-w-0">
+          <FixturesContent />
+        </div>
+
+        {/* Right ads */}
+        <aside className="w-40 xl:w-44 shrink-0 sticky top-8 space-y-3">
+          <AdCard slotKey="right_1" slot={adSlots.right_1} />
+          <AdCard slotKey="right_2" slot={adSlots.right_2} />
+          <AdCard slotKey="right_3" slot={adSlots.right_3} />
+        </aside>
+      </div>
+
+      {/* Mobile layout */}
+      <div className="lg:hidden">
+        {/* Mobile top ads */}
+        <div className="space-y-2 mb-5">
+          <HorizontalAdBanner slotKey="left_1" slot={adSlots.left_1} />
+          <HorizontalAdBanner slotKey="right_1" slot={adSlots.right_1} />
+        </div>
+
+        <FixturesContent />
+
+        {/* Mobile bottom ads */}
+        <div className="space-y-2 mt-5">
+          <HorizontalAdBanner slotKey="left_2" slot={adSlots.left_2} />
+          <HorizontalAdBanner slotKey="left_3" slot={adSlots.left_3} />
+          <HorizontalAdBanner slotKey="right_2" slot={adSlots.right_2} />
+          <HorizontalAdBanner slotKey="right_3" slot={adSlots.right_3} />
+        </div>
+      </div>
     </div>
   );
 }
