@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
-import ataLogo from '@assets/ATA_logo_1781543559550.png';
+import ataLogo from '@assets/cropped-ATA_logo-removebg-preview_1782471649356.png';
 
 function UserMenu({ onLogout }: { onLogout: () => void }) {
   const [open, setOpen] = useState(false);

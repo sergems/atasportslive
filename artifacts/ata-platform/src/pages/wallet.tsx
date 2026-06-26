@@ -255,6 +255,27 @@ export default function Wallet() {
                 <div className="rounded-lg bg-teal-500/10 border border-teal-500/20 px-3 py-2 text-xs text-teal-300">
                   Pay securely via <strong>MTN MoMo, Airtel Money, Visa/Mastercard</strong> and more — powered by Pesapal.
                 </div>
+                {/* Quick-select amounts */}
+                <div className="flex gap-2">
+                  {[
+                    { amount: '1.50', label: 'Daily', desc: '1 day access' },
+                    { amount: '9.00', label: 'Weekly', desc: '7 day access' },
+                  ].map(({ amount, label, desc }) => (
+                    <button
+                      key={amount}
+                      onClick={() => setDepositAmount(amount)}
+                      className={`flex-1 rounded-lg border py-2.5 px-3 text-left transition-all ${
+                        depositAmount === amount
+                          ? 'bg-teal-500/20 border-teal-500 text-white'
+                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+                      }`}
+                    >
+                      <div className="font-bold text-base font-mono leading-none">${amount}</div>
+                      <div className={`text-[10px] font-semibold mt-1 ${depositAmount === amount ? 'text-teal-400' : 'text-slate-500'}`}>{label}</div>
+                      <div className="text-[9px] text-slate-600 mt-0.5">{desc}</div>
+                    </button>
+                  ))}
+                </div>
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
                   <div className="relative">
