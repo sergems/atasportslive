@@ -85,6 +85,7 @@ export function Navbar() {
   const unreadCount = notificationsData?.unreadCount || 0;
 
   const navLinks = [
+    { href: '/', label: 'Home', exact: true },
     { href: '/live', label: 'Live', pulse: true, mobileHide: true },
     { href: '/streams', label: 'Streams' },
     { href: '/upcoming', label: 'Upcoming' },
@@ -105,11 +106,11 @@ export function Navbar() {
 
         {/* Nav links - centered absolutely (desktop only) */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium absolute left-1/2 -translate-x-1/2">
-          {navLinks.map(({ href, label, pulse }) => (
+          {navLinks.map(({ href, label, pulse, exact }) => (
             <Link
               key={href}
               href={href}
-              className={`inline-flex items-center gap-1.5 transition-colors hover:text-white ${location.startsWith(href) ? 'text-white' : 'text-slate-400'}`}
+              className={`inline-flex items-center gap-1.5 transition-colors hover:text-white ${(exact ? location === href : location.startsWith(href)) ? 'text-white' : 'text-slate-400'}`}
             >
               {pulse && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
               {label}
@@ -175,8 +176,8 @@ export function Navbar() {
       {/* Mobile guest dropdown menu */}
       {!isAuthenticated && mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur px-4 py-3 space-y-1">
-          {navLinks.filter(l => !l.mobileHide).map(({ href, label, pulse }) => {
-            const active = location.startsWith(href);
+          {navLinks.filter(l => !l.mobileHide).map(({ href, label, pulse, exact }) => {
+            const active = exact ? location === href : location.startsWith(href);
             return (
               <Link key={href} href={href} onClick={() => setMobileMenuOpen(false)}>
                 <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer
