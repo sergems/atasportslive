@@ -50,10 +50,12 @@ export default function Login() {
         setLocation(roleRedirect(res.user.role));
       },
       onError: (err: any) => {
-        const msg = err?.response?.data?.error
-          || err?.response?.data?.message
-          || err?.message
-          || 'Invalid email or password. Please try again.';
+        const body = err?.response?.data || err?.data || {};
+        if (body?.reason === 'password_reset_required' && body?.email) {
+          setLocation(`/set-password?email=${encodeURIComponent(body.email)}`);
+          return;
+        }
+        const msg = body?.error || err?.message || 'Invalid email or password. Please try again.';
         setLoginError(msg);
       }
     });
