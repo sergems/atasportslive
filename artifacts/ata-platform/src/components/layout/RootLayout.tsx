@@ -117,29 +117,6 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
               <p className="text-sm text-slate-400 leading-relaxed">
                 ATA produces, and promotes sporting events in Africa. We bring live sporting events to our sports' fans. We are one of Africa's largest online streaming providers of sports programming; streaming virtually every major sports event on the continent.
               </p>
-              <p className="mt-3 text-xs text-slate-500">
-                &copy; {new Date().getFullYear()} ATA Sports Live. All rights reserved.
-              </p>
-              <div className="flex items-center gap-3 mt-4">
-                <a
-                  href="https://www.facebook.com/profile.php?id=61567116955397"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="ATA on Facebook"
-                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-200"
-                >
-                  <FaFacebook className="h-4 w-4" />
-                </a>
-                <a
-                  href="https://www.youtube.com/channel/UCCMb9rG7jg6g8ClKR-yBYWQ"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="ATA on YouTube"
-                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white transition-all duration-200"
-                >
-                  <FaYoutube className="h-4 w-4" />
-                </a>
-              </div>
             </div>
 
             {/* General Contact */}
@@ -249,6 +226,33 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
             <Link href="/terms" className="hover:text-slate-300 transition-colors">Terms and Conditions</Link>
             <Link href="/privacy-policy" className="hover:text-slate-300 transition-colors">Privacy Policy</Link>
             <Link href="/refund-policy" className="hover:text-slate-300 transition-colors">Refund Policy</Link>
+          </div>
+
+          {/* Copyright + Social — centered full-width */}
+          <div className="mt-6 pt-6 border-t border-slate-800/60 flex flex-col items-center gap-3">
+            <p className="text-xs text-slate-500 text-center">
+              &copy; {new Date().getFullYear()} ATA Sports Live. All rights reserved.
+            </p>
+            <div className="flex items-center gap-3">
+              <a
+                href="https://www.facebook.com/profile.php?id=61567116955397"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ATA on Facebook"
+                className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-200"
+              >
+                <FaFacebook className="h-4 w-4" />
+              </a>
+              <a
+                href="https://www.youtube.com/channel/UCCMb9rG7jg6g8ClKR-yBYWQ"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ATA on YouTube"
+                className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white transition-all duration-200"
+              >
+                <FaYoutube className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </div>
       </footer>
