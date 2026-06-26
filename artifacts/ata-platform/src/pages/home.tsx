@@ -397,26 +397,16 @@ export default function Home() {
       </section>
 
       {/* Payment Partners */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/40 px-6 py-5">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 text-center mb-4">
-          Accepted payment methods
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          {[
-            { src: airtelMoney, alt: 'Airtel Money', bg: 'bg-black' },
-            { src: mpesa,       alt: 'M-Pesa',       bg: 'bg-black' },
-            { src: tigoPesa,    alt: 'Tigo Pesa',    bg: 'bg-[#002d6e]' },
-            { src: visa,        alt: 'Visa',          bg: 'bg-black' },
-            { src: mastercard,  alt: 'Mastercard',   bg: 'bg-black' },
-          ].map(({ src, alt, bg }) => (
-            <div
-              key={alt}
-              className={`${bg} rounded-xl flex items-center justify-center px-4 py-2.5 h-12 w-28 border border-white/5 shadow-sm`}
-            >
-              <img src={src} alt={alt} className="max-h-7 max-w-full object-contain" />
-            </div>
-          ))}
-        </div>
+      <section className="flex flex-wrap items-center justify-center gap-6 py-2">
+        {[
+          { src: airtelMoney, alt: 'Airtel Money' },
+          { src: mpesa,       alt: 'M-Pesa' },
+          { src: tigoPesa,    alt: 'Tigo Pesa' },
+          { src: visa,        alt: 'Visa' },
+          { src: mastercard,  alt: 'Mastercard' },
+        ].map(({ src, alt }) => (
+          <img key={alt} src={src} alt={alt} className="h-8 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
+        ))}
       </section>
 
       {/* Exchange Markets — logged-in users only */}
