@@ -294,11 +294,27 @@ export default function GameDetail() {
 
                 <div className="space-y-2">
                   <Label className="text-slate-300">Stake Amount (USD)</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[1, 2, 5, 10, 20, 50].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => setStakeAmount(String(amt))}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all active:scale-95 ${
+                          stakeAmount === String(amt)
+                            ? 'bg-amber-500/20 border-amber-500/60 text-amber-400 shadow-sm shadow-amber-500/10'
+                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                        }`}
+                      >
+                        ${amt}
+                      </button>
+                    ))}
+                  </div>
                   <Input
                     type="number"
                     min="0.01"
                     step="0.01"
-                    placeholder="Enter stake..."
+                    placeholder="Or enter custom amount..."
                     value={stakeAmount}
                     onChange={(e) => setStakeAmount(e.target.value)}
                     className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"

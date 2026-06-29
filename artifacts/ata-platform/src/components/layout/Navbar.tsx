@@ -113,16 +113,19 @@ export function Navbar() {
 
         {/* Nav links - centered absolutely (desktop only) */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium absolute left-1/2 -translate-x-1/2">
-          {navLinks.map(({ href, label, pulse, exact }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`inline-flex items-center gap-1.5 transition-colors hover:text-white ${(exact ? location === href : location.startsWith(href)) ? 'text-white' : 'text-slate-400'}`}
-            >
-              {pulse && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
-              {label}
-            </Link>
-          ))}
+          {navLinks.map(({ href, label, pulse, exact }) => {
+            const active = exact ? location === href : location.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`relative inline-flex items-center gap-1.5 pb-1 transition-colors hover:text-white border-b-2 ${active ? 'text-white border-teal-400' : 'text-slate-400 border-transparent hover:border-slate-600'}`}
+              >
+                {pulse && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
+                {label}
+              </Link>
+            );
+          })}
           {isAdmin && (
             <Link
               href="/admin"
@@ -152,7 +155,9 @@ export function Navbar() {
                 <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-white">
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 rounded-full bg-amber-500 text-[9px] font-bold text-slate-950 flex items-center justify-center leading-none">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
                   )}
                 </Button>
               </Link>

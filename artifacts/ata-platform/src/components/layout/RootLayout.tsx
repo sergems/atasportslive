@@ -1,23 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
-import { MapPin, Phone, Mail, Home, Radio, Film, Swords, Wallet, LogIn, LogOut, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { MapPin, Phone, Mail, Home, Radio, Film, Swords, Wallet, LogIn, LogOut, LayoutDashboard, ShieldCheck, ChevronUp } from 'lucide-react';
 import { FaFacebook, FaYoutube, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
 import { useAuth } from '@/lib/auth';
+import { useListNotifications } from '@workspace/api-client-react';
 
 function MobileBottomNav() {
   const [location] = useLocation();
   const { isAuthenticated, logout, isAdmin } = useAuth();
-
+  const { data: notifData } = useListNotifications({ unreadOnly: true }, {
+    query: { enabled: isAuthenticated, queryKey: ['notif-mobile'], refetchInterval: 30000 }
+  });
+  const unreadCount = notifData?.unreadCount ?? 0;
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
 
   if (isAuthenticated) {
     const tabs = [
-      { href: '/dashboard', label: 'Home',    icon: LayoutDashboard },
-      { href: '/live',      label: 'Live',    icon: Radio,   pulse: true },
+      { href: '/dashboard', label: 'Home',    icon: LayoutDashboard, badge: unreadCount },
+      { href: '/live',      label: 'Live',    icon: Radio,  pulse: true },
       { href: '/streams',   label: 'Streams', icon: Film },
       { href: '/games',     label: 'Games',   icon: Swords },
       { href: '/wallet',    label: 'Wallet',  icon: Wallet },
@@ -27,29 +31,29 @@ function MobileBottomNav() {
     return (
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
         <div className="flex items-stretch justify-around h-16">
-          {tabs.map(({ href, label, icon: Icon, pulse }) => {
-            const active = href === '/dashboard'
-              ? location === '/dashboard'
-              : location.startsWith(href);
+          {tabs.map(({ href, label, icon: Icon, pulse, badge }) => {
+            const active = href === '/dashboard' ? location === '/dashboard' : location.startsWith(href);
             return (
               <Link key={href} href={href} onClick={scrollTop}>
-                <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] transition-colors ${active ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
+                <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] transition-all duration-150 active:scale-90 ${active ? 'text-teal-400' : 'text-slate-500'}`}>
                   <div className="relative">
                     <Icon className="h-5 w-5" />
-                    {pulse && (
-                      <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                    {pulse && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
+                    {badge != null && badge > 0 && (
+                      <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-amber-500 text-[8px] font-bold text-slate-950 flex items-center justify-center leading-none">
+                        {badge > 9 ? '9+' : badge}
+                      </span>
                     )}
                   </div>
                   <span className="text-[9px] font-semibold tracking-wide leading-none">{label}</span>
-                  {active && <span className="mt-0.5 h-0.5 w-4 rounded-full bg-teal-400" />}
+                  <span className={`mt-0.5 h-0.5 w-4 rounded-full transition-all duration-200 ${active ? 'bg-teal-400 opacity-100' : 'opacity-0'}`} />
                 </div>
               </Link>
             );
           })}
-          {/* Logout */}
           <button
             onClick={() => { scrollTop(); logout(); }}
-            className="flex flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] text-slate-500 active:text-red-400 transition-colors"
+            className="flex flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] text-slate-500 active:text-red-400 active:scale-90 transition-all duration-150"
           >
             <LogOut className="h-5 w-5" />
             <span className="text-[9px] font-semibold tracking-wide leading-none">Logout</span>
@@ -59,10 +63,9 @@ function MobileBottomNav() {
     );
   }
 
-  // Guest tabs
   const guestTabs = [
     { href: '/',        label: 'Home',    icon: Home },
-    { href: '/live',    label: 'Live',    icon: Radio,   pulse: true },
+    { href: '/live',    label: 'Live',    icon: Radio,  pulse: true },
     { href: '/streams', label: 'Streams', icon: Film },
   ];
 
@@ -73,25 +76,22 @@ function MobileBottomNav() {
           const active = href === '/' ? location === '/' : location.startsWith(href);
           return (
             <Link key={href} href={href} onClick={scrollTop}>
-              <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-colors ${active ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
+              <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-all duration-150 active:scale-90 ${active ? 'text-teal-400' : 'text-slate-500'}`}>
                 <div className="relative">
                   <Icon className="h-5 w-5" />
-                  {pulse && (
-                    <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                  )}
+                  {pulse && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
                 </div>
                 <span className="text-[9px] font-semibold tracking-wide leading-none">{label}</span>
-                {active && <span className="mt-0.5 h-0.5 w-4 rounded-full bg-teal-400" />}
+                <span className={`mt-0.5 h-0.5 w-4 rounded-full transition-all duration-200 ${active ? 'bg-teal-400 opacity-100' : 'opacity-0'}`} />
               </div>
             </Link>
           );
         })}
-        {/* Login */}
         <Link href="/login" onClick={scrollTop}>
-          <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-colors ${location === '/login' ? 'text-teal-400' : 'text-slate-500 active:text-slate-300'}`}>
+          <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-all duration-150 active:scale-90 ${location === '/login' ? 'text-teal-400' : 'text-slate-500'}`}>
             <LogIn className="h-5 w-5" />
             <span className="text-[9px] font-semibold tracking-wide leading-none">Login</span>
-            {location === '/login' && <span className="mt-0.5 h-0.5 w-4 rounded-full bg-teal-400" />}
+            <span className={`mt-0.5 h-0.5 w-4 rounded-full transition-all duration-200 ${location === '/login' ? 'bg-teal-400 opacity-100' : 'opacity-0'}`} />
           </div>
         </Link>
       </div>
@@ -101,14 +101,31 @@ function MobileBottomNav() {
 
 export function RootLayout({ children }: { children: React.ReactNode }) {
   useWebSocket();
+  const [location] = useLocation();
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 350);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col bg-background text-foreground">
       <Navbar />
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
-        {children}
+        <div key={location} className="page-enter">
+          {children}
+        </div>
       </main>
       <MobileBottomNav />
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label="Scroll to top"
+        className={`fixed bottom-24 right-4 md:bottom-6 z-40 h-10 w-10 rounded-full bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20 flex items-center justify-center hover:bg-teal-400 active:scale-95 transition-all duration-300 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
+      >
+        <ChevronUp className="h-5 w-5" />
+      </button>
       <footer className="mb-16 md:mb-0 mt-16 border-t border-border/40 bg-primary/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
