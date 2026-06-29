@@ -36,6 +36,7 @@ import AdminSettings from "@/pages/admin/settings";
 import AdminSlides from "@/pages/admin/slides";
 import AdminAds from "@/pages/admin/ads";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
+import AdminPromotions from "@/pages/admin/promotions";
 import FinanceDashboard from "@/pages/finance/dashboard";
 import FinanceWithdrawals from "@/pages/finance/withdrawals";
 import { FinanceLayout } from "@/components/layout/FinanceLayout";
@@ -150,6 +151,9 @@ function Router() {
         </Route>
         <Route path="/admin/ads">
           {() => <ProtectedRoute component={() => <AdminLayout><AdminAds /></AdminLayout>} adminOnly />}
+        </Route>
+        <Route path="/admin/promotions">
+          {() => <ProtectedRoute component={() => <AdminLayout><AdminPromotions /></AdminLayout>} adminOnly />}
         </Route>
         <Route path="/finance/dashboard">
           {() => <ProtectedRoute component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} financeOnly />}

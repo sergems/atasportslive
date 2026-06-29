@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
-import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable } from "@workspace/db";
+import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
 import { eq, sql, desc, and, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
@@ -365,6 +365,120 @@ router.post("/notify-pending", authMiddleware, requireRole("admin"), async (req:
 
   req.log.info({ sent, failed }, "Activation emails dispatched");
   res.json({ sent, failed, errors: errors.slice(0, 10) });
+});
+
+// ── Promotions Admin CRUD ─────────────────────────────────────────────────────
+
+router.get("/promotions/stats", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const [total] = await db.select({ count: sql<number>`count(*)` }).from(promotionsTable);
+  const [active] = await db.select({ count: sql<number>`count(*)` }).from(promotionsTable).where(eq(promotionsTable.status, "active"));
+  const [issued] = await db.select({ sum: sql<number>`COALESCE(SUM(amount),0)` }).from(bonusTransactionsTable).where(eq(bonusTransactionsTable.type, "earned"));
+  const [used] = await db.select({ sum: sql<number>`COALESCE(SUM(amount),0)` }).from(bonusTransactionsTable).where(eq(bonusTransactionsTable.type, "used"));
+  const [revoked] = await db.select({ sum: sql<number>`COALESCE(SUM(amount),0)` }).from(bonusTransactionsTable).where(eq(bonusTransactionsTable.type, "revoked"));
+
+  res.json({
+    total: Number(total.count),
+    active: Number(active.count),
+    totalBonusIssued: parseFloat(String(issued.sum)) || 0,
+    totalBonusUsed: parseFloat(String(used.sum)) || 0,
+    totalBonusRevoked: parseFloat(String(revoked.sum)) || 0,
+  });
+});
+
+router.get("/promotions", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const promos = await db.select().from(promotionsTable).orderBy(desc(promotionsTable.createdAt));
+  res.json(promos.map(p => ({
+    id: p.id, name: p.name, code: p.code, type: p.type, bonusType: p.bonusType,
+    percentage: p.percentage ? parseFloat(p.percentage as string) : null,
+    fixedAmount: p.fixedAmount ? parseFloat(p.fixedAmount as string) : null,
+    minDeposit: parseFloat(p.minDeposit as string),
+    maxBonus: p.maxBonus ? parseFloat(p.maxBonus as string) : null,
+    maxUses: p.maxUses, usedCount: p.usedCount, startDate: p.startDate, endDate: p.endDate,
+    status: p.status, description: p.description, bannerImageUrl: p.bannerImageUrl,
+    termsConditions: p.termsConditions, bonusExpiryDays: p.bonusExpiryDays, createdAt: p.createdAt,
+  })));
+});
+
+router.post("/promotions", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const { name, code, type, bonusType, percentage, fixedAmount, minDeposit, maxBonus, maxUses, startDate, endDate, status, description, termsConditions, bonusExpiryDays } = req.body;
+  if (!name) { res.status(400).json({ error: "name is required" }); return; }
+  if (bonusType === "percentage" && !percentage) { res.status(400).json({ error: "percentage required for percentage bonus" }); return; }
+  if (bonusType === "fixed" && !fixedAmount) { res.status(400).json({ error: "fixedAmount required for fixed bonus" }); return; }
+
+  const [promo] = await db.insert(promotionsTable).values({
+    name, code: code?.trim().toUpperCase() || null, type: type || "automatic",
+    bonusType: bonusType || "percentage",
+    percentage: percentage?.toString() || null, fixedAmount: fixedAmount?.toString() || null,
+    minDeposit: (minDeposit || 0).toString(), maxBonus: maxBonus?.toString() || null,
+    maxUses: maxUses || null, startDate: startDate ? new Date(startDate) : null,
+    endDate: endDate ? new Date(endDate) : null, status: status || "draft",
+    description: description || null, termsConditions: termsConditions || null,
+    bonusExpiryDays: bonusExpiryDays || null, createdBy: req.userId!,
+  }).returning();
+  res.status(201).json(promo);
+});
+
+router.patch("/promotions/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  const { name, code, type, bonusType, percentage, fixedAmount, minDeposit, maxBonus, maxUses, startDate, endDate, status, description, termsConditions, bonusExpiryDays } = req.body;
+  const updates: Record<string, any> = {};
+  if (name !== undefined) updates.name = name;
+  if (code !== undefined) updates.code = code?.trim().toUpperCase() || null;
+  if (type !== undefined) updates.type = type;
+  if (bonusType !== undefined) updates.bonusType = bonusType;
+  if (percentage !== undefined) updates.percentage = percentage?.toString() || null;
+  if (fixedAmount !== undefined) updates.fixedAmount = fixedAmount?.toString() || null;
+  if (minDeposit !== undefined) updates.minDeposit = minDeposit.toString();
+  if (maxBonus !== undefined) updates.maxBonus = maxBonus?.toString() || null;
+  if (maxUses !== undefined) updates.maxUses = maxUses || null;
+  if (startDate !== undefined) updates.startDate = startDate ? new Date(startDate) : null;
+  if (endDate !== undefined) updates.endDate = endDate ? new Date(endDate) : null;
+  if (status !== undefined) updates.status = status;
+  if (description !== undefined) updates.description = description || null;
+  if (termsConditions !== undefined) updates.termsConditions = termsConditions || null;
+  if (bonusExpiryDays !== undefined) updates.bonusExpiryDays = bonusExpiryDays || null;
+  updates.updatedAt = new Date();
+
+  const [updated] = await db.update(promotionsTable).set(updates).where(eq(promotionsTable.id, id)).returning();
+  if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+  res.json(updated);
+});
+
+router.delete("/promotions/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  await db.delete(promotionsTable).where(eq(promotionsTable.id, id));
+  res.json({ ok: true });
+});
+
+router.post("/promotions/:id/revoke/:userId", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const promotionId = Number(req.params.id);
+  const targetUserId = Number(req.params.userId);
+  const { reason } = req.body;
+
+  const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, targetUserId)).limit(1);
+  if (!wallet) { res.status(404).json({ error: "User wallet not found" }); return; }
+
+  const bonusBal = parseFloat((wallet.bonusBalance as string) || "0");
+  if (bonusBal <= 0) { res.status(400).json({ error: "No bonus balance to revoke" }); return; }
+
+  await db.update(walletsTable).set({ bonusBalance: sql`0` }).where(eq(walletsTable.userId, targetUserId));
+
+  await db.insert(bonusTransactionsTable).values({
+    userId: targetUserId,
+    promotionId,
+    type: "revoked",
+    amount: bonusBal.toFixed(2),
+    balanceBefore: bonusBal.toFixed(2),
+    balanceAfter: "0",
+    revokedBy: req.userId!,
+    revokedReason: reason || "Admin revocation",
+    description: `Bonus revoked by admin. Reason: ${reason || "Admin revocation"}`,
+  });
+
+  await notify(targetUserId, "deposit_received", "Bonus Revoked",
+    `Your bonus balance has been revoked. ${reason ? `Reason: ${reason}` : ""}`);
+
+  res.json({ ok: true, revokedAmount: bonusBal });
 });
 
 export default router;

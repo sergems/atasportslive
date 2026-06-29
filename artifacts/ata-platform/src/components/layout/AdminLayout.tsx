@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   ImagePlus,
+  Gift,
 } from 'lucide-react';
 
 function usePendingWithdrawalCount() {
@@ -66,6 +67,7 @@ const navItems = [
   { href: '/admin/users',            label: 'Users',         icon: Users },
   { href: '/admin/wallets',          label: 'Wallets',       icon: Wallet },
   { href: '/admin/withdrawals',      label: 'Withdrawals',   icon: ArrowUpRight, badge: true },
+  { href: '/admin/promotions',       label: 'Promotions',    icon: Gift },
   { href: '/admin/vouchers',         label: 'Vouchers',      icon: Ticket },
   { href: '/admin/ads',              label: 'Ad Slots',      icon: ImagePlus },
   { href: '/admin/reports',          label: 'Reports',       icon: BarChart2 },

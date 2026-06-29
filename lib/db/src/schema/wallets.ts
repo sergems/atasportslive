@@ -10,6 +10,7 @@ export const walletsTable = pgTable("wallets", {
   availableBalance: numeric("available_balance", { precision: 12, scale: 2 }).notNull().default("0"),
   pendingBalance: numeric("pending_balance", { precision: 12, scale: 2 }).notNull().default("0"),
   withdrawableBalance: numeric("withdrawable_balance", { precision: 12, scale: 2 }).notNull().default("0"),
+  bonusBalance: numeric("bonus_balance", { precision: 12, scale: 2 }).notNull().default("0"),
   currency: text("currency").notNull().default("USD"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

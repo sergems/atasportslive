@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   ArrowDownLeft, ArrowUpRight, Ticket, Wallet as WalletIcon,
   CreditCard, Clock, ExternalLink, Lock, Smartphone, Bitcoin,
-  CheckCircle2, AlertTriangle, ShieldCheck,
+  CheckCircle2, AlertTriangle, ShieldCheck, Gift, Sparkles, Tag,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGetWalletQueryKey } from '@workspace/api-client-react';
@@ -109,6 +109,11 @@ export default function Wallet() {
   const [voucherCode, setVoucherCode] = useState('');
   const [depositTab, setDepositTab] = useState<'pesapal' | 'voucher'>('pesapal');
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoValidation, setPromoValidation] = useState<{ valid: boolean; estimatedBonus?: number; promotionId?: number; termsConditions?: string; name?: string; reason?: string } | null>(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [pendingBonus, setPendingBonus] = useState<{ promotionId: number; name: string; estimatedBonus: number; termsConditions: string | null; depositTransactionId: string } | null>(null);
 
   // Payout method setup state
   const [newPayoutMethod, setNewPayoutMethod] = useState('mtn_momo');
@@ -147,6 +152,29 @@ export default function Wallet() {
     onError: (err: any) => toast.error(err.message),
   });
 
+  const depositMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/wallet/deposit', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ amount: parseFloat(depositAmount), paymentMethod: 'mtn_momo' }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed');
+      return d;
+    },
+    onSuccess: (data) => {
+      invalidate();
+      toast.success('Deposit successful!');
+      setDepositAmount('');
+      if (data.pendingBonus) {
+        setPendingBonus(data.pendingBonus);
+        setShowTermsModal(true);
+      }
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const redeemMutation = useMutation({
     mutationFn: () => redeemVoucher(voucherCode.trim()),
     onSuccess: (data) => {
@@ -155,6 +183,77 @@ export default function Wallet() {
       setVoucherCode('');
     },
     onError: (err: any) => toast.error(err.message),
+  });
+
+  const validatePromoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/promotions/validate-code', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ code: promoCode.trim().toUpperCase(), depositAmount: parseFloat(depositAmount) || 0 }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.valid) {
+        setPromoValidation({
+          valid: true, estimatedBonus: data.estimatedBonus,
+          promotionId: data.promotion?.id, termsConditions: data.promotion?.termsConditions,
+          name: data.promotion?.name,
+        });
+      } else {
+        setPromoValidation({ valid: false, reason: data.reason });
+      }
+    },
+    onError: () => setPromoValidation({ valid: false, reason: 'Validation failed. Try again.' }),
+  });
+
+  const applyPromoMutation = useMutation({
+    mutationFn: async ({ depositTransactionId }: { depositTransactionId?: string }) => {
+      const res = await fetch('/api/promotions/apply-code', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ code: promoCode.trim().toUpperCase(), depositTransactionId }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed');
+      return d;
+    },
+    onSuccess: (data) => {
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
+      toast.success('Promo Code Applied!', { description: data.message });
+      setPromoCode(''); setPromoValidation(null); setShowTermsModal(false); setTermsAccepted(false);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const claimBonusMutation = useMutation({
+    mutationFn: async ({ promotionId, depositTransactionId }: { promotionId: number; depositTransactionId: string }) => {
+      const res = await fetch('/api/promotions/claim', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ promotionId, depositTransactionId }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed');
+      return d;
+    },
+    onSuccess: (data) => {
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
+      toast.success('Bonus Claimed!', { description: data.message });
+      setPendingBonus(null); setShowTermsModal(false); setTermsAccepted(false);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const { data: bonusHistory } = useQuery({
+    queryKey: ['my-bonuses'],
+    queryFn: async () => {
+      const res = await fetch('/api/promotions/my-bonuses', { headers: authHeaders() });
+      return res.json() as Promise<{ bonusBalance: number; transactions: Array<{ id: number; type: string; amount: number; description: string | null; promotionName: string | null; createdAt: string }> }>;
+    },
   });
 
   const payoutSetupMutation = useMutation({
@@ -200,21 +299,41 @@ export default function Wallet() {
         </div>
       )}
 
+      {/* Pending bonus banner */}
+      {pendingBonus && !showTermsModal && (
+        <div className="flex items-center gap-3 rounded-lg bg-purple-500/10 border border-purple-500/30 px-4 py-3 cursor-pointer"
+          onClick={() => setShowTermsModal(true)}>
+          <Gift className="h-5 w-5 text-purple-400 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm text-white font-semibold">🎁 You have a bonus waiting!</p>
+            <p className="text-xs text-purple-300">Accept terms to claim your ${pendingBonus.estimatedBonus.toFixed(2)} bonus from "{pendingBonus.name}"</p>
+          </div>
+          <Button size="sm" className="bg-purple-500 hover:bg-purple-400 text-white h-8 text-xs gap-1 shrink-0">
+            <Sparkles className="h-3.5 w-3.5" /> Claim
+          </Button>
+        </div>
+      )}
+
       {/* Balance Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
         {[
-          { label: 'Total Balance',  value: wallet?.balance,             color: 'text-teal-400' },
-          { label: 'Available',      value: wallet?.availableBalance,    color: 'text-white' },
+          { label: 'Total Balance',  value: (wallet?.balance || 0) + (wallet?.bonusBalance || 0), color: 'text-teal-400' },
+          { label: 'Cash Balance',   value: wallet?.availableBalance,    color: 'text-white' },
+          { label: 'Bonus Balance',  value: wallet?.bonusBalance,        color: 'text-purple-400', icon: Gift },
           { label: 'Pending',        value: wallet?.pendingBalance,      color: 'text-amber-400' },
           { label: 'Withdrawable',   value: wallet?.withdrawableBalance, color: 'text-green-400' },
-        ].map(({ label, value, color }) => (
-          <Card key={label} className="bg-slate-900 border-primary/20">
-            <CardContent className="pt-3 pb-3 px-3 sm:pt-6 sm:pb-4 sm:px-4">
+        ].map(({ label, value, color, icon: Icon }) => (
+          <Card key={label} className={`bg-slate-900 border-primary/20 ${label === 'Bonus Balance' && (wallet?.bonusBalance || 0) > 0 ? 'border-purple-500/40' : ''}`}>
+            <CardContent className="pt-3 pb-3 px-3 sm:pt-5 sm:pb-3 sm:px-4">
               {loadingWallet
-                ? <Skeleton className="h-6 sm:h-8 w-20 bg-slate-800" />
-                : <div className={`text-lg sm:text-2xl font-bold font-mono ${color}`}>${(value || 0).toFixed(2)}</div>
+                ? <Skeleton className="h-6 sm:h-7 w-20 bg-slate-800" />
+                : <div className={`text-base sm:text-xl font-bold font-mono ${color} flex items-center gap-1`}>
+                    {Icon && <Icon className="h-3.5 w-3.5 opacity-70" />}
+                    ${(value || 0).toFixed(2)}
+                  </div>
               }
-              <div className="text-slate-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">{label}</div>
+              <div className="text-slate-400 text-[10px] sm:text-xs mt-0.5 sm:mt-1">{label}</div>
+              {label === 'Bonus Balance' && <div className="text-[9px] text-purple-500 mt-0.5">Streaming only</div>}
             </CardContent>
           </Card>
         ))}
@@ -481,6 +600,95 @@ export default function Wallet() {
         </Card>
       </div>
 
+      {/* Promo Code + Bonus History */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
+
+        {/* Promo Code Card */}
+        <Card className="bg-slate-900 border-primary/20">
+          <CardHeader className="pb-2 pt-4 px-4 sm:pt-5 sm:px-5">
+            <CardTitle className="flex items-center gap-2 text-purple-400 text-sm sm:text-base">
+              <Tag className="h-4 w-4" /> Promo Code
+            </CardTitle>
+            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">Enter a promo code to earn bonus streaming credit</p>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. WELCOME50" maxLength={20}
+                value={promoCode}
+                onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoValidation(null); }}
+                className="bg-slate-800 border-slate-700 text-white font-mono uppercase h-9 text-sm tracking-wider flex-1"
+              />
+              <Button
+                onClick={() => validatePromoMutation.mutate()}
+                disabled={!promoCode.trim() || validatePromoMutation.isPending}
+                className="bg-slate-700 hover:bg-slate-600 text-white h-9 px-3 text-xs shrink-0"
+              >
+                {validatePromoMutation.isPending ? '…' : 'Check'}
+              </Button>
+            </div>
+
+            {promoValidation && !promoValidation.valid && (
+              <div className="flex items-center gap-2 rounded-md bg-red-500/10 border border-red-500/30 px-3 py-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                <span className="text-xs text-red-300">{promoValidation.reason}</span>
+              </div>
+            )}
+
+            {promoValidation?.valid && (
+              <div className="rounded-md bg-purple-500/10 border border-purple-500/30 px-3 py-2.5 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Gift className="h-4 w-4 text-purple-400 shrink-0" />
+                  <div>
+                    <p className="text-xs text-white font-semibold">{promoValidation.name}</p>
+                    <p className="text-xs text-purple-300">Estimated bonus: <span className="font-bold font-mono">${promoValidation.estimatedBonus?.toFixed(2)}</span></p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => { setShowTermsModal(true); }}
+                  className="w-full bg-purple-500 hover:bg-purple-400 text-white h-8 text-xs gap-1.5"
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> Accept Terms & Claim Bonus
+                </Button>
+              </div>
+            )}
+
+            <p className="text-[10px] text-slate-600">Bonus credit can only be used for live stream access. Cannot be withdrawn.</p>
+          </CardContent>
+        </Card>
+
+        {/* Bonus History */}
+        <Card className="bg-slate-900 border-primary/20">
+          <CardHeader className="pb-2 pt-4 px-4 sm:pt-5 sm:px-5">
+            <CardTitle className="flex items-center gap-2 text-purple-400 text-sm sm:text-base">
+              <Gift className="h-4 w-4" /> Bonus History
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-5 pb-4 sm:pb-5">
+            {!bonusHistory || bonusHistory.transactions.length === 0 ? (
+              <div className="text-center py-6 text-slate-600">
+                <Gift className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-xs">No bonus transactions yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {bonusHistory.transactions.slice(0, 8).map(tx => (
+                  <div key={tx.id} className="flex items-center justify-between py-1.5 border-b border-slate-800/50">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-white truncate">{tx.description || tx.promotionName || tx.type}</p>
+                      <p className="text-[10px] text-slate-500">{new Date(tx.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className={`text-xs font-mono font-bold ml-2 shrink-0 ${tx.type === 'earned' || tx.type === 'promo_code_earned' ? 'text-purple-400' : tx.type === 'used' ? 'text-slate-400' : 'text-red-400'}`}>
+                      {tx.type === 'earned' || tx.type === 'promo_code_earned' ? '+' : '-'}${tx.amount.toFixed(2)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Transactions link */}
       <div className="rounded-lg bg-slate-800/50 border border-slate-700 px-4 py-3 flex items-center justify-between">
         <span className="text-xs sm:text-sm text-slate-400">View your full transaction history.</span>
@@ -488,6 +696,76 @@ export default function Wallet() {
           Transactions →
         </Link>
       </div>
+
+      {/* Terms & Conditions Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-purple-500/30 rounded-xl max-w-md w-full shadow-2xl">
+            <div className="p-5 border-b border-slate-800">
+              <div className="flex items-center gap-2 mb-1">
+                <Gift className="h-5 w-5 text-purple-400" />
+                <h2 className="text-white font-bold text-base">Promotional Bonus Terms</h2>
+              </div>
+              <p className="text-slate-400 text-xs">
+                {pendingBonus ? (
+                  <>You've earned a <span className="text-purple-400 font-bold">${pendingBonus.estimatedBonus.toFixed(2)}</span> bonus from "{pendingBonus.name}"</>
+                ) : promoValidation?.valid ? (
+                  <>Claim your <span className="text-purple-400 font-bold">${promoValidation.estimatedBonus?.toFixed(2)}</span> bonus from "{promoValidation.name}"</>
+                ) : null}
+              </p>
+            </div>
+
+            <div className="p-5 space-y-3">
+              <div className="bg-slate-800 rounded-lg p-3 text-xs text-slate-300 space-y-2">
+                {[
+                  'Bonus funds cannot be withdrawn.',
+                  'Bonus funds cannot be transferred.',
+                  'Bonus funds cannot be used for betting.',
+                  'Bonus funds may only be used to purchase ATA Sports livestream access.',
+                  'ATA may revoke bonuses obtained through abuse or fraud.',
+                ].map((t, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-teal-400 shrink-0 mt-0.5" />
+                    <span>{t}</span>
+                  </div>
+                ))}
+                {(pendingBonus?.termsConditions || promoValidation?.termsConditions) && (
+                  <div className="mt-2 pt-2 border-t border-slate-700 text-slate-400 whitespace-pre-wrap text-[11px]">
+                    {pendingBonus?.termsConditions || promoValidation?.termsConditions}
+                  </div>
+                )}
+              </div>
+
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)}
+                  className="mt-0.5 accent-purple-500" />
+                <span className="text-xs text-slate-300">I understand and agree to the Promotional Bonus Terms.</span>
+              </label>
+
+              <div className="flex gap-2 pt-1">
+                <Button variant="ghost" onClick={() => { setShowTermsModal(false); setTermsAccepted(false); }}
+                  className="flex-1 text-slate-400 hover:text-white h-9 text-xs">
+                  Cancel
+                </Button>
+                <Button
+                  disabled={!termsAccepted || claimBonusMutation.isPending || applyPromoMutation.isPending}
+                  onClick={() => {
+                    if (pendingBonus) {
+                      claimBonusMutation.mutate({ promotionId: pendingBonus.promotionId, depositTransactionId: pendingBonus.depositTransactionId });
+                    } else if (promoValidation?.valid) {
+                      applyPromoMutation.mutate({});
+                    }
+                  }}
+                  className="flex-1 bg-purple-500 hover:bg-purple-400 text-white h-9 text-xs gap-1.5"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {claimBonusMutation.isPending || applyPromoMutation.isPending ? 'Claiming…' : 'Accept & Claim Bonus'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

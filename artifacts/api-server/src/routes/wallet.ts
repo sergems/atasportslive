@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, walletsTable, transactionsTable, usersTable, vouchersTable } from "@workspace/db";
-import { eq, sql, desc } from "drizzle-orm";
+import { db, walletsTable, transactionsTable, usersTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
+import { eq, sql, desc, and, lte, gte, or, isNull } from "drizzle-orm";
+import { creditBonus, findMatchingAutoPromo } from "./promotions";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
 import { sendMail, templates } from "../lib/mailer";
@@ -23,6 +24,7 @@ const toWalletResponse = (w: typeof walletsTable.$inferSelect) => ({
   availableBalance: parseFloat(w.availableBalance as string),
   pendingBalance: parseFloat(w.pendingBalance as string),
   withdrawableBalance: parseFloat(w.withdrawableBalance as string),
+  bonusBalance: parseFloat((w.bonusBalance as string) || "0"),
   currency: w.currency,
 });
 
@@ -84,8 +86,31 @@ router.post("/deposit", authMiddleware, async (req: AuthRequest, res): Promise<v
 
   await notify(req.userId!, "deposit_received", "Deposit Confirmed", `$${amount} has been added to your wallet.`);
 
+  // Check for matching automatic promotions — return as pendingBonus (user must accept terms)
+  const matchingPromo = await findMatchingAutoPromo(amount);
+  let pendingBonus = null;
+  if (matchingPromo) {
+    const alreadyAccepted = await db.select().from(promotionTermsAcceptanceTable).where(
+      and(eq(promotionTermsAcceptanceTable.userId, req.userId!), eq(promotionTermsAcceptanceTable.promotionId, matchingPromo.id))
+    ).limit(1);
+
+    if (!alreadyAccepted.length) {
+      const pct = matchingPromo.percentage ? parseFloat(matchingPromo.percentage as string) : null;
+      const fixed = matchingPromo.fixedAmount ? parseFloat(matchingPromo.fixedAmount as string) : null;
+      let est = pct ? (amount * pct) / 100 : (fixed || 0);
+      if (matchingPromo.maxBonus) est = Math.min(est, parseFloat(matchingPromo.maxBonus as string));
+      pendingBonus = {
+        promotionId: matchingPromo.id,
+        name: matchingPromo.name,
+        estimatedBonus: Math.round(est * 100) / 100,
+        termsConditions: matchingPromo.termsConditions,
+        depositTransactionId: tx.transactionId,
+      };
+    }
+  }
+
   const updatedTx = await db.select().from(transactionsTable).where(eq(transactionsTable.id, tx.id)).limit(1);
-  res.status(201).json(toTxResponse(updatedTx[0]));
+  res.status(201).json({ ...toTxResponse(updatedTx[0]), pendingBonus });
 });
 
 router.get("/payout-method", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
@@ -473,6 +498,21 @@ async function confirmPesapalPayment(orderTrackingId: string, merchantRef: strin
       }).where(eq(walletsTable.userId, tx.userId));
 
       await notify(tx.userId, "deposit_received", "Deposit Confirmed", `$${amt.toFixed(2)} has been added to your wallet via Pesapal.`);
+
+      // Check for matching automatic promotions
+      const matchingPromo = await findMatchingAutoPromo(amt);
+      if (matchingPromo) {
+        const alreadyAccepted = await db.select().from(promotionTermsAcceptanceTable).where(
+          and(eq(promotionTermsAcceptanceTable.userId, tx.userId), eq(promotionTermsAcceptanceTable.promotionId, matchingPromo.id))
+        ).limit(1);
+        if (!alreadyAccepted.length) {
+          await notify(tx.userId, "deposit_received", "🎁 Bonus Waiting!",
+            `You qualify for a bonus from "${matchingPromo.name}"! Go to your Wallet to claim it.`);
+        } else {
+          await creditBonus(tx.userId, matchingPromo, amt);
+        }
+      }
+
       logger.info({ merchantRef, orderTrackingId }, "Pesapal deposit confirmed");
       return true;
     } else if (status.statusCode === 2 || status.statusCode === 3) {

@@ -1,0 +1,591 @@
+Add a complete Promotions and Bonus Management System to the existing ATA Sports platform.
+
+The feature must be fully integrated with the existing Wallet, Pesapal deposits, Live Streaming system, User Dashboard, and Admin Dashboard.
+
+The platform already has:
+
+User Wallet
+Deposits
+Live Streaming
+Peer-to-Peer Betting
+Admin Dashboard
+
+Do NOT replace existing functionality.
+
+Extend the platform professionally.
+
+OVERVIEW
+
+ATA wants to reward users who deposit funds.
+
+Whenever an administrator activates a promotion, users who deposit money through Pesapal (or any supported payment gateway) automatically receive bonus credit.
+
+This bonus is NOT cash.
+
+It is promotional credit.
+
+The bonus credit:
+
+✓ Can ONLY pay for live streaming access.
+
+✓ Cannot be withdrawn.
+
+✓ Cannot be transferred.
+
+✓ Cannot be used for betting.
+
+✓ Cannot be converted into cash.
+
+BONUS WALLET
+
+Split the user's wallet into separate balances.
+
+Wallet Structure
+
+Cash Balance
+
+Deposits
+Withdrawals
+Betting
+Live Streaming
+
+Bonus Balance
+
+Promotional bonuses
+Promo code rewards
+
+Display both balances separately.
+
+Example
+
+Cash Balance
+
+$38.20
+
+Bonus Balance
+
+$12.00
+
+Total Value
+
+$50.20
+
+PROMOTION MANAGEMENT
+
+Create a complete Promotions module inside the Admin Dashboard.
+
+Admin can create unlimited promotions.
+
+Fields:
+
+Promotion Name
+
+Promotion Code (optional)
+
+Promotion Type
+
+Automatic
+
+Promo Code
+
+Welcome Bonus
+
+Seasonal
+
+Deposit Match
+
+Percentage Bonus
+
+Fixed Bonus
+
+Minimum Deposit
+
+Maximum Bonus Amount
+
+Maximum Uses
+
+Start Date
+
+End Date
+
+Status
+
+Draft
+
+Scheduled
+
+Active
+
+Paused
+
+Expired
+
+Description
+
+Banner Image
+
+Terms & Conditions
+
+BONUS CALCULATION
+
+Example:
+
+Promotion
+
+50% Bonus
+
+Deposit
+
+$20
+
+User receives
+
+Cash Wallet
+
+$20
+
+Bonus Wallet
+
+$10
+
+Total Wallet Value
+
+$30
+
+Example
+
+Deposit
+
+$100
+
+Bonus
+
+25%
+
+Maximum Bonus
+
+$15
+
+User receives
+
+Cash
+
+$100
+
+Bonus
+
+$15
+
+ELIGIBLE DEPOSITS
+
+Only completed deposits qualify.
+
+Supported gateways:
+
+Pesapal
+
+Future payment providers
+
+The bonus is credited automatically after payment confirmation.
+
+PROMO CODE SYSTEM
+
+Users may optionally enter a promo code before depositing.
+
+Example:
+
+WELCOME50
+
+BOXING25
+
+POOL20
+
+ATA2026
+
+The system validates:
+
+Code exists
+
+Code active
+
+Within date range
+
+Usage limit not exceeded
+
+Deposit meets minimum amount
+
+If valid:
+
+Apply bonus.
+
+If invalid:
+
+Display reason.
+
+TERMS & CONDITIONS
+
+Before receiving any promotional bonus, the user MUST accept the Promotion Terms.
+
+Show a modal.
+
+Example
+
+Promotional Bonus Terms
+
+I understand that:
+
+✔ Bonus funds cannot be withdrawn.
+
+✔ Bonus funds cannot be transferred.
+
+✔ Bonus funds cannot be used for betting.
+
+✔ Bonus funds may only be used to purchase ATA Sports livestream access.
+
+✔ ATA may revoke bonuses obtained through abuse or fraud.
+
+Checkbox
+
+"I agree to the Promotional Bonus Terms."
+
+Button
+
+Accept & Continue
+
+The user must explicitly accept before receiving bonus funds.
+
+Save:
+
+Date Accepted
+
+IP Address
+
+Promotion ID
+
+User ID
+
+Version of Terms Accepted
+
+STREAMING PAYMENT PRIORITY
+
+When purchasing livestream access:
+
+System should automatically use:
+
+Bonus Wallet FIRST
+
+If bonus balance is insufficient:
+
+Use remaining Bonus
+
+Then deduct remaining amount from Cash Wallet.
+
+Example
+
+Livestream Cost
+
+$1.50
+
+Bonus Balance
+
+$1.00
+
+Cash Balance
+
+$10
+
+Deduct
+
+Bonus
+
+$1.00
+
+Cash
+
+$0.50
+
+BETTING RESTRICTIONS
+
+Bonus Balance MUST NEVER be usable for:
+
+Placing bets
+
+Matching bets
+
+Broker fees
+
+Withdrawals
+
+Transfers
+
+Peer-to-peer payments
+
+Settlement payouts
+
+The Betting Engine should ONLY use Cash Wallet.
+
+WITHDRAWAL RESTRICTIONS
+
+Withdrawals can ONLY use:
+
+Cash Balance
+
+Never Bonus Balance.
+
+BONUS TRANSACTION HISTORY
+
+Create transaction types.
+
+Bonus Earned
+
+Promo Code Bonus
+
+Welcome Bonus
+
+Deposit Bonus
+
+Bonus Used
+
+Bonus Expired
+
+Bonus Revoked
+
+Each transaction includes:
+
+Date
+
+Promotion
+
+Amount
+
+Remaining Balance
+
+Reference Number
+
+Status
+
+BONUS EXPIRY
+
+Each promotion may define:
+
+Bonus Expiry
+
+Examples:
+
+7 days
+
+30 days
+
+90 days
+
+Never expires
+
+Expired bonus is automatically removed.
+
+User receives notification.
+
+BONUS REVERSAL
+
+Admin may revoke bonus.
+
+Reasons:
+
+Fraud
+
+Chargeback
+
+Duplicate payment
+
+Promotion abuse
+
+Suspicious activity
+
+System records:
+
+Admin
+
+Date
+
+Reason
+
+Audit log
+
+USER DASHBOARD
+
+Add Bonus section.
+
+Display:
+
+Current Bonus Balance
+
+Available Promotions
+
+Active Promo Codes
+
+Bonus Expiry
+
+Bonus History
+
+Streaming Savings
+
+ADMIN DASHBOARD
+
+Create Promotions Management.
+
+Statistics
+
+Total Promotions
+
+Active Promotions
+
+Bonus Issued
+
+Bonus Used
+
+Bonus Expired
+
+Bonus Revoked
+
+Most Used Promo Code
+
+Highest Performing Campaign
+
+Conversion Rate
+
+Streaming Revenue Generated from Bonuses
+
+NOTIFICATIONS
+
+Notify users when:
+
+Bonus received
+
+Bonus expires in 3 days
+
+Bonus expired
+
+Promotion activated
+
+Promotion ending soon
+
+Promo code invalid
+
+DATABASE
+
+Create new tables.
+
+Promotions
+
+PromotionCodes
+
+UserBonuses
+
+BonusTransactions
+
+PromotionTermsAcceptance
+
+PromotionUsage
+
+BonusExpiry
+
+AuditLogs
+
+SECURITY
+
+Prevent:
+
+Duplicate bonuses
+
+Multiple promo abuse
+
+Fake deposits
+
+Negative balances
+
+Race conditions
+
+Multiple simultaneous redemptions
+
+Store complete audit logs.
+
+API ENDPOINTS
+
+Create REST APIs.
+
+GET promotions
+
+GET active promotions
+
+POST validate promo
+
+POST accept terms
+
+POST apply promotion
+
+GET user bonuses
+
+GET bonus history
+
+POST admin create promotion
+
+PUT update promotion
+
+DELETE deactivate promotion
+
+POST revoke bonus
+
+UI DESIGN
+
+Use the existing ATA design.
+
+Create modern promotional cards.
+
+Examples:
+
+🎁 Welcome Bonus
+
+50% Deposit Match
+
+Deposit today and receive bonus credit for ATA Sports livestreams.
+
+Button
+
+Claim Bonus
+
+or
+
+Enter Promo Code
+
+Display countdown timers for expiring promotions.
+
+FUTURE READY
+
+Design the promotion engine so it can later support:
+
+Referral bonuses
+
+Birthday bonuses
+
+Cashback promotions
+
+First deposit rewards
+
+Loyalty rewards
+
+VIP rewards
+
+Tournament promotions
+
+Holiday campaigns
+
+Multi-level campaigns
+
+Coupon codes
+
+Affiliate bonuses
+
+without changing the database structure.
+
+Additional Enhancement (Recommended)
+
+Implement a "Bonus-Eligible Livestream" flag in the admin panel. This allows administrators to choose whether a particular livestream can be paid for using bonus funds. Premium events (such as championship finals or exclusive PPV matches) can be marked as Bonus Not Accepted, requiring users to pay from their cash wallet instead. This gives ATA greater flexibility in managing promotional campaigns and maximizing revenue while still rewarding users.

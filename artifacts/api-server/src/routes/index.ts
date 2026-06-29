@@ -14,6 +14,7 @@ import announcementsRouter from "./announcements";
 import highlightsRouter from "./highlights";
 import settingsRouter from "./settings";
 import slidesRouter from "./slides";
+import promotionsRouter from "./promotions";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use("/announcements", announcementsRouter);
 router.use("/highlights", highlightsRouter);
 router.use("/settings", settingsRouter);
 router.use("/slides", slidesRouter);
+router.use("/promotions", promotionsRouter);
 
 export default router;
