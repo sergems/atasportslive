@@ -77,7 +77,7 @@ export default function GameDetail() {
     if (isNaN(stake) || stake <= 0) { toast.error('Enter a valid stake amount'); return; }
 
     try {
-      const result = await placeBet.mutateAsync({ data: { gameId, outcome: selectedOutcome, stake } });
+      const result = await placeBet.mutateAsync({ data: { gameId, outcome: selectedOutcome as any, stake } });
       queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
       queryClient.invalidateQueries({ queryKey: getListMyBetsQueryKey() });
       setMatchStatus(result.matchStatus);
@@ -155,9 +155,9 @@ export default function GameDetail() {
                 {(game as any).eventEndDate && (
                   <span className="flex items-center gap-1.5">– {(game as any).eventEndDate}</span>
                 )}
-                {(game.city || game.country) && (
+                {((game as any).city || (game as any).country) && (
                   <span className="flex items-center gap-1.5">
-                    <MapPin className="h-4 w-4" />{[game.city, game.country].filter(Boolean).join(', ')}
+                    <MapPin className="h-4 w-4" />{[(game as any).city, (game as any).country].filter(Boolean).join(', ')}
                   </span>
                 )}
               </div>
@@ -188,7 +188,7 @@ export default function GameDetail() {
               <div className="flex justify-center gap-6 mt-6 text-sm text-slate-400">
                 <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{game.eventDate} at {game.eventTime}</span>
                 <span className="flex items-center gap-1.5"><Users className="h-4 w-4" />{game.openBetsCount} open bets</span>
-                <span className="flex items-center gap-1.5"><TrendingUp className="h-4 w-4" />Pool: ${game.totalBetPool.toFixed(2)}</span>
+                <span className="flex items-center gap-1.5"><TrendingUp className="h-4 w-4" />Pool: ${(game.totalBetPool ?? 0).toFixed(2)}</span>
               </div>
               {game.result && (
                 <div className="text-center mt-4">
@@ -369,7 +369,7 @@ export default function GameDetail() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Total Pool</span>
-                  <span className="text-amber-400 font-mono">${game.totalBetPool.toFixed(2)}</span>
+                  <span className="text-amber-400 font-mono">${(game.totalBetPool ?? 0).toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>

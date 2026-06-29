@@ -221,7 +221,7 @@ function SettlePanel({ game, onDone }: { game: any; onDone: () => void }) {
 
   const handle = async () => {
     try {
-      await settleGame.mutateAsync({ id: game.id, data: { result } });
+      await settleGame.mutateAsync({ id: game.id, data: { result: result as any } });
       qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
       toast.success('Game settled');
       onDone();

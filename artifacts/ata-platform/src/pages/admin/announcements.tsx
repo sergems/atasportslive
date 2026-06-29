@@ -178,7 +178,7 @@ function AnnouncementCard({ announcement: a, onEdit, editing }: { announcement: 
   const handleDelete = async () => {
     if (!confirm('Delete this announcement?')) return;
     try {
-      await deleteMut.mutateAsync();
+      await deleteMut.mutateAsync(undefined as any);
       toast.success('Deleted');
     } catch (e: any) { toast.error(e.message); }
   };

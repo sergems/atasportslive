@@ -21,6 +21,7 @@ export const transactionStatusEnum = pgEnum("transaction_status", [
   "completed",
   "failed",
   "rejected",
+  "approved",
 ]);
 
 export const paymentMethodEnum = pgEnum("payment_method", [

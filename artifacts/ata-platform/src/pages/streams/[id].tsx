@@ -40,10 +40,11 @@ export default function StreamDetail() {
         videoRef.current.play().catch(e => console.error("Playback failed", e));
       }
     }
+    return undefined;
   }, [stream, access]);
 
   const handlePurchase = () => {
-    purchaseMutation.mutate({ data: { streamId } }, {
+    purchaseMutation.mutate({ id: streamId }, {
       onSuccess: () => {
         toast.success("Access purchased successfully!");
         refetchAccess();

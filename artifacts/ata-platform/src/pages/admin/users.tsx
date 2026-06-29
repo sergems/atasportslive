@@ -304,7 +304,7 @@ export default function AdminUsers() {
 
   const handleRole = async (id: number, role: string) => {
     try {
-      await updateRole.mutateAsync({ id, data: { role } });
+      await updateRole.mutateAsync({ id, data: { role: role as any } });
       invalidate();
       toast.success('Role updated');
     } catch (err: any) { toast.error(err?.data?.error || 'Failed'); }

@@ -11,10 +11,10 @@ export default function AdminReports() {
 
   const [period, setPeriod] = useState('monthly');
 
-  const { data: streaming } = useGetStreamingReport({ period });
-  const { data: betting } = useGetBettingReport({ period });
-  const { data: wallet } = useGetWalletReport({ period });
-  const { data: revenue } = useGetRevenueBreakdown({ period });
+  const { data: streaming } = useGetStreamingReport({ period: period as any });
+  const { data: betting } = useGetBettingReport({ period: period as any });
+  const { data: wallet } = useGetWalletReport({ period: period as any });
+  const { data: revenue } = useGetRevenueBreakdown({ period: period as any });
 
   const chartData = revenue?.data || [];
 

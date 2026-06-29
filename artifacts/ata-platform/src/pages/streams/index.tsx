@@ -44,7 +44,7 @@ function StreamCard({ stream, isAuthenticated }: { stream: Stream; isAuthenticat
   const isLive = stream.status === 'live';
 
   const { data: accessData } = useCheckStreamAccess(stream.id, {
-    query: { enabled: !!isAuthenticated && !!isPaid && !isEnded },
+    query: { enabled: !!isAuthenticated && !!isPaid && !isEnded, queryKey: ['stream-access', stream.id] },
   });
   const hasAccess = accessData?.hasAccess === true;
 

@@ -232,7 +232,7 @@ function SlideCard({ slide: s, onEdit, editing }: { slide: Slide; onEdit: () => 
 
   const handleDelete = async () => {
     if (!confirm('Delete this slide?')) return;
-    try { await deleteMut.mutateAsync(); toast.success('Slide deleted'); }
+    try { await deleteMut.mutateAsync(undefined as any); toast.success('Slide deleted'); }
     catch (e: any) { toast.error(e.message); }
   };
 

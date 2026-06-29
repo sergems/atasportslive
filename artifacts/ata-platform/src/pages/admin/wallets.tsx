@@ -20,7 +20,9 @@ const METHOD_LABELS: Record<string, string> = {
 
 function authHeaders() {
   const token = useAuthStore.getState().token;
-  return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
 }
 
 async function fetchUsers() {

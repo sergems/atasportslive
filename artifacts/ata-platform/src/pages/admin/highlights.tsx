@@ -150,7 +150,7 @@ function HighlightCard({ h, onEdit, editing }: { h: Highlight; onEdit: () => voi
   const handleDelete = async () => {
     if (!confirm('Delete this highlight?')) return;
     try {
-      await deleteMut.mutateAsync();
+      await deleteMut.mutateAsync(undefined as any);
       toast.success('Deleted');
     } catch (e: any) { toast.error(e.message); }
   };
