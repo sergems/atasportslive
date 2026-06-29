@@ -369,7 +369,8 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
     res.status(400).json({ error: "Voucher code is required" });
     return;
   }
-  const [voucher] = await db.select().from(vouchersTable).where(eq(vouchersTable.code, code.trim())).limit(1);
+  const normalized = code.replace(/[-\s]/g, "").toUpperCase().trim();
+  const [voucher] = await db.select().from(vouchersTable).where(eq(vouchersTable.code, normalized)).limit(1);
   if (!voucher) { res.status(404).json({ error: "Invalid voucher code" }); return; }
   if (voucher.isRedeemed) { res.status(400).json({ error: "This voucher has already been redeemed" }); return; }
 

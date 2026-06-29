@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { randomBytes } from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
 import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
@@ -181,8 +182,17 @@ router.get("/finance-stats", authMiddleware, requireRole("admin", "finance"), as
 
 const VOUCHER_VALUES = [1, 5, 10, 20, 50];
 
+// Unambiguous alphanumeric alphabet — excludes 0/O, 1/I/L to avoid misreads
+const VOUCHER_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; // 31 chars
+
 function generateCode(): string {
-  return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
+  let code = "";
+  while (code.length < 12) {
+    const byte = randomBytes(1)[0]!;
+    // Rejection sampling: 31 * 8 = 248; drop bytes 248-255 to avoid modulo bias
+    if (byte < 248) code += VOUCHER_CHARS[byte % VOUCHER_CHARS.length];
+  }
+  return code;
 }
 
 router.post("/vouchers", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {

@@ -13,6 +13,11 @@ import { useAuthStore } from '@/lib/auth-store';
 
 const AMOUNTS = [1, 5, 10, 20, 50];
 
+function formatCode(code: string): string {
+  const raw = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  return raw.replace(/(.{4})(.{4})(.{4})/, '$1-$2-$3');
+}
+
 function authHeaders() {
   const token = useAuthStore.getState().token;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -57,7 +62,7 @@ export default function AdminVouchers() {
   });
 
   const copyCode = (id: number, code: string) => {
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(formatCode(code));
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -127,7 +132,7 @@ export default function AdminVouchers() {
               {available.map((v: any) => (
                 <div key={v.id} className="flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-4 py-3">
                   <div>
-                    <div className="font-mono text-lg font-bold text-white tracking-widest">{v.code}</div>
+                    <div className="font-mono text-sm font-bold text-white tracking-widest">{formatCode(v.code)}</div>
                     <div className="text-amber-400 font-semibold text-sm">${v.amount.toFixed(2)}</div>
                   </div>
                   <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => copyCode(v.id, v.code)}>
@@ -154,7 +159,7 @@ export default function AdminVouchers() {
               {redeemed.map((v: any) => (
                 <div key={v.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg px-4 py-2.5 opacity-60">
                   <div className="flex items-center gap-4">
-                    <span className="font-mono text-base text-slate-400 tracking-widest line-through">{v.code}</span>
+                    <span className="font-mono text-sm text-slate-400 tracking-widest line-through">{formatCode(v.code)}</span>
                     <span className="text-amber-500 text-sm font-semibold">${v.amount.toFixed(2)}</span>
                   </div>
                   <div className="text-right text-xs text-slate-500">

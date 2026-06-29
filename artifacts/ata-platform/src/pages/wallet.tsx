@@ -426,15 +426,20 @@ export default function Wallet() {
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-xs sm:text-sm">Voucher Code</Label>
                   <Input
-                    placeholder="e.g. 228623" maxLength={6}
-                    value={voucherCode} onChange={e => setVoucherCode(e.target.value.replace(/\D/g, ''))}
-                    className="bg-slate-800 border-slate-700 text-white font-mono text-xl tracking-[0.3em] text-center h-10 sm:h-11"
+                    placeholder="XXXX-XXXX-XXXX" maxLength={14}
+                    value={voucherCode}
+                    onChange={e => {
+                      const raw = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12);
+                      const fmt = raw.replace(/(.{4})(.{0,4})(.{0,4})/, (_, a, b, c) => [a, b, c].filter(Boolean).join('-'));
+                      setVoucherCode(fmt);
+                    }}
+                    className="bg-slate-800 border-slate-700 text-white font-mono text-lg tracking-[0.25em] text-center h-10 sm:h-11 uppercase"
                   />
-                  <p className="text-[10px] text-slate-500 text-center">6-digit code printed on your ATA Voucher</p>
+                  <p className="text-[10px] text-slate-500 text-center">12-character code from your ATA Voucher</p>
                 </div>
                 <Button
                   onClick={() => redeemMutation.mutate()}
-                  disabled={voucherCode.length !== 6 || redeemMutation.isPending}
+                  disabled={voucherCode.replace(/-/g, '').length !== 12 || redeemMutation.isPending}
                   className="w-full bg-slate-600 hover:bg-slate-500 text-white font-bold h-9 sm:h-10"
                 >
                   <Ticket className="h-4 w-4 mr-2" />
