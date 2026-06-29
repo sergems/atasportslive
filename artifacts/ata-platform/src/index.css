@@ -272,6 +272,29 @@
   animation: page-enter 0.22s ease-out both;
 }
 
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.card-enter {
+  opacity: 0;
+  animation: card-enter 0.38s ease-out forwards;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 24s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
 .safe-area-bottom {
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
 }

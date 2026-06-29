@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'wouter';
 import { useListUpcomingStreams, useListUpcomingGames } from '@workspace/api-client-react';
 import { useQuery } from '@tanstack/react-query';
@@ -85,6 +85,7 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
   const [leaving, setLeaving] = useState<number | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
+  const touchStartX = useRef<number | null>(null);
 
   const goTo = useCallback((index: number, dir: 'next' | 'prev' = 'next') => {
     if (transitioning || index === current) return;
@@ -112,6 +113,16 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
     return () => clearInterval(t);
   }, [next, slides.length]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 40) dx < 0 ? next() : prevSlide();
+    touchStartX.current = null;
+  };
+
   const slide = slides[current];
   const enterAnim = direction === 'next' ? 'slideInRight' : 'slideInLeft';
   const exitAnim  = direction === 'next' ? 'slideOutLeft' : 'slideOutRight';
@@ -120,6 +131,8 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
     <section
       className="relative overflow-hidden rounded-3xl border border-primary/20"
       style={{ height: 'clamp(280px, 55vw, 520px)' }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <style>{sliderStyles}</style>
 
@@ -292,6 +305,10 @@ export default function Home() {
   const upcomingGames = Array.isArray(_upcomingGames) ? _upcomingGames : [];
   const visibleAnnouncements = (announcements || []).filter((a) => !dismissedIds.has(a.id));
   const activeSlides = Array.isArray(slides) ? slides : [];
+
+  const liveCount = upcomingStreams.filter((s: any) => s.status === 'live').length;
+  const totalPool = upcomingGames.reduce((sum: number, g: any) => sum + (g.totalBetPool || 0), 0);
+  const totalOpenBets = upcomingGames.reduce((sum: number, g: any) => sum + (g.openBetsCount || 0), 0);
 
   return (
     <div className="space-y-10">
