@@ -46,7 +46,8 @@ export default function Login() {
     loginMutation.mutate({ data }, {
       onSuccess: (res) => {
         login(res.accessToken, res.user);
-        toast.success('Logged in successfully');
+        const firstName = res.user.fullName?.split(' ')[0] || res.user.username || 'there';
+        toast.success(`Welcome back, ${firstName}! 👋`);
         setLocation(roleRedirect(res.user.role));
       },
       onError: (err: any) => {
