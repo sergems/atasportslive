@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
 import ataLogo from '@assets/cropped-ATA_logo-removebg-preview_1782471649356.png';
 
-function UserMenu({ onLogout }: { onLogout: () => void }) {
+function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -18,6 +18,8 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  const firstName = user?.fullName?.split(' ')[0] || user?.username || '';
+
   const items = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/bets', label: 'My Bets', icon: Trophy },
@@ -28,10 +30,11 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1 rounded-md p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
         aria-label="User menu"
       >
-        <UserIcon className="h-5 w-5" />
+        <UserIcon className="h-5 w-5 shrink-0" />
+        {firstName && <span className="hidden sm:inline text-sm font-medium text-slate-200">{firstName}</span>}
         <ChevronDown className={`h-3 w-3 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
 
@@ -60,7 +63,7 @@ function UserMenu({ onLogout }: { onLogout: () => void }) {
 }
 
 export function Navbar() {
-  const { isAuthenticated, logout, isAdmin } = useAuth();
+  const { isAuthenticated, logout, isAdmin, user } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -149,7 +152,7 @@ export function Navbar() {
                   )}
                 </Button>
               </Link>
-              <UserMenu onLogout={logout} />
+              <UserMenu onLogout={logout} user={user} />
             </>
           ) : (
             <>
