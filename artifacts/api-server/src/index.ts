@@ -3,6 +3,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { wsClients } from "./lib/notify";
+import { startBonusCron } from "./lib/bonusCron";
 
 const rawPort = process.env["PORT"];
 
@@ -49,4 +50,5 @@ httpServer.listen(port, (err?: Error) => {
     process.exit(1);
   }
   logger.info({ port }, "ATA Platform server listening");
+  startBonusCron();
 });
