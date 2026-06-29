@@ -421,7 +421,7 @@ export default function Wallet() {
             ) : (
               <div className="space-y-3">
                 <div className="rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-xs text-slate-400">
-                  Enter your 6-digit ATA Voucher code to credit your wallet instantly.
+                  Enter your 12-character ATA Voucher code to credit your wallet instantly.
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-xs sm:text-sm">Voucher Code</Label>
