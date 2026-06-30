@@ -15,6 +15,20 @@ import mpesa from '@assets/m-pesa-seeklogo_1782470222583.png';
 import visa from '@assets/Visa_Brandmark_Blue_RGB_2021_1782470222584.png';
 import ataLogo from '@assets/cropped-ATA_logo-removebg-preview_1782471649356.png';
 
+function FlagImg({ code }: { code?: string | null }) {
+  if (!code || code.trim().length < 2) return null;
+  const cc = code.trim().toLowerCase().slice(0, 2);
+  return (
+    <img
+      src={`https://flagcdn.com/20x15/${cc}.png`}
+      srcSet={`https://flagcdn.com/40x30/${cc}.png 2x`}
+      alt={cc.toUpperCase()}
+      className="inline-block rounded-[1px] shrink-0"
+      style={{ height: 13, width: 'auto' }}
+    />
+  );
+}
+
 interface Announcement { id: number; title: string; content: string; priority: number; }
 interface Slide {
   id: number;
@@ -490,10 +504,20 @@ export default function Home() {
                           </div>
                           <div className="flex justify-between items-center gap-2">
                             <div className="text-center flex-1 min-w-0">
+                              {game.playerACountry && (
+                                <div className="flex justify-center mb-1">
+                                  <FlagImg code={game.playerACountry} />
+                                </div>
+                              )}
                               <div className="font-bold text-base text-white truncate group-hover:text-teal-300 transition-colors">{game.playerA}</div>
                             </div>
                             <div className="px-2 py-1 text-[10px] font-black text-slate-600 bg-slate-800 rounded shrink-0">VS</div>
                             <div className="text-center flex-1 min-w-0">
+                              {game.playerBCountry && (
+                                <div className="flex justify-center mb-1">
+                                  <FlagImg code={game.playerBCountry} />
+                                </div>
+                              )}
                               <div className="font-bold text-base text-white truncate group-hover:text-amber-300 transition-colors">{game.playerB}</div>
                             </div>
                           </div>
