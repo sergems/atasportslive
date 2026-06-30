@@ -580,6 +580,60 @@ router.post("/pawapay/callback/payout", async (req, res): Promise<void> => {
   }
 });
 
+router.post("/pawapay/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { amount, phoneNumber, provider } = req.body;
+  if (!amount || Number(amount) <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
+  if (!phoneNumber || !provider) { res.status(400).json({ error: "phoneNumber and provider are required" }); return; }
+
+  const config = await getPawapayConfig();
+  if (!config) { res.status(503).json({ error: "PawaPay is not configured. Contact admin." }); return; }
+
+  const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, req.userId!)).limit(1);
+  if (!wallet || parseFloat(wallet.withdrawableBalance as string) < Number(amount)) {
+    res.status(400).json({ error: "Insufficient withdrawable balance" });
+    return;
+  }
+
+  await db.update(walletsTable).set({
+    withdrawableBalance: sql`withdrawable_balance - ${Number(amount)}`,
+    availableBalance: sql`available_balance - ${Number(amount)}`,
+    pendingBalance: sql`pending_balance + ${Number(amount)}`,
+  }).where(eq(walletsTable.userId, req.userId!));
+
+  const payoutId = uuidv4();
+  const [tx] = await db.insert(transactionsTable).values({
+    transactionId: payoutId,
+    userId: req.userId!,
+    type: "withdrawal",
+    amount: Number(amount).toFixed(2),
+    status: "approved",
+    paymentMethod: "pawapay",
+    reference: phoneNumber,
+    description: `Instant withdrawal via PawaPay (${provider}) to ${phoneNumber}`,
+  }).returning();
+
+  try {
+    const host = `${req.protocol}://${req.get("host")}`;
+    await pawapayInitiatePayout(config, {
+      payoutId,
+      amount: Number(amount),
+      phoneNumber,
+      provider,
+      callbackUrl: `${host}/api/wallet/pawapay/callback/payout`,
+    });
+    res.status(201).json({ ...toTxResponse(tx), instant: true });
+  } catch (err: any) {
+    await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+    await db.update(walletsTable).set({
+      withdrawableBalance: sql`withdrawable_balance + ${Number(amount)}`,
+      availableBalance: sql`available_balance + ${Number(amount)}`,
+      pendingBalance: sql`pending_balance - ${Number(amount)}`,
+    }).where(eq(walletsTable.userId, req.userId!));
+    req.log.error({ err }, "PawaPay instant withdraw error");
+    res.status(502).json({ error: err.message || "Payout gateway error. Please try again." });
+  }
+});
+
 router.get("/pawapay/status", async (_req, res): Promise<void> => {
   const config = await getPawapayConfig();
   res.json({ configured: !!config, environment: config?.environment ?? null });

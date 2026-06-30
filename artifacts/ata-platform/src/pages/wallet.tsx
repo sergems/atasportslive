@@ -101,14 +101,61 @@ async function getPawapayStatus() {
 }
 
 const PAWAPAY_PROVIDERS = [
-  { value: 'MTN_MOMO_UGA', label: 'MTN MoMo', hint: 'e.g. 0771234567' },
-  { value: 'AIRTEL_UGA',   label: 'Airtel Money', hint: 'e.g. 0751234567' },
-  { value: 'MTN_MOMO_KEN', label: 'MTN (Kenya)', hint: 'e.g. 0712345678' },
-  { value: 'MPESA_KEN',    label: 'M-Pesa (Kenya)', hint: 'e.g. 0712345678' },
-  { value: 'MTN_MOMO_RWA', label: 'MTN (Rwanda)', hint: 'e.g. 0781234567' },
-  { value: 'MTN_MOMO_GHA', label: 'MTN (Ghana)', hint: 'e.g. 0241234567' },
-  { value: 'AIRTEL_ZMB',   label: 'Airtel (Zambia)', hint: 'e.g. 0971234567' },
-  { value: 'MTN_MOMO_ZMB', label: 'MTN (Zambia)', hint: 'e.g. 0961234567' },
+  // Uganda
+  { value: 'MTN_MOMO_UGA',    label: '🇺🇬 MTN MoMo — Uganda',               hint: 'e.g. 0771234567' },
+  { value: 'AIRTEL_UGA',      label: '🇺🇬 Airtel Money — Uganda',            hint: 'e.g. 0751234567' },
+  // Kenya
+  { value: 'MPESA_KEN',       label: '🇰🇪 M-Pesa — Kenya',                   hint: 'e.g. 0712345678' },
+  { value: 'AIRTEL_KEN',      label: '🇰🇪 Airtel Money — Kenya',             hint: 'e.g. 0733000000' },
+  // Tanzania
+  { value: 'VODACOM_TZA',     label: '🇹🇿 M-Pesa (Vodacom) — Tanzania',      hint: 'e.g. 0754000000' },
+  { value: 'AIRTEL_TZA',      label: '🇹🇿 Airtel Money — Tanzania',          hint: 'e.g. 0780000000' },
+  { value: 'TIGO_TZA',        label: '🇹🇿 Tigo Pesa — Tanzania',             hint: 'e.g. 0716000000' },
+  { value: 'HALOTEL_TZA',     label: '🇹🇿 HaloPesa — Tanzania',              hint: 'e.g. 0621000000' },
+  { value: 'ZANTEL_TZA',      label: '🇹🇿 Zantel — Tanzania',                hint: 'e.g. 0777000000' },
+  // Rwanda
+  { value: 'MTN_MOMO_RWA',    label: '🇷🇼 MTN MoMo — Rwanda',               hint: 'e.g. 0781234567' },
+  { value: 'AIRTEL_RWA',      label: '🇷🇼 Airtel Money — Rwanda',            hint: 'e.g. 0731234567' },
+  // Zambia
+  { value: 'MTN_MOMO_ZMB',    label: '🇿🇲 MTN MoMo — Zambia',               hint: 'e.g. 0961234567' },
+  { value: 'AIRTEL_ZMB',      label: '🇿🇲 Airtel Money — Zambia',            hint: 'e.g. 0971234567' },
+  { value: 'ZAMTEL_ZMB',      label: '🇿🇲 Zamtel Kwacha — Zambia',           hint: 'e.g. 0951234567' },
+  // Ghana
+  { value: 'MTN_MOMO_GHA',    label: '🇬🇭 MTN MoMo — Ghana',                hint: 'e.g. 0241234567' },
+  { value: 'VODAFONE_GHA',    label: '🇬🇭 Telecel Cash (Vodafone) — Ghana',  hint: 'e.g. 0201234567' },
+  { value: 'AIRTELTIGO_GHA',  label: '🇬🇭 AirtelTigo Money — Ghana',         hint: 'e.g. 0261234567' },
+  // Mozambique
+  { value: 'MPESA_MOZ',       label: '🇲🇿 M-Pesa (Vodacom) — Mozambique',   hint: 'e.g. 0841234567' },
+  { value: 'TMCEL_MOZ',       label: '🇲🇿 mKesh (Tmcel) — Mozambique',       hint: 'e.g. 0821234567' },
+  { value: 'MOVITEL_MOZ',     label: '🇲🇿 e-Mola (Movitel) — Mozambique',   hint: 'e.g. 0861234567' },
+  // DR Congo
+  { value: 'VODACOM_COD',     label: '🇨🇩 M-Pesa (Vodacom) — DR Congo',     hint: 'e.g. 0811234567' },
+  { value: 'AIRTEL_COD',      label: '🇨🇩 Airtel Money — DR Congo',          hint: 'e.g. 0991234567' },
+  { value: 'ORANGE_COD',      label: '🇨🇩 Orange Money — DR Congo',          hint: 'e.g. 0851234567' },
+  // Malawi
+  { value: 'AIRTEL_MWI',      label: '🇲🇼 Airtel Money — Malawi',            hint: 'e.g. 0991234567' },
+  { value: 'TNM_MWI',         label: '🇲🇼 TNM Mpamba — Malawi',              hint: 'e.g. 0881234567' },
+  // Cameroon
+  { value: 'MTN_MOMO_CMR',    label: '🇨🇲 MTN MoMo — Cameroon',             hint: 'e.g. 0671234567' },
+  { value: 'ORANGE_CMR',      label: '🇨🇲 Orange Money — Cameroon',          hint: 'e.g. 0691234567' },
+  // Senegal
+  { value: 'ORANGE_SEN',      label: '🇸🇳 Orange Money — Senegal',           hint: 'e.g. 771234567' },
+  { value: 'FREE_SEN',        label: '🇸🇳 Free Money — Senegal',             hint: 'e.g. 761234567' },
+  { value: 'EXPRESSO_SEN',    label: '🇸🇳 Expresso Money — Senegal',         hint: 'e.g. 701234567' },
+  // Côte d'Ivoire
+  { value: 'MTN_MOMO_CIV',    label: "🇨🇮 MTN MoMo — Côte d'Ivoire",        hint: 'e.g. 0701234567' },
+  { value: 'ORANGE_CIV',      label: "🇨🇮 Orange Money — Côte d'Ivoire",     hint: 'e.g. 0711234567' },
+  { value: 'MOOV_CIV',        label: "🇨🇮 Moov Money — Côte d'Ivoire",       hint: 'e.g. 0811234567' },
+  // Burkina Faso
+  { value: 'ORANGE_BFA',      label: '🇧🇫 Orange Money — Burkina Faso',      hint: 'e.g. 71234567' },
+  // Togo
+  { value: 'TOGOCOM_TGO',     label: '🇹🇬 T-Money (Togocom) — Togo',        hint: 'e.g. 90123456' },
+  { value: 'MOOV_TGO',        label: '🇹🇬 Moov Money — Togo',               hint: 'e.g. 91123456' },
+  // Benin
+  { value: 'MTN_MOMO_BEN',    label: '🇧🇯 MTN MoMo — Benin',                hint: 'e.g. 97123456' },
+  { value: 'MOOV_BEN',        label: '🇧🇯 Moov Money — Benin',               hint: 'e.g. 95123456' },
+  // Mali
+  { value: 'ORANGE_MLI',      label: '🇲🇱 Orange Money — Mali',              hint: 'e.g. 70123456' },
 ];
 
 const PAYOUT_METHODS = [
@@ -144,6 +191,9 @@ export default function Wallet() {
   const [pawapayPhone, setPawapayPhone] = useState('');
   const [pawapayProvider, setPawapayProvider] = useState('MTN_MOMO_UGA');
   const [pawapayDepositId, setPawapayDepositId] = useState<string | null>(null);
+  const [withdrawTab, setWithdrawTab] = useState<'pawapay' | 'standard'>('pawapay');
+  const [pawapayWithdrawPhone, setPawapayWithdrawPhone] = useState('');
+  const [pawapayWithdrawProvider, setPawapayWithdrawProvider] = useState('MTN_MOMO_UGA');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [promoValidation, setPromoValidation] = useState<{ valid: boolean; estimatedBonus?: number; promotionId?: number; termsConditions?: string; name?: string; reason?: string } | null>(null);
@@ -226,6 +276,26 @@ export default function Wallet() {
       setPawapayDepositId(null);
     }
   }, [pawapayPollData?.status]);
+
+  const pawapayWithdrawMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/wallet/pawapay/withdraw', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ amount: parseFloat(withdrawAmount), phoneNumber: pawapayWithdrawPhone.trim(), provider: pawapayWithdrawProvider }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Withdrawal failed');
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Withdrawal sent!', { description: 'Your funds are on the way to your mobile money account.' });
+      invalidate();
+      setWithdrawAmount('');
+      setPawapayWithdrawPhone('');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   const pesapalMutation = useMutation({
     mutationFn: () => initiatePesapal(parseFloat(depositAmount)),
@@ -664,132 +734,48 @@ export default function Wallet() {
             <CardTitle className="flex items-center gap-2 text-amber-400 text-base sm:text-lg">
               <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5" /> Withdrawal
             </CardTitle>
-            {pawapayConfigured && hasPayoutMethod && ['mtn_momo','airtel_money'].includes(payoutData?.payoutMethod ?? '') ? (
+            {pawapayConfigured ? (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Zap className="h-3 w-3 text-green-400" />
-                <p className="text-xs text-green-400 font-semibold">Instant via PawaPay — no admin approval needed</p>
+                <p className="text-xs text-green-400 font-semibold">PawaPay instant withdrawal available — no admin approval</p>
               </div>
             ) : (
               <p className="text-xs text-slate-500 mt-0.5">All withdrawals are reviewed and approved by admin</p>
             )}
           </CardHeader>
-          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-            {loadingPayout ? (
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+
+            {/* Withdrawal method tabs — only shown when PawaPay is configured */}
+            {pawapayConfigured && (
+              <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
+                <button
+                  onClick={() => setWithdrawTab('pawapay')}
+                  className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${withdrawTab === 'pawapay' ? 'bg-green-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                >
+                  <Zap className="h-3 w-3" /> PawaPay (Instant)
+                </button>
+                <button
+                  onClick={() => setWithdrawTab('standard')}
+                  className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${withdrawTab === 'standard' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                >
+                  <Clock className="h-3 w-3" /> Standard (Admin)
+                </button>
+              </div>
+            )}
+
+            {/* ── PawaPay instant withdrawal form ── */}
+            {pawapayConfigured && withdrawTab === 'pawapay' ? (
               <div className="space-y-3">
-                <Skeleton className="h-16 bg-slate-800 rounded-lg" />
-                <Skeleton className="h-10 bg-slate-800 rounded" />
-              </div>
-            ) : !hasPayoutMethod ? (
-              /* ── No payout method — setup gate ── */
-              <div className="space-y-4">
-                <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-3 flex gap-2.5">
-                  <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-                  <div className="text-xs text-amber-300 space-y-1">
-                    <p className="font-semibold">Payout method required</p>
-                    <p>You must add a withdrawal account before requesting payouts. This can only be set <strong>once</strong> — choose carefully.</p>
-                  </div>
+                <div className="rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2 text-xs text-green-300 flex items-center gap-2">
+                  <Zap className="h-3.5 w-3.5 shrink-0" />
+                  Funds sent directly to your mobile money account across Africa — no waiting.
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-xs sm:text-sm">Payout Method</Label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {PAYOUT_METHODS.map(m => (
-                      <button
-                        key={m.value}
-                        onClick={() => { setNewPayoutMethod(m.value); setNewPayoutAccount(''); setConfirmSetup(false); }}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors ${
-                          newPayoutMethod === m.value
-                            ? 'bg-teal-500/10 border-teal-500/50 text-white'
-                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
-                        }`}
-                      >
-                        <m.icon className={`h-4 w-4 shrink-0 ${newPayoutMethod === m.value ? 'text-teal-400' : 'text-slate-500'}`} />
-                        <span className="text-sm font-medium">{m.label}</span>
-                        {newPayoutMethod === m.value && <CheckCircle2 className="h-3.5 w-3.5 text-teal-400 ml-auto" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-xs sm:text-sm">{selectedMethod.label} Account</Label>
-                  <Input
-                    placeholder={selectedMethod.placeholder}
-                    value={newPayoutAccount}
-                    onChange={e => { setNewPayoutAccount(e.target.value); setConfirmSetup(false); }}
-                    className="bg-slate-800 border-slate-700 text-white font-mono h-10"
-                  />
-                  <p className="text-[10px] text-slate-500">{selectedMethod.hint}</p>
-                </div>
-
-                {newPayoutAccount.trim() && !confirmSetup && (
-                  <Button
-                    onClick={() => setConfirmSetup(true)}
-                    className="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-semibold h-9"
-                    variant="outline"
-                  >
-                    <ShieldCheck className="h-4 w-4 mr-2" />
-                    Review & Confirm
-                  </Button>
-                )}
-
-                {confirmSetup && (
-                  <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-3">
-                    <p className="text-xs text-amber-300 font-semibold flex items-center gap-1.5">
-                      <Lock className="h-3.5 w-3.5" /> Confirm your payout account
-                    </p>
-                    <div className="text-xs text-slate-300 space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Method:</span>
-                        <span className="font-medium">{METHOD_LABELS[newPayoutMethod]}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Account:</span>
-                        <span className="font-mono font-medium">{newPayoutAccount.trim()}</span>
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-amber-400/80">⚠ This cannot be changed after saving. Contact admin if you need to update it.</p>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => setConfirmSetup(false)}
-                        variant="ghost"
-                        size="sm"
-                        className="flex-1 text-slate-400 hover:text-white h-8 text-xs"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={() => payoutSetupMutation.mutate()}
-                        disabled={payoutSetupMutation.isPending}
-                        size="sm"
-                        className="flex-1 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold h-8 text-xs"
-                      >
-                        <Lock className="h-3 w-3 mr-1" />
-                        {payoutSetupMutation.isPending ? 'Saving…' : 'Save & Lock'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* ── Payout method set — withdrawal form ── */
-              <div className="space-y-4">
-                {/* Locked payout method display */}
-                <div className="rounded-lg bg-slate-800 border border-slate-700 px-3 py-2.5 flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-0.5">
-                      <Lock className="h-3 w-3" /> Payout account (locked)
-                    </div>
-                    <div className="text-white font-medium text-sm">{METHOD_LABELS[payoutData.payoutMethod!] ?? payoutData.payoutMethod}</div>
-                    <div className="text-slate-400 font-mono text-xs mt-0.5">{payoutData.payoutAccount}</div>
-                  </div>
-                  <ShieldCheck className="h-5 w-5 text-teal-400 shrink-0" />
-                </div>
-
+                {/* Amount */}
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-base">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono">$</span>
                     <Input
                       type="number" min="1" step="0.01" placeholder="0.00"
                       value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)}
@@ -801,26 +787,193 @@ export default function Wallet() {
                   </p>
                 </div>
 
-                <Button
-                  onClick={() => withdrawMutation.mutate()}
-                  disabled={withdrawMutation.isPending || !withdrawAmount || parseFloat(withdrawAmount) <= 0}
-                  className={`w-full font-bold h-10 ${pawapayConfigured && ['mtn_momo','airtel_money'].includes(payoutData?.payoutMethod ?? '') ? 'bg-green-500 hover:bg-green-400 text-slate-950' : 'bg-amber-500 hover:bg-amber-400 text-slate-950'}`}
-                >
-                  {pawapayConfigured && ['mtn_momo','airtel_money'].includes(payoutData?.payoutMethod ?? '') ? (
-                    <><Zap className="h-4 w-4 mr-2" />{withdrawMutation.isPending ? 'Processing…' : 'Withdraw Instantly'}</>
-                  ) : (
-                    <><ArrowUpRight className="h-4 w-4 mr-2" />{withdrawMutation.isPending ? 'Processing…' : 'Request Withdrawal'}</>
-                  )}
-                </Button>
-
-                <div className="rounded-md bg-slate-800/50 border border-slate-700/50 px-3 py-2 text-[10px] text-slate-500 flex items-start gap-2">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-slate-600 shrink-0 mt-0.5" />
-                  {pawapayConfigured && ['mtn_momo','airtel_money'].includes(payoutData?.payoutMethod ?? '')
-                    ? 'Funds are sent instantly to your mobile money account via PawaPay. To change your payout account, contact support.'
-                    : 'Withdrawals are manually reviewed and approved by admin before funds are sent. To change your payout account, contact support.'
-                  }
+                {/* Network */}
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 text-xs sm:text-sm">Mobile Network</Label>
+                  <select
+                    value={pawapayWithdrawProvider}
+                    onChange={e => setPawapayWithdrawProvider(e.target.value)}
+                    className="w-full rounded-md bg-slate-800 border border-slate-700 text-white text-sm h-10 px-3 focus:outline-none focus:ring-1 focus:ring-green-500"
+                  >
+                    {PAWAPAY_PROVIDERS.map(p => (
+                      <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* Phone */}
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 text-xs sm:text-sm">Mobile Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      type="tel"
+                      placeholder={PAWAPAY_PROVIDERS.find(p => p.value === pawapayWithdrawProvider)?.hint || 'e.g. 0771234567'}
+                      value={pawapayWithdrawPhone}
+                      onChange={e => setPawapayWithdrawPhone(e.target.value)}
+                      className="bg-slate-800 border-slate-700 text-white h-10 font-mono pl-9"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500">Your registered mobile money number</p>
+                </div>
+
+                <Button
+                  onClick={() => pawapayWithdrawMutation.mutate()}
+                  disabled={
+                    pawapayWithdrawMutation.isPending ||
+                    !withdrawAmount || parseFloat(withdrawAmount) <= 0 ||
+                    !pawapayWithdrawPhone.trim()
+                  }
+                  className="w-full bg-green-500 hover:bg-green-400 text-slate-950 font-bold h-10 gap-2"
+                >
+                  <Zap className="h-4 w-4" />
+                  {pawapayWithdrawMutation.isPending ? 'Sending…' : 'Withdraw Instantly'}
+                </Button>
+                <p className="text-[10px] text-slate-500 text-center">Funds arrive in your mobile money account within minutes.</p>
               </div>
+            ) : (
+              /* ── Standard withdrawal (admin approval) ── */
+              loadingPayout ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-16 bg-slate-800 rounded-lg" />
+                  <Skeleton className="h-10 bg-slate-800 rounded" />
+                </div>
+              ) : !hasPayoutMethod ? (
+                /* No payout method — setup gate */
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-3 flex gap-2.5">
+                    <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="text-xs text-amber-300 space-y-1">
+                      <p className="font-semibold">Payout method required</p>
+                      <p>You must add a withdrawal account before requesting payouts. This can only be set <strong>once</strong> — choose carefully.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-300 text-xs sm:text-sm">Payout Method</Label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {PAYOUT_METHODS.map(m => (
+                        <button
+                          key={m.value}
+                          onClick={() => { setNewPayoutMethod(m.value); setNewPayoutAccount(''); setConfirmSetup(false); }}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition-colors ${
+                            newPayoutMethod === m.value
+                              ? 'bg-teal-500/10 border-teal-500/50 text-white'
+                              : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
+                          }`}
+                        >
+                          <m.icon className={`h-4 w-4 shrink-0 ${newPayoutMethod === m.value ? 'text-teal-400' : 'text-slate-500'}`} />
+                          <span className="text-sm font-medium">{m.label}</span>
+                          {newPayoutMethod === m.value && <CheckCircle2 className="h-3.5 w-3.5 text-teal-400 ml-auto" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-300 text-xs sm:text-sm">{selectedMethod.label} Account</Label>
+                    <Input
+                      placeholder={selectedMethod.placeholder}
+                      value={newPayoutAccount}
+                      onChange={e => { setNewPayoutAccount(e.target.value); setConfirmSetup(false); }}
+                      className="bg-slate-800 border-slate-700 text-white font-mono h-10"
+                    />
+                    <p className="text-[10px] text-slate-500">{selectedMethod.hint}</p>
+                  </div>
+
+                  {newPayoutAccount.trim() && !confirmSetup && (
+                    <Button
+                      onClick={() => setConfirmSetup(true)}
+                      className="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-semibold h-9"
+                      variant="outline"
+                    >
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+                      Review & Confirm
+                    </Button>
+                  )}
+
+                  {confirmSetup && (
+                    <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 space-y-3">
+                      <p className="text-xs text-amber-300 font-semibold flex items-center gap-1.5">
+                        <Lock className="h-3.5 w-3.5" /> Confirm your payout account
+                      </p>
+                      <div className="text-xs text-slate-300 space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Method:</span>
+                          <span className="font-medium">{METHOD_LABELS[newPayoutMethod]}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Account:</span>
+                          <span className="font-mono font-medium">{newPayoutAccount.trim()}</span>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-amber-400/80">⚠ This cannot be changed after saving. Contact admin if you need to update it.</p>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setConfirmSetup(false)}
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 text-slate-400 hover:text-white h-8 text-xs"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => payoutSetupMutation.mutate()}
+                          disabled={payoutSetupMutation.isPending}
+                          size="sm"
+                          className="flex-1 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold h-8 text-xs"
+                        >
+                          <Lock className="h-3 w-3 mr-1" />
+                          {payoutSetupMutation.isPending ? 'Saving…' : 'Save & Lock'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Payout method set — withdrawal form */
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-slate-800 border border-slate-700 px-3 py-2.5 flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-0.5">
+                        <Lock className="h-3 w-3" /> Payout account (locked)
+                      </div>
+                      <div className="text-white font-medium text-sm">{METHOD_LABELS[payoutData.payoutMethod!] ?? payoutData.payoutMethod}</div>
+                      <div className="text-slate-400 font-mono text-xs mt-0.5">{payoutData.payoutAccount}</div>
+                    </div>
+                    <ShieldCheck className="h-5 w-5 text-teal-400 shrink-0" />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-base">$</span>
+                      <Input
+                        type="number" min="1" step="0.01" placeholder="0.00"
+                        value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)}
+                        className="bg-slate-800 border-slate-700 text-white h-10 font-mono pl-7"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-500">
+                      Withdrawable: <span className="text-green-400 font-mono font-semibold">${(wallet?.withdrawableBalance || 0).toFixed(2)}</span>
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => withdrawMutation.mutate()}
+                    disabled={withdrawMutation.isPending || !withdrawAmount || parseFloat(withdrawAmount) <= 0}
+                    className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold h-10"
+                  >
+                    <ArrowUpRight className="h-4 w-4 mr-2" />
+                    {withdrawMutation.isPending ? 'Processing…' : 'Request Withdrawal'}
+                  </Button>
+
+                  <div className="rounded-md bg-slate-800/50 border border-slate-700/50 px-3 py-2 text-[10px] text-slate-500 flex items-start gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-slate-600 shrink-0 mt-0.5" />
+                    Withdrawals are manually reviewed and approved by admin before funds are sent. To change your payout account, contact support.
+                  </div>
+                </div>
+              )
             )}
           </CardContent>
         </Card>
