@@ -673,7 +673,7 @@ interface QuickGame {
   totalBetPool: string;
 }
 
-function QuickBetPanel({ token }: { token: string | null }) {
+function QuickBetPanel({ token, streamSport }: { token: string | null; streamSport?: string }) {
   const qc = useQueryClient();
   const [outcome, setOutcome] = useState<'player_a_wins' | 'player_b_wins' | null>(null);
   const [stake, setStake] = useState('');
@@ -694,8 +694,14 @@ function QuickBetPanel({ token }: { token: string | null }) {
   const game = liveGames.find((g) => g.id === selectedId) ?? liveGames[0] ?? null;
 
   useEffect(() => {
-    if (liveGames.length > 0 && !selectedId) setSelectedId(liveGames[0].id);
-  }, [liveGames]);
+    if (liveGames.length === 0) return;
+    // Auto-select the game whose sport matches the live stream; fall back to first
+    const match = streamSport
+      ? liveGames.find((g) => g.sport.toLowerCase() === streamSport.toLowerCase())
+      : null;
+    setSelectedId((match ?? liveGames[0]).id);
+    setOutcome(null);
+  }, [liveGames, streamSport]);
 
   const placeBet = async () => {
     if (!game || !outcome || !stake || placing) return;
@@ -895,7 +901,7 @@ export default function Live() {
 
   const sidebar = (
     <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3">
-      {isAuthenticated && <QuickBetPanel token={token} />}
+      {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? settings?.mux_sport} />}
       <CommentSection
         streamId={paywallStreamId}
         token={token}
