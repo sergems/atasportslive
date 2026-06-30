@@ -45,7 +45,7 @@ export default function Login() {
   const onSubmit = (data: any) => {
     setLoginError(null);
     loginMutation.mutate({ data }, {
-      onSuccess: (res) => {
+      onSuccess: (res: any) => {
         login(res.accessToken, res.user);
         const firstName = res.user.fullName?.split(' ')[0] || res.user.email?.split('@')[0] || 'there';
         toast.success(`Welcome back, ${firstName}! 👋`);

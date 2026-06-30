@@ -292,7 +292,7 @@ export default function Streams() {
 
   const { data: streamsData, isLoading } = useListStreams(
     { status: status !== 'all' ? status : undefined, limit: 40 },
-    { query: { refetchInterval: 30_000 } },
+    { query: { refetchInterval: 30_000 } as any },
   );
 
   const streams = (streamsData?.streams || []) as Stream[];

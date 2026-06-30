@@ -36,7 +36,7 @@ export default function Register() {
 
   const onSubmit = (data: any) => {
     registerMutation.mutate({ data }, {
-      onSuccess: (res) => {
+      onSuccess: (res: any) => {
         login(res.accessToken, res.user);
         toast.success('Registration successful');
         setLocation('/dashboard');

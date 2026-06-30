@@ -1,0 +1,8 @@
+export const FALLBACK_SLOTS: Record<string, { tagline: string; sub: string; cta: string; bg: string; badge: string; accent: string }> = {
+  left_1:  { tagline: 'Your brand here',        sub: 'Reach thousands of sports fans across Uganda and Africa.',  cta: 'Advertise with us', bg: 'from-teal-900/80 via-slate-900 to-slate-950',    badge: 'bg-teal-500/20 text-teal-300',     accent: 'border-teal-500/20' },
+  left_2:  { tagline: 'Power the game',          sub: 'Connect with passionate fans at every match and stream.',  cta: 'Get exposure',       bg: 'from-amber-900/60 via-slate-900 to-slate-950',   badge: 'bg-amber-500/20 text-amber-300',   accent: 'border-amber-500/20' },
+  left_3:  { tagline: 'Grow with sports',        sub: "Sponsor Uganda's rising sports talent and events.",         cta: 'Become a sponsor',   bg: 'from-emerald-900/60 via-slate-900 to-slate-950', badge: 'bg-emerald-500/20 text-emerald-300', accent: 'border-emerald-500/20' },
+  right_1: { tagline: 'Be seen. Be heard.',      sub: 'Premium placement next to live sports content.',           cta: 'Book a slot',        bg: 'from-violet-900/60 via-slate-900 to-slate-950',  badge: 'bg-violet-500/20 text-violet-300', accent: 'border-violet-500/20' },
+  right_2: { tagline: 'Champion brands',         sub: "Align your brand with Uganda's top sporting moments.",     cta: 'Learn more',         bg: 'from-red-900/60 via-slate-900 to-slate-950',     badge: 'bg-red-500/20 text-red-300',       accent: 'border-red-500/20' },
+  right_3: { tagline: 'Win with every match',    sub: 'Your message delivered to engaged sports fans daily.',     cta: 'Start today',        bg: 'from-blue-900/60 via-slate-900 to-slate-950',    badge: 'bg-blue-500/20 text-blue-300',     accent: 'border-blue-500/20' },
+};
