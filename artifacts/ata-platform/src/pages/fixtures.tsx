@@ -4,7 +4,7 @@ import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, MapPin, Tv, Swords, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import { useAdSlots, AdCard, HorizontalAdBanner } from '@/components/ads';
+import { useAdSlots, AdCard } from '@/components/ads';
 
 interface UpcomingStream {
   id: number;
@@ -453,21 +453,7 @@ export default function Fixtures() {
 
       {/* Mobile layout */}
       <div className="lg:hidden">
-        {/* Mobile top ads */}
-        <div className="space-y-2 mb-5">
-          <HorizontalAdBanner slotKey="left_1" slot={adSlots.left_1} />
-          <HorizontalAdBanner slotKey="right_1" slot={adSlots.right_1} />
-        </div>
-
         <FixturesContent />
-
-        {/* Mobile bottom ads */}
-        <div className="space-y-2 mt-5">
-          <HorizontalAdBanner slotKey="left_2" slot={adSlots.left_2} />
-          <HorizontalAdBanner slotKey="left_3" slot={adSlots.left_3} />
-          <HorizontalAdBanner slotKey="right_2" slot={adSlots.right_2} />
-          <HorizontalAdBanner slotKey="right_3" slot={adSlots.right_3} />
-        </div>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarClock, MapPin, ChevronRight, Tv, Swords } from 'lucide-react';
-import { useAdSlots, AdCard, HorizontalAdBanner } from '@/components/ads';
+import { useAdSlots, AdCard } from '@/components/ads';
 
 interface UpcomingStream {
   id: number;
@@ -186,12 +186,6 @@ export default function Upcoming() {
 
   const mainContent = (
     <div className="space-y-6">
-      {/* Mobile top ads */}
-      <div className="lg:hidden space-y-2">
-        <HorizontalAdBanner slotKey="left_1" slot={adSlots.left_1} />
-        <HorizontalAdBanner slotKey="right_1" slot={adSlots.right_1} />
-      </div>
-
       <div className="flex items-center gap-3">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase">Upcoming Events</h1>
       </div>
@@ -223,23 +217,11 @@ export default function Upcoming() {
                   <EventCard key={event.key} event={event} now={now} />
                 ))}
               </div>
-              {/* Mobile mid-feed ads every 2nd group */}
-              {gi % 2 === 1 && (
-                <div className="lg:hidden mt-4 space-y-2">
-                  <HorizontalAdBanner slotKey="left_2" slot={adSlots.left_2} />
-                </div>
-              )}
             </div>
           ))}
         </div>
       )}
 
-      {/* Mobile bottom ads */}
-      <div className="lg:hidden space-y-2 pt-2">
-        <HorizontalAdBanner slotKey="left_3" slot={adSlots.left_3} />
-        <HorizontalAdBanner slotKey="right_2" slot={adSlots.right_2} />
-        <HorizontalAdBanner slotKey="right_3" slot={adSlots.right_3} />
-      </div>
     </div>
   );
 
