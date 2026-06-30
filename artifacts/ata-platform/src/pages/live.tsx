@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer } from 'lucide-react';
+import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
@@ -258,6 +258,205 @@ function NoLiveBroadcast() {
   );
 }
 
+// ─── Sneak Peek countdown hook ───────────────────────────────────────────────
+
+const SNEAK_PEEK_SECONDS = 60;
+
+function useSneakPeek(isLive: boolean, canWatch: boolean, peekKey: string) {
+  const alreadyUsed = () => {
+    try { return sessionStorage.getItem(peekKey) === 'true'; } catch { return false; }
+  };
+
+  const [active, setActive] = useState(false);
+  const [expired, setExpired] = useState(() => alreadyUsed());
+  const [secondsLeft, setSecondsLeft] = useState(SNEAK_PEEK_SECONDS);
+
+  // Auto-start the peek once we know stream is live and user has no access
+  useEffect(() => {
+    if (isLive && !canWatch && !alreadyUsed() && !active && !expired) {
+      setActive(true);
+      setSecondsLeft(SNEAK_PEEK_SECONDS);
+    }
+  }, [isLive, canWatch]);
+
+  // Countdown
+  useEffect(() => {
+    if (!active) return;
+    const id = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(id);
+          setActive(false);
+          setExpired(true);
+          try { sessionStorage.setItem(peekKey, 'true'); } catch {}
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [active]);
+
+  const skip = () => {
+    setActive(false);
+    setExpired(true);
+    try { sessionStorage.setItem(peekKey, 'true'); } catch {}
+  };
+
+  return { active, expired, secondsLeft, skip };
+}
+
+// ─── Sneak Peek player wrapper ────────────────────────────────────────────────
+
+function SneakPeekPlayer({
+  secondsLeft,
+  onSkip,
+  isAuthenticated,
+  children,
+}: {
+  secondsLeft: number;
+  onSkip: () => void;
+  isAuthenticated: boolean;
+  children: React.ReactNode;
+}) {
+  const pct = (secondsLeft / SNEAK_PEEK_SECONDS) * 100;
+  const urgent = secondsLeft <= 15;
+
+  return (
+    <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
+      {children}
+
+      {/* Top banner */}
+      <div className="absolute top-0 inset-x-0 flex items-center justify-between gap-3 bg-gradient-to-b from-black/80 to-transparent px-4 py-3 pointer-events-none">
+        <div className="flex items-center gap-2">
+          <Eye className="h-4 w-4 text-amber-400 shrink-0" />
+          <span className="text-white text-sm font-semibold">
+            Sneak Peek Preview
+          </span>
+          <span className="text-slate-400 text-xs">
+            — {isAuthenticated ? 'top up your wallet to keep watching' : 'sign in to keep watching'}
+          </span>
+        </div>
+      </div>
+
+      {/* Bottom countdown bar */}
+      <div className="absolute bottom-0 inset-x-0 pointer-events-none">
+        {/* Progress bar */}
+        <div className="h-1 bg-slate-800/80">
+          <div
+            className={`h-full transition-all duration-1000 ease-linear ${urgent ? 'bg-red-500' : 'bg-amber-400'}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+
+        {/* Controls row */}
+        <div className="flex items-center justify-between gap-3 bg-gradient-to-t from-black/90 to-transparent px-4 pt-3 pb-4 pointer-events-auto">
+          <div className={`flex items-center gap-2 ${urgent ? 'text-red-400' : 'text-amber-400'}`}>
+            <Timer className="h-4 w-4 shrink-0" />
+            <span className="font-mono font-bold text-sm tabular-nums">
+              {String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')}
+            </span>
+            <span className="text-slate-400 text-xs">preview remaining</span>
+          </div>
+          <button
+            onClick={onSkip}
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          >
+            <EyeOff className="h-3.5 w-3.5" />
+            Skip preview
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Post-peek gate (replaces StreamGate after preview expires) ───────────────
+
+function SneakPeekExpiredGate({
+  isAuthenticated,
+  price,
+  isFree,
+  paywallStreamId,
+  isPurchasing,
+  onPurchase,
+  title,
+}: {
+  isAuthenticated: boolean;
+  price: number;
+  isFree: boolean;
+  paywallStreamId: number | undefined;
+  isPurchasing: boolean;
+  onPurchase: () => void;
+  title: string;
+}) {
+  return (
+    <div className="relative rounded-xl overflow-hidden border border-amber-500/30 bg-slate-900 w-full">
+      <div className="flex flex-col items-center justify-center text-center px-6 py-14 sm:py-16">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 mb-5">
+          <Timer className="h-7 w-7 text-amber-400" />
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Your preview has ended</h2>
+        <p className="text-slate-400 text-sm mb-8 max-w-md">
+          You watched your free 1-minute sneak peek of <span className="text-white font-medium">{title}</span>.
+          {!isAuthenticated
+            ? ' Sign in to purchase full 24-hour access.'
+            : ` Top up your wallet and pay $${price.toFixed(2)} for 24-hour access.`}
+        </p>
+
+        {!isAuthenticated ? (
+          <div className="space-y-3 max-w-sm w-full">
+            <Link href="/login" className="block">
+              <Button className="w-full h-12 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-base gap-2">
+                <LogIn className="h-5 w-5" />
+                Sign In to Watch
+              </Button>
+            </Link>
+            <p className="text-slate-600 text-xs">
+              Don't have an account?{' '}
+              <Link href="/register" className="text-teal-400 hover:text-teal-300">Create one free</Link>
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3 max-w-sm w-full">
+            <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 px-5 py-4">
+              <p className="text-slate-400 text-xs mb-1">24-hour access fee</p>
+              <p className="text-amber-400 font-bold text-3xl font-mono">${price.toFixed(2)}</p>
+              <p className="text-slate-500 text-xs mt-1">Deducted from your ATA wallet balance</p>
+            </div>
+            <Button
+              onClick={onPurchase}
+              disabled={isPurchasing || !paywallStreamId}
+              className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-base gap-2"
+            >
+              {isPurchasing ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
+                  Processing…
+                </span>
+              ) : (
+                <>
+                  <Wallet className="h-5 w-5" />
+                  Pay ${price.toFixed(2)} & Watch Live
+                </>
+              )}
+            </Button>
+            <Link href="/wallet" className="block">
+              <Button variant="outline" className="w-full border-slate-700 text-slate-300 hover:text-white">
+                Top Up Wallet First
+              </Button>
+            </Link>
+            <p className="text-slate-500 text-xs flex items-center justify-center gap-1.5">
+              <Lock className="h-3 w-3" />
+              Funds deducted from your wallet · 24-hour access
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Stream preview card (shown when live but no access) ──────────────────────
 
 function StreamGate({
@@ -418,6 +617,14 @@ export default function Live() {
   //   NO  → not logged in, or logged in but hasn't purchased
   const canWatch = isAuthenticated && (isFreeStream || access?.hasAccess === true);
 
+  // ── Sneak peek (1-min preview for locked-out users) ──────────────────────
+  const peekKey = `sneak_used_${paywallStreamId ?? 'mux'}`;
+  const sneakPeek = useSneakPeek(
+    !isLoading && isAnythingLive && !canWatch,
+    canWatch,
+    peekKey,
+  );
+
   // ── Purchase handler ─────────────────────────────────────────────────────
   const purchaseMutation = useMutation({
     mutationFn: async (streamId: number) => {
@@ -500,21 +707,56 @@ export default function Live() {
           </div>
         </>
 
-      ) : (
-        /* ── Live but no access — show gate card ──────────────── */
+      ) : sneakPeek.active ? (
+        /* ── Sneak peek — show player with countdown overlay ───── */
         <>
-          <StreamGate
-            title={paywallTitle}
-            description={stream?.description}
-            sport={stream?.sport}
-            thumbnailUrl={stream?.thumbnailUrl}
-            price={paywallPrice}
-            isFree={isFreeStream}
+          <SneakPeekPlayer
+            secondsLeft={sneakPeek.secondsLeft}
+            onSkip={sneakPeek.skip}
             isAuthenticated={isAuthenticated}
-            paywallStreamId={paywallStreamId}
-            isPurchasing={purchaseMutation.isPending}
-            onPurchase={() => paywallStreamId && purchaseMutation.mutate(paywallStreamId)}
-          />
+          >
+            {liveStreamUrl
+              ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} />
+              : <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />
+            }
+          </SneakPeekPlayer>
+
+          {/* Stream title during peek */}
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-bold text-red-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
+            </span>
+            <h1 className="text-lg font-bold text-white">{stream?.title ?? paywallTitle}</h1>
+          </div>
+        </>
+
+      ) : (
+        /* ── Live but no access (peek done or skipped) ─────────── */
+        <>
+          {sneakPeek.expired ? (
+            <SneakPeekExpiredGate
+              isAuthenticated={isAuthenticated}
+              price={paywallPrice}
+              isFree={isFreeStream}
+              paywallStreamId={paywallStreamId}
+              isPurchasing={purchaseMutation.isPending}
+              onPurchase={() => paywallStreamId && purchaseMutation.mutate(paywallStreamId)}
+              title={paywallTitle}
+            />
+          ) : (
+            <StreamGate
+              title={paywallTitle}
+              description={stream?.description}
+              sport={stream?.sport}
+              thumbnailUrl={stream?.thumbnailUrl}
+              price={paywallPrice}
+              isFree={isFreeStream}
+              isAuthenticated={isAuthenticated}
+              paywallStreamId={paywallStreamId}
+              isPurchasing={purchaseMutation.isPending}
+              onPurchase={() => paywallStreamId && purchaseMutation.mutate(paywallStreamId)}
+            />
+          )}
 
           {/* Upcoming schedule below the gate */}
           <UpcomingSchedule />
