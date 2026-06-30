@@ -758,7 +758,7 @@ export default function Wallet() {
                   onClick={() => setWithdrawTab('standard')}
                   className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${withdrawTab === 'standard' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
                 >
-                  <Clock className="h-3 w-3" /> Standard (Admin)
+                  <Clock className="h-3 w-3" /> Standard
                 </button>
               </div>
             )}
@@ -833,7 +833,12 @@ export default function Wallet() {
               </div>
             ) : (
               /* ── Standard withdrawal (admin approval) ── */
-              loadingPayout ? (
+              <>
+              <div className="rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-2 text-xs text-sky-300 flex items-center gap-2 mb-3">
+                <Clock className="h-3.5 w-3.5 shrink-0" />
+                All requested payments are processed the following day before 11:00 AM EAT.
+              </div>
+              {loadingPayout ? (
                 <div className="space-y-3">
                   <Skeleton className="h-16 bg-slate-800 rounded-lg" />
                   <Skeleton className="h-10 bg-slate-800 rounded" />
@@ -973,7 +978,8 @@ export default function Wallet() {
                     Withdrawals are manually reviewed and approved by admin before funds are sent. To change your payout account, contact support.
                   </div>
                 </div>
-              )
+              )}
+              </>
             )}
           </CardContent>
         </Card>
