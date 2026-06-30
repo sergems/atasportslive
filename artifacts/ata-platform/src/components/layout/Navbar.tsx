@@ -112,7 +112,7 @@ export function Navbar() {
         </div>
 
         {/* Nav links - centered absolutely (desktop only) */}
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium absolute left-1/2 -translate-x-1/2">
+        <nav className="hidden md:flex items-center space-x-4 text-sm font-medium absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
           {navLinks.map(({ href, label, pulse, exact }) => {
             const active = exact ? location === href : location.startsWith(href);
             return (
