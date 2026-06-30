@@ -1,53 +1,110 @@
-# ATA Platform — Linode Deployment Guide
+# ATA Platform — Deployment Guide
 
+**GitHub repo:** `https://github.com/sergems/atasportslive`  
 **Server IP:** `173.230.131.210`  
 **Future domain:** `https://atasportslive.com`  
 **Stack:** Node.js 24 · pnpm 11.8.0 · Express 5 · PostgreSQL 16 · nginx · Docker
 
 ---
 
-## Overview
+## How it works
 
-The app runs as three Docker containers managed by Docker Compose:
+```
+Your computer  →  GitHub  →  Linode server
+   (code)        (repo)      (Docker containers)
+```
 
-| Container | Role | Port |
-|-----------|------|------|
-| `db`      | PostgreSQL 16-alpine database | internal only |
-| `api`     | Node.js / Express API server | internal `8080` |
-| `nginx`   | Reverse proxy + frontend static files | `80` (public) |
+Every deployment follows the same loop:
+1. Make changes on your computer
+2. Push to GitHub
+3. SSH into the Linode server and pull + redeploy
 
-nginx is the only container exposed to the internet. It serves the built React frontend directly and proxies `/api`, `/ws`, and `/uploads` to the API container.
+The server runs three Docker containers:
+
+| Container | Role | Exposed |
+|-----------|------|---------|
+| `db`      | PostgreSQL 16 — stores all data | No (internal only) |
+| `api`     | Node.js / Express API + WebSocket | No (internal only) |
+| `nginx`   | Serves frontend + proxies API | Yes — port 80 / 443 |
 
 ---
 
-## Part 1 — First-time Server Setup
+## Part 1 — Push your code to GitHub
 
-### 1.1 SSH into your Linode
+Do this once from your computer before touching the server.
+
+### 1.1 Make sure Git is set up locally
+
+```bash
+git config --global user.name  "Your Name"
+git config --global user.email "your@email.com"
+```
+
+### 1.2 Initialise the repo and push
+
+```bash
+cd /path/to/your/ata-platform   # your project folder on your computer
+
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/sergems/atasportslive.git
+git push -u origin main
+```
+
+> If GitHub asks for credentials, enter your GitHub username and a **Personal Access Token** (not your password).  
+> Create one at: **GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)**  
+> Give it the `repo` scope.
+
+### 1.3 Add a `.gitignore` (if not already present)
+
+Make sure these lines are in `.gitignore` so secrets and build files are never committed:
+
+```
+.env
+node_modules
+**/dist
+backup.sql
+deploy/ssl/
+```
+
+---
+
+## Part 2 — First-time Linode server setup
+
+SSH into the server:
 
 ```bash
 ssh root@173.230.131.210
 ```
 
-### 1.2 Update the system
+### 2.1 Update the system
 
 ```bash
 apt-get update && apt-get upgrade -y
 ```
 
-### 1.3 Install Docker Engine
+### 2.2 Install Git
+
+```bash
+apt-get install -y git
+```
+
+### 2.3 Install Docker Engine
 
 ```bash
 curl -fsSL https://get.docker.com | sh
 ```
 
-Verify it installed correctly:
+Verify:
 
 ```bash
 docker --version
 # Docker version 27.x.x
 ```
 
-### 1.4 Install Docker Compose plugin
+### 2.4 Install Docker Compose plugin
 
 ```bash
 apt-get install -y docker-compose-plugin
@@ -55,120 +112,122 @@ docker compose version
 # Docker Compose version v2.x.x
 ```
 
-### 1.5 (Optional but recommended) Create a non-root user
+### 2.5 Set up a firewall
 
 ```bash
-adduser ata
-usermod -aG docker ata
-su - ata
+apt-get install -y ufw
+ufw allow 22     # SSH
+ufw allow 80     # HTTP
+ufw allow 443    # HTTPS (for when the domain is ready)
+ufw enable
+ufw status
 ```
 
 ---
 
-## Part 2 — Upload the Project
-
-### Option A — Git clone (recommended)
-
-If your code is on GitHub/GitLab:
+## Part 3 — Clone the repo onto the server
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ata-platform.git /opt/ata
-cd /opt/ata
-```
-
-### Option B — Upload with scp (from your local machine)
-
-Run this **on your local machine** (not on the server):
-
-```bash
-# Upload the entire project folder
-scp -r /path/to/ata-platform root@173.230.131.210:/opt/ata
-```
-
-Then on the server:
-
-```bash
+git clone https://github.com/sergems/atasportslive.git /opt/ata
 cd /opt/ata
 ```
 
 ---
 
-## Part 3 — Configure Environment Variables
+## Part 4 — Configure environment variables
 
-### 3.1 Create the `.env` file
+### 4.1 Create the `.env` file
 
 ```bash
 cp deploy/.env.example .env
 nano .env
 ```
 
-Fill in strong, random values:
+Fill in every value. Here is what each one means:
+
+| Variable | Description | How to generate |
+|----------|-------------|-----------------|
+| `POSTGRES_PASSWORD` | PostgreSQL database password | `openssl rand -base64 32` |
+| `SESSION_SECRET` | JWT signing secret | `openssl rand -base64 64` |
+| `SMTP_HOST` | Your email SMTP server | See §4.2 below |
+| `SMTP_PORT` | SMTP port (usually 587) | See §4.2 below |
+| `SMTP_USER` | SMTP login email address | See §4.2 below |
+| `SMTP_PASS` | SMTP password or App Password | See §4.2 below |
+| `NOTIFY_EMAIL` | Where weekly backup emails go | `info@atasportslive.com` |
+
+**Generate secure values right now:**
+
+```bash
+# Copy these outputs into your .env
+openssl rand -base64 32   # → POSTGRES_PASSWORD
+openssl rand -base64 64   # → SESSION_SECRET
+```
+
+### 4.2 Setting up Gmail SMTP (recommended)
+
+If you want to send the weekly backup notification from a Gmail account:
+
+1. Go to **myaccount.google.com → Security → 2-Step Verification** and turn it ON  
+2. Then go to **myaccount.google.com/apppasswords**  
+3. Create an App Password called "ATA Backup"  
+4. Copy the 16-character password it gives you  
+
+Use these values in `.env`:
 
 ```env
-POSTGRES_PASSWORD=replace_with_a_long_random_password
-SESSION_SECRET=replace_with_a_long_random_secret
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=yourname@gmail.com
+SMTP_PASS=xxxx xxxx xxxx xxxx    ← the 16-char App Password
+NOTIFY_EMAIL=info@atasportslive.com
 ```
 
-**Generate secure values:**
+### 4.3 Lock down the `.env` file
 
 ```bash
-# Generate POSTGRES_PASSWORD
-openssl rand -base64 32
-
-# Generate SESSION_SECRET
-openssl rand -base64 64
-```
-
-> ⚠️ Never share or commit the `.env` file. Keep it on the server only.
-
-### 3.2 Secure the `.env` file
-
-```bash
-chmod 600 .env
+chmod 600 /opt/ata/.env
 ```
 
 ---
 
-## Part 4 — Build and Start the Containers
+## Part 5 — Build and start the app
 
-### 4.1 Build Docker images
+### 5.1 Build Docker images
 
-This compiles the TypeScript API server, builds the React frontend, and assembles the nginx image. It takes **3–6 minutes** on first run.
+This downloads Node.js, compiles TypeScript, builds the React frontend, and sets up nginx. Takes **3–6 minutes** on first run.
 
 ```bash
+cd /opt/ata
 docker compose build
 ```
 
-### 4.2 Start the database first
+### 5.2 Start the database
 
 ```bash
 docker compose up -d db
 ```
 
-Wait for it to become healthy:
+Wait until it shows `(healthy)`:
 
 ```bash
-docker compose ps
-# db should show "(healthy)"
+watch docker compose ps
+# Press Ctrl+C when db shows "(healthy)"
 ```
 
-### 4.3 Restore your database from backup
+### 5.3 Restore your database from backup
 
-Copy your `backup.sql` to the server (if not already there):
+Copy your `backup.sql` from your local machine to the server:
 
 ```bash
-# From your local machine:
-scp backup.sql root@173.230.131.210:/opt/ata/backup.sql
+# Run this on YOUR LOCAL COMPUTER (not on the server):
+scp /path/to/backup.sql root@173.230.131.210:/opt/ata/backup.sql
 ```
 
-Then restore it into the running postgres container:
+Then on the **server**, restore it:
 
 ```bash
-# Load the backup into the database
-docker compose exec -T db psql \
-  -U ata_user \
-  -d ata_db \
-  < backup.sql
+cd /opt/ata
+docker compose exec -T db psql -U ata_user -d ata_db < backup.sql
 ```
 
 Verify the data loaded:
@@ -176,17 +235,16 @@ Verify the data loaded:
 ```bash
 docker compose exec db psql -U ata_user -d ata_db \
   -c "SELECT COUNT(*) FROM users;"
+# Should show your user count, e.g. 5031
 ```
 
-You should see your user count (e.g., `5031`).
-
-### 4.4 Start all services
+### 5.4 Start all services
 
 ```bash
 docker compose up -d
 ```
 
-Check all containers are running:
+Check everything is running:
 
 ```bash
 docker compose ps
@@ -195,101 +253,143 @@ docker compose ps
 Expected output:
 
 ```
-NAME        IMAGE       STATUS          PORTS
-ata-api     ...         Up              
-ata-db      ...         Up (healthy)    
-ata-nginx   ...         Up              0.0.0.0:80->80/tcp
+NAME        STATUS          PORTS
+ata-api     Up              
+ata-db      Up (healthy)    
+ata-nginx   Up              0.0.0.0:80->80/tcp
 ```
 
----
-
-## Part 5 — Verify the Deployment
-
-### 5.1 Test in a browser
+### 5.5 Test it in a browser
 
 Open: **http://173.230.131.210**
 
 You should see the ATA Platform home page.
 
-### 5.2 Test the API
+---
+
+## Part 6 — Set up automatic database backups
+
+Backups run daily at 2 AM, keep only the 2 most recent copies, and email a notification to `info@atasportslive.com` every Monday at 8 AM.
+
+### 6.1 Make the scripts executable
 
 ```bash
-curl http://173.230.131.210/api/streams
-# Should return JSON with stream data
+chmod +x /opt/ata/deploy/backup.sh
+chmod +x /opt/ata/deploy/notify-backup.py
 ```
 
-### 5.3 Check container logs
+### 6.2 Create the backups folder
 
 ```bash
-# All services
-docker compose logs -f
+mkdir -p /opt/ata/backups
+```
 
-# Just the API server
-docker compose logs -f api
+### 6.3 Test the backup script manually
 
-# Just nginx
-docker compose logs -f nginx
+```bash
+/opt/ata/deploy/backup.sh
+```
+
+You should see output like:
+
+```
+[2026-06-30 02:00:01] Starting backup → /opt/ata/backups/ata_backup_20260630_020001.sql.gz
+[2026-06-30 02:00:05] Backup complete: ata_backup_20260630_020001.sql.gz (4.2 MB)
+[2026-06-30 02:00:05] Done.
+```
+
+### 6.4 Test the email notification manually
+
+```bash
+python3 /opt/ata/deploy/notify-backup.py
+```
+
+Check `info@atasportslive.com` — you should receive a notification email within a minute.
+
+### 6.5 Schedule both with cron
+
+```bash
+crontab -e
+```
+
+Add these two lines at the bottom:
+
+```cron
+# Daily database backup at 02:00 AM — keeps last 2 copies
+0 2 * * * /opt/ata/deploy/backup.sh >> /var/log/ata-backup.log 2>&1
+
+# Weekly email notification every Monday at 08:00 AM
+0 8 * * 1 python3 /opt/ata/deploy/notify-backup.py >> /var/log/ata-backup.log 2>&1
+```
+
+Save and exit (in nano: `Ctrl+O`, `Enter`, `Ctrl+X`).
+
+Verify cron is active:
+
+```bash
+crontab -l
+```
+
+### 6.6 View backup logs
+
+```bash
+tail -f /var/log/ata-backup.log
 ```
 
 ---
 
-## Part 6 — Add a Domain Name (atasportslive.com)
+## Part 7 — Add a domain name (atasportslive.com)
 
-Once your domain is registered and pointed at `173.230.131.210`, follow these steps.
+When your domain `atasportslive.com` is registered, follow these steps.
 
-### 6.1 Point DNS to the server
+### 7.1 Point DNS to the server
 
-In your domain registrar's DNS settings, add:
+In your domain registrar's DNS panel, add these records:
 
-| Type | Name | Value |
-|------|------|-------|
-| `A` | `@` | `173.230.131.210` |
-| `A` | `www` | `173.230.131.210` |
+| Type | Name  | Value              | TTL  |
+|------|-------|--------------------|------|
+| `A`  | `@`   | `173.230.131.210`  | 3600 |
+| `A`  | `www` | `173.230.131.210`  | 3600 |
 
-Wait for DNS to propagate (usually 5–30 minutes, up to 48 hours).
-
-### 6.2 Install Certbot
+Wait for DNS to propagate (usually 5–30 minutes, up to 48 hours). Test with:
 
 ```bash
-apt-get install -y certbot python3-certbot-nginx
+ping atasportslive.com
+# Should resolve to 173.230.131.210
 ```
 
-### 6.3 Stop nginx temporarily to issue the certificate
+### 7.2 Get a free SSL certificate (HTTPS)
 
 ```bash
+apt-get install -y certbot
+
+# Stop nginx temporarily so certbot can use port 80
 docker compose stop nginx
-```
 
-### 6.4 Obtain the SSL certificate
-
-```bash
+# Issue the certificate
 certbot certonly --standalone \
   -d atasportslive.com \
   -d www.atasportslive.com \
-  --email your@email.com \
+  --email info@atasportslive.com \
   --agree-tos \
   --non-interactive
 ```
 
-Certificates will be saved to:
-- `/etc/letsencrypt/live/atasportslive.com/fullchain.pem`
-- `/etc/letsencrypt/live/atasportslive.com/privkey.pem`
-
-### 6.5 Copy certificates to the deploy/ssl folder
+### 7.3 Copy certificates to the project
 
 ```bash
 mkdir -p /opt/ata/deploy/ssl
+
 cp /etc/letsencrypt/live/atasportslive.com/fullchain.pem /opt/ata/deploy/ssl/
-cp /etc/letsencrypt/live/atasportslive.com/privkey.pem  /opt/ata/deploy/ssl/
+cp /etc/letsencrypt/live/atasportslive.com/privkey.pem   /opt/ata/deploy/ssl/
 chmod 600 /opt/ata/deploy/ssl/privkey.pem
 ```
 
-### 6.6 Update nginx.conf for HTTPS
+### 7.4 Switch nginx to HTTPS
 
-Replace the contents of `deploy/nginx.conf` with:
+Replace `deploy/nginx.conf` with:
 
 ```nginx
-# Redirect HTTP → HTTPS
 server {
     listen 80;
     server_name atasportslive.com www.atasportslive.com;
@@ -352,14 +452,24 @@ server {
 }
 ```
 
-### 6.7 Rebuild nginx and restart
+### 7.5 Rebuild nginx and restart
 
 ```bash
+cd /opt/ata
 docker compose build nginx
 docker compose up -d nginx
 ```
 
-### 6.8 Set up automatic certificate renewal
+Test HTTPS:
+
+```bash
+curl -I https://atasportslive.com
+# Should return HTTP/2 200
+```
+
+### 7.6 Auto-renew SSL certificates
+
+SSL certificates expire every 90 days. Add this to cron to auto-renew:
 
 ```bash
 crontab -e
@@ -367,38 +477,56 @@ crontab -e
 
 Add this line:
 
-```
-0 3 * * * certbot renew --quiet && cp /etc/letsencrypt/live/atasportslive.com/fullchain.pem /opt/ata/deploy/ssl/ && cp /etc/letsencrypt/live/atasportslive.com/privkey.pem /opt/ata/deploy/ssl/ && docker compose -f /opt/ata/docker-compose.yml restart nginx
+```cron
+# Renew SSL certificate on the 1st of every month at 3 AM
+0 3 1 * * certbot renew --quiet && cp /etc/letsencrypt/live/atasportslive.com/fullchain.pem /opt/ata/deploy/ssl/ && cp /etc/letsencrypt/live/atasportslive.com/privkey.pem /opt/ata/deploy/ssl/ && docker compose -f /opt/ata/docker-compose.yml restart nginx
 ```
 
 ---
 
-## Part 7 — Updating the App
+## Part 8 — Deploying updates (after first setup)
 
-When you push new code changes:
+Every time you make changes to the app:
+
+### On your computer
 
 ```bash
+# Stage and commit your changes
+git add .
+git commit -m "describe what you changed"
+
+# Push to GitHub
+git push origin main
+```
+
+### On the Linode server
+
+```bash
+ssh root@173.230.131.210
 cd /opt/ata
 
-# Pull latest code (if using git)
-git pull
+# Pull latest code from GitHub
+git pull origin main
 
-# Rebuild images (only changed layers rebuild — fast)
+# Rebuild Docker images (only changed layers rebuild — usually fast)
 docker compose build
 
-# Restart services with zero-downtime rollover
+# Restart services with the new build
 docker compose up -d
 ```
 
+That's it. The site will be back up within 30–60 seconds.
+
 ---
 
-## Part 8 — Useful Operations
+## Part 9 — Useful day-to-day commands
 
-### View real-time logs
+### View live logs
 
 ```bash
-docker compose logs -f api
-docker compose logs -f nginx
+docker compose logs -f          # all services
+docker compose logs -f api      # API server only
+docker compose logs -f nginx    # nginx only
 ```
 
 ### Restart a single service
@@ -414,10 +542,26 @@ docker compose restart nginx
 docker compose exec db psql -U ata_user -d ata_db
 ```
 
-### Back up the database
+### Manually trigger a backup right now
 
 ```bash
-docker compose exec db pg_dump -U ata_user ata_db > backup_$(date +%Y%m%d).sql
+/opt/ata/deploy/backup.sh
+ls -lh /opt/ata/backups/
+```
+
+### Download a backup to your local computer
+
+```bash
+# Run this on your LOCAL machine:
+scp root@173.230.131.210:/opt/ata/backups/ata_backup_YYYYMMDD_HHMMSS.sql.gz ./
+```
+
+### Restore a backup
+
+```bash
+cd /opt/ata
+gunzip -c backups/ata_backup_YYYYMMDD_HHMMSS.sql.gz | \
+  docker compose exec -T db psql -U ata_user -d ata_db
 ```
 
 ### Stop everything
@@ -426,52 +570,40 @@ docker compose exec db pg_dump -U ata_user ata_db > backup_$(date +%Y%m%d).sql
 docker compose down
 ```
 
-### Stop and wipe the database volume (⚠️ destructive)
-
-```bash
-docker compose down -v
-```
-
 ---
 
-## Part 9 — Firewall Configuration (recommended)
+## Quick reference — full file structure on the server
 
-Allow only the ports you need:
-
-```bash
-ufw allow 22    # SSH
-ufw allow 80    # HTTP
-ufw allow 443   # HTTPS (when domain is ready)
-ufw enable
-ufw status
+```
+/opt/ata/
+├── Dockerfile              ← Multi-stage Docker build
+├── docker-compose.yml      ← Orchestrates all 3 services
+├── .dockerignore
+├── .env                    ← Secrets — never commit this file
+├── deploy/
+│   ├── nginx.conf          ← nginx reverse proxy config
+│   ├── .env.example        ← Template for .env
+│   ├── backup.sh           ← Daily DB backup script (cron)
+│   ├── notify-backup.py    ← Weekly email notification (cron)
+│   └── ssl/                ← SSL certificates (added when domain is ready)
+│       ├── fullchain.pem
+│       └── privkey.pem
+└── backups/                ← Backup files (last 2 kept automatically)
+    ├── ata_backup_20260701_020001.sql.gz
+    └── ata_backup_20260702_020001.sql.gz
 ```
 
 ---
 
 ## Troubleshooting
 
-| Symptom | Check |
-|---------|-------|
-| Site not loading | `docker compose ps` — is nginx Up? |
-| API errors | `docker compose logs api` |
-| Database errors | `docker compose logs db` — is it healthy? |
-| WebSocket not connecting | Ensure port 80/443 is open in firewall |
-| Build fails | Run `docker compose build --no-cache` to force a clean build |
-| Permission denied on .env | Run `chmod 600 .env` |
-
----
-
-## File Structure Summary
-
-```
-/opt/ata/
-├── Dockerfile              ← Multi-stage Docker build
-├── docker-compose.yml      ← Orchestrates all 3 services
-├── .dockerignore           ← Speeds up Docker builds
-├── .env                    ← Secrets (never commit this)
-├── deploy/
-│   ├── nginx.conf          ← nginx reverse proxy config
-│   ├── .env.example        ← Template for .env
-│   └── ssl/                ← SSL certificates (added later)
-└── backup.sql              ← Database backup for restore
-```
+| Problem | What to check |
+|---------|---------------|
+| Site not loading | `docker compose ps` — is nginx `Up`? |
+| API errors (500) | `docker compose logs api` |
+| Database errors | `docker compose logs db` — is it `(healthy)`? |
+| WebSocket not connecting | Check firewall: `ufw status` — port 80 open? |
+| Backup email not arriving | Check spam folder; run `python3 /opt/ata/deploy/notify-backup.py` manually and watch for errors |
+| Build fails | `docker compose build --no-cache` to force a clean rebuild |
+| `git pull` asks for password | Use a Personal Access Token, not your GitHub password |
+| Permission denied `.env` | `chmod 600 /opt/ata/.env` |
