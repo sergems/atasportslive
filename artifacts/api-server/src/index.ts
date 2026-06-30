@@ -2,7 +2,7 @@ import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import app from "./app";
 import { logger } from "./lib/logger";
-import { wsClients } from "./lib/notify";
+import { wsClients, wsStreamClients } from "./lib/notify";
 import { startBonusCron } from "./lib/bonusCron";
 
 const rawPort = process.env["PORT"];
@@ -24,16 +24,26 @@ const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 wss.on("connection", (ws: WebSocket, req) => {
   const url = new URL(req.url || "/", `http://localhost`);
   const userId = parseInt(url.searchParams.get("userId") || "0");
+  const streamId = parseInt(url.searchParams.get("streamId") || "0");
 
   if (userId > 0) {
     wsClients.set(userId, ws);
     logger.info({ userId }, "WebSocket client connected");
   }
 
+  if (streamId > 0) {
+    if (!wsStreamClients.has(streamId)) wsStreamClients.set(streamId, new Set());
+    wsStreamClients.get(streamId)!.add(ws);
+    logger.info({ streamId }, "Client joined stream room");
+  }
+
   ws.on("close", () => {
     if (userId > 0) {
       wsClients.delete(userId);
       logger.info({ userId }, "WebSocket client disconnected");
+    }
+    if (streamId > 0) {
+      wsStreamClients.get(streamId)?.delete(ws);
     }
   });
 

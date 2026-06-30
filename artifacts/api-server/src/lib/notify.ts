@@ -2,6 +2,16 @@ import { db, notificationsTable } from "@workspace/db";
 import type { WebSocket } from "ws";
 
 export const wsClients = new Map<number, WebSocket>();
+export const wsStreamClients = new Map<number, Set<WebSocket>>();
+
+export function broadcastToStream(streamId: number, message: object): void {
+  const clients = wsStreamClients.get(streamId);
+  if (!clients) return;
+  const payload = JSON.stringify(message);
+  for (const ws of clients) {
+    if (ws.readyState === 1) ws.send(payload);
+  }
+}
 
 type NotificationType =
   | "bet_matched"

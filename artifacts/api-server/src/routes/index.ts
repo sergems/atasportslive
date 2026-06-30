@@ -15,6 +15,7 @@ import highlightsRouter from "./highlights";
 import settingsRouter from "./settings";
 import slidesRouter from "./slides";
 import promotionsRouter from "./promotions";
+import commentsRouter from "./comments";
 
 const router: IRouter = Router();
 
@@ -23,6 +24,7 @@ router.use("/auth", authRouter);
 router.use("/users", usersRouter);
 router.use("/wallet", walletRouter);
 router.use("/streams", streamsRouter);
+router.use("/streams/:id/comments", commentsRouter);
 router.use("/games", gamesRouter);
 router.use("/bets", betsRouter);
 router.use("/notifications", notificationsRouter);

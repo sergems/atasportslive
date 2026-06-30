@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff } from 'lucide-react';
+import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
@@ -510,6 +510,307 @@ function StreamGate({
   );
 }
 
+// ─── Live Comment Section ─────────────────────────────────────────────────────
+
+interface LiveComment {
+  id: number;
+  userId: number;
+  username: string;
+  content: string;
+  createdAt: string;
+}
+
+function CommentSection({
+  streamId,
+  token,
+  userId,
+  isAuthenticated,
+}: {
+  streamId: number | undefined;
+  token: string | null;
+  userId: number | undefined;
+  isAuthenticated: boolean;
+}) {
+  const [comments, setComments] = useState<LiveComment[]>([]);
+  const [input, setInput] = useState('');
+  const [posting, setPosting] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  // Fetch existing comments
+  useEffect(() => {
+    if (!streamId) return;
+    fetch(`/api/streams/${streamId}/comments`)
+      .then((r) => r.json())
+      .then((data) => setComments(data.comments || []))
+      .catch(() => {});
+  }, [streamId]);
+
+  // Connect to stream WS room for real-time comments
+  useEffect(() => {
+    if (!streamId) return;
+    let destroyed = false;
+    let reconnect: ReturnType<typeof setTimeout>;
+
+    const connect = () => {
+      if (destroyed) return;
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const url = `${proto}//${window.location.host}/ws?streamId=${streamId}${userId ? `&userId=${userId}` : ''}`;
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+
+      ws.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.type === 'stream_comment' && data.comment) {
+            setComments((prev) =>
+              prev.some((c) => c.id === data.comment.id) ? prev : [...prev, data.comment],
+            );
+          }
+        } catch {}
+      };
+      ws.onclose = () => { if (!destroyed) reconnect = setTimeout(connect, 3000); };
+    };
+
+    connect();
+    return () => { destroyed = true; clearTimeout(reconnect); wsRef.current?.close(); };
+  }, [streamId, userId]);
+
+  // Auto-scroll to bottom on new comments
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [comments.length]);
+
+  const postComment = async () => {
+    if (!input.trim() || !streamId || posting) return;
+    setPosting(true);
+    try {
+      const r = await fetch(`/api/streams/${streamId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content: input.trim() }),
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Failed'); }
+      setInput('');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to post comment');
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden" style={{ height: '420px' }}>
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800 shrink-0">
+        <MessageSquare className="h-4 w-4 text-teal-400" />
+        <span className="text-sm font-semibold text-white">Live Chat</span>
+        <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
+      </div>
+
+      {/* Messages — scrollable area */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
+        {comments.length === 0 && (
+          <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>
+        )}
+        {comments.map((c) => (
+          <div key={c.id} className="flex gap-2 items-start">
+            <div className="h-6 w-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-teal-400 mt-0.5">
+              {c.username[0]?.toUpperCase() ?? '?'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-teal-400 text-[11px] font-semibold mr-1.5">{c.username}</span>
+              <span className="text-slate-300 text-[13px] break-words">{c.content}</span>
+            </div>
+          </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="shrink-0 border-t border-slate-800 px-2 py-2">
+        {isAuthenticated ? (
+          <div className="flex items-center gap-2">
+            <input
+              className="flex-1 bg-slate-800 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-teal-500/50 min-w-0"
+              placeholder="Say something…"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); postComment(); } }}
+              maxLength={280}
+            />
+            <button
+              onClick={postComment}
+              disabled={posting || !input.trim()}
+              className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-teal-500 hover:bg-teal-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {posting
+                ? <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
+                : <Send className="h-3.5 w-3.5 text-slate-950" />
+              }
+            </button>
+          </div>
+        ) : (
+          <Link href="/login">
+            <button className="w-full text-center text-xs text-slate-500 hover:text-teal-400 transition-colors py-1">
+              Sign in to chat
+            </button>
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Quick P2P Bet Panel ──────────────────────────────────────────────────────
+
+interface QuickGame {
+  id: number;
+  playerA: string;
+  playerB: string;
+  sport: string;
+  openBetsCount: number;
+  totalBetPool: string;
+}
+
+function QuickBetPanel({ token }: { token: string | null }) {
+  const qc = useQueryClient();
+  const [outcome, setOutcome] = useState<'player_a_wins' | 'player_b_wins' | null>(null);
+  const [stake, setStake] = useState('');
+  const [placing, setPlacing] = useState(false);
+
+  const { data: gamesData } = useQuery<{ games: QuickGame[] }>({
+    queryKey: ['games', 'live-quick'],
+    queryFn: async () => {
+      const r = await fetch('/api/games?status=live&limit=10');
+      if (!r.ok) return { games: [] };
+      return r.json();
+    },
+    refetchInterval: 30_000,
+  });
+
+  const liveGames = gamesData?.games ?? [];
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const game = liveGames.find((g) => g.id === selectedId) ?? liveGames[0] ?? null;
+
+  useEffect(() => {
+    if (liveGames.length > 0 && !selectedId) setSelectedId(liveGames[0].id);
+  }, [liveGames]);
+
+  const placeBet = async () => {
+    if (!game || !outcome || !stake || placing) return;
+    const stakeNum = parseFloat(stake);
+    if (isNaN(stakeNum) || stakeNum <= 0) { toast.error('Enter a valid stake amount'); return; }
+    setPlacing(true);
+    try {
+      const r = await fetch('/api/bets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ gameId: game.id, outcome, stake: stakeNum.toFixed(2) }),
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Bet failed'); }
+      toast.success('Bet placed! 🎯');
+      setStake('');
+      setOutcome(null);
+      qc.invalidateQueries({ queryKey: ['wallet'] });
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to place bet');
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  if (!liveGames.length) return null;
+
+  return (
+    <div className="rounded-xl border border-amber-500/20 bg-slate-900 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800 bg-amber-500/5">
+        <Swords className="h-4 w-4 text-amber-400" />
+        <span className="text-sm font-semibold text-white">Quick Bet</span>
+        <span className="ml-auto text-[10px] text-amber-400/50 font-mono">P2P · 10% fee</span>
+      </div>
+
+      <div className="p-3 space-y-3">
+        {/* Game selector */}
+        {liveGames.length > 1 && (
+          <select
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:ring-1 focus:ring-amber-500/40"
+            value={selectedId ?? ''}
+            onChange={(e) => { setSelectedId(Number(e.target.value)); setOutcome(null); }}
+          >
+            {liveGames.map((g) => (
+              <option key={g.id} value={g.id}>{g.playerA} vs {g.playerB}</option>
+            ))}
+          </select>
+        )}
+
+        {game && (
+          <>
+            {/* Outcome picker */}
+            <div className="grid grid-cols-2 gap-2">
+              {(['player_a_wins', 'player_b_wins'] as const).map((o) => {
+                const isA = o === 'player_a_wins';
+                const label = isA ? game.playerA : game.playerB;
+                const side = isA ? 'A' : 'B';
+                const active = outcome === o;
+                return (
+                  <button
+                    key={o}
+                    onClick={() => setOutcome(o)}
+                    className={`flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2.5 text-center transition-all ${
+                      active
+                        ? 'border-teal-500 bg-teal-500/10'
+                        : 'border-slate-700 hover:border-slate-600'
+                    }`}
+                  >
+                    <span className="text-[9px] uppercase tracking-wider font-bold text-slate-500">Player {side}</span>
+                    <span className={`text-sm font-bold leading-tight line-clamp-1 max-w-full ${active ? 'text-teal-300' : 'text-white'}`}>
+                      {label}
+                    </span>
+                    <span className="text-[9px] text-slate-500 mt-0.5">wins</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Stake input */}
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-mono">$</span>
+              <input
+                type="number"
+                min="0.50"
+                step="0.50"
+                placeholder="0.00"
+                value={stake}
+                onChange={(e) => setStake(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && placeBet()}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-amber-500/40 font-mono"
+              />
+            </div>
+
+            {/* Place bet */}
+            <button
+              onClick={placeBet}
+              disabled={placing || !outcome || !stake || parseFloat(stake) <= 0}
+              className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition-colors"
+            >
+              {placing
+                ? <span className="h-4 w-4 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
+                : <><Swords className="h-4 w-4" /> Place Bet</>
+              }
+            </button>
+
+            <p className="text-center text-[10px] text-slate-600">
+              {game.openBetsCount} open bet{game.openBetsCount !== 1 ? 's' : ''} · ${parseFloat(game.totalBetPool || '0').toFixed(2)} pool
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ───────────────────────────────────────────────────────────────
 
 export default function Live() {
@@ -517,6 +818,7 @@ export default function Live() {
 
   const { isAuthenticated } = useAuth();
   const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
   const qc = useQueryClient();
 
   const { data: stream, isLoading: loadingStream } = useLiveStream();
@@ -585,8 +887,24 @@ export default function Live() {
 
   // ─────────────────────────────────────────────────────────────────────────
 
+  const playerEl = liveStreamUrl
+    ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} />
+    : <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />;
+
+  const sidebar = (
+    <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3">
+      {isAuthenticated && <QuickBetPanel token={token} />}
+      <CommentSection
+        streamId={paywallStreamId}
+        token={token}
+        userId={user?.id}
+        isAuthenticated={isAuthenticated}
+      />
+    </div>
+  );
+
   return (
-    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 min-w-0">
+    <div className="max-w-7xl mx-auto min-w-0">
 
       {isLoading ? (
         /* ── Loading skeleton ─────────────────────────────────── */
@@ -597,79 +915,86 @@ export default function Live() {
         <NoLiveBroadcast />
 
       ) : canWatch ? (
-        /* ── Authenticated + access granted — show the player ─── */
-        <>
-          <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
-            {liveStreamUrl
-              ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} />
-              : <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />
-            }
-          </div>
-
-          {/* Stream info bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-flex items-center gap-1 rounded bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-bold text-red-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
-                </span>
-                {stream?.sport && (
-                  <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{stream.sport}</span>
-                )}
-                {(stream?.city || stream?.country) && (
-                  <span className="text-xs text-slate-600">
-                    · {[stream?.city, stream?.country].filter(Boolean).join(', ')}
+        /* ── Authenticated + access granted — 2-col layout ──── */
+        <div className="flex flex-col lg:flex-row gap-4 items-start">
+          {/* Left: player + info bar */}
+          <div className="flex-1 min-w-0 space-y-3">
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
+              {playerEl}
+            </div>
+            {/* Stream info bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="inline-flex items-center gap-1 rounded bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-bold text-red-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
                   </span>
+                  {stream?.sport && (
+                    <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{stream.sport}</span>
+                  )}
+                  {(stream?.city || stream?.country) && (
+                    <span className="text-xs text-slate-600">
+                      · {[stream?.city, stream?.country].filter(Boolean).join(', ')}
+                    </span>
+                  )}
+                  {isFreeStream && (
+                    <span className="text-xs text-emerald-400 font-semibold">FREE</span>
+                  )}
+                </div>
+                <h1 className="text-lg sm:text-xl font-bold text-white">{stream?.title ?? paywallTitle}</h1>
+                {stream?.description && (
+                  <p className="text-slate-400 text-sm mt-1 max-w-2xl">{stream.description}</p>
                 )}
-                {isFreeStream && (
-                  <span className="text-xs text-emerald-400 font-semibold">FREE</span>
+                {access?.expiresAt && (
+                  <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Access expires {new Date(access.expiresAt).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 )}
               </div>
-              <h1 className="text-lg sm:text-xl font-bold text-white">{stream?.title ?? paywallTitle}</h1>
-              {stream?.description && (
-                <p className="text-slate-400 text-sm mt-1 max-w-2xl">{stream.description}</p>
-              )}
-              {access?.expiresAt && (
-                <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  Access expires {new Date(access.expiresAt).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 text-slate-400 text-sm shrink-0">
-              <Users className="h-4 w-4 text-teal-500" />
-              <span className="font-mono text-white">{stream?.viewerCount ?? 0}</span>
-              <span className="text-slate-500">watching</span>
+              <div className="flex items-center gap-1.5 text-slate-400 text-sm shrink-0">
+                <Users className="h-4 w-4 text-teal-500" />
+                <span className="font-mono text-white">{stream?.viewerCount ?? 0}</span>
+                <span className="text-slate-500">watching</span>
+              </div>
             </div>
           </div>
-        </>
+          {/* Right: sidebar */}
+          {sidebar}
+        </div>
 
       ) : sneakPeek.active ? (
-        /* ── Sneak peek — show player with countdown overlay ───── */
-        <>
-          <SneakPeekPlayer
-            secondsLeft={sneakPeek.secondsLeft}
-            onSkip={sneakPeek.skip}
-            isAuthenticated={isAuthenticated}
-          >
-            {liveStreamUrl
-              ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} />
-              : <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />
-            }
-          </SneakPeekPlayer>
-
-          {/* Stream title during peek */}
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-bold text-red-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
-            </span>
-            <h1 className="text-lg font-bold text-white">{stream?.title ?? paywallTitle}</h1>
+        /* ── Sneak peek — 2-col layout with player + sidebar ─── */
+        <div className="flex flex-col lg:flex-row gap-4 items-start">
+          <div className="flex-1 min-w-0 space-y-3">
+            <SneakPeekPlayer
+              secondsLeft={sneakPeek.secondsLeft}
+              onSkip={sneakPeek.skip}
+              isAuthenticated={isAuthenticated}
+            >
+              {playerEl}
+            </SneakPeekPlayer>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-bold text-red-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
+              </span>
+              <h1 className="text-lg font-bold text-white">{stream?.title ?? paywallTitle}</h1>
+            </div>
           </div>
-        </>
+          {/* sidebar — comment section only during preview (no betting required) */}
+          <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0">
+            <CommentSection
+              streamId={paywallStreamId}
+              token={token}
+              userId={user?.id}
+              isAuthenticated={isAuthenticated}
+            />
+          </div>
+        </div>
 
       ) : (
-        /* ── Live but no access — show paywall (with optional preview button) */
-        <>
+        /* ── Live but no access — full-width paywall ──────────── */
+        <div className="space-y-6">
           <StreamGate
             title={paywallTitle}
             description={stream?.description}
@@ -685,10 +1010,8 @@ export default function Live() {
             previewUsed={sneakPeek.used}
             onStartPreview={sneakPeek.start}
           />
-
-          {/* Upcoming schedule below the gate */}
           <UpcomingSchedule />
-        </>
+        </div>
       )}
     </div>
   );
