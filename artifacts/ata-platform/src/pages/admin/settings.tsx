@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   Settings, Radio, Save, ExternalLink, CheckCircle2, AlertCircle,
-  CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Tv2,
+  CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Tv2, Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -41,6 +41,13 @@ export default function AdminSettings() {
   const [pesapalCurrency, setPesapalCurrency] = useState('UGX');
   const [showSecret, setShowSecret] = useState(false);
 
+  // PawaPay
+  const [pawapayToken, setPawapayToken] = useState('');
+  const [pawapayEnv, setPawapayEnv] = useState<'sandbox' | 'production'>('sandbox');
+  const [pawapayCurrency, setPaywapayCurrency] = useState('UGX');
+  const [pawapayRate, setPawapayRate] = useState('3700');
+  const [showPawapayToken, setShowPawapayToken] = useState(false);
+
   // SMTP
   const [smtpHost, setSmtpHost] = useState('');
   const [smtpPort, setSmtpPort] = useState('587');
@@ -63,6 +70,10 @@ export default function AdminSettings() {
       setPesapalSecret(settings.pesapal_consumer_secret ?? '');
       setPesapalEnv((settings.pesapal_environment as 'sandbox' | 'live') ?? 'live');
       setPesapalCurrency(settings.pesapal_currency ?? 'UGX');
+      setPawapayToken(settings.pawapay_api_token ?? '');
+      setPawapayEnv((settings.pawapay_environment as 'sandbox' | 'production') ?? 'sandbox');
+      setPaywapayCurrency(settings.pawapay_currency ?? 'UGX');
+      setPawapayRate(settings.pawapay_exchange_rate ?? '3700');
       setSmtpHost(settings.smtp_host ?? '');
       setSmtpPort(settings.smtp_port ?? '587');
       setSmtpUser(settings.smtp_user ?? '');
@@ -170,6 +181,18 @@ export default function AdminSettings() {
       pesapal_environment: pesapalEnv,
       pesapal_currency: pesapalCurrency.toUpperCase().trim(),
       pesapal_ipn_id: '',
+    });
+  };
+
+  const savePawapaySettings = () => {
+    if (!pawapayToken.trim()) { toast.error('API Token is required'); return; }
+    const rate = parseFloat(pawapayRate);
+    if (isNaN(rate) || rate <= 0) { toast.error('Exchange rate must be a positive number'); return; }
+    saveMutation.mutate({
+      pawapay_api_token: pawapayToken.trim(),
+      pawapay_environment: pawapayEnv,
+      pawapay_currency: pawapayCurrency.toUpperCase().trim() || 'UGX',
+      pawapay_exchange_rate: rate.toString(),
     });
   };
 
@@ -481,6 +504,143 @@ export default function AdminSettings() {
               <li>They're redirected to Pesapal to pay via MoMo, Airtel Money, card, or USSD.</li>
               <li>On payment, Pesapal sends an IPN notification and redirects back — wallet is credited automatically.</li>
               <li>Changing credentials clears the saved IPN ID so it re-registers on next payment.</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── PawaPay ── */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Zap className="h-4 w-4 text-green-400" />
+              PawaPay
+            </CardTitle>
+            {settings?.pawapay_api_token ? (
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Configured</Badge>
+            ) : (
+              <Badge className="bg-slate-700 text-slate-400 border-slate-600">Not configured</Badge>
+            )}
+          </div>
+          <CardDescription className="text-slate-400">
+            Preferred mobile money gateway for Uganda and East Africa. Enables instant deposits and withdrawals via MTN MoMo, Airtel Money, M-Pesa, and more — no admin approval needed for mobile money withdrawals when configured.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Environment */}
+          <div className="space-y-2">
+            <Label className="text-slate-300 text-sm flex items-center gap-1.5">
+              <Globe className="h-3.5 w-3.5" /> Environment
+            </Label>
+            <div className="flex gap-2">
+              {(['production', 'sandbox'] as const).map((env) => (
+                <button
+                  key={env}
+                  onClick={() => setPawapayEnv(env)}
+                  className={`flex-1 py-2 px-3 rounded-md border text-sm font-medium transition-colors ${
+                    pawapayEnv === env
+                      ? env === 'production'
+                        ? 'bg-green-500 border-green-500 text-slate-950'
+                        : 'bg-amber-500 border-amber-500 text-slate-950'
+                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {env === 'production' ? '🟢 Production' : '🧪 Sandbox (Testing)'}
+                </button>
+              ))}
+            </div>
+            {pawapayEnv === 'sandbox' && (
+              <p className="text-xs text-amber-400/80 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" /> Sandbox mode — transactions are simulated.
+              </p>
+            )}
+          </div>
+
+          {/* API Token */}
+          <div className="space-y-1.5">
+            <Label htmlFor="pawapayToken" className="text-slate-300 text-sm flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5" /> API Token
+            </Label>
+            <div className="relative">
+              <Input
+                id="pawapayToken"
+                type={showPawapayToken ? 'text' : 'password'}
+                value={pawapayToken}
+                onChange={(e) => setPawapayToken(e.target.value)}
+                placeholder="Your PawaPay Bearer token"
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-sm pr-10"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPawapayToken(!showPawapayToken)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {showPawapayToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">Found in your PawaPay dashboard under API Access.</p>
+          </div>
+
+          {/* Currency & Rate */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="pawapayCurrency" className="text-slate-300 text-sm">Local Currency</Label>
+              <Input
+                id="pawapayCurrency"
+                value={pawapayCurrency}
+                onChange={(e) => setPaywapayCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                placeholder="UGX"
+                maxLength={3}
+                className="bg-slate-800 border-slate-700 text-white font-mono"
+                disabled={isLoading}
+              />
+              <p className="text-xs text-slate-500">ISO 4217 code (default UGX)</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pawapayRate" className="text-slate-300 text-sm">USD Exchange Rate</Label>
+              <Input
+                id="pawapayRate"
+                type="number"
+                min="1"
+                step="1"
+                value={pawapayRate}
+                onChange={(e) => setPawapayRate(e.target.value)}
+                placeholder="3700"
+                className="bg-slate-800 border-slate-700 text-white font-mono"
+                disabled={isLoading}
+              />
+              <p className="text-xs text-slate-500">Units of local currency per $1 USD</p>
+            </div>
+          </div>
+
+          <div className="pt-1 flex items-center gap-3">
+            <Button
+              onClick={savePawapaySettings}
+              disabled={saveMutation.isPending || isLoading}
+              className="bg-green-500 hover:bg-green-400 text-slate-950 font-bold gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {saveMutation.isPending ? 'Saving…' : 'Save PawaPay Settings'}
+            </Button>
+            <a
+              href="https://dashboard.pawapay.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-green-400 hover:text-green-300 flex items-center gap-1 transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" /> PawaPay Dashboard
+            </a>
+          </div>
+
+          <div className="rounded-md bg-slate-800/50 border border-slate-700 px-3 py-2.5 text-xs text-slate-500 space-y-1.5">
+            <p className="font-semibold text-slate-400">How it works</p>
+            <ul className="space-y-1 list-disc list-inside">
+              <li>Users select PawaPay on the Wallet deposit page, enter their mobile number &amp; network.</li>
+              <li>A mobile money prompt is pushed directly to their phone — no redirect needed.</li>
+              <li>On approval, PawaPay sends a callback and the wallet is credited instantly.</li>
+              <li>Withdrawals for MTN MoMo and Airtel Money users are processed automatically — no admin approval queue.</li>
             </ul>
           </div>
         </CardContent>

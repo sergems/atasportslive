@@ -30,6 +30,7 @@ export const paymentMethodEnum = pgEnum("payment_method", [
   "btc_binance",
   "internal",
   "pesapal",
+  "pawapay",
 ]);
 
 export const transactionsTable = pgTable("transactions", {

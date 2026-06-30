@@ -14,6 +14,12 @@ import {
   submitOrder,
   getTransactionStatus,
 } from "../lib/pesapal";
+import {
+  getPawapayConfig,
+  initiateDeposit as pawapayInitiateDeposit,
+  initiatePayout as pawapayInitiatePayout,
+  providerForMethod,
+} from "../lib/pawapay";
 
 const router = Router();
 
@@ -176,6 +182,11 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
     return;
   }
 
+  // Determine if PawaPay instant payout can be used (mobile money methods only)
+  const isMobileMoney = ["mtn_momo", "airtel_money"].includes(userRow.payout_method);
+  const pawapayConfig = isMobileMoney ? await getPawapayConfig() : null;
+  const useInstantPayout = !!(pawapayConfig && isMobileMoney);
+
   // Lock funds
   await db.update(walletsTable).set({
     withdrawableBalance: sql`withdrawable_balance - ${Number(amount)}`,
@@ -183,6 +194,45 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
     pendingBalance: sql`pending_balance + ${Number(amount)}`,
   }).where(eq(walletsTable.userId, req.userId!));
 
+  if (useInstantPayout && pawapayConfig) {
+    // PawaPay instant payout — UUID is the payoutId used with PawaPay
+    const payoutId = uuidv4();
+    const [tx] = await db.insert(transactionsTable).values({
+      transactionId: payoutId,
+      userId: req.userId!,
+      type: "withdrawal",
+      amount: Number(amount).toFixed(2),
+      status: "approved",
+      paymentMethod: "pawapay",
+      reference: userRow.payout_account,
+      description: `Instant withdrawal via PawaPay to ${userRow.payout_method.replace(/_/g, " ")} ${userRow.payout_account}`,
+    }).returning();
+
+    try {
+      const host = `${req.protocol}://${req.get("host")}`;
+      await pawapayInitiatePayout(pawapayConfig, {
+        payoutId,
+        amount: Number(amount),
+        phoneNumber: userRow.payout_account,
+        provider: providerForMethod(userRow.payout_method),
+        callbackUrl: `${host}/api/wallet/pawapay/callback/payout`,
+      });
+      res.status(201).json({ ...toTxResponse(tx), instant: true });
+    } catch (err: any) {
+      // Rollback funds if PawaPay call fails
+      await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+      await db.update(walletsTable).set({
+        withdrawableBalance: sql`withdrawable_balance + ${Number(amount)}`,
+        availableBalance: sql`available_balance + ${Number(amount)}`,
+        pendingBalance: sql`pending_balance - ${Number(amount)}`,
+      }).where(eq(walletsTable.userId, req.userId!));
+      req.log.error({ err }, "PawaPay payout initiation error");
+      res.status(502).json({ error: err.message || "Payout gateway error. Please try again." });
+    }
+    return;
+  }
+
+  // Standard flow: pending for admin approval (Pesapal users, BTC, or when PawaPay not configured)
   const [tx] = await db
     .insert(transactionsTable)
     .values({
@@ -408,6 +458,133 @@ router.get("/admin/wallets", authMiddleware, requireRole("admin"), async (req: A
   res.json({ wallets: wallets.map(toWalletResponse), total: Number(count), page, limit });
 });
 
+// ── PAWAPAY ──────────────────────────────────────────────────────────────────
+
+router.post("/pawapay/deposit", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { amount, phoneNumber, provider } = req.body;
+  if (!amount || Number(amount) <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
+  if (!phoneNumber || !provider) { res.status(400).json({ error: "phoneNumber and provider are required" }); return; }
+
+  const config = await getPawapayConfig();
+  if (!config) { res.status(503).json({ error: "PawaPay is not configured. Contact admin." }); return; }
+
+  const depositId = uuidv4();
+  const [tx] = await db.insert(transactionsTable).values({
+    transactionId: depositId,
+    userId: req.userId!,
+    type: "deposit",
+    amount: Number(amount).toFixed(2),
+    status: "pending",
+    paymentMethod: "pawapay",
+    description: `PawaPay deposit (${config.currency} ${(Number(amount) * config.exchangeRate).toFixed(0)})`,
+    metadata: JSON.stringify({ depositId, provider, phoneNumber }),
+  }).returning();
+
+  try {
+    const host = `${req.protocol}://${req.get("host")}`;
+    const result = await pawapayInitiateDeposit(config, {
+      depositId,
+      amount: Number(amount),
+      phoneNumber,
+      provider,
+      callbackUrl: `${host}/api/wallet/pawapay/callback/deposit`,
+      clientReferenceId: tx.transactionId,
+    });
+
+    if (result.status === "REJECTED") {
+      await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+      res.status(400).json({ error: result.failureReason?.failureMessage || "Deposit rejected by provider" });
+      return;
+    }
+
+    res.status(201).json({ depositId, status: result.status });
+  } catch (err: any) {
+    await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+    req.log.error({ err }, "PawaPay deposit initiation error");
+    res.status(502).json({ error: err.message || "Payment gateway error" });
+  }
+});
+
+router.get("/pawapay/deposit/status", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { depositId } = req.query;
+  if (!depositId) { res.status(400).json({ error: "depositId required" }); return; }
+  const [tx] = await db.select().from(transactionsTable)
+    .where(and(eq(transactionsTable.transactionId, depositId as string), eq(transactionsTable.userId, req.userId!)))
+    .limit(1);
+  if (!tx) { res.status(404).json({ error: "Transaction not found" }); return; }
+  res.json({ status: tx.status, amount: parseFloat(tx.amount as string) });
+});
+
+router.post("/pawapay/callback/deposit", async (req, res): Promise<void> => {
+  res.status(200).json({ ok: true }); // Acknowledge immediately
+  const { depositId, status } = req.body as { depositId?: string; status?: string };
+  if (!depositId || !status) return;
+
+  const [tx] = await db.select().from(transactionsTable)
+    .where(eq(transactionsTable.transactionId, depositId)).limit(1);
+  if (!tx || tx.status !== "pending") return;
+
+  if (status === "COMPLETED") {
+    await db.update(transactionsTable).set({ status: "completed" }).where(eq(transactionsTable.id, tx.id));
+    const amt = parseFloat(tx.amount as string);
+    await db.update(walletsTable).set({
+      balance: sql`balance + ${amt}`,
+      availableBalance: sql`available_balance + ${amt}`,
+      withdrawableBalance: sql`withdrawable_balance + ${amt}`,
+    }).where(eq(walletsTable.userId, tx.userId));
+    await notify(tx.userId, "deposit_received", "Deposit Confirmed", `$${amt.toFixed(2)} credited to your wallet via PawaPay.`);
+    const matchingPromo = await findMatchingAutoPromo(amt);
+    if (matchingPromo) {
+      const already = await db.select().from(promotionTermsAcceptanceTable)
+        .where(and(eq(promotionTermsAcceptanceTable.userId, tx.userId), eq(promotionTermsAcceptanceTable.promotionId, matchingPromo.id))).limit(1);
+      if (!already.length) {
+        await notify(tx.userId, "deposit_received", "🎁 Bonus Waiting!", `Go to your Wallet to claim your bonus.`);
+      } else {
+        await creditBonus(tx.userId, matchingPromo, amt);
+      }
+    }
+    logger.info({ depositId }, "PawaPay deposit confirmed via callback");
+  } else if (status === "FAILED" || status === "CANCELLED") {
+    await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+    logger.info({ depositId, status }, "PawaPay deposit failed");
+  }
+});
+
+router.post("/pawapay/callback/payout", async (req, res): Promise<void> => {
+  res.status(200).json({ ok: true }); // Acknowledge immediately
+  const { payoutId, status } = req.body as { payoutId?: string; status?: string };
+  if (!payoutId || !status) return;
+
+  const [tx] = await db.select().from(transactionsTable)
+    .where(eq(transactionsTable.transactionId, payoutId)).limit(1);
+  if (!tx) return;
+
+  if (status === "COMPLETED" && tx.status === "approved") {
+    await db.update(transactionsTable).set({ status: "completed" }).where(eq(transactionsTable.id, tx.id));
+    await db.update(walletsTable).set({
+      balance: sql`balance - ${parseFloat(tx.amount as string)}`,
+      pendingBalance: sql`pending_balance - ${parseFloat(tx.amount as string)}`,
+    }).where(eq(walletsTable.userId, tx.userId));
+    await notify(tx.userId, "withdrawal_approved", "Withdrawal Sent", `$${parseFloat(tx.amount as string).toFixed(2)} has been sent to your mobile money account.`);
+    logger.info({ payoutId }, "PawaPay payout completed");
+  } else if ((status === "FAILED" || status === "CANCELLED") && (tx.status === "approved" || tx.status === "pending")) {
+    await db.update(transactionsTable).set({ status: "rejected" }).where(eq(transactionsTable.id, tx.id));
+    const amt = parseFloat(tx.amount as string);
+    await db.update(walletsTable).set({
+      withdrawableBalance: sql`withdrawable_balance + ${amt}`,
+      availableBalance: sql`available_balance + ${amt}`,
+      pendingBalance: sql`pending_balance - ${amt}`,
+    }).where(eq(walletsTable.userId, tx.userId));
+    await notify(tx.userId, "withdrawal_rejected", "Withdrawal Failed", `Your withdrawal of $${parseFloat(tx.amount as string).toFixed(2)} via PawaPay failed. Funds returned to wallet.`);
+    logger.warn({ payoutId, status }, "PawaPay payout failed — funds returned");
+  }
+});
+
+router.get("/pawapay/status", async (_req, res): Promise<void> => {
+  const config = await getPawapayConfig();
+  res.json({ configured: !!config, environment: config?.environment ?? null });
+});
+
 // ── PESAPAL ──────────────────────────────────────────────────────────────────
 
 router.post("/pesapal/initiate", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
@@ -620,7 +797,7 @@ router.post("/admin/adjust", authMiddleware, requireRole("admin"), async (req: A
     description: description || `Admin manual ${type}`,
   });
 
-  await notify(Number(userId), type === "credit" ? "wallet_credit" : "wallet_debit",
+  await notify(Number(userId), type === "credit" ? "deposit_received" : "withdrawal_approved",
     type === "credit" ? "Wallet Credited" : "Wallet Debited",
     `Your wallet has been ${type === "credit" ? "credited" : "debited"} $${amt.toFixed(2)} by admin.`
   );

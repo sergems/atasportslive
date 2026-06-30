@@ -11,6 +11,7 @@ import {
   ArrowDownLeft, ArrowUpRight, Ticket, Wallet as WalletIcon,
   CreditCard, Clock, ExternalLink, Lock, Smartphone, Bitcoin,
   CheckCircle2, AlertTriangle, ShieldCheck, Gift, Sparkles, Tag,
+  Zap, Phone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getGetWalletQueryKey } from '@workspace/api-client-react';
@@ -78,6 +79,38 @@ async function checkPesapalStatus(ref: string) {
   return res.json() as Promise<{ status: string; amount: number }>;
 }
 
+async function initiatePawapayDeposit(amount: number, phoneNumber: string, provider: string) {
+  const res = await fetch('/api/wallet/pawapay/deposit', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ amount, phoneNumber, provider }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'PawaPay deposit failed');
+  return data as { depositId: string; status: string };
+}
+
+async function checkPawapayDepositStatus(depositId: string) {
+  const res = await fetch(`/api/wallet/pawapay/deposit/status?depositId=${depositId}`, { headers: authHeaders() });
+  return res.json() as Promise<{ status: string; amount: number }>;
+}
+
+async function getPawapayStatus() {
+  const res = await fetch('/api/wallet/pawapay/status');
+  return res.json() as Promise<{ configured: boolean; environment: string | null }>;
+}
+
+const PAWAPAY_PROVIDERS = [
+  { value: 'MTN_MOMO_UGA', label: 'MTN MoMo', hint: 'e.g. 0771234567' },
+  { value: 'AIRTEL_UGA',   label: 'Airtel Money', hint: 'e.g. 0751234567' },
+  { value: 'MTN_MOMO_KEN', label: 'MTN (Kenya)', hint: 'e.g. 0712345678' },
+  { value: 'MPESA_KEN',    label: 'M-Pesa (Kenya)', hint: 'e.g. 0712345678' },
+  { value: 'MTN_MOMO_RWA', label: 'MTN (Rwanda)', hint: 'e.g. 0781234567' },
+  { value: 'MTN_MOMO_GHA', label: 'MTN (Ghana)', hint: 'e.g. 0241234567' },
+  { value: 'AIRTEL_ZMB',   label: 'Airtel (Zambia)', hint: 'e.g. 0971234567' },
+  { value: 'MTN_MOMO_ZMB', label: 'MTN (Zambia)', hint: 'e.g. 0961234567' },
+];
+
 const PAYOUT_METHODS = [
   { value: 'mtn_momo',     label: 'MTN MoMo',           icon: Smartphone, placeholder: 'e.g. 0771234567',        hint: 'Enter your MTN mobile number' },
   { value: 'airtel_money', label: 'Airtel Money',        icon: Smartphone, placeholder: 'e.g. 0751234567',        hint: 'Enter your Airtel mobile number' },
@@ -107,7 +140,10 @@ export default function Wallet() {
 
   const [depositAmount, setDepositAmount] = useState('');
   const [voucherCode, setVoucherCode] = useState('');
-  const [depositTab, setDepositTab] = useState<'pesapal' | 'voucher'>('pesapal');
+  const [depositTab, setDepositTab] = useState<'pawapay' | 'pesapal' | 'voucher'>('pawapay');
+  const [pawapayPhone, setPawapayPhone] = useState('');
+  const [pawapayProvider, setPawapayProvider] = useState('MTN_MOMO_UGA');
+  const [pawapayDepositId, setPawapayDepositId] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [promoValidation, setPromoValidation] = useState<{ valid: boolean; estimatedBonus?: number; promotionId?: number; termsConditions?: string; name?: string; reason?: string } | null>(null);
@@ -122,6 +158,13 @@ export default function Wallet() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
   const invalidatePayout = () => queryClient.invalidateQueries({ queryKey: ['payout-method'] });
+
+  const { data: pawapayServerStatus } = useQuery({
+    queryKey: ['pawapay-status'],
+    queryFn: getPawapayStatus,
+    staleTime: 60_000,
+  });
+  const pawapayConfigured = pawapayServerStatus?.configured ?? false;
 
   // Pending/matched bets locking funds
   const { data: pendingBetsData } = useListMyBets({ status: 'pending', limit: 100 });
@@ -151,6 +194,38 @@ export default function Wallet() {
       invalidate();
     }
   }, [statusData?.status]);
+
+  const pawapayMutation = useMutation({
+    mutationFn: () => initiatePawapayDeposit(parseFloat(depositAmount), pawapayPhone.trim(), pawapayProvider),
+    onSuccess: (data) => {
+      setPawapayDepositId(data.depositId);
+      toast.info('Check your phone!', { description: 'A payment prompt has been sent to your mobile number.' });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const { data: pawapayPollData } = useQuery({
+    queryKey: ['pawapay-deposit-status', pawapayDepositId],
+    queryFn: () => checkPawapayDepositStatus(pawapayDepositId!),
+    enabled: !!pawapayDepositId,
+    refetchInterval: (q) => {
+      const s = q.state.data?.status;
+      return (!s || s === 'pending') ? 3000 : false;
+    },
+  });
+
+  useEffect(() => {
+    if (pawapayPollData?.status === 'completed') {
+      toast.success('Payment Confirmed!', { description: `$${pawapayPollData.amount} credited to your wallet.` });
+      invalidate();
+      setPawapayDepositId(null);
+      setDepositAmount('');
+      setPawapayPhone('');
+    } else if (pawapayPollData?.status === 'failed') {
+      toast.error('Payment failed or was declined.');
+      setPawapayDepositId(null);
+    }
+  }, [pawapayPollData?.status]);
 
   const pesapalMutation = useMutation({
     mutationFn: () => initiatePesapal(parseFloat(depositAmount)),
@@ -379,23 +454,130 @@ export default function Wallet() {
             {/* Tabs */}
             <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
               <button
-                onClick={() => setDepositTab('pesapal')}
-                className={`flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold py-1.5 rounded-md transition-colors ${depositTab === 'pesapal' ? 'bg-teal-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                onClick={() => { setDepositTab('pawapay'); setPawapayDepositId(null); }}
+                className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${depositTab === 'pawapay' ? 'bg-green-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
               >
-                <CreditCard className="h-3.5 w-3.5" />
+                <Zap className="h-3 w-3" />
+                PawaPay
+                {pawapayConfigured && <Badge className="bg-green-700 text-white text-[8px] px-1 py-0 leading-none ml-0.5 hidden sm:inline-flex">Preferred</Badge>}
+              </button>
+              <button
+                onClick={() => setDepositTab('pesapal')}
+                className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${depositTab === 'pesapal' ? 'bg-teal-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+              >
+                <CreditCard className="h-3 w-3" />
                 Pesapal
-                <Badge className="bg-teal-600 text-white text-[9px] px-1 py-0 leading-none ml-0.5">Recommended</Badge>
               </button>
               <button
                 onClick={() => setDepositTab('voucher')}
-                className={`flex-1 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold py-1.5 rounded-md transition-colors ${depositTab === 'voucher' ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${depositTab === 'voucher' ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-white'}`}
               >
-                <Ticket className="h-3.5 w-3.5" />
+                <Ticket className="h-3 w-3" />
                 Voucher
               </button>
             </div>
 
-            {depositTab === 'pesapal' ? (
+            {depositTab === 'pawapay' ? (
+              <div className="space-y-3">
+                {!pawapayConfigured ? (
+                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-3 text-xs text-amber-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">PawaPay not configured</p>
+                      <p className="text-amber-400/80 mt-0.5">An admin must add the PawaPay API token in Settings before this gateway is available.</p>
+                    </div>
+                  </div>
+                ) : pawapayDepositId ? (
+                  /* Awaiting phone confirmation */
+                  <div className="space-y-4 py-2">
+                    <div className="flex flex-col items-center gap-3 py-4">
+                      <div className="h-14 w-14 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center animate-pulse">
+                        <Phone className="h-7 w-7 text-green-400" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-white font-semibold text-sm">Check your phone!</p>
+                        <p className="text-slate-400 text-xs mt-1">A mobile money prompt has been sent to <span className="text-white font-mono">{pawapayPhone}</span>.</p>
+                        <p className="text-slate-500 text-[10px] mt-1">Approve the request to complete your deposit. This page updates automatically.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+                      <Clock className="h-3.5 w-3.5 animate-spin" />
+                      Waiting for confirmation…
+                    </div>
+                    <Button
+                      onClick={() => { setPawapayDepositId(null); }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-slate-500 hover:text-white h-8 text-xs"
+                    >
+                      Cancel / Try again
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2 text-xs text-green-300 flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 shrink-0" />
+                      Pay instantly with mobile money across Africa — MTN, Airtel, M-Pesa &amp; more.
+                    </div>
+                    {/* Quick amounts */}
+                    <div className="flex gap-2">
+                      {[{ amount: '1.50', label: 'Daily' }, { amount: '9.00', label: 'Weekly' }].map(({ amount, label }) => (
+                        <button key={amount} onClick={() => setDepositAmount(amount)}
+                          className={`flex-1 rounded-md border px-3 py-1.5 text-left transition-all ${depositAmount === amount ? 'bg-green-500/20 border-green-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}>
+                          <span className="font-bold text-sm font-mono">${amount}</span>
+                          <span className={`text-[10px] font-medium ml-1.5 ${depositAmount === amount ? 'text-green-400' : 'text-slate-500'}`}>{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Amount */}
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono">$</span>
+                        <Input type="number" min="1" step="0.01" placeholder="0.00"
+                          value={depositAmount} onChange={e => setDepositAmount(e.target.value)}
+                          className="bg-slate-800 border-slate-700 text-white h-10 sm:h-11 font-mono pl-7" />
+                      </div>
+                    </div>
+                    {/* Provider */}
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-300 text-xs sm:text-sm">Mobile Network</Label>
+                      <select
+                        value={pawapayProvider}
+                        onChange={e => setPawapayProvider(e.target.value)}
+                        className="w-full rounded-md bg-slate-800 border border-slate-700 text-white text-sm h-10 px-3 focus:outline-none focus:ring-1 focus:ring-green-500"
+                      >
+                        {PAWAPAY_PROVIDERS.map(p => (
+                          <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Phone */}
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-300 text-xs sm:text-sm">Mobile Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <Input
+                          type="tel" placeholder={PAWAPAY_PROVIDERS.find(p => p.value === pawapayProvider)?.hint || 'e.g. 0771234567'}
+                          value={pawapayPhone} onChange={e => setPawapayPhone(e.target.value)}
+                          className="bg-slate-800 border-slate-700 text-white h-10 font-mono pl-9"
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-500">Your registered mobile money number</p>
+                    </div>
+                    <Button
+                      onClick={() => pawapayMutation.mutate()}
+                      disabled={!depositAmount || parseFloat(depositAmount) < 1 || !pawapayPhone.trim() || pawapayMutation.isPending}
+                      className="w-full bg-green-500 hover:bg-green-400 text-slate-950 font-bold h-10 sm:h-11 gap-2"
+                    >
+                      <Zap className="h-4 w-4" />
+                      {pawapayMutation.isPending ? 'Sending prompt…' : 'Pay with PawaPay'}
+                    </Button>
+                    <p className="text-[10px] text-slate-500 text-center">You will receive a mobile money prompt on your phone.</p>
+                  </>
+                )}
+              </div>
+            ) : depositTab === 'pesapal' ? (
               <div className="space-y-3">
                 <div className="rounded-lg bg-teal-500/10 border border-teal-500/20 px-3 py-2 text-xs text-teal-300">
                   Pay securely via <strong>MTN MoMo, Airtel Money, Visa/Mastercard</strong> and more — powered by Pesapal.
@@ -482,7 +664,14 @@ export default function Wallet() {
             <CardTitle className="flex items-center gap-2 text-amber-400 text-base sm:text-lg">
               <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5" /> Withdrawal
             </CardTitle>
-            <p className="text-xs text-slate-500 mt-0.5">All withdrawals are reviewed and approved by admin</p>
+            {pawapayConfigured && hasPayoutMethod && ['mtn_momo','airtel_money'].includes(payoutData?.payoutMethod ?? '') ? (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Zap className="h-3 w-3 text-green-400" />
+                <p className="text-xs text-green-400 font-semibold">Instant via PawaPay — no admin approval needed</p>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 mt-0.5">All withdrawals are reviewed and approved by admin</p>
+            )}
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             {loadingPayout ? (
@@ -615,15 +804,21 @@ export default function Wallet() {
                 <Button
                   onClick={() => withdrawMutation.mutate()}
                   disabled={withdrawMutation.isPending || !withdrawAmount || parseFloat(withdrawAmount) <= 0}
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold h-10"
+                  className={`w-full font-bold h-10 ${pawapayConfigured && ['mtn_momo','airtel_money'].includes(payoutData?.payoutMethod ?? '') ? 'bg-green-500 hover:bg-green-400 text-slate-950' : 'bg-amber-500 hover:bg-amber-400 text-slate-950'}`}
                 >
-                  <ArrowUpRight className="h-4 w-4 mr-2" />
-                  {withdrawMutation.isPending ? 'Processing…' : 'Request Withdrawal'}
+                  {pawapayConfigured && ['mtn_momo','airtel_money'].includes(payoutData?.payoutMethod ?? '') ? (
+                    <><Zap className="h-4 w-4 mr-2" />{withdrawMutation.isPending ? 'Processing…' : 'Withdraw Instantly'}</>
+                  ) : (
+                    <><ArrowUpRight className="h-4 w-4 mr-2" />{withdrawMutation.isPending ? 'Processing…' : 'Request Withdrawal'}</>
+                  )}
                 </Button>
 
                 <div className="rounded-md bg-slate-800/50 border border-slate-700/50 px-3 py-2 text-[10px] text-slate-500 flex items-start gap-2">
                   <CheckCircle2 className="h-3.5 w-3.5 text-slate-600 shrink-0 mt-0.5" />
-                  Withdrawals are manually reviewed and approved by admin before funds are sent. To change your payout account, contact support.
+                  {pawapayConfigured && ['mtn_momo','airtel_money'].includes(payoutData?.payoutMethod ?? '')
+                    ? 'Funds are sent instantly to your mobile money account via PawaPay. To change your payout account, contact support.'
+                    : 'Withdrawals are manually reviewed and approved by admin before funds are sent. To change your payout account, contact support.'
+                  }
                 </div>
               </div>
             )}
