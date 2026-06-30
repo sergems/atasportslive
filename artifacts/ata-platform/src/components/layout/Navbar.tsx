@@ -126,6 +126,14 @@ export function Navbar() {
               </Link>
             );
           })}
+          <a
+            href="https://shop.atasportslive.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative inline-flex items-center gap-1.5 pb-1 transition-colors hover:text-white text-slate-400 border-b-2 border-transparent hover:border-slate-600"
+          >
+            E-Shop
+          </a>
           {isAdmin && (
             <Link
               href="/admin"
@@ -200,6 +208,15 @@ export function Navbar() {
               </Link>
             );
           })}
+          <a
+            href="https://shop.atasportslive.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+          >
+            E-Shop
+          </a>
           <div className="pt-1 border-t border-slate-800 mt-1">
             <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
               <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-teal-400 hover:text-teal-300 hover:bg-slate-800/60 transition-colors cursor-pointer">
