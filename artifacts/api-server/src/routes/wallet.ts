@@ -23,6 +23,22 @@ import {
 
 const router = Router();
 
+/** Read a single setting value from the DB. Returns null if not found. */
+async function getSetting(key: string): Promise<string | null> {
+  const rows = await db.execute(sql`SELECT value FROM settings WHERE key = ${key} LIMIT 1`);
+  const row = (rows.rows as { value: string }[])[0];
+  return row?.value ?? null;
+}
+
+/**
+ * Returns true if the gateway is enabled (default: true if key not set).
+ * Set `pesapal_enabled` or `pawapay_enabled` to 'false' to disable.
+ */
+async function isGatewayEnabled(gateway: "pesapal" | "pawapay"): Promise<boolean> {
+  const val = await getSetting(`${gateway}_enabled`);
+  return val !== "false";
+}
+
 const toWalletResponse = (w: typeof walletsTable.$inferSelect) => ({
   id: w.id,
   userId: w.userId,
@@ -184,7 +200,8 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
 
   // Determine if PawaPay instant payout can be used (mobile money methods only)
   const isMobileMoney = ["mtn_momo", "airtel_money"].includes(userRow.payout_method);
-  const pawapayConfig = isMobileMoney ? await getPawapayConfig() : null;
+  const pawapayGatewayEnabled = isMobileMoney ? await isGatewayEnabled("pawapay") : false;
+  const pawapayConfig = (isMobileMoney && pawapayGatewayEnabled) ? await getPawapayConfig() : null;
   const useInstantPayout = !!(pawapayConfig && isMobileMoney);
 
   // Lock funds
@@ -463,6 +480,11 @@ router.post("/pawapay/deposit", authMiddleware, async (req: AuthRequest, res): P
   if (!amount || Number(amount) <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
   if (!phoneNumber || !provider) { res.status(400).json({ error: "phoneNumber and provider are required" }); return; }
 
+  if (!(await isGatewayEnabled("pawapay"))) {
+    res.status(503).json({ error: "PawaPay is temporarily unavailable. Please try another payment method or contact support." });
+    return;
+  }
+
   const config = await getPawapayConfig();
   if (!config) { res.status(503).json({ error: "PawaPay is not configured. Contact admin." }); return; }
 
@@ -677,6 +699,11 @@ router.post("/pesapal/initiate", authMiddleware, async (req: AuthRequest, res): 
   const { amount } = req.body;
   if (!amount || Number(amount) <= 0) {
     res.status(400).json({ error: "Invalid amount" });
+    return;
+  }
+
+  if (!(await isGatewayEnabled("pesapal"))) {
+    res.status(503).json({ error: "Pesapal is temporarily unavailable. Please try another payment method or contact support." });
     return;
   }
 

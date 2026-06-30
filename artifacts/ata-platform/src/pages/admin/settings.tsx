@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   Settings, Radio, Save, ExternalLink, CheckCircle2, AlertCircle,
-  CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Tv2, Zap,
+  CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Tv2, Zap, Power,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -41,6 +41,10 @@ export default function AdminSettings() {
   const [pesapalCurrency, setPesapalCurrency] = useState('UGX');
   const [showSecret, setShowSecret] = useState(false);
 
+  // Gateway enable/disable toggles
+  const [pesapalEnabled, setPesapalEnabled] = useState(true);
+  const [pawapayEnabled, setPawapayEnabled] = useState(true);
+
   // PawaPay
   const [pawapayToken, setPawapayToken] = useState('');
   const [pawapayEnv, setPawapayEnv] = useState<'sandbox' | 'production'>('sandbox');
@@ -70,10 +74,12 @@ export default function AdminSettings() {
       setPesapalSecret(settings.pesapal_consumer_secret ?? '');
       setPesapalEnv((settings.pesapal_environment as 'sandbox' | 'live') ?? 'live');
       setPesapalCurrency(settings.pesapal_currency ?? 'UGX');
+      setPesapalEnabled(settings.pesapal_enabled !== 'false');
       setPawapayToken(settings.pawapay_api_token ?? '');
       setPawapayEnv((settings.pawapay_environment as 'sandbox' | 'production') ?? 'sandbox');
       setPaywapayCurrency(settings.pawapay_currency ?? 'UGX');
       setPawapayRate(settings.pawapay_exchange_rate ?? '3700');
+      setPawapayEnabled(settings.pawapay_enabled !== 'false');
       setSmtpHost(settings.smtp_host ?? '');
       setSmtpPort(settings.smtp_port ?? '587');
       setSmtpUser(settings.smtp_user ?? '');
@@ -171,11 +177,12 @@ export default function AdminSettings() {
   };
 
   const savePesapalSettings = () => {
-    if (!pesapalKey.trim() || !pesapalSecret.trim()) {
-      toast.error('Consumer Key and Secret are required');
+    if (pesapalEnabled && (!pesapalKey.trim() || !pesapalSecret.trim())) {
+      toast.error('Consumer Key and Secret are required when Pesapal is enabled');
       return;
     }
     saveMutation.mutate({
+      pesapal_enabled: pesapalEnabled ? 'true' : 'false',
       pesapal_consumer_key: pesapalKey.trim(),
       pesapal_consumer_secret: pesapalSecret.trim(),
       pesapal_environment: pesapalEnv,
@@ -185,10 +192,11 @@ export default function AdminSettings() {
   };
 
   const savePawapaySettings = () => {
-    if (!pawapayToken.trim()) { toast.error('API Token is required'); return; }
+    if (pawapayEnabled && !pawapayToken.trim()) { toast.error('API Token is required when PawaPay is enabled'); return; }
     const rate = parseFloat(pawapayRate);
     if (isNaN(rate) || rate <= 0) { toast.error('Exchange rate must be a positive number'); return; }
     saveMutation.mutate({
+      pawapay_enabled: pawapayEnabled ? 'true' : 'false',
       pawapay_api_token: pawapayToken.trim(),
       pawapay_environment: pawapayEnv,
       pawapay_currency: pawapayCurrency.toUpperCase().trim() || 'UGX',
@@ -364,25 +372,48 @@ export default function AdminSettings() {
       </Card>
 
       {/* ── Pesapal Payment Gateway ── */}
-      <Card className="bg-slate-900 border-slate-700">
+      <Card className={`border-slate-700 transition-colors ${pesapalEnabled ? 'bg-slate-900' : 'bg-slate-900/50 border-slate-700/60'}`}>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-white flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-teal-400" />
+              <CreditCard className={`h-4 w-4 ${pesapalEnabled ? 'text-teal-400' : 'text-slate-500'}`} />
               Pesapal Payment Gateway
             </CardTitle>
-            {isPesapalConfigured ? (
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 gap-1">
-                <CheckCircle2 className="h-3 w-3" /> Configured
-              </Badge>
-            ) : (
-              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1">
-                <AlertCircle className="h-3 w-3" /> Not set
-              </Badge>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Active / Disabled badge */}
+              {pesapalEnabled ? (
+                isPesapalConfigured ? (
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Active
+                  </Badge>
+                ) : (
+                  <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1">
+                    <AlertCircle className="h-3 w-3" /> Not configured
+                  </Badge>
+                )
+              ) : (
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1">
+                  <Power className="h-3 w-3" /> Disabled
+                </Badge>
+              )}
+              {/* Enable / Disable toggle */}
+              <button
+                type="button"
+                onClick={() => setPesapalEnabled(v => !v)}
+                title={pesapalEnabled ? 'Disable Pesapal' : 'Enable Pesapal'}
+                className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 ${pesapalEnabled ? 'bg-teal-500 focus:ring-teal-500' : 'bg-slate-600 focus:ring-slate-500'}`}
+              >
+                <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${pesapalEnabled ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
           </div>
           <CardDescription className="text-slate-400">
             API credentials from your Pesapal merchant account. Users will be charged in the selected currency.
+            {!pesapalEnabled && (
+              <span className="block mt-1.5 text-red-400/80 font-medium">
+                ⚠ Pesapal is disabled — users cannot make Pesapal deposits until re-enabled.
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -510,21 +541,46 @@ export default function AdminSettings() {
       </Card>
 
       {/* ── PawaPay ── */}
-      <Card className="bg-slate-900 border-slate-700">
+      <Card className={`border-slate-700 transition-colors ${pawapayEnabled ? 'bg-slate-900' : 'bg-slate-900/50 border-slate-700/60'}`}>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-white flex items-center gap-2">
-              <Zap className="h-4 w-4 text-green-400" />
+              <Zap className={`h-4 w-4 ${pawapayEnabled ? 'text-green-400' : 'text-slate-500'}`} />
               PawaPay
             </CardTitle>
-            {settings?.pawapay_api_token ? (
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Configured</Badge>
-            ) : (
-              <Badge className="bg-slate-700 text-slate-400 border-slate-600">Not configured</Badge>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Active / Disabled badge */}
+              {pawapayEnabled ? (
+                settings?.pawapay_api_token ? (
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30 gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Active
+                  </Badge>
+                ) : (
+                  <Badge className="bg-slate-700 text-slate-400 border-slate-600">Not configured</Badge>
+                )
+              ) : (
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1">
+                  <Power className="h-3 w-3" /> Disabled
+                </Badge>
+              )}
+              {/* Enable / Disable toggle */}
+              <button
+                type="button"
+                onClick={() => setPawapayEnabled(v => !v)}
+                title={pawapayEnabled ? 'Disable PawaPay' : 'Enable PawaPay'}
+                className={`relative w-11 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 ${pawapayEnabled ? 'bg-green-500 focus:ring-green-500' : 'bg-slate-600 focus:ring-slate-500'}`}
+              >
+                <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${pawapayEnabled ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
           </div>
           <CardDescription className="text-slate-400">
             Preferred mobile money gateway for Uganda and East Africa. Enables instant deposits and withdrawals via MTN MoMo, Airtel Money, M-Pesa, and more — no admin approval needed for mobile money withdrawals when configured.
+            {!pawapayEnabled && (
+              <span className="block mt-1.5 text-red-400/80 font-medium">
+                ⚠ PawaPay is disabled — instant deposits and payouts are suspended until re-enabled. Withdrawals will fall back to manual processing.
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
