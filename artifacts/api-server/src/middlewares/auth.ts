@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
@@ -22,13 +23,37 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   }
 
   const token = authHeader.split(" ")[1];
+  let payload: { userId: number; role: string; sv?: string };
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { userId: number; role: string };
+    payload = jwt.verify(token, JWT_SECRET) as { userId: number; role: string; sv?: string };
+  } catch {
+    res.status(401).json({ error: "Invalid or expired token" });
+    return;
+  }
+
+  // If the token carries a session version, verify it matches the DB record.
+  // Tokens without sv (legacy) are still allowed — they'll be replaced on next login.
+  if (payload.sv) {
+    db.select({ sessionToken: usersTable.sessionToken })
+      .from(usersTable)
+      .where(eq(usersTable.id, payload.userId))
+      .limit(1)
+      .then(([user]) => {
+        if (!user || user.sessionToken !== payload.sv) {
+          res.status(401).json({ error: "Session expired — please log in again" });
+          return;
+        }
+        req.userId = payload.userId;
+        req.userRole = payload.role;
+        next();
+      })
+      .catch(() => {
+        res.status(500).json({ error: "Internal error" });
+      });
+  } else {
     req.userId = payload.userId;
     req.userRole = payload.role;
     next();
-  } catch {
-    res.status(401).json({ error: "Invalid or expired token" });
   }
 }
 
@@ -46,17 +71,21 @@ export function requireRole(...roles: string[]) {
   };
 }
 
-export function generateTokens(userId: number, role: string) {
-  const accessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: "24h" });
-  const refreshToken = jwt.sign({ userId, role, type: "refresh" }, JWT_SECRET, { expiresIn: "30d" });
+export function generateSessionToken(): string {
+  return randomUUID();
+}
+
+export function generateTokens(userId: number, role: string, sessionToken: string) {
+  const accessToken = jwt.sign({ userId, role, sv: sessionToken }, JWT_SECRET, { expiresIn: "24h" });
+  const refreshToken = jwt.sign({ userId, role, sv: sessionToken, type: "refresh" }, JWT_SECRET, { expiresIn: "30d" });
   return { accessToken, refreshToken };
 }
 
-export function verifyRefreshToken(token: string): { userId: number; role: string } | null {
+export function verifyRefreshToken(token: string): { userId: number; role: string; sv?: string } | null {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { userId: number; role: string; type: string };
+    const payload = jwt.verify(token, JWT_SECRET) as { userId: number; role: string; type: string; sv?: string };
     if (payload.type !== "refresh") return null;
-    return { userId: payload.userId, role: payload.role };
+    return { userId: payload.userId, role: payload.role, sv: payload.sv };
   } catch {
     return null;
   }

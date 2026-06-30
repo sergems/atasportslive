@@ -4,6 +4,7 @@ import { db, usersTable, walletsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import {
   generateTokens,
+  generateSessionToken,
   verifyRefreshToken,
   authMiddleware,
   type AuthRequest,
@@ -41,8 +42,9 @@ router.post("/register", async (req, res): Promise<void> => {
     .values({ email, passwordHash, fullName, phone: phone || null, role: "user" })
     .returning();
   await db.insert(walletsTable).values({ userId: user.id });
-  const tokens = generateTokens(user.id, user.role);
-  await db.update(usersTable).set({ refreshToken: tokens.refreshToken }).where(eq(usersTable.id, user.id));
+  const sv = generateSessionToken();
+  const tokens = generateTokens(user.id, user.role, sv);
+  await db.update(usersTable).set({ refreshToken: tokens.refreshToken, sessionToken: sv }).where(eq(usersTable.id, user.id));
   res.status(201).json({ ...tokens, user: userPayload(user) });
 });
 
@@ -77,8 +79,11 @@ router.post("/login", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
-  const tokens = generateTokens(user.id, user.role);
-  await db.update(usersTable).set({ refreshToken: tokens.refreshToken }).where(eq(usersTable.id, user.id));
+
+  // Generate a new session token — this invalidates any existing session for this user
+  const sv = generateSessionToken();
+  const tokens = generateTokens(user.id, user.role, sv);
+  await db.update(usersTable).set({ refreshToken: tokens.refreshToken, sessionToken: sv }).where(eq(usersTable.id, user.id));
   res.json({ ...tokens, user: userPayload(user) });
 });
 
@@ -107,10 +112,11 @@ router.post("/set-password", async (req, res): Promise<void> => {
     return;
   }
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  const tokens = generateTokens(user.id, user.role);
+  const sv = generateSessionToken();
+  const tokens = generateTokens(user.id, user.role, sv);
   await db
     .update(usersTable)
-    .set({ passwordHash, mustSetPassword: false, refreshToken: tokens.refreshToken })
+    .set({ passwordHash, mustSetPassword: false, refreshToken: tokens.refreshToken, sessionToken: sv })
     .where(eq(usersTable.id, user.id));
 
   // Ensure wallet exists (imported users may not have one yet)
@@ -135,13 +141,20 @@ router.post("/refresh", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Token revoked" });
     return;
   }
-  const tokens = generateTokens(user.id, user.role);
-  await db.update(usersTable).set({ refreshToken: tokens.refreshToken }).where(eq(usersTable.id, user.id));
+  // Also verify session token to prevent refresh from a displaced session
+  if (payload.sv && user.sessionToken !== payload.sv) {
+    res.status(401).json({ error: "Session expired — please log in again" });
+    return;
+  }
+  // Reuse the same session token so the existing session stays alive
+  const sv = user.sessionToken || generateSessionToken();
+  const tokens = generateTokens(user.id, user.role, sv);
+  await db.update(usersTable).set({ refreshToken: tokens.refreshToken, sessionToken: sv }).where(eq(usersTable.id, user.id));
   res.json({ ...tokens, user: userPayload(user) });
 });
 
 router.post("/logout", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
-  await db.update(usersTable).set({ refreshToken: null }).where(eq(usersTable.id, req.userId!));
+  await db.update(usersTable).set({ refreshToken: null, sessionToken: null }).where(eq(usersTable.id, req.userId!));
   res.json({ message: "Logged out" });
 });
 

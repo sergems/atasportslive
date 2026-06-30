@@ -736,8 +736,8 @@ export default function Wallet() {
             </CardTitle>
             {pawapayConfigured ? (
               <div className="flex items-center gap-1.5 mt-0.5">
-                <Zap className="h-3 w-3 text-green-400" />
-                <p className="text-xs text-green-400 font-semibold">PawaPay instant withdrawal available — no admin approval</p>
+                <Zap className="h-3 w-3 text-amber-400" />
+                <p className="text-xs text-amber-400 font-semibold">PawaPay instant withdrawal available — no admin approval</p>
               </div>
             ) : (
               <p className="text-xs text-slate-500 mt-0.5">All withdrawals are reviewed and approved by admin</p>
@@ -750,7 +750,7 @@ export default function Wallet() {
               <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
                 <button
                   onClick={() => setWithdrawTab('pawapay')}
-                  className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${withdrawTab === 'pawapay' ? 'bg-green-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                  className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${withdrawTab === 'pawapay' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
                 >
                   <Zap className="h-3 w-3" /> PawaPay (Instant)
                 </button>
@@ -766,7 +766,7 @@ export default function Wallet() {
             {/* ── PawaPay instant withdrawal form ── */}
             {pawapayConfigured && withdrawTab === 'pawapay' ? (
               <div className="space-y-3">
-                <div className="rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2 text-xs text-green-300 flex items-center gap-2">
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-300 flex items-center gap-2">
                   <Zap className="h-3.5 w-3.5 shrink-0" />
                   Funds sent directly to your mobile money account across Africa — no waiting.
                 </div>
@@ -824,7 +824,7 @@ export default function Wallet() {
                     !withdrawAmount || parseFloat(withdrawAmount) <= 0 ||
                     !pawapayWithdrawPhone.trim()
                   }
-                  className="w-full bg-green-500 hover:bg-green-400 text-slate-950 font-bold h-10 gap-2"
+                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold h-10 gap-2"
                 >
                   <Zap className="h-4 w-4" />
                   {pawapayWithdrawMutation.isPending ? 'Sending…' : 'Withdraw Instantly'}
