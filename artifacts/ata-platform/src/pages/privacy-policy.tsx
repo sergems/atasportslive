@@ -1,6 +1,12 @@
 import React from 'react';
+import { useSEO } from '@/lib/seo';
 
 export default function PrivacyPolicy() {
+  useSEO({
+    title: 'Privacy Policy',
+    path: '/privacy-policy',
+    description: "ATA Sports Live privacy policy. How we collect, use, and protect your personal data on Africa's premier sports streaming and P2P betting platform.",
+  });
   return (
     <div className="max-w-3xl mx-auto py-10">
       <h1 className="text-3xl font-bold text-white mb-2">Privacy Policy</h1>

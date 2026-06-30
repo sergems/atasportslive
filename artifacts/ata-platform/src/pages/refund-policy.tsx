@@ -1,6 +1,12 @@
 import React from 'react';
+import { useSEO } from '@/lib/seo';
 
 export default function RefundPolicy() {
+  useSEO({
+    title: 'Refund Policy',
+    path: '/refund-policy',
+    description: 'ATA Sports Live refund and cancellation policy. Understand when and how wallet credits, stream access fees, and bets are eligible for refund.',
+  });
   return (
     <div className="max-w-3xl mx-auto py-10">
       <h1 className="text-3xl font-bold text-white mb-2">Refund Policy</h1>

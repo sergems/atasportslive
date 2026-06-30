@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { useListUpcomingStreams, useListUpcomingGames } from '@workspace/api-client-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
+import { useSEO, STRUCTURED_DATA } from '@/lib/seo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Countdown } from '@/components/ui/countdown';
@@ -304,9 +305,12 @@ function DefaultHero() {
 }
 
 export default function Home() {
-  useEffect(() => {
-    document.title = 'ATA Sports Live — Africa\'s Premier Sports Streaming & Betting Exchange';
-  }, []);
+  useSEO({
+    title: "Africa's Premier Sports Streaming & P2P Betting",
+    path: '/',
+    description: "Watch live Pool and Boxing from across Africa. Bet peer-to-peer in real-time — Africa's #1 sports exchange. Stream from $1.50/day.",
+    jsonLd: [STRUCTURED_DATA.website, STRUCTURED_DATA.organization, STRUCTURED_DATA.sportsOrg, STRUCTURED_DATA.faq],
+  });
 
   const { isAuthenticated } = useAuth();
   const { data: _upcomingStreams, isLoading: loadingStreams } = useListUpcomingStreams();

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useSEO } from '@/lib/seo';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useLocation } from 'wouter';
@@ -26,8 +27,8 @@ export default function Register() {
     },
   });
 
+  useSEO({ title: 'Create Your Account', path: '/register', noindex: true });
   useEffect(() => {
-    document.title = 'Register - ATA Platform';
     if (isAuthenticated) {
       setLocation('/dashboard');
     }

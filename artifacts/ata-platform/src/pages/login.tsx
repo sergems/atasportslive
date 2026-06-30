@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSEO } from '@/lib/seo';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useLocation } from 'wouter';
@@ -13,6 +14,7 @@ import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Login() {
+  useSEO({ title: 'Sign In', path: '/login', noindex: true });
   const { isAuthenticated, login } = useAuth();
   const [, setLocation] = useLocation();
   const loginMutation = useLogin();
@@ -35,7 +37,6 @@ export default function Login() {
   };
 
   useEffect(() => {
-    document.title = 'Login - ATA Platform';
     if (isAuthenticated) {
       setLocation(roleRedirect(user?.role));
     }

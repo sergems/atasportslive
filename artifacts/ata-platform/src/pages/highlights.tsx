@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Play, Clapperboard, X } from 'lucide-react';
@@ -113,7 +114,15 @@ function HighlightCard({ h, onPlay }: { h: Highlight; onPlay: () => void }) {
 }
 
 export default function Highlights() {
-  useEffect(() => { document.title = 'Highlights - ATA Platform'; }, []);
+  useSEO({
+    title: 'Match Highlights',
+    path: '/highlights',
+    description: 'Watch the best Pool and Boxing match highlights from ATA Sports Live events across Africa. Replay top moments and knockout action.',
+    jsonLd: makeBreadcrumb([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Highlights', url: `${SITE_URL}/highlights` },
+    ]),
+  });
 
   const [active, setActive] = useState<Highlight | null>(null);
 

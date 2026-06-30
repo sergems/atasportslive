@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
+import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords, PanelRightClose, PanelRightOpen } from 'lucide-react';
@@ -819,7 +820,15 @@ function QuickBetPanel({ token, streamSport }: { token: string | null; streamSpo
 // ─── Main page ───────────────────────────────────────────────────────────────
 
 export default function Live() {
-  useEffect(() => { document.title = 'Live - ATA Platform'; }, []);
+  useSEO({
+    title: 'Watch Live Now',
+    path: '/live',
+    description: 'Watch Pool and Boxing matches streaming live right now on ATA Sports Live. Access HD streams for $1.50/day — pay from your wallet, watch instantly.',
+    jsonLd: makeBreadcrumb([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Live Now', url: `${SITE_URL}/live` },
+    ]),
+  });
 
   const { isAuthenticated } = useAuth();
   const token = useAuthStore((s) => s.token);

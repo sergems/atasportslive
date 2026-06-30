@@ -2,23 +2,132 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>ATA Sports Live — Kampala's Premier Sports Streaming & Betting Exchange</title>
-    <meta name="description" content="Watch live Pool and Boxing matches from Kampala. Bet peer-to-peer in real-time on Uganda's top sports betting exchange. Stream from $1.50/day." />
-    <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="ATA Sports Live — Live Streams & P2P Betting" />
-    <meta property="og:description" content="Watch live Pool and Boxing matches from Kampala. Bet peer-to-peer in real-time on Uganda's top sports betting exchange." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="application-name" content="ATA Sports Live" />
+    <meta name="apple-mobile-web-app-title" content="ATA Sports Live" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <title>ATA Sports Live — Africa's Premier Sports Streaming &amp; P2P Betting Exchange</title>
+    <meta name="description" content="Watch live Pool and Boxing matches from across Africa. Bet peer-to-peer in real-time on Africa's #1 sports betting exchange. Stream from $1.50/day." />
+    <meta name="keywords" content="live sports streaming Africa, Pool betting, Boxing live stream, P2P sports betting Uganda, ATA Sports Live, sports exchange Kampala" />
+    <meta name="author" content="ATA Sports Live" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
+    <link rel="canonical" href="https://atasportslive.com/" />
+
+    <!-- OpenGraph -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ATA Sports Live" />
+    <meta property="og:title" content="ATA Sports Live — Africa's Premier Sports Streaming &amp; P2P Betting Exchange" />
+    <meta property="og:description" content="Watch live Pool and Boxing matches from across Africa. Bet peer-to-peer in real-time on Africa's #1 sports betting exchange. Stream from $1.50/day." />
     <meta property="og:url" content="https://atasportslive.com/" />
+    <meta property="og:image" content="https://atasportslive.com/opengraph.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ATA Sports Live — Live Pool and Boxing Streaming from Africa" />
+    <meta property="og:locale" content="en_UG" />
+    <meta property="og:locale:alternate" content="en_GB" />
+
+    <!-- Twitter / X Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="ATA Sports Live — Live Streams & P2P Betting" />
-    <meta name="twitter:description" content="Watch live Pool and Boxing matches from Kampala. Bet peer-to-peer in real-time on Uganda's top sports betting exchange." />
+    <meta name="twitter:site" content="@ATASportsLive" />
+    <meta name="twitter:creator" content="@ATASportsLive" />
+    <meta name="twitter:title" content="ATA Sports Live — Africa's Premier Sports Streaming &amp; P2P Betting" />
+    <meta name="twitter:description" content="Watch live Pool and Boxing matches from across Africa. Bet peer-to-peer in real-time. Stream from $1.50/day." />
+    <meta name="twitter:image" content="https://atasportslive.com/opengraph.jpg" />
+    <meta name="twitter:image:alt" content="ATA Sports Live — Live Pool and Boxing Streaming" />
+
+    <!-- Icons & Manifest -->
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" href="/ata-logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Preconnect for 3rd-party origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://flagcdn.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://atasportslive.com" />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+
+    <!-- Static JSON-LD: crawlers see this before JS executes -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://atasportslive.com/#website",
+          "name": "ATA Sports Live",
+          "url": "https://atasportslive.com",
+          "description": "Africa's premier live sports streaming and P2P betting exchange.",
+          "inLanguage": "en",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://atasportslive.com/streams?search={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://atasportslive.com/#organization",
+          "name": "ATA Sports Live",
+          "alternateName": "Advanced Talent Agency Sports",
+          "url": "https://atasportslive.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://atasportslive.com/ata-logo.png",
+            "width": 512,
+            "height": 512
+          },
+          "description": "Africa's premier live sports streaming and P2P betting exchange. Watch Pool and Boxing matches and bet peer-to-peer.",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Nsambya",
+            "addressLocality": "Kampala",
+            "addressCountry": "UG"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+256-772-364-513",
+            "contactType": "customer service",
+            "areaServed": "UG",
+            "availableLanguage": "English"
+          },
+          "sameAs": [
+            "https://www.facebook.com/ATASportsLive",
+            "https://twitter.com/ATASportsLive",
+            "https://www.youtube.com/ATASportsLive"
+          ]
+        },
+        {
+          "@type": "SportsOrganization",
+          "@id": "https://atasportslive.com/#sportsorg",
+          "name": "ATA Sports Live",
+          "url": "https://atasportslive.com",
+          "sport": ["Pool", "Boxing"],
+          "description": "Live Pool and Boxing streaming with peer-to-peer betting exchange across Africa."
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
+    <noscript>
+      <style>body{background:#0f172a;color:#94a3b8;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:2rem}</style>
+      <p><strong>ATA Sports Live</strong> requires JavaScript to run. Please enable JavaScript in your browser to watch live sports and place P2P bets.</p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

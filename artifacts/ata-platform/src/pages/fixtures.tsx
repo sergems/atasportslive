@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -414,7 +415,15 @@ function FixturesContent() {
 }
 
 export default function Fixtures() {
-  useEffect(() => { document.title = 'Fixtures — ATA Sports Live'; }, []);
+  useSEO({
+    title: 'Fixtures & Schedule',
+    path: '/fixtures',
+    description: 'Full fixture schedule for Pool and Boxing matches on ATA Sports Live. Filter by sport, date, and location. Never miss a match across Africa.',
+    jsonLd: makeBreadcrumb([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Fixtures', url: `${SITE_URL}/fixtures` },
+    ]),
+  });
 
   const adSlots = useAdSlots();
 

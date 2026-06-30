@@ -1,2 +1,29 @@
 User-agent: *
 Allow: /
+
+# Private — authenticated-only pages
+Disallow: /admin/
+Disallow: /admin
+Disallow: /finance/
+Disallow: /finance
+Disallow: /dashboard
+Disallow: /wallet
+Disallow: /transactions
+Disallow: /notifications
+Disallow: /bets
+Disallow: /set-password
+
+# Explicitly allow all public content
+Allow: /streams
+Allow: /games
+Allow: /live
+Allow: /upcoming
+Allow: /fixtures
+Allow: /highlights
+Allow: /register
+Allow: /login
+Allow: /terms
+Allow: /privacy-policy
+Allow: /refund-policy
+
+Sitemap: https://atasportslive.com/sitemap.xml

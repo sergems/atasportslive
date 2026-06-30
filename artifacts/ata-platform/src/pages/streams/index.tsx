@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Lock, LockOpen, Eye, Play, Radio, Film, Trophy, Users, TrendingUp, Flame } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 
 interface Stream {
   id: number;
@@ -279,7 +280,15 @@ export default function Streams() {
   const [status, setStatus] = useState<string>('all');
   const { isAuthenticated } = useAuth();
 
-  useEffect(() => { document.title = 'Streams — ATA Sports Live'; }, []);
+  useSEO({
+    title: 'Live Streams',
+    path: '/streams',
+    description: 'Browse live and upcoming Pool and Boxing streams from across Africa. Watch in HD for $1.50/day — no subscription, pay per stream.',
+    jsonLd: makeBreadcrumb([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Live Streams', url: `${SITE_URL}/streams` },
+    ]),
+  });
 
   const { data: streamsData, isLoading } = useListStreams(
     { status: status !== 'all' ? status : undefined, limit: 40 },

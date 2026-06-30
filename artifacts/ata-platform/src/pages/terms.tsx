@@ -1,6 +1,12 @@
 import React from 'react';
+import { useSEO } from '@/lib/seo';
 
 export default function Terms() {
+  useSEO({
+    title: 'Terms and Conditions',
+    path: '/terms',
+    description: "Read the Terms and Conditions for using ATA Sports Live — Africa's premier live sports streaming and P2P betting exchange. Governing rules for streaming, betting, wallets, and payments.",
+  });
   return (
     <div className="max-w-3xl mx-auto py-10">
       <h1 className="text-3xl font-bold text-white mb-2">Terms and Conditions</h1>

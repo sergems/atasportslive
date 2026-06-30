@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { useListGames } from '@workspace/api-client-react';
+import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, Trophy, TrendingUp, CheckCircle2 } from 'lucide-react';
@@ -149,7 +150,15 @@ export default function Games() {
   const [tab, setTab] = useState<Tab>('betting');
   const [sport, setSport] = useState<string>('all');
 
-  useEffect(() => { document.title = 'Games & Markets - ATA Platform'; }, []);
+  useSEO({
+    title: 'Betting Markets & Live Games',
+    path: '/games',
+    description: 'Place and match P2P bets on live Pool and Boxing matches across Africa. Real odds, instant matching, 10% brokerage on winnings only.',
+    jsonLd: makeBreadcrumb([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Betting Markets', url: `${SITE_URL}/games` },
+    ]),
+  });
 
   const { data: gamesData, isLoading } = useListGames({
     sport: sport !== 'all' ? sport : undefined,

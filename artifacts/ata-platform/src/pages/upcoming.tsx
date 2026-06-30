@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -168,7 +169,15 @@ function EventCard({ event, now }: { event: UnifiedEvent; now: Date }) {
 }
 
 export default function Upcoming() {
-  useEffect(() => { document.title = 'Upcoming Events — ATA Sports Live'; }, []);
+  useSEO({
+    title: 'Upcoming Events',
+    path: '/upcoming',
+    description: 'Upcoming Pool and Boxing matches streaming live on ATA Sports Live. View schedules, countdowns, and book your stream access in advance.',
+    jsonLd: makeBreadcrumb([
+      { name: 'Home', url: SITE_URL },
+      { name: 'Upcoming Events', url: `${SITE_URL}/upcoming` },
+    ]),
+  });
 
   const { events, isLoading } = useUpcomingEvents();
   const adSlots = useAdSlots();

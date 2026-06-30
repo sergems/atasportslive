@@ -115,8 +115,32 @@ function MobileBottomNav() {
   );
 }
 
+const NOINDEX_PREFIXES = [
+  '/admin', '/finance', '/dashboard', '/wallet',
+  '/transactions', '/notifications', '/bets', '/set-password',
+];
+
+function useRouteRobots() {
+  const [location] = useLocation();
+  useEffect(() => {
+    const isPrivate = NOINDEX_PREFIXES.some(
+      (p) => location === p || location.startsWith(p + '/')
+    );
+    if (isPrivate) {
+      let el = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute('name', 'robots');
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', 'noindex, nofollow');
+    }
+  }, [location]);
+}
+
 export function RootLayout({ children }: { children: React.ReactNode }) {
   useWebSocket();
+  useRouteRobots();
   const [location] = useLocation();
   const [showScrollTop, setShowScrollTop] = useState(false);
 
