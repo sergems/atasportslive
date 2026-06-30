@@ -16,7 +16,11 @@ export const FALLBACK_SLOTS: Record<string, { tagline: string; sub: string; cta:
   right_3: { tagline: 'Win with every match',    sub: 'Your message delivered to engaged sports fans daily.',     cta: 'Start today',        bg: 'from-blue-900/60 via-slate-900 to-slate-950',    badge: 'bg-blue-500/20 text-blue-300',     accent: 'border-blue-500/20' },
 };
 
-export function useAdSlots(): Record<string, AdSlotData> {
+export interface AdSlotsResult extends Record<string, AdSlotData> {
+  hideOnMobile: boolean;
+}
+
+export function useAdSlots(): AdSlotsResult {
   const { data: settings } = useQuery<Record<string, string>>({
     queryKey: ['ad-slots'],
     queryFn: () => fetch('/api/settings').then((r) => r.json()),
@@ -37,6 +41,7 @@ export function useAdSlots(): Record<string, AdSlotData> {
     right_1: parse('right_1'),
     right_2: parse('right_2'),
     right_3: parse('right_3'),
+    hideOnMobile: settings?.['ads_hide_on_mobile'] === 'true',
   };
 }
 

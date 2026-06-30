@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ImagePlus, Save, Trash2, ExternalLink, LayoutTemplate, CheckCircle2, Upload } from 'lucide-react';
+import { ImagePlus, Save, Trash2, ExternalLink, LayoutTemplate, CheckCircle2, Upload, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { FALLBACK_SLOTS } from '@/components/ads';
 
@@ -186,6 +186,8 @@ export default function AdminAds() {
     left_1: emptySlot(), left_2: emptySlot(), left_3: emptySlot(),
     right_1: emptySlot(), right_2: emptySlot(), right_3: emptySlot(),
   });
+  const [hideOnMobile, setHideOnMobile] = useState(false);
+  const [savingMobile, setSavingMobile] = useState(false);
 
   useEffect(() => {
     if (!settings) return;
@@ -198,7 +200,37 @@ export default function AdminAds() {
       left_1: parse('left_1'), left_2: parse('left_2'), left_3: parse('left_3'),
       right_1: parse('right_1'), right_2: parse('right_2'), right_3: parse('right_3'),
     });
+    setHideOnMobile(settings['ads_hide_on_mobile'] === 'true');
   }, [settings]);
+
+  const saveMobileSetting = async (value: boolean) => {
+    setSavingMobile(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ads_hide_on_mobile: value ? 'true' : 'false' }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Save failed');
+      }
+      qc.invalidateQueries({ queryKey: ['settings'] });
+      qc.invalidateQueries({ queryKey: ['ad-slots'] });
+      toast.success(value ? 'Ads hidden on mobile.' : 'Ads shown on mobile.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save');
+      setHideOnMobile(!value); // revert
+    } finally {
+      setSavingMobile(false);
+    }
+  };
+
+  const toggleMobile = () => {
+    const next = !hideOnMobile;
+    setHideOnMobile(next);
+    saveMobileSetting(next);
+  };
 
   const [saving, setSaving] = useState<SlotKey | null>(null);
 
@@ -266,6 +298,39 @@ export default function AdminAds() {
           </p>
         </div>
       </div>
+
+      {/* Mobile ads toggle */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardContent className="flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-slate-800 border border-slate-700 shrink-0">
+              <Smartphone className="h-4 w-4 text-slate-400" />
+            </div>
+            <div>
+              <p className="text-white text-sm font-semibold">Hide ads on mobile</p>
+              <p className="text-slate-500 text-xs mt-0.5">
+                When on, ads are hidden on all mobile screens. Desktop sidebar ads are unaffected.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            {hideOnMobile ? (
+              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 hidden sm:flex">Hidden on mobile</Badge>
+            ) : (
+              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hidden sm:flex">Shown on mobile</Badge>
+            )}
+            <button
+              type="button"
+              onClick={toggleMobile}
+              disabled={savingMobile}
+              className={`relative w-10 h-5 rounded-full transition-colors disabled:opacity-50 ${hideOnMobile ? 'bg-amber-500' : 'bg-teal-500'}`}
+              aria-label="Toggle mobile ads"
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${hideOnMobile ? 'translate-x-5' : ''}`} />
+            </button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column */}
