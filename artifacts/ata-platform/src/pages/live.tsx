@@ -729,19 +729,19 @@ function QuickBetPanel({ token, streamSport }: { token: string | null; streamSpo
   if (!liveGames.length) return null;
 
   return (
-    <div className="rounded-xl border border-amber-500/20 bg-slate-900 overflow-hidden">
+    <div className="rounded-lg border border-amber-500/20 bg-slate-900 overflow-hidden shrink-0">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800 bg-amber-500/5">
-        <Swords className="h-4 w-4 text-amber-400" />
-        <span className="text-sm font-semibold text-white">Quick Bet</span>
-        <span className="ml-auto text-[10px] text-amber-400/50 font-mono">P2P · 10% fee</span>
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-slate-800 bg-amber-500/5">
+        <Swords className="h-3 w-3 text-amber-400" />
+        <span className="text-xs font-semibold text-white">Quick Bet</span>
+        <span className="ml-auto text-[9px] text-amber-400/50 font-mono">P2P · 10% fee</span>
       </div>
 
-      <div className="p-3 space-y-3">
+      <div className="p-2 space-y-1.5">
         {/* Game selector */}
         {liveGames.length > 1 && (
           <select
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:ring-1 focus:ring-amber-500/40"
+            className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-[11px] text-white outline-none focus:ring-1 focus:ring-amber-500/40"
             value={selectedId ?? ''}
             onChange={(e) => { setSelectedId(Number(e.target.value)); setOutcome(null); }}
           >
@@ -753,62 +753,59 @@ function QuickBetPanel({ token, streamSport }: { token: string | null; streamSpo
 
         {game && (
           <>
-            {/* Outcome picker */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Outcome picker — single row, horizontal */}
+            <div className="grid grid-cols-2 gap-1.5">
               {(['player_a_wins', 'player_b_wins'] as const).map((o) => {
                 const isA = o === 'player_a_wins';
                 const label = isA ? game.playerA : game.playerB;
-                const side = isA ? 'A' : 'B';
                 const active = outcome === o;
                 return (
                   <button
                     key={o}
                     onClick={() => setOutcome(o)}
-                    className={`flex flex-col items-center gap-0.5 rounded-xl border px-2 py-2.5 text-center transition-all ${
+                    className={`flex items-center justify-center gap-1 rounded-lg border px-1.5 py-1.5 text-center transition-all ${
                       active
                         ? 'border-teal-500 bg-teal-500/10'
                         : 'border-slate-700 hover:border-slate-600'
                     }`}
                   >
-                    <span className="text-[9px] uppercase tracking-wider font-bold text-slate-500">Player {side}</span>
-                    <span className={`text-sm font-bold leading-tight line-clamp-1 max-w-full ${active ? 'text-teal-300' : 'text-white'}`}>
+                    <span className={`text-[11px] font-semibold leading-tight line-clamp-1 ${active ? 'text-teal-300' : 'text-white'}`}>
                       {label}
                     </span>
-                    <span className="text-[9px] text-slate-500 mt-0.5">wins</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Stake input */}
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-mono">$</span>
-              <input
-                type="number"
-                min="0.50"
-                step="0.50"
-                placeholder="0.00"
-                value={stake}
-                onChange={(e) => setStake(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && placeBet()}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-amber-500/40 font-mono"
-              />
+            {/* Stake + Place bet on same row */}
+            <div className="flex gap-1.5">
+              <div className="relative flex-1">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-mono">$</span>
+                <input
+                  type="number"
+                  min="0.50"
+                  step="0.50"
+                  placeholder="0.00"
+                  value={stake}
+                  onChange={(e) => setStake(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && placeBet()}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-5 pr-2 py-1.5 text-xs text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-amber-500/40 font-mono"
+                />
+              </div>
+              <button
+                onClick={placeBet}
+                disabled={placing || !outcome || !stake || parseFloat(stake) <= 0}
+                className="flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold text-xs px-3 py-1.5 transition-colors shrink-0"
+              >
+                {placing
+                  ? <span className="h-3 w-3 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
+                  : <><Swords className="h-3 w-3" /> Bet</>
+                }
+              </button>
             </div>
 
-            {/* Place bet */}
-            <button
-              onClick={placeBet}
-              disabled={placing || !outcome || !stake || parseFloat(stake) <= 0}
-              className="w-full h-10 flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition-colors"
-            >
-              {placing
-                ? <span className="h-4 w-4 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
-                : <><Swords className="h-4 w-4" /> Place Bet</>
-              }
-            </button>
-
-            <p className="text-center text-[10px] text-slate-600">
-              {game.openBetsCount} open bet{game.openBetsCount !== 1 ? 's' : ''} · ${parseFloat(game.totalBetPool || '0').toFixed(2)} pool
+            <p className="text-center text-[9px] text-slate-600">
+              {game.openBetsCount} open · ${parseFloat(game.totalBetPool || '0').toFixed(2)} pool
             </p>
           </>
         )}
