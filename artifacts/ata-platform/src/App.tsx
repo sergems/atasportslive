@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { GoogleAuthProvider } from "@/lib/google-auth";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 
@@ -186,12 +187,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <AuthProvider>
-            <Router />
-          </AuthProvider>
-        </WouterRouter>
-        <Toaster theme="dark" position="bottom-right" />
+        <GoogleAuthProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <AuthProvider>
+              <Router />
+            </AuthProvider>
+          </WouterRouter>
+          <Toaster theme="dark" position="bottom-right" />
+        </GoogleAuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
