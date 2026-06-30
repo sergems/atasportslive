@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useGetWallet } from '@workspace/api-client-react';
+import { useGetWallet, useListMyBets } from '@workspace/api-client-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -122,6 +122,12 @@ export default function Wallet() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
   const invalidatePayout = () => queryClient.invalidateQueries({ queryKey: ['payout-method'] });
+
+  // Pending/matched bets locking funds
+  const { data: pendingBetsData } = useListMyBets({ status: 'pending', limit: 100 });
+  const { data: matchedBetsData } = useListMyBets({ status: 'matched', limit: 100 });
+  const activeBetsCount = (pendingBetsData?.total ?? 0) + (matchedBetsData?.total ?? 0);
+  const lockedAmount = wallet?.pendingBalance ?? 0;
 
   const { data: statusData } = useQuery({
     queryKey: ['pesapal-status', paymentRef],
@@ -338,6 +344,26 @@ export default function Wallet() {
           </Card>
         ))}
       </div>
+
+      {/* Active bets locking funds */}
+      {activeBetsCount > 0 && (
+        <div className="flex items-center gap-3 rounded-xl bg-amber-500/10 border border-amber-500/25 px-4 py-3">
+          <Lock className="h-4 w-4 text-amber-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-amber-300 font-semibold">
+              {activeBetsCount} active bet{activeBetsCount !== 1 ? 's' : ''} locking <span className="font-mono">${lockedAmount.toFixed(2)}</span>
+            </p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Funds are released when bets are settled, cancelled, or won.
+            </p>
+          </div>
+          <Link href="/bets" className="shrink-0">
+            <Button size="sm" variant="outline" className="h-7 text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10 gap-1">
+              <Ticket className="h-3 w-3" /> View Bets
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Deposit + Withdraw */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
