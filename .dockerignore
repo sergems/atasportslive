@@ -1,0 +1,42 @@
+# Version control
+.git
+.gitignore
+
+# Node dependencies (installed fresh inside Docker)
+node_modules
+**/node_modules
+
+# Build outputs (rebuilt inside Docker)
+**/dist
+artifacts/ata-platform/dist
+artifacts/api-server/dist
+
+# Development / local config
+.env
+.env.*
+!deploy/.env.example
+
+# Replit-specific
+.replit
+.upm
+.cache
+.config
+.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+coverage
+*.test.*
+*.spec.*
+
+# Large files not needed in build
+backup.sql
+attached_assets
