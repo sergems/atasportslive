@@ -4,7 +4,22 @@ import { useAuth } from '@/lib/auth';
 import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import ataLogo from '@assets/cropped-ATA_logo-removebg-preview_1782471649356.png';
+
+function useIsLive() {
+  const { data } = useQuery<boolean>({
+    queryKey: ['nav', 'is-live'],
+    queryFn: async () => {
+      const r = await fetch('/api/streams?status=live&limit=1');
+      const d = await r.json();
+      return (d.streams?.length ?? 0) > 0;
+    },
+    refetchInterval: 30_000,
+    staleTime: 20_000,
+  });
+  return data ?? false;
+}
 
 function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
   const [open, setOpen] = useState(false);
@@ -70,6 +85,7 @@ export function Navbar() {
   const { isAuthenticated, logout, isAdmin, user } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isLive = useIsLive();
 
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
 
@@ -93,7 +109,7 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Home', exact: true },
-    { href: '/live', label: 'Live', pulse: true, mobileHide: true },
+    { href: '/live', label: 'Live', pulse: isLive, mobileHide: true },
     { href: '/streams', label: 'Streams' },
     { href: '/upcoming', label: 'Upcoming' },
     { href: '/highlights', label: 'Highlights' },
@@ -115,14 +131,20 @@ export function Navbar() {
         <nav className="hidden md:flex items-center space-x-4 text-sm font-medium absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
           {navLinks.map(({ href, label, pulse, exact }) => {
             const active = exact ? location === href : location.startsWith(href);
+            const isLiveLink = href === '/live';
             return (
               <Link
                 key={href}
                 href={href}
                 className={`relative inline-flex items-center gap-1.5 pb-1 transition-colors hover:text-white border-b-2 ${active ? 'text-white border-teal-400' : 'text-slate-400 border-transparent hover:border-slate-600'}`}
               >
-                {pulse && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
                 {label}
+                {isLiveLink && pulse && (
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500/20 border border-red-500/40 px-1.5 py-px text-[9px] font-bold text-red-400 uppercase tracking-wider leading-none">
+                    <span className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
+                    Live
+                  </span>
+                )}
               </Link>
             );
           })}

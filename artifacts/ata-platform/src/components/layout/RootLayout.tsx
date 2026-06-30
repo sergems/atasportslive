@@ -8,10 +8,26 @@ import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
 import { useAuth } from '@/lib/auth';
 import { useListNotifications } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
+
+function useIsLive() {
+  const { data } = useQuery<boolean>({
+    queryKey: ['nav', 'is-live'],
+    queryFn: async () => {
+      const r = await fetch('/api/streams?status=live&limit=1');
+      const d = await r.json();
+      return (d.streams?.length ?? 0) > 0;
+    },
+    refetchInterval: 30_000,
+    staleTime: 20_000,
+  });
+  return data ?? false;
+}
 
 function MobileBottomNav() {
   const [location] = useLocation();
   const { isAuthenticated, logout, isAdmin } = useAuth();
+  const isLive = useIsLive();
   const { data: notifData } = useListNotifications({ unreadOnly: true }, {
     query: { enabled: isAuthenticated, queryKey: ['notif-mobile'], refetchInterval: 30000 }
   });
@@ -21,7 +37,7 @@ function MobileBottomNav() {
   if (isAuthenticated) {
     const tabs = [
       { href: '/dashboard', label: 'Home',    icon: LayoutDashboard, badge: unreadCount },
-      { href: '/live',      label: 'Live',    icon: Radio,  pulse: true },
+      { href: '/live',      label: 'Live',    icon: Radio,  pulse: isLive },
       { href: '/streams',   label: 'Streams', icon: Film },
       { href: '/games',     label: 'Games',   icon: Swords },
       { href: '/wallet',    label: 'Wallet',  icon: Wallet },
@@ -65,7 +81,7 @@ function MobileBottomNav() {
 
   const guestTabs = [
     { href: '/',        label: 'Home',    icon: Home },
-    { href: '/live',    label: 'Live',    icon: Radio,  pulse: true },
+    { href: '/live',    label: 'Live',    icon: Radio,  pulse: isLive },
     { href: '/streams', label: 'Streams', icon: Film },
   ];
 
