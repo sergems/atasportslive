@@ -2,7 +2,7 @@ import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { db, betsTable, gamesTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
 import { eq, desc, sql, and, ne } from "drizzle-orm";
-import { authMiddleware, type AuthRequest } from "../middlewares/auth";
+import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
 import { sendMail, templates } from "../lib/mailer";
 
@@ -253,22 +253,31 @@ router.get("/:id", authMiddleware, async (req: AuthRequest, res): Promise<void> 
   res.json({ bet: toBet(bet, game ? { id: game.id, sport: game.sport, playerA: game.playerA, playerB: game.playerB, status: game.status } : null), matchStatus: bet.status === "matched" ? "exact_match" : nearMatches.length > 0 ? "near_match" : "unmatched", nearMatches });
 });
 
-router.post("/:id/cancel", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+// Admin-only: cancel any pending bet and refund the user
+router.post("/:id/cancel", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
-  const [bet] = await db.select().from(betsTable).where(and(eq(betsTable.id, id), eq(betsTable.userId, req.userId!))).limit(1);
+  const [bet] = await db.select().from(betsTable).where(eq(betsTable.id, id)).limit(1);
   if (!bet || bet.status !== "pending") {
     res.status(400).json({ error: "Can only cancel pending bets" });
     return;
   }
   await db.update(betsTable).set({ status: "cancelled" }).where(eq(betsTable.id, id));
   const stake = parseFloat(bet.stake as string);
-  // Restore balance and available; clear pending — do NOT touch withdrawable (stake was never winnings)
   await db.update(walletsTable).set({
     balance: sql`balance + ${stake}`,
     availableBalance: sql`available_balance + ${stake}`,
     pendingBalance: sql`pending_balance - ${stake}`,
-  }).where(eq(walletsTable.userId, req.userId!));
+  }).where(eq(walletsTable.userId, bet.userId));
   await db.update(gamesTable).set({ openBetsCount: sql`open_bets_count - 1` }).where(eq(gamesTable.id, bet.gameId));
+  await db.insert(transactionsTable).values({
+    transactionId: `CAN-${uuidv4().split("-")[0].toUpperCase()}`,
+    userId: bet.userId,
+    type: "bet_stake",
+    amount: stake.toString(),
+    status: "completed",
+    paymentMethod: "internal",
+    description: `Bet cancelled by admin (bet #${id}) — stake refunded`,
+  });
   const [updated] = await db.select().from(betsTable).where(eq(betsTable.id, id)).limit(1);
   res.json(toBet(updated));
 });

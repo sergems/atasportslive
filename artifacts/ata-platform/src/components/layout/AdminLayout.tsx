@@ -62,6 +62,7 @@ const navItems = [
   { href: '/admin/slides',           label: 'Hero Slides',   icon: GalleryHorizontalEnd },
   { href: '/admin/streams',          label: 'Streams',       icon: Radio },
   { href: '/admin/games',            label: 'Games',         icon: Trophy },
+  { href: '/admin/bets',             label: 'Bets',          icon: Swords },
   { href: '/admin/highlights',       label: 'Highlights',    icon: Clapperboard },
   { href: '/admin/announcements',    label: 'Announcements', icon: Megaphone },
   { href: '/admin/users',            label: 'Users',         icon: Users },
