@@ -95,9 +95,9 @@ async function checkPawapayDepositStatus(depositId: string) {
   return res.json() as Promise<{ status: string; amount: number }>;
 }
 
-async function getPawapayStatus() {
-  const res = await fetch('/api/wallet/pawapay/status');
-  return res.json() as Promise<{ configured: boolean; environment: string | null }>;
+async function getGatewayStatus() {
+  const res = await fetch('/api/wallet/gateway-status');
+  return res.json() as Promise<{ pesapalEnabled: boolean; pawapayEnabled: boolean; pawapayConfigured: boolean }>;
 }
 
 const PAWAPAY_PROVIDERS = [
@@ -209,12 +209,20 @@ export default function Wallet() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
   const invalidatePayout = () => queryClient.invalidateQueries({ queryKey: ['payout-method'] });
 
-  const { data: pawapayServerStatus } = useQuery({
-    queryKey: ['pawapay-status'],
-    queryFn: getPawapayStatus,
+  const { data: gatewayStatus } = useQuery({
+    queryKey: ['gateway-status'],
+    queryFn: getGatewayStatus,
     staleTime: 60_000,
   });
-  const pawapayConfigured = pawapayServerStatus?.configured ?? false;
+  const pawapayConfigured = gatewayStatus?.pawapayConfigured ?? false;
+  const pawapayEnabled   = gatewayStatus?.pawapayEnabled   ?? true;
+  const pesapalEnabled   = gatewayStatus?.pesapalEnabled   ?? true;
+
+  // If the currently-selected deposit tab becomes disabled, fall back to voucher
+  useEffect(() => {
+    if (depositTab === 'pawapay' && !pawapayEnabled) setDepositTab('pesapal');
+    if (depositTab === 'pesapal' && !pesapalEnabled) setDepositTab('voucher');
+  }, [pawapayEnabled, pesapalEnabled]);
 
   // Pending/matched bets locking funds
   const { data: pendingBetsData } = useListMyBets({ status: 'pending', limit: 100 });
@@ -524,19 +532,29 @@ export default function Wallet() {
             {/* Tabs */}
             <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
               <button
-                onClick={() => { setDepositTab('pawapay'); setPawapayDepositId(null); }}
-                className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${depositTab === 'pawapay' ? 'bg-green-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                onClick={() => { if (pawapayEnabled) { setDepositTab('pawapay'); setPawapayDepositId(null); } }}
+                disabled={!pawapayEnabled}
+                title={!pawapayEnabled ? 'PawaPay is currently unavailable' : undefined}
+                className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors
+                  ${!pawapayEnabled ? 'opacity-40 cursor-not-allowed text-slate-500' : depositTab === 'pawapay' ? 'bg-green-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
               >
                 <Zap className="h-3 w-3" />
                 PawaPay
-                {pawapayConfigured && <Badge className="bg-green-700 text-white text-[8px] px-1 py-0 leading-none ml-0.5 hidden sm:inline-flex">Preferred</Badge>}
+                {!pawapayEnabled
+                  ? <Badge className="bg-red-800/60 text-red-300 text-[8px] px-1 py-0 leading-none ml-0.5 hidden sm:inline-flex">Off</Badge>
+                  : pawapayConfigured && <Badge className="bg-green-700 text-white text-[8px] px-1 py-0 leading-none ml-0.5 hidden sm:inline-flex">Preferred</Badge>
+                }
               </button>
               <button
-                onClick={() => setDepositTab('pesapal')}
-                className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors ${depositTab === 'pesapal' ? 'bg-teal-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
+                onClick={() => { if (pesapalEnabled) setDepositTab('pesapal'); }}
+                disabled={!pesapalEnabled}
+                title={!pesapalEnabled ? 'Pesapal is currently unavailable' : undefined}
+                className={`flex-1 flex items-center justify-center gap-1 text-[11px] sm:text-xs font-semibold py-1.5 rounded-md transition-colors
+                  ${!pesapalEnabled ? 'opacity-40 cursor-not-allowed text-slate-500' : depositTab === 'pesapal' ? 'bg-teal-500 text-slate-950' : 'text-slate-400 hover:text-white'}`}
               >
                 <CreditCard className="h-3 w-3" />
                 Pesapal
+                {!pesapalEnabled && <Badge className="bg-red-800/60 text-red-300 text-[8px] px-1 py-0 leading-none ml-0.5 hidden sm:inline-flex">Off</Badge>}
               </button>
               <button
                 onClick={() => setDepositTab('voucher')}
@@ -549,7 +567,15 @@ export default function Wallet() {
 
             {depositTab === 'pawapay' ? (
               <div className="space-y-3">
-                {!pawapayConfigured ? (
+                {!pawapayEnabled ? (
+                  <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-3 text-xs text-red-300 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">PawaPay is temporarily unavailable</p>
+                      <p className="text-red-400/80 mt-0.5">This payment method has been disabled. Please use Pesapal or a Voucher to deposit.</p>
+                    </div>
+                  </div>
+                ) : !pawapayConfigured ? (
                   <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-3 text-xs text-amber-300 flex items-start gap-2">
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <div>
@@ -734,7 +760,7 @@ export default function Wallet() {
             <CardTitle className="flex items-center gap-2 text-amber-400 text-base sm:text-lg">
               <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5" /> Withdrawal
             </CardTitle>
-            {pawapayConfigured ? (
+            {pawapayConfigured && pawapayEnabled ? (
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Zap className="h-3 w-3 text-amber-400" />
                 <p className="text-xs text-amber-400 font-semibold">PawaPay instant withdrawal available — no admin approval</p>
@@ -745,8 +771,8 @@ export default function Wallet() {
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
 
-            {/* Withdrawal method tabs — only shown when PawaPay is configured */}
-            {pawapayConfigured && (
+            {/* Withdrawal method tabs — only shown when PawaPay is configured AND enabled */}
+            {pawapayConfigured && pawapayEnabled && (
               <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
                 <button
                   onClick={() => setWithdrawTab('pawapay')}
@@ -764,7 +790,7 @@ export default function Wallet() {
             )}
 
             {/* ── PawaPay instant withdrawal form ── */}
-            {pawapayConfigured && withdrawTab === 'pawapay' ? (
+            {pawapayConfigured && pawapayEnabled && withdrawTab === 'pawapay' ? (
               <div className="space-y-3">
                 <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-300 flex items-center gap-2">
                   <Zap className="h-3.5 w-3.5 shrink-0" />

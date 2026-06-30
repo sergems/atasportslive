@@ -693,6 +693,19 @@ router.get("/pawapay/status", async (_req, res): Promise<void> => {
   res.json({ configured: !!config, environment: config?.environment ?? null });
 });
 
+router.get("/gateway-status", async (_req, res): Promise<void> => {
+  const [pawapayConfig, pesapalEnabled, pawapayEnabled] = await Promise.all([
+    getPawapayConfig(),
+    isGatewayEnabled("pesapal"),
+    isGatewayEnabled("pawapay"),
+  ]);
+  res.json({
+    pesapalEnabled,
+    pawapayEnabled,
+    pawapayConfigured: !!pawapayConfig,
+  });
+});
+
 // ── PESAPAL ──────────────────────────────────────────────────────────────────
 
 router.post("/pesapal/initiate", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
