@@ -49,7 +49,7 @@ export function toMsisdn(phone: string, defaultCountryCode = "256"): string {
 
 export function providerForMethod(payoutMethod: string): string {
   if (payoutMethod === "mtn_momo") return "MTN_MOMO_UGA";
-  if (payoutMethod === "airtel_money") return "AIRTEL_UGA";
+  if (payoutMethod === "airtel_money") return "AIRTEL_OAPI_UGA";
   return "";
 }
 
