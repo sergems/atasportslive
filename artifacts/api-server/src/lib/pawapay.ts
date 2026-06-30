@@ -142,7 +142,6 @@ export interface InitiatePayoutInput {
   amount: number;
   phoneNumber: string;
   provider: string;
-  callbackUrl?: string;
 }
 
 export interface PayoutInitResponse {
@@ -169,10 +168,7 @@ export async function initiatePayout(
         provider: input.provider,
       },
     },
-    customerTimestamp: new Date().toISOString(),
-    statementDescription: "ATA withdrawal",
   };
-  if (input.callbackUrl) body.callbackUrl = input.callbackUrl;
 
   logger.info({ url, payoutId: input.payoutId, provider: input.provider }, "PawaPay initiatePayout");
 

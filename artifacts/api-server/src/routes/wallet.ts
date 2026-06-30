@@ -209,13 +209,11 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
     }).returning();
 
     try {
-      const host = `${req.protocol}://${req.get("host")}`;
       await pawapayInitiatePayout(pawapayConfig, {
         payoutId,
         amount: Number(amount),
         phoneNumber: userRow.payout_account,
         provider: providerForMethod(userRow.payout_method),
-        callbackUrl: `${host}/api/wallet/pawapay/callback/payout`,
       });
       res.status(201).json({ ...toTxResponse(tx), instant: true });
     } catch (err: any) {
@@ -649,13 +647,11 @@ router.post("/pawapay/withdraw", authMiddleware, async (req: AuthRequest, res): 
   }).returning();
 
   try {
-    const host = `${req.protocol}://${req.get("host")}`;
     await pawapayInitiatePayout(config, {
       payoutId,
       amount: Number(amount),
       phoneNumber,
       provider,
-      callbackUrl: `${host}/api/wallet/pawapay/callback/payout`,
     });
     res.status(201).json({ ...toTxResponse(tx), instant: true });
   } catch (err: any) {
