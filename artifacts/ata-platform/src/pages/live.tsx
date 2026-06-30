@@ -92,7 +92,7 @@ function MuxPlayer({ playbackId, title }: { playbackId: string; title: string })
   return (
     <div className="relative w-full h-full">
       <iframe
-        src={`https://player.mux.com/${playbackId}`}
+        src={`https://player.mux.com/${playbackId}?autoplay=true&muted=false`}
         title={title}
         className="absolute inset-0 w-full h-full border-0"
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
@@ -143,7 +143,7 @@ function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) {
   }, []);
 
   return (
-    <video ref={videoRef} className="w-full h-full object-cover" controls playsInline title={title} />
+    <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay muted playsInline title={title} />
   );
 }
 
