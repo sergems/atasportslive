@@ -52,7 +52,7 @@ function StreamCard({ stream, isAuthenticated }: { stream: Stream; isAuthenticat
   const sportPill = SPORT_COLOR[stream.sport] ?? 'text-slate-400 bg-slate-500/10 border-slate-500/30';
 
   return (
-    <Link href={`/streams/${stream.id}`}>
+    <Link href={isLive ? '/live' : `/streams/${stream.id}`}>
       <div className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 cursor-pointer
         ${isLive
           ? 'border-red-500/40 shadow-lg shadow-red-500/10 hover:border-red-400/60'
@@ -210,7 +210,7 @@ function LiveLeaderboard({ streams }: { streams: Stream[] }) {
           const sportPill = SPORT_COLOR[stream.sport] ?? 'text-slate-400 bg-slate-500/10 border-slate-500/30';
 
           return (
-            <Link key={stream.id} href={`/streams/${stream.id}`}>
+            <Link key={stream.id} href="/live">
               <div className={`group flex items-center gap-3 px-4 py-3 hover:bg-slate-800/40 transition-colors cursor-pointer ${style.bg}`}>
                 {/* Rank */}
                 <div className="w-7 shrink-0 text-center text-base leading-none select-none">{style.medal}</div>
