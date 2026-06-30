@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const SITE_NAME = "ATA Sports Live";
 const DEFAULT_DESCRIPTION =
-  "Watch live Pool and Boxing matches from Kampala. Bet peer-to-peer in real-time on Uganda's top sports betting exchange. Stream from $1.50/day.";
+  "Watch live Pool and Boxing matches from across Africa. Bet peer-to-peer in real-time on Africa's top sports betting exchange. Stream from $1.50/day.";
 const DEFAULT_OG_IMAGE = "https://atasportslive.com/opengraph.jpg";
 const SITE_URL = "https://atasportslive.com";
 
@@ -86,7 +86,7 @@ export const STRUCTURED_DATA = {
     logo: "https://atasportslive.com/ata-logo.png",
     sameAs: [],
     description:
-      "Uganda's premier live sports streaming and P2P betting exchange, based in Kampala. Watch Pool and Boxing matches and bet peer-to-peer.",
+      "Africa's premier live sports streaming and P2P betting exchange. Watch Pool and Boxing matches and bet peer-to-peer.",
     address: {
       "@type": "PostalAddress",
       addressLocality: "Kampala",

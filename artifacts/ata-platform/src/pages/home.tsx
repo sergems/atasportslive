@@ -305,7 +305,7 @@ function DefaultHero() {
 
 export default function Home() {
   useEffect(() => {
-    document.title = 'ATA Sports Live — Kampala\'s Premier Sports Streaming & Betting Exchange';
+    document.title = 'ATA Sports Live — Africa\'s Premier Sports Streaming & Betting Exchange';
   }, []);
 
   const { isAuthenticated } = useAuth();
