@@ -138,12 +138,13 @@ export function Navbar() {
                 href={href}
                 className={`relative inline-flex items-center gap-1.5 pb-1 transition-colors hover:text-white border-b-2 ${active ? 'text-white border-teal-400' : 'text-slate-400 border-transparent hover:border-slate-600'}`}
               >
-                {label}
-                {isLiveLink && pulse && (
+                {isLiveLink && pulse ? (
                   <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500/20 border border-red-500/40 px-1.5 py-px text-[9px] font-bold text-red-400 uppercase tracking-wider leading-none">
                     <span className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
                     Live
                   </span>
+                ) : (
+                  label
                 )}
               </Link>
             );
