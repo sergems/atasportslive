@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oY7IGxm9VGPB0nizNFAP75Kj5d6SX6IjaedAr9VCXCVlJw9nKWKDVvo84tDDjEB
+\restrict cYLNmenc7d2798IFB4qrLNu1dMqWzDGk9UgkZaJOIdWNACJAbLKlfjuyKOQXfBn
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -120,7 +120,8 @@ CREATE TYPE public.notification_type AS ENUM (
     'bet_lost',
     'match_result',
     'bet_refunded',
-    'low_balance'
+    'low_balance',
+    'bonus_expiry_warning'
 );
 
 
@@ -1060,7 +1061,7 @@ ALTER TABLE ONLY public.wallets ALTER COLUMN id SET DEFAULT nextval('public.wall
 --
 
 COPY public.announcements (id, title, content, is_active, priority, created_at, updated_at) FROM stdin;
-1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	f	10	2026-06-15 19:17:47.184937+00	2026-06-26 12:27:45.663+00
+1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	f	10	2026-06-15 19:17:47.184937+00	2026-06-30 09:11:10.26+00
 \.
 
 
@@ -1080,6 +1081,8 @@ COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_ret
 1	TKT-80CBCB97	2	2	player_b_wins	40.00	0.00	pending	\N	\N	2026-06-15 16:42:22.409097+00	2026-06-15 16:42:22.409097+00
 2	TKT-94544E67	2	3	player_a_wins	2.00	0.00	pending	\N	\N	2026-06-15 21:22:49.715996+00	2026-06-15 21:22:49.715996+00
 3	TKT-F426B032	1	3	player_a_wins	2.00	0.00	pending	\N	\N	2026-06-25 22:53:12.644571+00	2026-06-25 22:53:12.644571+00
+4	TKT-52359471	1	13	player_a_wins	20.00	0.00	pending	\N	\N	2026-06-30 09:21:15.590905+00	2026-06-30 09:21:15.590905+00
+5	TKT-20924702	1	13	player_b_wins	80.00	0.00	pending	\N	\N	2026-06-30 11:53:25.68106+00	2026-06-30 11:53:25.68106+00
 \.
 
 
@@ -1096,18 +1099,20 @@ COPY public.bonus_transactions (id, user_id, promotion_id, type, amount, balance
 --
 
 COPY public.games (id, sport, player_a, player_b, event_date, event_time, status, result, total_bet_pool, open_bets_count, matched_bets_count, created_at, updated_at, event_end_date, event_end_time, city, country, type, parent_id, player_a_country, player_b_country) FROM stdin;
-4	boxing	Joseph Kato	Richard Wanyama	2026-06-22	18:00	upcoming	\N	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
 5	pool	Samuel Kagwa	Alex Mutumba	2026-06-13	17:00	completed	player_a_wins	240.00	0	8	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
-2	boxing	Moses Nkosi	Emmanuel Atiku	2026-06-16	20:00	upcoming	\N	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-15 16:42:22.416+00	\N	\N	\N	\N	single	\N	\N	\N
-6	boxing	Matavu Ukasha	Kasasa Isaac	2026-06-20	14:00	upcoming	\N	0.00	0	0	2026-06-15 18:45:17.011713+00	2026-06-15 18:45:17.011713+00	\N	\N	\N	\N	single	\N	\N	\N
-7	pool	Ali Hassan	John Doe	2026-06-20	15:00	upcoming	\N	0.00	0	0	2026-06-15 19:06:10.922877+00	2026-06-15 19:06:10.922877+00	\N	\N	\N	\N	single	\N	\N	\N
-8	pool	Big Kels – ATA International Clash		2026-06-18	11:00	upcoming	\N	0.00	0	0	2026-06-15 19:41:45.888663+00	2026-06-15 19:41:45.888663+00	2026-06-21	14:30	Lagos	Nigeria	competition	\N	\N	\N
-9	pool	Caesar Chandinga	Serge	2026-06-18	18:00	upcoming	\N	0.00	0	0	2026-06-15 19:52:47.086143+00	2026-06-15 19:52:47.086143+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
-12	pool	Caesar Chandinga	Jabulani	2026-06-21	16:54	upcoming	\N	0.00	0	0	2026-06-15 19:55:04.828187+00	2026-06-15 20:12:18.086+00	\N	\N	Lagos	Nigeria	single	8	UG	CD
-11	pool	Jacob	Caesar Chandinga	2026-06-20	20:00	upcoming	\N	0.00	0	0	2026-06-15 19:54:24.775026+00	2026-06-15 20:52:16.387+00	\N	\N	Lagos	Nigeria	single	8	TZ	UG
-10	pool	Siyabonga Shezi	Caesar Chandinga	2026-06-19	18:00	upcoming	\N	0.00	0	0	2026-06-15 19:53:28.784467+00	2026-06-15 20:53:34.678+00	\N	\N	Lagos	Nigeria	single	8	ZA	UG
 1	pool	Hassan Mukasa	David Ssemwanga	2026-06-15	19:00	completed	player_b_wins	90.00	5	3	2026-06-15 16:31:06.632179+00	2026-06-15 21:17:47.146+00	\N	\N	\N	\N	single	\N	\N	\N
-3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	upcoming	\N	0.00	2	0	2026-06-15 16:31:06.632179+00	2026-06-25 22:53:12.651+00	\N	\N	\N	\N	single	\N	\N	\N
+3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	completed	player_a_wins	0.00	2	0	2026-06-15 16:31:06.632179+00	2026-06-29 19:11:12.311+00	\N	\N	\N	\N	single	\N	\N	\N
+2	boxing	Moses Nkosi	Emmanuel Atiku	2026-06-16	20:00	completed	draw	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-29 19:11:21.125+00	\N	\N	\N	\N	single	\N	\N	\N
+9	pool	Caesar Chandinga	Serge	2026-06-18	18:00	completed	player_a_wins	0.00	0	0	2026-06-15 19:52:47.086143+00	2026-06-29 19:11:33.366+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
+10	pool	Siyabonga Shezi	Caesar Chandinga	2026-06-19	18:00	completed	player_a_wins	0.00	0	0	2026-06-15 19:53:28.784467+00	2026-06-29 19:11:39.972+00	\N	\N	Lagos	Nigeria	single	8	ZA	UG
+11	pool	Jacob	Caesar Chandinga	2026-06-20	20:00	completed	player_b_wins	0.00	0	0	2026-06-15 19:54:24.775026+00	2026-06-29 19:11:46.001+00	\N	\N	Lagos	Nigeria	single	8	TZ	UG
+12	pool	Caesar Chandinga	Jabulani	2026-06-21	16:54	completed	player_a_wins	0.00	0	0	2026-06-15 19:55:04.828187+00	2026-06-29 19:11:55.884+00	\N	\N	Lagos	Nigeria	single	8	UG	CD
+8	pool	Big Kels – ATA International Clash		2026-06-18	11:00	completed	player_a_wins	0.00	0	0	2026-06-15 19:41:45.888663+00	2026-06-29 19:12:08.639+00	2026-06-21	14:30	Lagos	Nigeria	competition	\N	\N	\N
+6	boxing	Matavu Ukasha	Kasasa Isaac	2026-06-20	14:00	completed	player_a_wins	0.00	0	0	2026-06-15 18:45:17.011713+00	2026-06-29 19:12:17.721+00	\N	\N	\N	\N	single	\N	\N	\N
+7	pool	Ali Hassan	John Doe	2026-06-20	15:00	completed	player_a_wins	0.00	0	0	2026-06-15 19:06:10.922877+00	2026-06-29 19:12:25.66+00	\N	\N	\N	\N	single	\N	\N	\N
+4	boxing	Joseph Kato	Richard Wanyama	2026-06-22	18:00	completed	player_a_wins	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-29 19:12:30.428+00	\N	\N	\N	\N	single	\N	\N	\N
+14	pool	Babalayo Ntusi	Kakule Mbanza	2026-07-02	18:00	upcoming	\N	0.00	0	0	2026-06-29 19:14:51.287195+00	2026-06-29 19:14:51.287195+00	\N	\N	Kigali	Rwanda	single	\N	ZA	CD
+13	pool	Jam Hun	Alec Boldic	2026-07-01	10:30	upcoming	\N	0.00	2	0	2026-06-29 19:13:42.015308+00	2026-06-30 11:53:25.685+00	\N	\N	Kigoma	Tanzania	single	\N	JP	KE
 \.
 
 
@@ -1246,6 +1251,10 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 14	WIT-E67E7CA6	2	withdrawal	3.00	completed	airtel_money	0751999888	Withdrawal via airtel_money to 0751999888	\N	2026-06-25 22:48:21.560621+00	2026-06-25 22:48:21.821+00
 15	DEP-526D3084	1	deposit	5.00	pending	pesapal	a1ccaf41-0474-4609-a481-da377f67c6b7	Pesapal deposit of USD 5	{"orderTrackingId":"a1ccaf41-0474-4609-a481-da377f67c6b7"}	2026-06-25 22:49:48.657561+00	2026-06-25 22:49:49.78+00
 16	BET-B4E6F1D0	1	bet_stake	2.00	completed	internal	\N	Bet stake on game #3	\N	2026-06-25 22:53:12.637187+00	2026-06-25 22:53:12.637187+00
+17	DEP-40B9E106	1	deposit	50.00	pending	pesapal	d27b4058-8268-4c01-8a9d-da33bcfe48d6	Pesapal deposit of USD 50	{"orderTrackingId":"d27b4058-8268-4c01-8a9d-da33bcfe48d6"}	2026-06-30 09:05:33.73978+00	2026-06-30 09:05:35.286+00
+18	BET-EF845262	1	bet_stake	20.00	completed	internal	\N	Bet stake on game #13	\N	2026-06-30 09:21:15.452179+00	2026-06-30 09:21:15.452179+00
+19	DEP-D3A48784	1	deposit	9.00	pending	pesapal	d51366fb-edfc-43e4-bebd-da3360ecc70a	Pesapal deposit of USD 9	{"orderTrackingId":"d51366fb-edfc-43e4-bebd-da3360ecc70a"}	2026-06-30 10:13:49.044372+00	2026-06-30 10:13:50.69+00
+20	BET-A451662D	1	bet_stake	80.00	completed	internal	\N	Bet stake on game #13	\N	2026-06-30 11:53:25.663855+00	2026-06-30 11:53:25.663855+00
 \.
 
 
@@ -6283,7 +6292,8 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5028	makar-gromov@casinotds.xyz	MUST_SET_PASSWORD	Colby Slocum	7752008001	user	active	\N	\N	2026-06-26 13:40:33.445422+00	2026-06-26 13:40:33.445422+00	\N	\N	\N	t
 5029	jacksonwalusansa52@gmail.com	MUST_SET_PASSWORD	Walusansa Jackason	0762141022	user	active	\N	\N	2026-06-26 13:40:33.449374+00	2026-06-26 13:40:33.449374+00	\N	\N	\N	t
 5030	clintonabcbill@gmail.com	MUST_SET_PASSWORD	Akampurira Ciboss	0753094499	user	active	\N	\N	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	\N	\N	\N	t
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyNzQ4NzMxLCJleHAiOjE3ODUzNDA3MzF9.tYakuGBrzvNORoPWvg376pWUls0gjEwnlLTeI6YJaKg	2026-06-15 16:31:06.226579+00	2026-06-29 15:58:51.174+00	\N	\N	\N	f
+5031	johm@try.co.za	$2b$10$9YzCt9Xc6KYJMh63h6yZaePOORc17dl8mHqBm3uQsIzREGscYfAPG	Alex	+27748448457	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzEsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4MDk5ODYsImV4cCI6MTc4NTQwMTk4Nn0.yJFBFZwZw743At1p7hYMTlw7hdXeVZ7Mfq7dQIOSDJ0	2026-06-30 08:59:46.506546+00	2026-06-30 08:59:46.92+00	\N	\N	\N	f
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyODE3MTY4LCJleHAiOjE3ODU0MDkxNjh9.hqkJAVhK6M37EmJjRvyGHa3LF5bhDC90xnA37Sm5ME0	2026-06-15 16:31:06.226579+00	2026-06-30 10:59:28.132+00	\N	\N	\N	f
 \.
 
 
@@ -6292,14 +6302,15 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 --
 
 COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, created_by, created_at) FROM stdin;
-1	228623	5.00	f	\N	\N	1	2026-06-15 17:53:38.305228+00
-2	844836	5.00	f	\N	\N	1	2026-06-15 17:53:38.312669+00
-3	156342	5.00	f	\N	\N	1	2026-06-15 17:53:38.316953+00
-4	961968	10.00	f	\N	\N	1	2026-06-15 17:54:55.111194+00
-5	204783	10.00	f	\N	\N	1	2026-06-15 17:54:55.123084+00
-6	840475	10.00	f	\N	\N	1	2026-06-15 17:54:55.130353+00
-7	751391	10.00	f	\N	\N	1	2026-06-15 17:54:55.136652+00
-8	014948	10.00	t	2	2026-06-15 18:04:53.685+00	1	2026-06-15 17:54:55.14225+00
+9	VKDRS8V58932	5.00	f	\N	\N	1	2026-06-29 18:53:01.93441+00
+1	MCSY4HE8BM4P	5.00	f	\N	\N	1	2026-06-15 17:53:38.305228+00
+2	8W92BX5TTSWU	5.00	f	\N	\N	1	2026-06-15 17:53:38.312669+00
+3	4Y83C78X8AQU	5.00	f	\N	\N	1	2026-06-15 17:53:38.316953+00
+4	6MX5KYPP5D6R	10.00	f	\N	\N	1	2026-06-15 17:54:55.111194+00
+5	H3BJTVPHNCFD	10.00	f	\N	\N	1	2026-06-15 17:54:55.123084+00
+6	DFVCV9UF36TE	10.00	f	\N	\N	1	2026-06-15 17:54:55.130353+00
+7	6JQ96N7HMSP2	10.00	f	\N	\N	1	2026-06-15 17:54:55.136652+00
+8	4GHCPKPCQU4M	10.00	t	2	2026-06-15 18:04:53.685+00	1	2026-06-15 17:54:55.14225+00
 \.
 
 
@@ -6309,7 +6320,6 @@ COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, c
 
 COPY public.wallets (id, user_id, balance, available_balance, pending_balance, withdrawable_balance, currency, created_at, updated_at, bonus_balance) FROM stdin;
 2	2	66.50	24.50	42.00	66.50	USD	2026-06-15 16:31:06.612958+00	2026-06-25 22:48:21.824+00	0.00
-1	1	10000.00	9998.00	2.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-25 22:53:12.603+00	0.00
 3	4	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:07.824468+00	2026-06-26 13:40:07.824468+00	0.00
 4	5	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:08.151+00	2026-06-26 13:40:08.151+00	0.00
 5	6	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:08.157593+00	2026-06-26 13:40:08.157593+00	0.00
@@ -11337,6 +11347,8 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 5027	5028	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.445422+00	2026-06-26 13:40:33.445422+00	0.00
 5028	5029	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.449374+00	2026-06-26 13:40:33.449374+00	0.00
 5029	5030	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	0.00
+5030	5031	0.00	0.00	0.00	0.00	USD	2026-06-30 08:59:46.800606+00	2026-06-30 08:59:46.800606+00	0.00
+1	1	10000.00	9898.00	102.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-30 11:53:25.412+00	0.00
 \.
 
 
@@ -11358,7 +11370,7 @@ SELECT pg_catalog.setval('public.audit_logs_id_seq', 1, false);
 -- Name: bets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.bets_id_seq', 3, true);
+SELECT pg_catalog.setval('public.bets_id_seq', 5, true);
 
 
 --
@@ -11372,7 +11384,7 @@ SELECT pg_catalog.setval('public.bonus_transactions_id_seq', 1, false);
 -- Name: games_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.games_id_seq', 12, true);
+SELECT pg_catalog.setval('public.games_id_seq', 14, true);
 
 
 --
@@ -11428,28 +11440,28 @@ SELECT pg_catalog.setval('public.streams_id_seq', 15, true);
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 16, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 20, true);
 
 
 --
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 5030, true);
+SELECT pg_catalog.setval('public.users_id_seq', 5031, true);
 
 
 --
 -- Name: vouchers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.vouchers_id_seq', 8, true);
+SELECT pg_catalog.setval('public.vouchers_id_seq', 9, true);
 
 
 --
 -- Name: wallets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.wallets_id_seq', 5029, true);
+SELECT pg_catalog.setval('public.wallets_id_seq', 5030, true);
 
 
 --
@@ -11776,5 +11788,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oY7IGxm9VGPB0nizNFAP75Kj5d6SX6IjaedAr9VCXCVlJw9nKWKDVvo84tDDjEB
+\unrestrict cYLNmenc7d2798IFB4qrLNu1dMqWzDGk9UgkZaJOIdWNACJAbLKlfjuyKOQXfBn
 
