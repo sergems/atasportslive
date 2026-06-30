@@ -754,19 +754,20 @@ function QuickBetPanel({ token, streamSport }: { token: string | null; streamSpo
         {game && (
           <>
             {/* Outcome picker — single row, horizontal */}
-            <div className="grid grid-cols-2 gap-1.5">
-              {(['player_a_wins', 'player_b_wins'] as const).map((o) => {
+            <div className="grid grid-cols-[1fr_auto_1fr] gap-1 items-center">
+              {(['player_a_wins', 'player_b_wins'] as const).reduce<React.ReactNode[]>((acc, o, i) => {
                 const isA = o === 'player_a_wins';
                 const label = isA ? game.playerA : game.playerB;
                 const active = outcome === o;
-                return (
+                if (i === 1) acc.push(
+                  <span key="vs" className="text-[9px] font-bold text-slate-600 uppercase tracking-wider text-center">VS</span>
+                );
+                acc.push(
                   <button
                     key={o}
                     onClick={() => setOutcome(o)}
-                    className={`flex items-center justify-center gap-1 rounded-lg border px-1.5 py-1.5 text-center transition-all ${
-                      active
-                        ? 'border-teal-500 bg-teal-500/10'
-                        : 'border-slate-700 hover:border-slate-600'
+                    className={`flex items-center justify-center rounded-lg border px-1.5 py-1.5 text-center transition-all ${
+                      active ? 'border-teal-500 bg-teal-500/10' : 'border-slate-700 hover:border-slate-600'
                     }`}
                   >
                     <span className={`text-[11px] font-semibold leading-tight line-clamp-1 ${active ? 'text-teal-300' : 'text-white'}`}>
@@ -774,7 +775,8 @@ function QuickBetPanel({ token, streamSport }: { token: string | null; streamSpo
                     </span>
                   </button>
                 );
-              })}
+                return acc;
+              }, [])}
             </div>
 
             {/* Stake + Place bet on same row */}
