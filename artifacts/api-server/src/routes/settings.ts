@@ -71,6 +71,53 @@ router.post("/sync-mux", authMiddleware, requireRole("admin"), async (req: AuthR
   res.json({ ok: true, streamId });
 });
 
+// Auto-probe the Mux HLS manifest to detect when a live stream ends.
+// Called by the frontend periodically while mux_is_live=true.
+// If Mux returns 4xx the stream has ended — we flip mux_is_live=false and
+// update the companion stream record so the paywall disappears automatically.
+router.post("/mux-probe", async (_req, res): Promise<void> => {
+  try {
+    const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'mux_%'`);
+    const s: Record<string, string> = {};
+    for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
+
+    const playbackId = s.mux_playback_id;
+    const isLive     = s.mux_is_live === "true";
+
+    // Nothing to probe if Mux is already marked offline
+    if (!isLive || !playbackId) { res.json({ live: false, changed: false }); return; }
+
+    // Probe the HLS manifest — no auth required for public playback IDs
+    let muxLive = true;
+    try {
+      const probe = await fetch(`https://stream.mux.com/${playbackId}.m3u8`, { method: "HEAD" });
+      muxLive = probe.ok; // 4xx / 5xx → stream is idle/ended
+    } catch {
+      muxLive = false; // network error — treat as offline
+    }
+
+    if (muxLive) { res.json({ live: true, changed: false }); return; }
+
+    // Stream has ended — flip the flag
+    await db.execute(
+      sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_is_live', 'false', NOW())
+          ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`
+    );
+
+    // Also update the companion stream record if it exists
+    const dbId = s.mux_stream_db_id ? Number(s.mux_stream_db_id) : null;
+    if (dbId) {
+      await db.execute(
+        sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${dbId}`
+      );
+    }
+
+    res.json({ live: false, changed: true });
+  } catch (err) {
+    res.status(500).json({ error: "Probe failed" });
+  }
+});
+
 // Send a test email to the logged-in admin using saved SMTP settings
 router.post("/test-email", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'smtp_%'`);

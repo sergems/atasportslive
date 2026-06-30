@@ -835,6 +835,26 @@ export default function Live() {
   const liveStreamUrl = settings?.liveStreamUrl ?? '';
   const muxPlaybackId = settings?.mux_playback_id || FALLBACK_MUX_PLAYBACK_ID;
   const muxIsLive     = settings?.mux_is_live === 'true';
+
+  // ── Auto-detect Mux stream end ───────────────────────────────────────────
+  // While Mux is marked live, probe the HLS manifest every 30s server-side.
+  // If the stream has ended the server flips mux_is_live=false and we
+  // invalidate settings so the paywall disappears within one poll cycle.
+  useQuery({
+    queryKey: ['mux-probe'],
+    queryFn: async () => {
+      const r = await fetch('/api/settings/mux-probe', { method: 'POST' });
+      const d = await r.json();
+      if (d.changed) {
+        qc.invalidateQueries({ queryKey: ['settings'] });
+        qc.invalidateQueries({ queryKey: ['streams'] });
+      }
+      return d;
+    },
+    enabled: muxIsLive,
+    refetchInterval: 30_000,
+    staleTime: 25_000,
+  });
   const muxIsFree     = settings?.mux_is_free === 'true';
   const muxPrice      = parseFloat(settings?.mux_price ?? '1.50');
   const muxTitle      = settings?.mux_title || 'ATA Live Stream';
