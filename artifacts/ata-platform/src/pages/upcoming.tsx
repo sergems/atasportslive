@@ -83,7 +83,7 @@ function useUpcomingEvents() {
       title: s.title,
       description: s.description || '',
       location: [s.city, s.country].filter(Boolean).join(', ') || null,
-      href: `/streams/${s.id}`,
+      href: `/live`,
       accessPrice: s.accessPrice,
       id: s.id,
     });

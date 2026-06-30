@@ -82,7 +82,7 @@ function useFixtures() {
         sport: s.sport,
         title: s.title,
         location: [s.city, s.country].filter(Boolean).join(', ') || null,
-        href: `/streams/${s.id}`,
+        href: `/live`,
         accessPrice: s.accessPrice,
         id: s.id,
       });
