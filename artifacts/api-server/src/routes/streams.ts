@@ -34,7 +34,8 @@ router.get("/", async (req, res): Promise<void> => {
   let q = db.select().from(streamsTable).$dynamic();
   if (status) q = q.where(eq(streamsTable.status, status as any));
 
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(streamsTable);
+  const countQ = db.select({ count: sql<number>`count(*)` }).from(streamsTable);
+  const [{ count }] = status ? await countQ.where(eq(streamsTable.status, status as any)) : await countQ;
   const streams = await q.orderBy(desc(streamsTable.startTime)).limit(limit).offset(offset);
   res.json({ streams: streams.map(toStream), total: Number(count), page, limit });
 });

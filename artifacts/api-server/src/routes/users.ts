@@ -24,7 +24,6 @@ router.get("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, r
   const role = req.query.role as string | undefined;
   const offset = (page - 1) * limit;
 
-  let query = db.select().from(usersTable);
   const conditions = [];
   if (search) {
     conditions.push(or(ilike(usersTable.fullName, `%${search}%`), ilike(usersTable.email, `%${search}%`)));
@@ -33,11 +32,15 @@ router.get("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, r
     conditions.push(eq(usersTable.role, role as "user" | "admin" | "moderator" | "guest"));
   }
 
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(usersTable);
+  const whereClause = conditions.length > 0 ? (conditions.length === 1 ? conditions[0] : conditions.reduce((a, b) => sql`${a} AND ${b}`)) : undefined;
 
-  const users = await db.select().from(usersTable).limit(limit).offset(offset);
+  const countQuery = db.select({ count: sql<number>`count(*)` }).from(usersTable);
+  const [{ count }] = whereClause ? await countQuery.where(whereClause as any) : await countQuery;
+
+  const usersQuery = db.select().from(usersTable);
+  const users = whereClause
+    ? await usersQuery.where(whereClause as any).limit(limit).offset(offset)
+    : await usersQuery.limit(limit).offset(offset);
   res.json({ users: users.map(toPublicUser), total: Number(count), page, limit });
 });
 

@@ -202,7 +202,9 @@ router.get("/my", authMiddleware, async (req: AuthRequest, res): Promise<void> =
   const status = req.query.status as string | undefined;
   const offset = (page - 1) * limit;
 
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(betsTable).where(eq(betsTable.userId, req.userId!));
+  const baseWhere = eq(betsTable.userId, req.userId!);
+  const countWhere = status ? and(baseWhere, eq(betsTable.status, status as any)) : baseWhere;
+  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(betsTable).where(countWhere);
   let q = db.select().from(betsTable).where(eq(betsTable.userId, req.userId!)).$dynamic();
   if (status) q = q.where(eq(betsTable.status, status as any));
 

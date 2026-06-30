@@ -39,10 +39,13 @@ router.get("/", async (req, res): Promise<void> => {
   const offset = (page - 1) * limit;
 
   let q = db.select().from(gamesTable).$dynamic();
-  if (status) q = q.where(eq(gamesTable.status, status as any));
-  if (sport) q = q.where(eq(gamesTable.sport, sport as any));
+  const filters = [];
+  if (status) filters.push(eq(gamesTable.status, status as any));
+  if (sport) filters.push(eq(gamesTable.sport, sport as any));
+  if (filters.length > 0) q = q.where(and(...filters));
 
-  const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(gamesTable);
+  const countQ = db.select({ count: sql<number>`count(*)` }).from(gamesTable);
+  const [{ count }] = filters.length > 0 ? await countQ.where(and(...filters)) : await countQ;
   const games = await q.orderBy(asc(gamesTable.eventDate), asc(gamesTable.eventTime)).limit(limit).offset(offset);
   res.json({ games: games.map(toGame), total: Number(count), page, limit });
 });
