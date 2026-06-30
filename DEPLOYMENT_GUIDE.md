@@ -484,7 +484,66 @@ Add this line:
 
 ---
 
-## Part 8 — Deploying updates (after first setup)
+## Part 8 — Admin configuration after first launch
+
+Once the platform is live (§5.5), log into the admin panel and configure these settings before sharing the link with users.
+
+### 8.1 Log in as admin
+
+Open **http://173.230.131.210** (or your domain once set up) and sign in:
+
+- **Email:** `admin@ata.ug`
+- **Password:** `admin123` ← **change this immediately** (Profile → Change Password)
+
+### 8.2 Configure payment gateways
+
+Go to **Admin → Settings** and scroll to the payment gateway cards.
+
+#### Pesapal (card payments, MoMo, USSD)
+
+| Field | Where to get it |
+|-------|----------------|
+| Consumer Key | Pesapal merchant dashboard → API credentials |
+| Consumer Secret | Pesapal merchant dashboard → API credentials |
+| Environment | Set to **Live** for production (Sandbox for testing) |
+| Currency | `UGX` (or your preferred settlement currency) |
+
+Click **Save Pesapal Settings**.
+
+#### PawaPay (instant mobile money — preferred)
+
+| Field | Where to get it |
+|-------|----------------|
+| API Token | PawaPay dashboard → Developer → API Keys |
+| Environment | Set to **Production** for live use (Sandbox for testing) |
+| Currency | `UGX` |
+| Exchange Rate | Current USD → UGX rate (e.g. `3700`) |
+
+Click **Save PawaPay Settings**.
+
+### 8.3 Enable / disable gateways
+
+Each gateway card in **Admin → Settings** has a toggle switch in the top-right corner:
+
+- **Toggle ON (coloured)** — gateway is live; users can deposit / withdraw through it
+- **Toggle OFF (grey)** — gateway is suspended; the tab is greyed out on the wallet page and users cannot click it; the API returns `503` for any attempt
+
+Use this to take a gateway offline for maintenance without touching the server — no restart needed, takes effect within 60 seconds for all users.
+
+> **Note:** Gateway credentials and on/off state are stored in the `settings` table in the database. They survive container restarts and redeployments automatically. No environment variables are needed.
+
+### 8.4 Test a deposit end-to-end
+
+Before going live:
+
+1. Log in as `demo@ata.ug` / `demo123`
+2. Go to **Wallet → Deposit**
+3. Try a small PawaPay deposit (sandbox mode) to confirm the mobile prompt arrives
+4. Try a Pesapal initiation (sandbox) to confirm the redirect lands on Pesapal's page
+
+---
+
+## Part 9 — Deploying updates (after first setup)
 
 Every time you make changes to the app:
 
@@ -519,7 +578,7 @@ That's it. The site will be back up within 30–60 seconds.
 
 ---
 
-## Part 9 — Useful day-to-day commands
+## Part 10 — Useful day-to-day commands
 
 ### View live logs
 
@@ -607,3 +666,7 @@ docker compose down
 | Build fails | `docker compose build --no-cache` to force a clean rebuild |
 | `git pull` asks for password | Use a Personal Access Token, not your GitHub password |
 | Permission denied `.env` | `chmod 600 /opt/ata/.env` |
+| Deposit tab greyed out for all users | A gateway was disabled in Admin → Settings. Re-enable the toggle and save. |
+| PawaPay deposit returns 503 | Either PawaPay is toggled off, or the API token is missing. Check Admin → Settings → PawaPay. |
+| Pesapal deposit returns 503 | Either Pesapal is toggled off, or Consumer Key/Secret is missing. Check Admin → Settings → Pesapal. |
+| Gateway settings lost after redeploy | Settings are stored in the `settings` DB table — they persist across restarts. If the table is missing, restore from backup (§5.3). |
