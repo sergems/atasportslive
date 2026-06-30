@@ -19,6 +19,7 @@ import {
   X,
   ImagePlus,
   Gift,
+  Swords,
 } from 'lucide-react';
 
 function usePendingWithdrawalCount() {
