@@ -534,7 +534,7 @@ function CommentSection({
   const [comments, setComments] = useState<LiveComment[]>([]);
   const [input, setInput] = useState('');
   const [posting, setPosting] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Fetch existing comments
@@ -576,9 +576,10 @@ function CommentSection({
     return () => { destroyed = true; clearTimeout(reconnect); wsRef.current?.close(); };
   }, [streamId, userId]);
 
-  // Auto-scroll to bottom on new comments
+  // Auto-scroll to bottom on new comments — scroll only the messages container, not the page
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [comments.length]);
 
   const postComment = async () => {
@@ -608,8 +609,8 @@ function CommentSection({
         <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
       </div>
 
-      {/* Messages — scrollable area */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
+      {/* Messages — scrollable area (ref here, not on a sentinel, so scrollTop works) */}
+      <div ref={messagesRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
         {comments.length === 0 && (
           <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>
         )}
@@ -624,7 +625,6 @@ function CommentSection({
             </div>
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
