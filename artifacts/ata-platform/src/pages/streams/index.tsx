@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import { useListStreams, useCheckStreamAccess } from '@workspace/api-client-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lock, LockOpen, Eye, Play, Radio, Film } from 'lucide-react';
+import { Lock, LockOpen, Eye, Play, Radio, Film, Trophy, Users, TrendingUp, Flame } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 interface Stream {
@@ -158,6 +158,111 @@ function StreamCard({ stream, isAuthenticated }: { stream: Stream; isAuthenticat
   );
 }
 
+// ─── Live Viewer Leaderboard ──────────────────────────────────────────────────
+
+const RANK_STYLES = [
+  { medal: '🥇', bar: 'bg-amber-400', text: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5' },
+  { medal: '🥈', bar: 'bg-slate-400', text: 'text-slate-300', border: 'border-slate-500/30', bg: 'bg-slate-800/40' },
+  { medal: '🥉', bar: 'bg-orange-600', text: 'text-orange-400', border: 'border-orange-700/30', bg: 'bg-orange-900/10' },
+];
+
+function LiveLeaderboard({ streams }: { streams: Stream[] }) {
+  const live = [...streams]
+    .filter((s) => s.status === 'live')
+    .sort((a, b) => (b.viewerCount ?? 0) - (a.viewerCount ?? 0));
+
+  if (live.length === 0) return null;
+
+  const topViewer = live[0].viewerCount ?? 0;
+
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-800">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-red-500/10 border border-red-500/20">
+            <Flame className="h-3.5 w-3.5 text-red-400" />
+          </div>
+          <span className="text-sm font-semibold text-white">Live Now</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-[10px] font-bold text-red-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+            {live.length} stream{live.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+          <TrendingUp className="h-3 w-3" />
+          Ranked by viewers
+        </div>
+      </div>
+
+      {/* Ranked rows */}
+      <div className="divide-y divide-slate-800/60">
+        {live.map((stream, i) => {
+          const style = RANK_STYLES[i] ?? {
+            medal: `#${i + 1}`,
+            bar: 'bg-slate-700',
+            text: 'text-slate-400',
+            border: 'border-slate-800',
+            bg: '',
+          };
+          const viewers = stream.viewerCount ?? 0;
+          const barPct = topViewer > 0 ? Math.max(4, Math.round((viewers / topViewer) * 100)) : 4;
+          const sportPill = SPORT_COLOR[stream.sport] ?? 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+
+          return (
+            <Link key={stream.id} href={`/streams/${stream.id}`}>
+              <div className={`group flex items-center gap-3 px-4 py-3 hover:bg-slate-800/40 transition-colors cursor-pointer ${style.bg}`}>
+                {/* Rank */}
+                <div className="w-7 shrink-0 text-center text-base leading-none select-none">{style.medal}</div>
+
+                {/* Thumbnail */}
+                <div className="h-10 w-16 shrink-0 rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
+                  {stream.thumbnailUrl ? (
+                    <img src={stream.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${SPORT_GRADIENT[stream.sport] ?? 'from-slate-800 to-slate-900'}`}>
+                      <Film className="h-4 w-4 text-white/20" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className={`shrink-0 inline-flex items-center rounded border px-1 py-px text-[9px] font-bold uppercase tracking-wider ${sportPill}`}>
+                      {stream.sport}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-white truncate group-hover:text-teal-300 transition-colors">
+                    {stream.title}
+                  </p>
+
+                  {/* Progress bar */}
+                  <div className="mt-1.5 h-1 rounded-full bg-slate-800 overflow-hidden w-full">
+                    <div
+                      className={`h-full rounded-full ${style.bar} transition-all duration-700`}
+                      style={{ width: `${barPct}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Viewer count */}
+                <div className="shrink-0 flex flex-col items-end gap-0.5">
+                  <div className={`flex items-center gap-1 font-mono font-bold text-sm ${style.text}`}>
+                    <Users className="h-3 w-3" />
+                    {viewers.toLocaleString()}
+                  </div>
+                  <span className="text-[10px] text-slate-600">watching</span>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function StreamCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-800">
@@ -176,16 +281,19 @@ export default function Streams() {
 
   useEffect(() => { document.title = 'Streams — ATA Sports Live'; }, []);
 
-  const { data: streamsData, isLoading } = useListStreams({
-    status: status !== 'all' ? status : undefined,
-    limit: 40,
-  });
+  const { data: streamsData, isLoading } = useListStreams(
+    { status: status !== 'all' ? status : undefined, limit: 40 },
+    { query: { refetchInterval: 30_000 } },
+  );
 
   const streams = (streamsData?.streams || []) as Stream[];
   const liveCount = streams.filter((s) => s.status === 'live').length;
 
   return (
     <div className="space-y-6">
+      {/* Live leaderboard — only shown when there are live streams */}
+      {!isLoading && <LiveLeaderboard streams={streams} />}
+
       {/* Filter */}
       <div className="flex justify-end">
         <Select value={status} onValueChange={setStatus}>
