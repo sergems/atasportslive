@@ -214,27 +214,31 @@ watch docker compose ps
 # Press Ctrl+C when db shows "(healthy)"
 ```
 
-### 5.3 Restore your database from backup
+### 5.3 Import the database from Replit
 
-Copy your `backup.sql` from your local machine to the server:
+**Step 1 — Download the dump from Replit**
+
+In Replit, find the file `bck.sql` in the file tree and download it to your computer.
+
+**Step 2 — Upload it to the server**
+
+Run this on your computer (not on the server):
 
 ```bash
-# Run this on YOUR LOCAL COMPUTER (not on the server):
-scp /path/to/backup.sql root@173.230.131.210:/opt/ata/backup.sql
+scp bck.sql root@173.230.131.210:/opt/ata/bck.sql
 ```
 
-Then on the **server**, restore it:
+**Step 3 — Import it on the server**
 
 ```bash
 cd /opt/ata
-docker compose exec -T db psql -U ata_user -d ata_db < backup.sql
+docker compose exec -T db psql -U ata_user -d ata_db < bck.sql
 ```
 
-Verify the data loaded:
+Done. Verify it worked:
 
 ```bash
-docker compose exec db psql -U ata_user -d ata_db \
-  -c "SELECT COUNT(*) FROM users;"
+docker compose exec db psql -U ata_user -d ata_db -c "SELECT COUNT(*) FROM users;"
 # Should show your user count, e.g. 5031
 ```
 
