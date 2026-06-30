@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict cYLNmenc7d2798IFB4qrLNu1dMqWzDGk9UgkZaJOIdWNACJAbLKlfjuyKOQXfBn
+\restrict HlOoBJcnNgZtWxXCBKNgKaFJ9ftkMmXSg0VsYaEjMzrQwObqhWwTtTlHm6ntQQ8
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -724,6 +724,44 @@ ALTER SEQUENCE public.stream_access_id_seq OWNED BY public.stream_access.id;
 
 
 --
+-- Name: stream_comments; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.stream_comments (
+    id integer NOT NULL,
+    stream_id integer NOT NULL,
+    user_id integer NOT NULL,
+    username text NOT NULL,
+    content text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.stream_comments OWNER TO postgres;
+
+--
+-- Name: stream_comments_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.stream_comments_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.stream_comments_id_seq OWNER TO postgres;
+
+--
+-- Name: stream_comments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.stream_comments_id_seq OWNED BY public.stream_comments.id;
+
+
+--
 -- Name: streams; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1022,6 +1060,13 @@ ALTER TABLE ONLY public.stream_access ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: stream_comments id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.stream_comments ALTER COLUMN id SET DEFAULT nextval('public.stream_comments_id_seq'::regclass);
+
+
+--
 -- Name: streams id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1193,6 +1238,12 @@ ad_slot_right_2_enabled	true	2026-06-26 12:59:27.898422+00
 ad_slot_left_2_image	/uploads/thumb-1782478777392-xur7em.jpg	2026-06-26 12:59:39.554338+00
 ad_slot_left_2_link		2026-06-26 12:59:39.558924+00
 ad_slot_left_2_enabled	true	2026-06-26 12:59:39.561872+00
+mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-06-30 13:44:34.608029+00
+mux_is_live	true	2026-06-30 13:44:34.61217+00
+mux_is_free	false	2026-06-30 13:44:34.614685+00
+mux_price	1.50	2026-06-30 13:44:34.618017+00
+mux_title	ATA Live Streaming	2026-06-30 13:44:34.62061+00
+mux_stream_db_id	16	2026-06-30 13:44:34.957527+00
 \.
 
 
@@ -1204,6 +1255,18 @@ COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, creat
 1	2	6	2026-06-15 20:14:11.119+00	2026-06-16 20:14:11.119+00	2026-06-15 20:14:11.16535+00
 2	2	5	2026-06-15 20:15:23.301+00	2026-06-16 20:15:23.301+00	2026-06-15 20:15:23.3139+00
 3	2	3	2026-06-15 22:11:37.424+00	2026-06-16 22:11:37.424+00	2026-06-15 22:11:37.445919+00
+4	1	16	2026-06-30 13:44:47.736+00	2026-07-01 13:44:47.736+00	2026-06-30 13:44:47.78522+00
+\.
+
+
+--
+-- Data for Name: stream_comments; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.stream_comments (id, stream_id, user_id, username, content, created_at) FROM stdin;
+1	1	2	Demo User	Great game!	2026-06-30 14:15:42.162731+00
+2	16	1	ATA Admin	awe	2026-06-30 14:16:27.022557+00
+3	16	1	ATA Admin	no	2026-06-30 14:17:00.103218+00
 \.
 
 
@@ -1227,6 +1290,7 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 7	Brian Lubega VS Patrick Okello		pool	/uploads/thumb-1781565625295-0oehmv.jpg	\N	\N	upcoming	2026-07-11 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:25.592+00	\N	\N
 9	Caesar Chandinga VS Serge		pool	/uploads/thumb-1781565653292-8uuyff.jpeg	\N	\N	upcoming	2026-07-17 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:53.647+00	Lagos	Nigeria
 10	Siyabonga Shezi VS Caesar Chandinga		pool	/uploads/thumb-1781565717628-74qmou.jpg	\N	\N	upcoming	2026-07-20 12:13:24.231916+00	\N	0	1.50	2026-06-15 23:14:13.462438+00	2026-06-15 23:21:57.935+00	Lagos	Nigeria
+16	ATA Live Streaming	\N	other	\N	\N	__mux_default__	live	2026-06-30 13:43:42.578897+00	\N	0	1.50	2026-06-30 13:43:42.578897+00	2026-06-30 13:44:34.953902+00	\N	\N
 \.
 
 
@@ -1255,6 +1319,7 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 18	BET-EF845262	1	bet_stake	20.00	completed	internal	\N	Bet stake on game #13	\N	2026-06-30 09:21:15.452179+00	2026-06-30 09:21:15.452179+00
 19	DEP-D3A48784	1	deposit	9.00	pending	pesapal	d51366fb-edfc-43e4-bebd-da3360ecc70a	Pesapal deposit of USD 9	{"orderTrackingId":"d51366fb-edfc-43e4-bebd-da3360ecc70a"}	2026-06-30 10:13:49.044372+00	2026-06-30 10:13:50.69+00
 20	BET-A451662D	1	bet_stake	80.00	completed	internal	\N	Bet stake on game #13	\N	2026-06-30 11:53:25.663855+00	2026-06-30 11:53:25.663855+00
+21	STR-E16E1130	1	stream_access	1.50	completed	internal	\N	24h access to: ATA Live Streaming	\N	2026-06-30 13:44:47.777837+00	2026-06-30 13:44:47.777837+00
 \.
 
 
@@ -1263,7 +1328,6 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 --
 
 COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at, payout_method, payout_account, payout_method_set_at, must_set_password) FROM stdin;
-2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI0Mjc3MDEsImV4cCI6MTc4NTAxOTcwMX0.ZzzHYHGDssRFUD4lXVjVYlGxNgCmj9t1r-zakywDWe8	2026-06-15 16:31:06.605107+00	2026-06-25 22:48:21.209+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f
 3	finance@atasportslive.com	$2b$10$kYls7fiDwBZGh/f3VZu9a.MMXOYhby4Q/.TXly/IMin3.ioz1rE2.	Finance Officer	\N	finance	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsInJvbGUiOiJmaW5hbmNlIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI0Mjc3MDEsImV4cCI6MTc4NTAxOTcwMX0.VRS8oDZ1cOwOB9sD7sUh_rkmDOO_MPstMrtbxX-1eWg	2026-06-25 22:43:39.335176+00	2026-06-25 22:48:21.489+00	\N	\N	\N	f
 4	info@atasportslive.com	MUST_SET_PASSWORD	ata.admin	\N	user	active	\N	\N	2026-06-26 13:40:07.824468+00	2026-06-26 13:40:07.824468+00	\N	\N	\N	t
 5	atauser@gmail.com	MUST_SET_PASSWORD	ATA user	\N	user	active	\N	\N	2026-06-26 13:40:08.151+00	2026-06-26 13:40:08.151+00	\N	\N	\N	t
@@ -6293,7 +6357,8 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5029	jacksonwalusansa52@gmail.com	MUST_SET_PASSWORD	Walusansa Jackason	0762141022	user	active	\N	\N	2026-06-26 13:40:33.449374+00	2026-06-26 13:40:33.449374+00	\N	\N	\N	t
 5030	clintonabcbill@gmail.com	MUST_SET_PASSWORD	Akampurira Ciboss	0753094499	user	active	\N	\N	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	\N	\N	\N	t
 5031	johm@try.co.za	$2b$10$9YzCt9Xc6KYJMh63h6yZaePOORc17dl8mHqBm3uQsIzREGscYfAPG	Alex	+27748448457	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzEsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4MDk5ODYsImV4cCI6MTc4NTQwMTk4Nn0.yJFBFZwZw743At1p7hYMTlw7hdXeVZ7Mfq7dQIOSDJ0	2026-06-30 08:59:46.506546+00	2026-06-30 08:59:46.92+00	\N	\N	\N	f
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyODE3MTY4LCJleHAiOjE3ODU0MDkxNjh9.hqkJAVhK6M37EmJjRvyGHa3LF5bhDC90xnA37Sm5ME0	2026-06-15 16:31:06.226579+00	2026-06-30 10:59:28.132+00	\N	\N	\N	f
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgyODI2NTkwLCJleHAiOjE3ODU0MTg1OTB9.kgBfP49B8rfc-pZEdWDqiq_2firpcPBQB37EOI9Tqig	2026-06-15 16:31:06.226579+00	2026-06-30 13:36:30.225+00	\N	\N	\N	f
+2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4Mjg5NDIsImV4cCI6MTc4NTQyMDk0Mn0.leASoRmoLld_gHz081VREE5bUsiYDBd-zLhkFctD3OM	2026-06-15 16:31:06.605107+00	2026-06-30 14:15:42.092+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f
 \.
 
 
@@ -11348,7 +11413,7 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 5028	5029	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.449374+00	2026-06-26 13:40:33.449374+00	0.00
 5029	5030	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	0.00
 5030	5031	0.00	0.00	0.00	0.00	USD	2026-06-30 08:59:46.800606+00	2026-06-30 08:59:46.800606+00	0.00
-1	1	10000.00	9898.00	102.00	10000.00	USD	2026-06-15 16:31:06.51595+00	2026-06-30 11:53:25.412+00	0.00
+1	1	9998.50	9896.50	102.00	9998.50	USD	2026-06-15 16:31:06.51595+00	2026-06-30 13:44:47.738+00	0.00
 \.
 
 
@@ -11426,21 +11491,28 @@ SELECT pg_catalog.setval('public.promotions_id_seq', 1, false);
 -- Name: stream_access_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.stream_access_id_seq', 3, true);
+SELECT pg_catalog.setval('public.stream_access_id_seq', 4, true);
+
+
+--
+-- Name: stream_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.stream_comments_id_seq', 3, true);
 
 
 --
 -- Name: streams_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.streams_id_seq', 15, true);
+SELECT pg_catalog.setval('public.streams_id_seq', 16, true);
 
 
 --
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 20, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 21, true);
 
 
 --
@@ -11585,6 +11657,14 @@ ALTER TABLE ONLY public.stream_access
 
 
 --
+-- Name: stream_comments stream_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.stream_comments
+    ADD CONSTRAINT stream_comments_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: streams streams_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -11654,6 +11734,13 @@ ALTER TABLE ONLY public.wallets
 
 ALTER TABLE ONLY public.wallets
     ADD CONSTRAINT wallets_user_id_unique UNIQUE (user_id);
+
+
+--
+-- Name: idx_stream_comments_stream; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_stream_comments_stream ON public.stream_comments USING btree (stream_id, created_at DESC);
 
 
 --
@@ -11745,6 +11832,14 @@ ALTER TABLE ONLY public.stream_access
 
 
 --
+-- Name: stream_comments stream_comments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.stream_comments
+    ADD CONSTRAINT stream_comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: transactions transactions_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -11788,5 +11883,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict cYLNmenc7d2798IFB4qrLNu1dMqWzDGk9UgkZaJOIdWNACJAbLKlfjuyKOQXfBn
+\unrestrict HlOoBJcnNgZtWxXCBKNgKaFJ9ftkMmXSg0VsYaEjMzrQwObqhWwTtTlHm6ntQQ8
 
