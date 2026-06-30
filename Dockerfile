@@ -17,7 +17,7 @@ RUN corepack enable && corepack prepare pnpm@11.8.0 --activate
 FROM base AS deps
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY lib/db/package.json                lib/db/
 COPY lib/api-spec/package.json          lib/api-spec/
 COPY lib/api-zod/package.json           lib/api-zod/

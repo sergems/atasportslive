@@ -1,0 +1,88 @@
+ => ERROR [api deps 10/10] RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store     43.6s
+ => [api native-deps 3/4] WORKDIR /deps                                                 0.1s
+ => [api native-deps 4/4] RUN npm install --save-exact         bcrypt@6.0.0         no  2.1s
+ => [api api 3/5] COPY --from=native-deps /deps/node_modules ./node_modules             0.1s
+------
+ > [api deps 10/10] RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store     pnpm install --frozen-lockfile:
+2.390 Scope: all 8 workspace projects
+2.906 ? Verifying lockfile against supply-chain policies (589 entries)...
+2.974 Lockfile is up to date, resolution step is skipped
+3.689 Progress: resolved 1, reused 0, downloaded 0, added 0
+3.816 Packages: +584
+3.816 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+4.984 Progress: resolved 584, reused 0, downloaded 0, added 0
+9.066 Progress: resolved 584, reused 0, downloaded 1, added 0
+10.12 Progress: resolved 584, reused 0, downloaded 21, added 0
+11.16 Progress: resolved 584, reused 0, downloaded 22, added 0
+12.99 Progress: resolved 584, reused 0, downloaded 23, added 0
+14.01 Progress: resolved 584, reused 0, downloaded 29, added 0
+15.02 Progress: resolved 584, reused 0, downloaded 47, added 0
+15.46 [WARN] Request took 13058ms: https://registry.npmjs.org/pnpm
+15.49
+15.49    ╭──────────────────────────────────────────────╮
+15.49    │                                              │
+15.49    │      Update available! 11.8.0 → 11.9.0.      │
+15.49    │     Changelog: https://pnpm.io/v/11.9.0      │
+15.49    │   To update, run: corepack use pnpm@11.9.0   │
+15.49    │                                              │
+15.49    ╰──────────────────────────────────────────────╯
+15.49
+16.45 Progress: resolved 584, reused 0, downloaded 64, added 0
+17.49 Progress: resolved 584, reused 0, downloaded 68, added 4
+18.67 Progress: resolved 584, reused 0, downloaded 93, added 4
+19.11 [WARN] Request took 10883ms: https://registry.npmjs.org/@types%2Fnode
+19.68 Progress: resolved 584, reused 0, downloaded 104, added 4
+20.25 [WARN] Request took 10078ms: https://registry.npmjs.org/framer-motion
+20.93 Progress: resolved 584, reused 0, downloaded 128, added 5
+21.94 Progress: resolved 584, reused 0, downloaded 150, added 8
+23.02 Progress: resolved 584, reused 0, downloaded 190, added 8
+24.03 Progress: resolved 584, reused 0, downloaded 222, added 12
+25.13 Progress: resolved 584, reused 0, downloaded 236, added 12
+25.68 [WARN] Request took 13653ms: https://registry.npmjs.org/hls.js
+26.25 ✓ Lockfile passes supply-chain policies (589 entries in 23.3s)
+26.25 Progress: resolved 584, reused 0, downloaded 275, added 16
+27.25 Progress: resolved 584, reused 0, downloaded 324, added 20
+28.26 Progress: resolved 584, reused 0, downloaded 357, added 20
+29.26 Progress: resolved 584, reused 0, downloaded 363, added 20
+30.26 Progress: resolved 584, reused 0, downloaded 373, added 20
+31.26 Progress: resolved 584, reused 0, downloaded 380, added 22
+32.26 Progress: resolved 584, reused 0, downloaded 510, added 32
+33.26 Progress: resolved 584, reused 0, downloaded 584, added 190
+34.27 Progress: resolved 584, reused 0, downloaded 584, added 324
+35.27 Progress: resolved 584, reused 0, downloaded 584, added 352
+36.27 Progress: resolved 584, reused 0, downloaded 584, added 359
+37.27 Progress: resolved 584, reused 0, downloaded 584, added 364
+38.27 Progress: resolved 584, reused 0, downloaded 584, added 365
+39.27 Progress: resolved 584, reused 0, downloaded 584, added 373
+40.28 Progress: resolved 584, reused 0, downloaded 584, added 447
+41.31 Progress: resolved 584, reused 0, downloaded 584, added 516
+41.76 Progress: resolved 584, reused 0, downloaded 584, added 584, done
+42.52
+42.52 devDependencies:
+42.52 + prettier 3.8.3
+42.52 + typescript 5.9.3
+42.52
+42.55 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+42.60 . preinstall: Done
+42.75 [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: bcrypt@5.1.1, bcrypt@6.0.0, esbuild@0.27.3
+42.75
+42.75 Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+------
+[+] build 0/2
+ ⠙ Image ata-api   Building                                                             57.1s
+ ⠙ Image ata-nginx Building                                                             57.1s
+Dockerfile:29
+
+--------------------
+
+  28 |
+
+  29 | >>> RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+
+  30 | >>>     pnpm install --frozen-lockfile
+
+  31 |
+
+--------------------
+
+target api: failed to solve: process "/bin/sh -c pnpm install --frozen-lockfile" did not complete successfully: exit code: 1
