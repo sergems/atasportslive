@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords } from 'lucide-react';
+import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
@@ -821,6 +821,8 @@ export default function Live() {
   const user = useAuthStore((s) => s.user);
   const qc = useQueryClient();
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   const { data: stream, isLoading: loadingStream } = useLiveStream();
   const { data: settings, isLoading: loadingSettings } = useGlobalSettings();
 
@@ -952,15 +954,27 @@ export default function Live() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-slate-400 text-sm shrink-0">
-                <Users className="h-4 w-4 text-teal-500" />
-                <span className="font-mono text-white">{stream?.viewerCount ?? 0}</span>
-                <span className="text-slate-500">watching</span>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-1.5 text-slate-400 text-sm">
+                  <Users className="h-4 w-4 text-teal-500" />
+                  <span className="font-mono text-white">{stream?.viewerCount ?? 0}</span>
+                  <span className="text-slate-500">watching</span>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen((v) => !v)}
+                  title={sidebarOpen ? 'Hide panel' : 'Show chat & bets'}
+                  className="hidden lg:flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white transition-colors"
+                >
+                  {sidebarOpen
+                    ? <><PanelRightClose className="h-3.5 w-3.5" /> Hide panel</>
+                    : <><PanelRightOpen className="h-3.5 w-3.5" /> Chat &amp; Bets</>
+                  }
+                </button>
               </div>
             </div>
           </div>
-          {/* Right: sidebar */}
-          {sidebar}
+          {/* Right: sidebar — collapsible */}
+          {sidebarOpen && sidebar}
         </div>
 
       ) : sneakPeek.active ? (
