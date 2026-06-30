@@ -342,6 +342,23 @@ export default function Home() {
         <DefaultHero />
       )}
 
+      {/* Stats strip */}
+      {(!loadingStreams || !loadingGames) && (
+        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 py-3 px-5 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-sm text-slate-400">Live: <span className="font-bold text-white">{liveCount}</span></span>
+          </div>
+          <div className="text-sm text-slate-400">Events: <span className="font-bold text-white">{upcomingStreams.length}</span></div>
+          {isAuthenticated && (
+            <>
+              <div className="text-sm text-slate-400">Pool: <span className="font-bold text-amber-400">${totalPool.toFixed(2)}</span></div>
+              <div className="text-sm text-slate-400">Open bets: <span className="font-bold text-teal-400">{totalOpenBets}</span></div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Upcoming Streams */}
       <section>
         <div className="flex items-center justify-between mb-6">
@@ -357,17 +374,23 @@ export default function Home() {
           {loadingStreams ? (
             Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-64 w-full rounded-xl bg-slate-800" />)
           ) : upcomingStreams?.length ? (
-            upcomingStreams.slice(0, 6).map((stream: any) => (
-              <Link key={stream.id} href="/live">
-                <Card className="group overflow-hidden border-primary/20 bg-card hover:border-teal-500/50 transition-all duration-300 cursor-pointer h-full">
-                  <div className="relative aspect-video bg-slate-900">
+            upcomingStreams.slice(0, 6).map((stream: any, i: number) => (
+              <Link key={stream.id} href="/live" className="card-enter block" style={{ animationDelay: `${i * 70}ms` }}>
+                <Card className="group overflow-hidden border-primary/20 bg-card hover:border-teal-500/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-teal-500/10 transition-all duration-300 cursor-pointer h-full">
+                  <div className="relative aspect-video bg-slate-900 overflow-hidden">
                     {stream.thumbnailUrl ? (
-                      <img src={stream.thumbnailUrl} alt={stream.title} className="object-cover w-full h-full opacity-80 group-hover:opacity-100 transition-opacity" />
+                      <img src={stream.thumbnailUrl} alt={stream.title} className="object-cover w-full h-full opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-slate-800">
                         <Play className="h-12 w-12 text-slate-600" />
                       </div>
                     )}
+                    {/* Watch overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                      <span className="flex items-center gap-1.5 text-sm font-bold text-slate-950 bg-amber-400 px-4 py-1.5 rounded-full translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                        <Play className="h-3.5 w-3.5 fill-current" /> Watch
+                      </span>
+                    </div>
                     <div className="absolute top-3 left-3">
                       {stream.status === 'live' ? (
                         <span className="inline-flex items-center rounded-md bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500/20">
@@ -414,18 +437,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Payment Partners */}
-      <section className="flex flex-wrap items-center justify-center gap-6 py-2">
-        {[
-          { src: ataLogo,     alt: 'ATA Sports Live' },
-          { src: mastercard,  alt: 'Mastercard' },
-          { src: visa,        alt: 'Visa' },
-          { src: airtelMoney, alt: 'Airtel Money' },
-          { src: mpesa,       alt: 'M-Pesa' },
-          { src: tigoPesa,    alt: 'Tigo Pesa' },
-        ].map(({ src, alt }) => (
-          <img key={alt} src={src} alt={alt} className="h-[45px] w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
-        ))}
+      {/* Payment Partners — marquee */}
+      <section className="overflow-hidden py-2 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+        <div className="flex items-center gap-10 animate-marquee w-max">
+          {[
+            { src: ataLogo,     alt: 'ATA Sports Live' },
+            { src: mastercard,  alt: 'Mastercard' },
+            { src: visa,        alt: 'Visa' },
+            { src: airtelMoney, alt: 'Airtel Money' },
+            { src: mpesa,       alt: 'M-Pesa' },
+            { src: tigoPesa,    alt: 'Tigo Pesa' },
+            { src: ataLogo,     alt: 'ATA Sports Live 2' },
+            { src: mastercard,  alt: 'Mastercard 2' },
+            { src: visa,        alt: 'Visa 2' },
+            { src: airtelMoney, alt: 'Airtel Money 2' },
+            { src: mpesa,       alt: 'M-Pesa 2' },
+            { src: tigoPesa,    alt: 'Tigo Pesa 2' },
+          ].map(({ src, alt }) => (
+            <img key={alt} src={src} alt={alt} className="h-[40px] w-auto object-contain opacity-60 hover:opacity-100 transition-opacity shrink-0" />
+          ))}
+        </div>
       </section>
 
       {/* Exchange Markets — logged-in users only */}
@@ -444,9 +475,9 @@ export default function Home() {
             {loadingGames ? (
               Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-slate-800" />)
             ) : upcomingGames?.length ? (
-              upcomingGames.slice(0, 4).map((game: any) => (
-                <Link key={game.id} href={`/games/${game.id}`}>
-                  <Card className="group overflow-hidden border-primary/20 bg-card hover:border-amber-500/50 transition-all duration-300 cursor-pointer">
+              upcomingGames.slice(0, 4).map((game: any, i: number) => (
+                <Link key={game.id} href={`/games/${game.id}`} className="card-enter block" style={{ animationDelay: `${i * 80}ms` }}>
+                  <Card className="group overflow-hidden border-primary/20 bg-card hover:border-amber-500/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 cursor-pointer">
                     <CardContent className="p-0">
                       <div className="flex flex-col sm:flex-row">
                         <div className="p-5 flex-1 border-b sm:border-b-0 sm:border-r border-slate-800">
@@ -457,13 +488,13 @@ export default function Home() {
                               {game.eventEndDate ? ` → ${game.eventEndDate}` : ''}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <div className="text-center flex-1">
-                              <div className="font-bold text-lg text-white">{game.playerA}</div>
+                          <div className="flex justify-between items-center gap-2">
+                            <div className="text-center flex-1 min-w-0">
+                              <div className="font-bold text-base text-white truncate group-hover:text-teal-300 transition-colors">{game.playerA}</div>
                             </div>
-                            <div className="px-4 text-xs font-bold text-slate-600">VS</div>
-                            <div className="text-center flex-1">
-                              <div className="font-bold text-lg text-white">{game.playerB}</div>
+                            <div className="px-2 py-1 text-[10px] font-black text-slate-600 bg-slate-800 rounded shrink-0">VS</div>
+                            <div className="text-center flex-1 min-w-0">
+                              <div className="font-bold text-base text-white truncate group-hover:text-amber-300 transition-colors">{game.playerB}</div>
                             </div>
                           </div>
                           {(game.city || game.country) && (
@@ -472,9 +503,13 @@ export default function Home() {
                             </p>
                           )}
                         </div>
-                        <div className="p-5 bg-slate-900/50 sm:w-40 flex flex-col justify-center items-center">
-                          <div className="text-xs text-slate-500 mb-1">Pool Size</div>
+                        <div className="p-4 bg-slate-900/50 sm:w-36 flex flex-col justify-center items-center gap-1">
+                          <div className="text-[10px] text-slate-500 uppercase tracking-wider">Pool</div>
                           <div className="font-mono font-bold text-xl text-amber-400">${(game.totalBetPool || 0).toFixed(2)}</div>
+                          {(game.openBetsCount ?? 0) > 0 && (
+                            <div className="text-[10px] text-teal-400 font-medium">{game.openBetsCount} open bets</div>
+                          )}
+                          <div className="mt-1 text-[10px] font-semibold text-slate-700 group-hover:text-amber-400 transition-colors">Bet Now →</div>
                         </div>
                       </div>
                     </CardContent>
