@@ -80,9 +80,16 @@ function ProtectedRoute({
   return <Component />;
 }
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }, [location]);
+  return null;
+}
+
 function Router() {
   return (
     <RootLayout>
+      <ScrollToTop />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/login" component={Login} />
