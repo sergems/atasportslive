@@ -1267,7 +1267,7 @@ components:
     # WALLET
     Wallet:
       type: object
-      required: [id, userId, balance, availableBalance, pendingBalance, withdrawableBalance, currency]
+      required: [id, userId, balance, availableBalance, pendingBalance, withdrawableBalance, bonusBalance, currency]
       properties:
         id:
           type: integer
@@ -1280,6 +1280,8 @@ components:
         pendingBalance:
           type: number
         withdrawableBalance:
+          type: number
+        bonusBalance:
           type: number
         currency:
           type: string

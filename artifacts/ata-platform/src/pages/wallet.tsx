@@ -468,13 +468,13 @@ export default function Wallet() {
       {/* Balance Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
         {[
-          { label: 'Total Balance',  value: (wallet?.balance || 0) + ((wallet as any)?.bonusBalance || 0), color: 'text-teal-400' },
+          { label: 'Total Balance',  value: (wallet?.balance || 0) + (wallet?.bonusBalance || 0), color: 'text-teal-400' },
           { label: 'Cash Balance',   value: wallet?.availableBalance,    color: 'text-white' },
-          { label: 'Bonus Balance',  value: (wallet as any)?.bonusBalance,        color: 'text-purple-400', icon: Gift },
+          { label: 'Bonus Balance',  value: wallet?.bonusBalance,        color: 'text-purple-400', icon: Gift },
           { label: 'Pending',        value: wallet?.pendingBalance,      color: 'text-amber-400' },
           { label: 'Withdrawable',   value: wallet?.withdrawableBalance, color: 'text-green-400' },
         ].map(({ label, value, color, icon: Icon }) => (
-          <Card key={label} className={`bg-slate-900 border-primary/20 ${label === 'Bonus Balance' && ((wallet as any)?.bonusBalance || 0) > 0 ? 'border-purple-500/40' : ''}`}>
+          <Card key={label} className={`bg-slate-900 border-primary/20 ${label === 'Bonus Balance' && (wallet?.bonusBalance || 0) > 0 ? 'border-purple-500/40' : ''}`}>
             <CardContent className="pt-3 pb-3 px-3 sm:pt-5 sm:pb-3 sm:px-4">
               {loadingWallet
                 ? <Skeleton className="h-6 sm:h-7 w-20 bg-slate-800" />

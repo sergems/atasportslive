@@ -13,5 +13,6 @@ export interface Wallet {
   availableBalance: number;
   pendingBalance: number;
   withdrawableBalance: number;
+  bonusBalance: number;
   currency: string;
 }

@@ -8,7 +8,7 @@ const router = Router({ mergeParams: true });
 
 // GET /api/streams/:id/comments  — last 100 comments, oldest first
 router.get("/", async (req, res): Promise<void> => {
-  const streamId = parseInt(req.params.id);
+  const streamId = parseInt((req.params as { id: string }).id);
   if (isNaN(streamId)) { res.status(400).json({ error: "Invalid stream id" }); return; }
 
   const rows = await db
@@ -23,7 +23,7 @@ router.get("/", async (req, res): Promise<void> => {
 
 // POST /api/streams/:id/comments — post a comment (auth required)
 router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
-  const streamId = parseInt(req.params.id);
+  const streamId = parseInt((req.params as { id: string }).id);
   if (isNaN(streamId)) { res.status(400).json({ error: "Invalid stream id" }); return; }
 
   const content = (req.body.content ?? "").trim();

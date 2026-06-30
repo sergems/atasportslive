@@ -230,6 +230,7 @@ export const GetWalletResponse = zod.object({
   "availableBalance": zod.number(),
   "pendingBalance": zod.number(),
   "withdrawableBalance": zod.number(),
+  "bonusBalance": zod.number(),
   "currency": zod.string().default(getWalletResponseCurrencyDefault)
 })
 
@@ -373,6 +374,7 @@ export const ListAllWalletsResponse = zod.object({
   "availableBalance": zod.number(),
   "pendingBalance": zod.number(),
   "withdrawableBalance": zod.number(),
+  "bonusBalance": zod.number(),
   "currency": zod.string().default(listAllWalletsResponseWalletsItemCurrencyDefault)
 })),
   "total": zod.number(),
