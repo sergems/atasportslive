@@ -48,8 +48,9 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
 
   const oppositeOutcome = outcome === "player_a_wins" ? "player_b_wins" : "player_a_wins";
 
-  // Lock stake
+  // Lock stake — deduct from balance immediately so the user sees the deduction right away
   await db.update(walletsTable).set({
+    balance: sql`balance - ${stake}`,
     availableBalance: sql`available_balance - ${stake}`,
     pendingBalance: sql`pending_balance + ${stake}`,
   }).where(eq(walletsTable.userId, userId));
@@ -261,9 +262,10 @@ router.post("/:id/cancel", authMiddleware, async (req: AuthRequest, res): Promis
   }
   await db.update(betsTable).set({ status: "cancelled" }).where(eq(betsTable.id, id));
   const stake = parseFloat(bet.stake as string);
+  // Restore balance and available; clear pending — do NOT touch withdrawable (stake was never winnings)
   await db.update(walletsTable).set({
+    balance: sql`balance + ${stake}`,
     availableBalance: sql`available_balance + ${stake}`,
-    withdrawableBalance: sql`withdrawable_balance + ${stake}`,
     pendingBalance: sql`pending_balance - ${stake}`,
   }).where(eq(walletsTable.userId, req.userId!));
   await db.update(gamesTable).set({ openBetsCount: sql`open_bets_count - 1` }).where(eq(gamesTable.id, bet.gameId));

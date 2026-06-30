@@ -159,10 +159,12 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
 
     if (newStatus === "won") {
       const payout = parseFloat(bet.potentialReturn as string);
+      const betStake = parseFloat(bet.stake as string);
       await db.update(walletsTable).set({
         balance: sql`balance + ${payout}`,
         availableBalance: sql`available_balance + ${payout}`,
         withdrawableBalance: sql`withdrawable_balance + ${payout}`,
+        pendingBalance: sql`pending_balance - ${betStake}`,
       }).where(eq(walletsTable.userId, bet.userId));
       await db.insert(transactionsTable).values({
         transactionId: `WIN-${uuidv4().split("-")[0].toUpperCase()}`,
@@ -192,7 +194,7 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
       await db.update(walletsTable).set({
         balance: sql`balance + ${refund}`,
         availableBalance: sql`available_balance + ${refund}`,
-        withdrawableBalance: sql`withdrawable_balance + ${refund}`,
+        pendingBalance: sql`pending_balance - ${refund}`,
       }).where(eq(walletsTable.userId, bet.userId));
       await db.insert(transactionsTable).values({
         transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
@@ -205,6 +207,11 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
       });
       await notify(bet.userId, "bet_refunded", "Bet Refunded", `Your bet was refunded due to a draw.`);
     } else {
+      // Lost — clear the stake from pending (money is gone)
+      const lostStake = parseFloat(bet.stake as string);
+      await db.update(walletsTable).set({
+        pendingBalance: sql`pending_balance - ${lostStake}`,
+      }).where(eq(walletsTable.userId, bet.userId));
       await notify(bet.userId, "bet_lost", "Bet Lost", `Your bet on game #${id} did not win.`);
       const [lostUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
       if (lostUser?.email) {
@@ -237,7 +244,7 @@ router.post("/:id/cancel", authMiddleware, requireRole("admin"), async (req: Aut
       await db.update(walletsTable).set({
         balance: sql`balance + ${refund}`,
         availableBalance: sql`available_balance + ${refund}`,
-        withdrawableBalance: sql`withdrawable_balance + ${refund}`,
+        pendingBalance: sql`pending_balance - ${refund}`,
       }).where(eq(walletsTable.userId, bet.userId));
       await db.insert(transactionsTable).values({
         transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
