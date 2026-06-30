@@ -600,7 +600,7 @@ function CommentSection({
   };
 
   return (
-    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden" style={{ height: '420px' }}>
+    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden h-full min-h-0">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800 shrink-0">
         <MessageSquare className="h-4 w-4 text-teal-400" />
@@ -900,14 +900,16 @@ export default function Live() {
     : <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />;
 
   const sidebar = (
-    <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3">
+    <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 min-h-0">
       {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? settings?.mux_sport} />}
-      <CommentSection
-        streamId={paywallStreamId}
-        token={token}
-        userId={user?.id}
-        isAuthenticated={isAuthenticated}
-      />
+      <div className="flex-1 min-h-0">
+        <CommentSection
+          streamId={paywallStreamId}
+          token={token}
+          userId={user?.id}
+          isAuthenticated={isAuthenticated}
+        />
+      </div>
     </div>
   );
 
@@ -924,63 +926,65 @@ export default function Live() {
 
       ) : canWatch ? (
         /* ── Authenticated + access granted — 2-col layout ──── */
-        <div className="flex flex-col lg:flex-row gap-4 items-start">
-          {/* Left: player + info bar */}
-          <div className="flex-1 min-w-0 space-y-3">
-            <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
+        <div className="space-y-3">
+          {/* Video row + sidebar — stretch so sidebar matches video height */}
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-stretch">
+            {/* Player */}
+            <div className="relative flex-1 min-w-0 aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
               {playerEl}
             </div>
-            {/* Stream info bar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-flex items-center gap-1 rounded bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-bold text-red-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
+            {/* Right: sidebar — collapsible, same height as player */}
+            {sidebarOpen && sidebar}
+          </div>
+
+          {/* Info bar — full width below video row */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-flex items-center gap-1 rounded bg-red-500/10 border border-red-500/20 px-2 py-0.5 text-xs font-bold text-red-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> LIVE
+                </span>
+                {stream?.sport && (
+                  <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{stream.sport}</span>
+                )}
+                {(stream?.city || stream?.country) && (
+                  <span className="text-xs text-slate-600">
+                    · {[stream?.city, stream?.country].filter(Boolean).join(', ')}
                   </span>
-                  {stream?.sport && (
-                    <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{stream.sport}</span>
-                  )}
-                  {(stream?.city || stream?.country) && (
-                    <span className="text-xs text-slate-600">
-                      · {[stream?.city, stream?.country].filter(Boolean).join(', ')}
-                    </span>
-                  )}
-                  {isFreeStream && (
-                    <span className="text-xs text-emerald-400 font-semibold">FREE</span>
-                  )}
-                </div>
-                <h1 className="text-lg sm:text-xl font-bold text-white">{stream?.title ?? paywallTitle}</h1>
-                {stream?.description && (
-                  <p className="text-slate-400 text-sm mt-1 max-w-2xl">{stream.description}</p>
                 )}
-                {access?.expiresAt && (
-                  <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
-                    <Lock className="h-3 w-3" />
-                    Access expires {new Date(access.expiresAt).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+                {isFreeStream && (
+                  <span className="text-xs text-emerald-400 font-semibold">FREE</span>
                 )}
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="flex items-center gap-1.5 text-slate-400 text-sm">
-                  <Users className="h-4 w-4 text-teal-500" />
-                  <span className="font-mono text-white">{stream?.viewerCount ?? 0}</span>
-                  <span className="text-slate-500">watching</span>
-                </div>
-                <button
-                  onClick={() => setSidebarOpen((v) => !v)}
-                  title={sidebarOpen ? 'Hide panel' : 'Show chat & bets'}
-                  className="hidden lg:flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white transition-colors"
-                >
-                  {sidebarOpen
-                    ? <><PanelRightClose className="h-3.5 w-3.5" /> Hide panel</>
-                    : <><PanelRightOpen className="h-3.5 w-3.5" /> Chat &amp; Bets</>
-                  }
-                </button>
+              <h1 className="text-lg sm:text-xl font-bold text-white">{stream?.title ?? paywallTitle}</h1>
+              {stream?.description && (
+                <p className="text-slate-400 text-sm mt-1 max-w-2xl">{stream.description}</p>
+              )}
+              {access?.expiresAt && (
+                <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Access expires {new Date(access.expiresAt).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-1.5 text-slate-400 text-sm">
+                <Users className="h-4 w-4 text-teal-500" />
+                <span className="font-mono text-white">{stream?.viewerCount ?? 0}</span>
+                <span className="text-slate-500">watching</span>
               </div>
+              <button
+                onClick={() => setSidebarOpen((v) => !v)}
+                title={sidebarOpen ? 'Hide panel' : 'Show chat & bets'}
+                className="hidden lg:flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white transition-colors"
+              >
+                {sidebarOpen
+                  ? <><PanelRightClose className="h-3.5 w-3.5" /> Hide panel</>
+                  : <><PanelRightOpen className="h-3.5 w-3.5" /> Chat &amp; Bets</>
+                }
+              </button>
             </div>
           </div>
-          {/* Right: sidebar — collapsible */}
-          {sidebarOpen && sidebar}
         </div>
 
       ) : sneakPeek.active ? (
