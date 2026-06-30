@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { randomBytes } from "crypto";
+import { spawn } from "child_process";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
 import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
@@ -489,6 +490,51 @@ router.post("/promotions/:id/revoke/:userId", authMiddleware, requireRole("admin
     `Your bonus balance has been revoked. ${reason ? `Reason: ${reason}` : ""}`);
 
   res.json({ ok: true, revokedAmount: bonusBal });
+});
+
+router.get("/db-export", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    res.status(500).json({ error: "DATABASE_URL is not set" });
+    return;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(dbUrl);
+  } catch {
+    res.status(500).json({ error: "DATABASE_URL is not a valid URL" });
+    return;
+  }
+
+  const host     = parsed.hostname;
+  const port     = parsed.port || "5432";
+  const database = parsed.pathname.replace(/^\//, "");
+  const username = parsed.username;
+  const password = parsed.password;
+
+  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader("Content-Disposition", `attachment; filename="bck.sql"`);
+
+  const env = { ...process.env, PGPASSWORD: password };
+  const args = ["-h", host, "-p", port, "-U", username, "-d", database, "--no-owner", "--no-acl"];
+  const dump = spawn("pg_dump", args, { env });
+
+  dump.stdout.pipe(res);
+
+  dump.stderr.on("data", (chunk: Buffer) => {
+    req.log.warn({ msg: "pg_dump stderr", detail: chunk.toString() });
+  });
+
+  dump.on("error", (err) => {
+    req.log.error({ err }, "pg_dump failed to start");
+    if (!res.headersSent) res.status(500).json({ error: "pg_dump not available on this server" });
+  });
+
+  dump.on("close", (code) => {
+    if (code !== 0) req.log.error({ code }, "pg_dump exited with non-zero code");
+  });
 });
 
 export default router;

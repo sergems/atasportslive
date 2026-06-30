@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Settings, Radio, Save, ExternalLink, CheckCircle2, AlertCircle,
   CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Tv2, Zap, Power,
+  Database, Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -44,6 +45,37 @@ export default function AdminSettings() {
   // Gateway enable/disable toggles
   const [pesapalEnabled, setPesapalEnabled] = useState(true);
   const [pawapayEnabled, setPawapayEnabled] = useState(true);
+
+  // Database export
+  const [exportingDb, setExportingDb] = useState(false);
+
+  const downloadDbBackup = async () => {
+    setExportingDb(true);
+    try {
+      const token = (await import('@/lib/auth-store')).useAuthStore.getState().token;
+      const res = await fetch('/api/admin/db-export', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Export failed');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bck.sql';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Database exported', { description: 'bck.sql downloaded to your computer.' });
+    } catch (err: any) {
+      toast.error(err.message || 'Export failed');
+    } finally {
+      setExportingDb(false);
+    }
+  };
 
   // PawaPay
   const [pawapayToken, setPawapayToken] = useState('');
@@ -884,6 +916,39 @@ export default function AdminSettings() {
               <span className="text-amber-400 text-xs">Unsaved changes</span>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Database Backup ── */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Database className="h-4 w-4 text-teal-400" />
+            Database Backup
+          </CardTitle>
+          <CardDescription className="text-slate-400">
+            Export a full SQL dump of the database as <code className="text-teal-400">bck.sql</code>.
+            Upload it to your Linode server to migrate or restore all data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-md bg-slate-800/50 border border-slate-700 px-3 py-2.5 text-xs text-slate-500 space-y-1.5">
+            <p className="font-semibold text-slate-400">How to use</p>
+            <ol className="space-y-1 list-decimal list-inside">
+              <li>Click <strong className="text-slate-300">Download bck.sql</strong> — the file saves to your computer.</li>
+              <li>Upload to your server: <code className="text-teal-400">scp bck.sql root@173.230.131.210:/opt/ata/bck.sql</code></li>
+              <li>Import on the server: <code className="text-teal-400">docker compose exec -T db psql -U ata_user -d ata_db &lt; bck.sql</code></li>
+            </ol>
+          </div>
+          <Button
+            onClick={downloadDbBackup}
+            disabled={exportingDb}
+            className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {exportingDb ? 'Exporting…' : 'Download bck.sql'}
+          </Button>
+          <p className="text-[11px] text-slate-500">Admin only — includes all users, wallets, bets, transactions, streams, and settings.</p>
         </CardContent>
       </Card>
     </div>
