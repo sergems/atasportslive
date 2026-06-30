@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict N6xmcD3FPBIbXTrqEZivrXPYj7I3IHdm7g0e2p9ek35ch3Un1SucbeMx3FtpKcx
+\restrict dwH6EvRgXe19OOWrst1pbcMkTOao8WuUW74XLi1SBl1W3x0H0RPTfSrbU9CDk2J
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1234,11 +1234,6 @@ COPY public.promotions (id, name, code, type, bonus_type, percentage, fixed_amou
 
 COPY public.settings (key, value, updated_at) FROM stdin;
 liveStreamUrl		2026-06-15 23:01:56.521376+00
-pesapal_consumer_key	n8oH1EgY3l+BI9ax/Lz9viA9DSLLVNSR	2026-06-25 22:14:02.252672+00
-pesapal_consumer_secret	y6frhAV12Vl7JJLIvLQiF8FJDkU=	2026-06-25 22:14:02.252672+00
-pesapal_environment	live	2026-06-25 22:14:02.252672+00
-pesapal_ipn_id	d7c51ff3-b23f-44f2-8e7e-da3722300b9a	2026-06-25 22:14:12.016673+00
-pesapal_currency	USD	2026-06-25 22:18:38.344018+00
 ad_slot_left_1_image	/uploads/thumb-1782478664500-w6yu2o.jpeg	2026-06-26 12:58:01.772977+00
 ad_slot_left_1_link		2026-06-26 12:58:01.780518+00
 ad_slot_left_1_enabled	true	2026-06-26 12:58:01.784311+00
@@ -1257,10 +1252,17 @@ mux_is_free	false	2026-06-30 15:48:30.787957+00
 mux_price	1.50	2026-06-30 15:48:30.793586+00
 mux_title	ATA Live Streaming	2026-06-30 15:48:30.796336+00
 mux_stream_db_id	16	2026-06-30 15:48:31.122069+00
-pawapay_api_token	eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI0MTIzIiwibWF2IjoiMSIsImV4cCI6MjA5ODQ2MDM5NywiaWF0IjoxNzgyODQxMTk3LCJwbSI6IkRBRixQQUYiLCJqdGkiOiI5MTY5YmZmYy1iOTc4LTRjNzMtOGZjOS1jNzk0YjRjZTZmYTAifQ.XnFyW4kS5w5R4xrtBQY18kgDDGBCwiP_EImdVen0XzTgw_950h1-MsmLxJkPWdbrcCmec3D9jDUEK0vRDKuAoQ	2026-06-30 18:00:22.8134+00
-pawapay_environment	sandbox	2026-06-30 18:00:22.82182+00
-pawapay_currency	UGX	2026-06-30 18:00:22.828632+00
-pawapay_exchange_rate	3700	2026-06-30 18:00:22.843496+00
+pawapay_enabled	true	2026-06-30 23:07:38.774835+00
+pawapay_api_token	eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI0MTIzIiwibWF2IjoiMSIsImV4cCI6MjA5ODQ2MDM5NywiaWF0IjoxNzgyODQxMTk3LCJwbSI6IkRBRixQQUYiLCJqdGkiOiI5MTY5YmZmYy1iOTc4LTRjNzMtOGZjOS1jNzk0YjRjZTZmYTAifQ.XnFyW4kS5w5R4xrtBQY18kgDDGBCwiP_EImdVen0XzTgw_950h1-MsmLxJkPWdbrcCmec3D9jDUEK0vRDKuAoQ	2026-06-30 23:07:38.779005+00
+pawapay_environment	sandbox	2026-06-30 23:07:38.782503+00
+pawapay_currency	UGX	2026-06-30 23:07:38.78569+00
+pawapay_exchange_rate	3700	2026-06-30 23:07:38.790117+00
+pesapal_enabled	true	2026-06-30 23:08:02.289321+00
+pesapal_consumer_key	n8oH1EgY3l+BI9ax/Lz9viA9DSLLVNSR	2026-06-30 23:08:02.293657+00
+pesapal_consumer_secret	y6frhAV12Vl7JJLIvLQiF8FJDkU=	2026-06-30 23:08:02.296451+00
+pesapal_environment	live	2026-06-30 23:08:02.299421+00
+pesapal_currency	USD	2026-06-30 23:08:02.301844+00
+pesapal_ipn_id		2026-06-30 23:08:02.304654+00
 \.
 
 
@@ -6390,8 +6392,8 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5029	jacksonwalusansa52@gmail.com	MUST_SET_PASSWORD	Walusansa Jackason	0762141022	user	active	\N	\N	2026-06-26 13:40:33.449374+00	2026-06-26 13:40:33.449374+00	\N	\N	\N	t	\N	\N
 5030	clintonabcbill@gmail.com	MUST_SET_PASSWORD	Akampurira Ciboss	0753094499	user	active	\N	\N	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	\N	\N	\N	t	\N	\N
 5031	johm@try.co.za	$2b$10$9YzCt9Xc6KYJMh63h6yZaePOORc17dl8mHqBm3uQsIzREGscYfAPG	Alex	+27748448457	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzEsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4MDk5ODYsImV4cCI6MTc4NTQwMTk4Nn0.yJFBFZwZw743At1p7hYMTlw7hdXeVZ7Mfq7dQIOSDJ0	2026-06-30 08:59:46.506546+00	2026-06-30 08:59:46.92+00	\N	\N	\N	f	\N	\N
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiMWQzY2I0NzItMTFkZC00ZWIyLWI5OWItYWQ0YTRlMDliNTk3IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4NTY1MzQsImV4cCI6MTc4NTQ0ODUzNH0.POYBLdgfDcLM78URy83Zh3JbUECE_WBk8SXbicY19i8	2026-06-15 16:31:06.226579+00	2026-06-30 21:55:34.146+00	\N	\N	\N	f	1d3cb472-11dd-4eb2-b99b-ad4a4e09b597	\N
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiIwYTA2MWY5ZC1lZGNjLTQ1NTctYTk5OS0wYTcyNDYyMGUyMjciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mjg1NjU2MywiZXhwIjoxNzg1NDQ4NTYzfQ.pVRD0vgBgW0h9WBQgZ-ue1e-N_TCxUNwlHkr5mn4kfE	2026-06-15 16:31:06.605107+00	2026-06-30 21:56:03.532+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	0a061f9d-edcc-4557-a999-0a724620e227	\N
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiNTU3NmRhNDMtNmRiZS00MzE1LThhZWItYWM0Zjc1ZmU3YTZmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4NTkyMjUsImV4cCI6MTc4NTQ1MTIyNX0.IwiKFPjT5Dis6DW3ZUKNCbUjMMn7gSPBGG1UghuacxY	2026-06-15 16:31:06.226579+00	2026-06-30 22:40:25.996+00	\N	\N	\N	f	5576da43-6dbe-4315-8aeb-ac4f75fe7a6f	\N
 \.
 
 
@@ -11940,5 +11942,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict N6xmcD3FPBIbXTrqEZivrXPYj7I3IHdm7g0e2p9ek35ch3Un1SucbeMx3FtpKcx
+\unrestrict dwH6EvRgXe19OOWrst1pbcMkTOao8WuUW74XLi1SBl1W3x0H0RPTfSrbU9CDk2J
 
