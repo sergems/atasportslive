@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
-  CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send,
+  CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -288,6 +288,70 @@ function ActivationEmailPanel() {
   );
 }
 
+function WalletAdjustPanel({ userId, onClose }: { userId: number; onClose: () => void }) {
+  const [type, setType] = useState<'credit' | 'debit'>('credit');
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/wallet/admin/adjust', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ userId, amount: parseFloat(amount), type, description }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      return data;
+    },
+    onSuccess: () => { toast.success(`Wallet ${type}ed successfully`); onClose(); },
+    onError: (e: any) => toast.error(e.message || 'Failed'),
+  });
+
+  return (
+    <div className="flex flex-wrap gap-3 items-end pt-2">
+      <div className="space-y-1">
+        <Label className="text-slate-400 text-xs">Type</Label>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as any)}
+          className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white text-xs h-8"
+        >
+          <option value="credit">Credit</option>
+          <option value="debit">Debit</option>
+        </select>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-slate-400 text-xs">Amount ($)</Label>
+        <Input
+          type="number" min="0.01" step="0.01"
+          value={amount} onChange={(e) => setAmount(e.target.value)}
+          placeholder="0.00"
+          className="bg-slate-800 border-slate-700 text-white text-xs h-8 w-28"
+        />
+      </div>
+      <div className="space-y-1 flex-1 min-w-[160px]">
+        <Label className="text-slate-400 text-xs">Description (optional)</Label>
+        <Input
+          value={description} onChange={(e) => setDescription(e.target.value)}
+          placeholder="e.g. Bonus credit"
+          className="bg-slate-800 border-slate-700 text-white text-xs h-8"
+        />
+      </div>
+      <Button
+        size="sm"
+        onClick={() => mutation.mutate()}
+        disabled={mutation.isPending || !amount || parseFloat(amount) <= 0}
+        className={`h-8 text-xs font-semibold ${type === 'credit' ? 'bg-teal-500 hover:bg-teal-400 text-slate-950' : 'bg-red-500 hover:bg-red-400 text-white'}`}
+      >
+        {mutation.isPending ? 'Saving…' : type === 'credit' ? '+ Credit' : '− Debit'}
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onClose} className="h-8 text-xs text-slate-400">
+        Cancel
+      </Button>
+    </div>
+  );
+}
+
 export default function AdminUsers() {
   useEffect(() => { document.title = 'Manage Users - Admin'; }, []);
 
@@ -295,6 +359,7 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editingPayoutFor, setEditingPayoutFor] = useState<number | null>(null);
+  const [walletAdjustFor, setWalletAdjustFor] = useState<number | null>(null);
 
   const { data, isLoading } = useListUsers({ page, limit: 20, search: search || undefined });
   const updateRole = useUpdateUserRole();
@@ -388,7 +453,16 @@ export default function AdminUsers() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => setEditingPayoutFor(editingPayoutFor === user.id ? null : user.id)}
+                            onClick={() => { setWalletAdjustFor(walletAdjustFor === user.id ? null : user.id); setEditingPayoutFor(null); }}
+                            className="h-7 text-xs text-amber-400 hover:bg-amber-500/10 gap-1"
+                          >
+                            <DollarSign className="h-3 w-3" />
+                            <span className="hidden sm:inline">Wallet</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => { setEditingPayoutFor(editingPayoutFor === user.id ? null : user.id); setWalletAdjustFor(null); }}
                             className="h-7 text-xs text-teal-400 hover:bg-teal-500/10 gap-1"
                           >
                             {editingPayoutFor === user.id ? <X className="h-3 w-3" /> : <Pencil className="h-3 w-3" />}
@@ -405,6 +479,13 @@ export default function AdminUsers() {
                         </div>
                       </td>
                     </tr>
+                    {walletAdjustFor === user.id && (
+                      <tr className="border-b border-slate-800/50 bg-amber-500/5">
+                        <td colSpan={6} className="px-4 pb-3">
+                          <WalletAdjustPanel userId={user.id} onClose={() => setWalletAdjustFor(null)} />
+                        </td>
+                      </tr>
+                    )}
                     {editingPayoutFor === user.id && (
                       <tr className="border-b border-slate-800/50 bg-slate-800/20">
                         <td colSpan={6} className="px-4 pb-3">

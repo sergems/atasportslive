@@ -1,15 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useListStreams, useCreateStream, useUpdateStream, useGoLive, useEndStream } from '@workspace/api-client-react';
+import { useCreateStream, useUpdateStream, useGoLive, useEndStream, useDeleteStream } from '@workspace/api-client-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Radio, Plus, Play, Square, Upload, X, ImageIcon, Pencil } from 'lucide-react';
+import { Radio, Plus, Play, Square, Upload, X, ImageIcon, Pencil, Trash2, Archive } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
-import { getListStreamsQueryKey } from '@workspace/api-client-react';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -138,6 +137,93 @@ function StreamForm({
   );
 }
 
+function StreamRow({
+  stream, editId, setEditId, startEdit, editForm, setEditForm, editIsTournament,
+  editThumbnailPreview, editFileInputRef, handleEditFileChange, clearEditThumbnail,
+  handleEdit, editSaving, goLiveId, setGoLiveId, hlsUrl, setHlsUrl,
+  handleGoLive, handleEnd, handleDelete,
+}: any) {
+  return (
+    <div>
+      <Card className={`bg-slate-900 border-primary/20 ${editId === stream.id ? 'border-amber-500/40' : ''}`}>
+        <CardContent className="py-4 px-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="flex-shrink-0 w-14 h-10 rounded overflow-hidden bg-slate-800 flex items-center justify-center">
+              {stream.thumbnailUrl
+                ? <img src={stream.thumbnailUrl} alt={stream.title} className="w-full h-full object-cover" />
+                : <ImageIcon className="h-5 w-5 text-slate-600" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge className={`${STATUS_COLORS[stream.status] || 'bg-slate-700 text-slate-300'} border text-xs`}>
+                  {stream.status}
+                </Badge>
+                <span className="text-xs text-slate-500 capitalize">{stream.sport}</span>
+              </div>
+              <p className="text-white font-semibold truncate">{stream.title}</p>
+              <p className="text-xs text-slate-400">
+                {new Date(stream.startTime).toLocaleString()}
+                {stream.endTime ? ` → ${new Date(stream.endTime).toLocaleString()}` : ''}
+                {(stream.city || stream.country) ? ` · ${[stream.city, stream.country].filter(Boolean).join(', ')}` : ''}
+                {` · $${stream.accessPrice}/day`}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-shrink-0 items-center">
+            <Button
+              size="sm" variant="ghost"
+              onClick={() => editId === stream.id ? setEditId(null) : startEdit(stream)}
+              className="h-8 w-8 p-0 text-slate-400 hover:text-amber-400"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            {stream.status === 'upcoming' && (
+              goLiveId === stream.id ? (
+                <div className="flex gap-2 items-center">
+                  <Input
+                    value={hlsUrl} onChange={(e: any) => setHlsUrl(e.target.value)}
+                    placeholder="HLS URL…"
+                    className="bg-slate-800 border-slate-700 text-white w-48 h-8 text-xs"
+                  />
+                  <Button size="sm" onClick={() => handleGoLive(stream.id)} className="bg-teal-500 hover:bg-teal-400 text-slate-950 h-8 text-xs">Go Live</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setGoLiveId(null)} className="text-slate-400 h-8 text-xs">Cancel</Button>
+                </div>
+              ) : (
+                <Button size="sm" onClick={() => setGoLiveId(stream.id)} className="bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:bg-teal-500/30 h-8 text-xs">
+                  <Play className="h-3 w-3 mr-1" /> Go Live
+                </Button>
+              )
+            )}
+            {stream.status === 'live' && (
+              <Button size="sm" variant="destructive" onClick={() => handleEnd(stream.id)} className="h-8 text-xs">
+                <Square className="h-3 w-3 mr-1" /> End
+              </Button>
+            )}
+            <Button
+              size="sm" variant="ghost"
+              onClick={() => handleDelete(stream.id, stream.title)}
+              className="h-8 w-8 p-0 text-slate-600 hover:text-red-400"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      {editId === stream.id && (
+        <div className="mt-2">
+          <StreamForm
+            form={editForm} setForm={setEditForm} isTournament={editIsTournament}
+            thumbnailPreview={editThumbnailPreview} fileInputRef={editFileInputRef}
+            onFileChange={handleEditFileChange} onClearThumb={clearEditThumbnail}
+            onSave={handleEdit} onCancel={() => { setEditId(null); clearEditThumbnail(); }}
+            saving={editSaving} title="Edit Stream" accentClass="border-amber-500/30"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminStreams() {
   useEffect(() => { document.title = 'Manage Streams - Admin'; }, []);
 
@@ -160,13 +246,20 @@ export default function AdminStreams() {
   const [editThumbnailPreview, setEditThumbnailPreview] = useState<string | null>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: streamsData, isLoading } = useListStreams({ limit: 50 });
+  const { data: streamsData, isLoading } = useQuery({
+    queryKey: ['streams', 'all'],
+    queryFn: () =>
+      fetch('/api/streams?limit=200&include_all=true', {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()) as Promise<{ streams: any[] }>,
+  });
   const createStream = useCreateStream();
   const updateStream = useUpdateStream();
   const goLive = useGoLive();
   const endStream = useEndStream();
+  const deleteStream = useDeleteStream();
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: getListStreamsQueryKey() });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['streams'] });
 
   const isTournament = form.sport === 'tournament';
   const editIsTournament = editForm.sport === 'tournament';
@@ -324,6 +417,21 @@ export default function AdminStreams() {
     }
   };
 
+  const handleDelete = async (id: number, title: string) => {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    try {
+      await deleteStream.mutateAsync({ id });
+      invalidate();
+      toast.success('Stream deleted');
+    } catch (e: any) {
+      toast.error(e?.data?.error || 'Failed to delete');
+    }
+  };
+
+  const allStreams: any[] = streamsData?.streams || [];
+  const activeStreams = allStreams.filter((s) => s.status !== 'ended');
+  const pastStreams = allStreams.filter((s) => s.status === 'ended');
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -355,85 +463,53 @@ export default function AdminStreams() {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 bg-slate-800 rounded-xl" />)}
         </div>
       ) : (
-        <div className="space-y-3">
-          {(streamsData?.streams || []).map((stream: any) => (
-            <div key={stream.id}>
-              <Card className={`bg-slate-900 border-primary/20 ${editId === stream.id ? 'border-amber-500/40' : ''}`}>
-                <CardContent className="py-4 px-5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="flex-shrink-0 w-14 h-10 rounded overflow-hidden bg-slate-800 flex items-center justify-center">
-                      {stream.thumbnailUrl
-                        ? <img src={stream.thumbnailUrl} alt={stream.title} className="w-full h-full object-cover" />
-                        : <ImageIcon className="h-5 w-5 text-slate-600" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge className={`${STATUS_COLORS[stream.status] || 'bg-slate-700 text-slate-300'} border text-xs`}>
-                          {stream.status}
-                        </Badge>
-                        <span className="text-xs text-slate-500 capitalize">{stream.sport}</span>
-                      </div>
-                      <p className="text-white font-semibold truncate">{stream.title}</p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(stream.startTime).toLocaleString()}
-                        {stream.endTime ? ` → ${new Date(stream.endTime).toLocaleString()}` : ''}
-                        {(stream.city || stream.country) ? ` · ${[stream.city, stream.country].filter(Boolean).join(', ')}` : ''}
-                        {` · $${stream.accessPrice}/day`}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0 items-center">
-                    <Button
-                      size="sm" variant="ghost"
-                      onClick={() => editId === stream.id ? setEditId(null) : startEdit(stream)}
-                      className="h-8 w-8 p-0 text-slate-400 hover:text-amber-400"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    {stream.status === 'upcoming' && (
-                      goLiveId === stream.id ? (
-                        <div className="flex gap-2 items-center">
-                          <Input
-                            value={hlsUrl} onChange={(e) => setHlsUrl(e.target.value)}
-                            placeholder="HLS URL…"
-                            className="bg-slate-800 border-slate-700 text-white w-48 h-8 text-xs"
-                          />
-                          <Button size="sm" onClick={() => handleGoLive(stream.id)} className="bg-teal-500 hover:bg-teal-400 text-slate-950 h-8 text-xs">Go Live</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setGoLiveId(null)} className="text-slate-400 h-8 text-xs">Cancel</Button>
-                        </div>
-                      ) : (
-                        <Button size="sm" onClick={() => setGoLiveId(stream.id)} className="bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:bg-teal-500/30 h-8 text-xs">
-                          <Play className="h-3 w-3 mr-1" /> Go Live
-                        </Button>
-                      )
-                    )}
-                    {stream.status === 'live' && (
-                      <Button size="sm" variant="destructive" onClick={() => handleEnd(stream.id)} className="h-8 text-xs">
-                        <Square className="h-3 w-3 mr-1" /> End
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-              {editId === stream.id && (
-                <div className="mt-2">
-                  <StreamForm
-                    form={editForm} setForm={setEditForm} isTournament={editIsTournament}
-                    thumbnailPreview={editThumbnailPreview} fileInputRef={editFileInputRef}
-                    onFileChange={handleEditFileChange} onClearThumb={clearEditThumbnail}
-                    onSave={handleEdit} onCancel={() => { setEditId(null); clearEditThumbnail(); }}
-                    saving={editSaving} title="Edit Stream" accentClass="border-amber-500/30"
-                  />
+        <>
+          {/* Active Streams */}
+          <div className="space-y-3">
+            {activeStreams.map((stream: any) => (
+              <StreamRow
+                key={stream.id} stream={stream}
+                editId={editId} setEditId={setEditId}
+                startEdit={startEdit} editForm={editForm} setEditForm={setEditForm}
+                editIsTournament={editIsTournament} editThumbnailPreview={editThumbnailPreview}
+                editFileInputRef={editFileInputRef} handleEditFileChange={handleEditFileChange}
+                clearEditThumbnail={clearEditThumbnail} handleEdit={handleEdit} editSaving={editSaving}
+                goLiveId={goLiveId} setGoLiveId={setGoLiveId} hlsUrl={hlsUrl} setHlsUrl={setHlsUrl}
+                handleGoLive={handleGoLive} handleEnd={handleEnd} handleDelete={handleDelete}
+              />
+            ))}
+            {activeStreams.length === 0 && (
+              <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                No active streams yet. Create one above.
+              </div>
+            )}
+          </div>
+
+          {/* Past Streams */}
+          {pastStreams.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 pt-2">
+                <div className="h-px flex-1 bg-slate-800" />
+                <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase tracking-widest">
+                  <Archive className="h-3.5 w-3.5" /> Past Streams ({pastStreams.length})
                 </div>
-              )}
-            </div>
-          ))}
-          {(!streamsData?.streams || streamsData.streams.length === 0) && (
-            <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-              No streams yet. Create one above.
+                <div className="h-px flex-1 bg-slate-800" />
+              </div>
+              {pastStreams.map((stream: any) => (
+                <StreamRow
+                  key={stream.id} stream={stream}
+                  editId={editId} setEditId={setEditId}
+                  startEdit={startEdit} editForm={editForm} setEditForm={setEditForm}
+                  editIsTournament={editIsTournament} editThumbnailPreview={editThumbnailPreview}
+                  editFileInputRef={editFileInputRef} handleEditFileChange={handleEditFileChange}
+                  clearEditThumbnail={clearEditThumbnail} handleEdit={handleEdit} editSaving={editSaving}
+                  goLiveId={goLiveId} setGoLiveId={setGoLiveId} hlsUrl={hlsUrl} setHlsUrl={setHlsUrl}
+                  handleGoLive={handleGoLive} handleEnd={handleEnd} handleDelete={handleDelete}
+                />
+              ))}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

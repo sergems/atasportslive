@@ -426,6 +426,8 @@ export default function AdminGames() {
 
   const allGames: any[] = gamesData?.games || [];
   const topLevel = allGames.filter((g) => !g.parentId);
+  const activeTopLevel = topLevel.filter((g) => !['completed', 'cancelled'].includes(g.status));
+  const pastTopLevel = topLevel.filter((g) => ['completed', 'cancelled'].includes(g.status));
   const childrenByParent: Record<number, any[]> = {};
   for (const g of allGames) {
     if (g.parentId) {
@@ -627,14 +629,29 @@ export default function AdminGames() {
           {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 bg-slate-800 rounded-xl" />)}
         </div>
       ) : (
-        <div className="space-y-3">
-          {topLevel.map((game) => <GameCard key={game.id} game={game} ctx={ctx} />)}
-          {topLevel.length === 0 && (
-            <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-              No games yet. Create a single match or a competition above.
+        <>
+          <div className="space-y-3">
+            {activeTopLevel.map((game) => <GameCard key={game.id} game={game} ctx={ctx} />)}
+            {activeTopLevel.length === 0 && (
+              <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                No active games yet. Create a single match or a competition above.
+              </div>
+            )}
+          </div>
+
+          {pastTopLevel.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 pt-2">
+                <div className="h-px flex-1 bg-slate-800" />
+                <div className="text-slate-500 text-xs font-semibold uppercase tracking-widest">
+                  Past / Completed ({pastTopLevel.length})
+                </div>
+                <div className="h-px flex-1 bg-slate-800" />
+              </div>
+              {pastTopLevel.map((game) => <GameCard key={game.id} game={game} ctx={ctx} />)}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

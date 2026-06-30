@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { db, streamsTable, streamAccessTable, walletsTable, transactionsTable, gamesTable, bonusTransactionsTable } from "@workspace/db";
-import { eq, desc, sql, and, gt } from "drizzle-orm";
+import { eq, desc, sql, and, gt, ne, or, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
 
@@ -29,25 +29,42 @@ router.get("/", async (req, res): Promise<void> => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
   const status = req.query.status as string | undefined;
+  const includeAll = req.query.include_all === 'true';
   const offset = (page - 1) * limit;
 
+  const whereClause = status
+    ? eq(streamsTable.status, status as any)
+    : includeAll
+    ? undefined
+    : ne(streamsTable.status, 'ended' as any);
+
   let q = db.select().from(streamsTable).$dynamic();
-  if (status) q = q.where(eq(streamsTable.status, status as any));
+  if (whereClause) q = q.where(whereClause);
 
   const countQ = db.select({ count: sql<number>`count(*)` }).from(streamsTable);
-  const [{ count }] = status ? await countQ.where(eq(streamsTable.status, status as any)) : await countQ;
+  const [{ count }] = whereClause ? await countQ.where(whereClause) : await countQ;
   const streams = await q.orderBy(desc(streamsTable.startTime)).limit(limit).offset(offset);
   res.json({ streams: streams.map(toStream), total: Number(count), page, limit });
 });
 
 router.get("/upcoming", async (req, res): Promise<void> => {
   const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
   const streams = await db
     .select()
     .from(streamsTable)
-    .where(eq(streamsTable.status, "upcoming"))
+    .where(
+      or(
+        eq(streamsTable.status, "live" as any),
+        and(
+          eq(streamsTable.status, "upcoming" as any),
+          gte(streamsTable.startTime, todayStart)
+        )
+      )
+    )
     .orderBy(streamsTable.startTime)
-    .limit(10);
+    .limit(20);
 
   res.json(streams.map((s) => ({
     ...toStream(s),

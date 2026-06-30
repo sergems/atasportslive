@@ -569,4 +569,64 @@ router.get("/pesapal/status", authMiddleware, async (req: AuthRequest, res): Pro
   res.json({ status: tx.status, amount: parseFloat(tx.amount as string) });
 });
 
+router.post("/admin/adjust", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const { userId, amount, type, description } = req.body;
+  if (!userId || !amount || !type) {
+    res.status(400).json({ error: "userId, amount, type required" });
+    return;
+  }
+  if (!["credit", "debit"].includes(type)) {
+    res.status(400).json({ error: "type must be 'credit' or 'debit'" });
+    return;
+  }
+  const amt = parseFloat(String(amount));
+  if (isNaN(amt) || amt <= 0) {
+    res.status(400).json({ error: "amount must be a positive number" });
+    return;
+  }
+
+  const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, Number(userId))).limit(1);
+  if (!wallet) {
+    res.status(404).json({ error: "Wallet not found" });
+    return;
+  }
+
+  if (type === "debit") {
+    const available = parseFloat(wallet.availableBalance as string);
+    if (available < amt) {
+      res.status(400).json({ error: `Insufficient balance. Available: $${available.toFixed(2)}` });
+      return;
+    }
+    await db.update(walletsTable).set({
+      balance: sql`balance - ${amt}`,
+      availableBalance: sql`available_balance - ${amt}`,
+      withdrawableBalance: sql`GREATEST(withdrawable_balance - ${amt}, 0)`,
+    }).where(eq(walletsTable.userId, Number(userId)));
+  } else {
+    await db.update(walletsTable).set({
+      balance: sql`balance + ${amt}`,
+      availableBalance: sql`available_balance + ${amt}`,
+      withdrawableBalance: sql`withdrawable_balance + ${amt}`,
+    }).where(eq(walletsTable.userId, Number(userId)));
+  }
+
+  await db.insert(transactionsTable).values({
+    transactionId: `ADJ-${uuidv4().split("-")[0].toUpperCase()}`,
+    userId: Number(userId),
+    type: type === "credit" ? "deposit" : "withdrawal",
+    amount: amt.toString(),
+    status: "completed",
+    paymentMethod: "internal",
+    description: description || `Admin manual ${type}`,
+  });
+
+  await notify(Number(userId), type === "credit" ? "wallet_credit" : "wallet_debit",
+    type === "credit" ? "Wallet Credited" : "Wallet Debited",
+    `Your wallet has been ${type === "credit" ? "credited" : "debited"} $${amt.toFixed(2)} by admin.`
+  );
+
+  const [updated] = await db.select().from(walletsTable).where(eq(walletsTable.userId, Number(userId))).limit(1);
+  res.json({ wallet: toWalletResponse(updated) });
+});
+
 export default router;

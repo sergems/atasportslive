@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { db, gamesTable, streamsTable, betsTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
-import { eq, desc, asc, sql, and } from "drizzle-orm";
+import { eq, desc, asc, sql, and, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
 import { sendMail, templates } from "../lib/mailer";
@@ -51,10 +51,11 @@ router.get("/", async (req, res): Promise<void> => {
 });
 
 router.get("/upcoming", async (req, res): Promise<void> => {
+  const today = new Date().toISOString().split("T")[0];
   const games = await db
     .select()
     .from(gamesTable)
-    .where(eq(gamesTable.status, "upcoming"))
+    .where(and(eq(gamesTable.status, "upcoming"), gte(gamesTable.eventDate, today)))
     .orderBy(gamesTable.eventDate)
     .limit(10);
   res.json(games.map(toGame));

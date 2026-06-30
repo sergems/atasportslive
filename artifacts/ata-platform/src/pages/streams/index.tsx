@@ -304,7 +304,6 @@ export default function Streams() {
             <SelectItem value="all">All Streams</SelectItem>
             <SelectItem value="live">Live Now</SelectItem>
             <SelectItem value="upcoming">Upcoming</SelectItem>
-            <SelectItem value="ended">Ended</SelectItem>
           </SelectContent>
         </Select>
       </div>
