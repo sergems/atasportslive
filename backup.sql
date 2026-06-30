@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict SbhjxEm7e79IlOfzILg6YDZaCt3lohWSyVMLExhkzSfZrUIWfKwvyiybzhMj3gW
+\restrict N6xmcD3FPBIbXTrqEZivrXPYj7I3IHdm7g0e2p9ek35ch3Un1SucbeMx3FtpKcx
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1202,6 +1202,13 @@ COPY public.notifications (id, user_id, type, title, message, read, created_at) 
 5	2	withdrawal_approved	Withdrawal Approved	Your withdrawal of $5.00 has been approved.	t	2026-06-25 22:34:52.658949+00
 6	2	withdrawal_approved	Withdrawal Approved	Your withdrawal of $3.00 has been approved and is being processed by our finance team.	t	2026-06-25 22:48:21.687562+00
 7	2	withdrawal_approved	Payment Sent	Your withdrawal of $3.00 has been paid. Please check your airtel money account.	t	2026-06-25 22:48:21.827435+00
+8	2	deposit_received	Deposit Confirmed	$1.50 credited to your wallet via PawaPay.	f	2026-06-30 21:49:50.86137+00
+9	2	deposit_received	Deposit Confirmed	$1.50 credited to your wallet via PawaPay.	f	2026-06-30 21:52:21.699878+00
+11	2	withdrawal_approved	Withdrawal Sent	$2.00 has been sent to your mobile money account.	f	2026-06-30 21:55:53.70791+00
+10	1	deposit_received	Deposit Confirmed	$9.00 credited to your wallet via PawaPay.	t	2026-06-30 21:55:50.944711+00
+12	1	withdrawal_rejected	Withdrawal Failed	Your withdrawal of $1000.00 via PawaPay failed. Funds returned to wallet.	t	2026-06-30 21:57:54.443036+00
+13	1	withdrawal_rejected	Withdrawal Failed	Your withdrawal of $200.00 via PawaPay failed. Funds returned to wallet.	t	2026-06-30 21:58:41.273352+00
+14	1	withdrawal_approved	Withdrawal Sent	$1.00 has been sent to your mobile money account.	t	2026-06-30 22:03:16.239765+00
 \.
 
 
@@ -1333,6 +1340,19 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 21	STR-E16E1130	1	stream_access	1.50	completed	internal	\N	24h access to: ATA Live Streaming	\N	2026-06-30 13:44:47.777837+00	2026-06-30 13:44:47.777837+00
 22	STR-00CBCFED	2	stream_access	1.50	completed	internal	\N	24h access to: ATA Live Streaming	\N	2026-06-30 15:04:57.217583+00	2026-06-30 15:04:57.217583+00
 23	BET-198D01CC	2	bet_stake	10.00	completed	internal	\N	Bet stake on game #16	\N	2026-06-30 15:27:46.161649+00	2026-06-30 15:27:46.161649+00
+24	01f29b05-ee5f-484c-bb72-296457adf0cd	2	deposit	1.50	completed	pawapay	\N	PawaPay deposit (UGX 5550)	{"depositId":"01f29b05-ee5f-484c-bb72-296457adf0cd","provider":"MTN_MOMO_UGA","phoneNumber":"256753456789"}	2026-06-30 21:49:49.898513+00	2026-06-30 21:49:50.853+00
+25	930f3da1-685d-4e3a-bbd2-d05bba68fd46	2	deposit	1.50	completed	pawapay	\N	PawaPay deposit (UGX 5550)	{"depositId":"930f3da1-685d-4e3a-bbd2-d05bba68fd46","provider":"AIRTEL_OAPI_UGA","phoneNumber":"256783456789"}	2026-06-30 21:52:20.982088+00	2026-06-30 21:52:21.657+00
+26	ed99f70a-a7ca-40cb-9ad9-1378e52a15c0	2	withdrawal	2.00	failed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:53:28.649279+00	2026-06-30 21:53:29.02+00
+27	69c275d0-f0ce-43e4-af38-44f63e2ba8af	2	withdrawal	2.00	failed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:54:07.614249+00	2026-06-30 21:54:08.002+00
+28	27074855-5e51-4dd0-a6f6-2f567ecf758f	2	withdrawal	2.00	failed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:54:23.52512+00	2026-06-30 21:54:23.908+00
+29	be17d0f3-fa4f-4030-92c6-44cf0fac8073	1	deposit	9.00	completed	pawapay	\N	PawaPay deposit (UGX 33300)	{"depositId":"be17d0f3-fa4f-4030-92c6-44cf0fac8073","provider":"MTN_MOMO_UGA","phoneNumber":"256783456789"}	2026-06-30 21:55:50.033058+00	2026-06-30 21:55:50.933+00
+30	ffca52e4-8028-49cb-9650-9625c23331a5	2	withdrawal	2.00	completed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:55:52.977055+00	2026-06-30 21:55:53.7+00
+31	0ab5f72c-6327-4f67-a991-a628a43ba41a	1	withdrawal	5000.00	failed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:57:13.905681+00	2026-06-30 21:57:14.31+00
+32	68598f0a-433f-417a-be76-21ebb0b7ade2	1	withdrawal	5000.00	failed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:57:26.244601+00	2026-06-30 21:57:26.602+00
+33	cb698ce8-a87e-47fa-b367-1b6bd08e4787	1	withdrawal	2500.00	failed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:57:40.020554+00	2026-06-30 21:57:40.395+00
+34	a3a528e0-f949-4820-8961-e2e7c3821a53	1	withdrawal	1000.00	rejected	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:57:53.908792+00	2026-06-30 21:57:54.432+00
+35	cd572056-1037-4867-bb2e-28d15dc2253a	1	withdrawal	200.00	rejected	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:58:40.681769+00	2026-06-30 21:58:41.257+00
+36	11ee2cdf-d6e0-4b38-8c1f-d2a7dc5ef4b8	1	withdrawal	1.00	completed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 22:03:15.244808+00	2026-06-30 22:03:16.231+00
 \.
 
 
@@ -6370,8 +6390,8 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5029	jacksonwalusansa52@gmail.com	MUST_SET_PASSWORD	Walusansa Jackason	0762141022	user	active	\N	\N	2026-06-26 13:40:33.449374+00	2026-06-26 13:40:33.449374+00	\N	\N	\N	t	\N	\N
 5030	clintonabcbill@gmail.com	MUST_SET_PASSWORD	Akampurira Ciboss	0753094499	user	active	\N	\N	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	\N	\N	\N	t	\N	\N
 5031	johm@try.co.za	$2b$10$9YzCt9Xc6KYJMh63h6yZaePOORc17dl8mHqBm3uQsIzREGscYfAPG	Alex	+27748448457	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzEsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4MDk5ODYsImV4cCI6MTc4NTQwMTk4Nn0.yJFBFZwZw743At1p7hYMTlw7hdXeVZ7Mfq7dQIOSDJ0	2026-06-30 08:59:46.506546+00	2026-06-30 08:59:46.92+00	\N	\N	\N	f	\N	\N
-2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4MzI1NzgsImV4cCI6MTc4NTQyNDU3OH0.wrBda9mf8EmebDyaNr9bZs63HzjoD89L4fkravH8VOE	2026-06-15 16:31:06.605107+00	2026-06-30 15:16:18.613+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	\N	\N
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiZDhjN2ZkZjItNjExYy00ZTM4LThjZWMtY2JhZmM2ZWUyNDE2IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4NTA0NDMsImV4cCI6MTc4NTQ0MjQ0M30.haTgG-N-2TiyWq8MGnK5gp-DooEoiGQt3BiXWf5zq_E	2026-06-15 16:31:06.226579+00	2026-06-30 20:14:03.238+00	\N	\N	\N	f	d8c7fdf2-611c-4e38-8cec-cbafc6ee2416	\N
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiMWQzY2I0NzItMTFkZC00ZWIyLWI5OWItYWQ0YTRlMDliNTk3IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4NTY1MzQsImV4cCI6MTc4NTQ0ODUzNH0.POYBLdgfDcLM78URy83Zh3JbUECE_WBk8SXbicY19i8	2026-06-15 16:31:06.226579+00	2026-06-30 21:55:34.146+00	\N	\N	\N	f	1d3cb472-11dd-4eb2-b99b-ad4a4e09b597	\N
+2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiIwYTA2MWY5ZC1lZGNjLTQ1NTctYTk5OS0wYTcyNDYyMGUyMjciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mjg1NjU2MywiZXhwIjoxNzg1NDQ4NTYzfQ.pVRD0vgBgW0h9WBQgZ-ue1e-N_TCxUNwlHkr5mn4kfE	2026-06-15 16:31:06.605107+00	2026-06-30 21:56:03.532+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	0a061f9d-edcc-4557-a999-0a724620e227	\N
 \.
 
 
@@ -11425,8 +11445,8 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 5028	5029	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.449374+00	2026-06-26 13:40:33.449374+00	0.00
 5029	5030	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	0.00
 5030	5031	0.00	0.00	0.00	0.00	USD	2026-06-30 08:59:46.800606+00	2026-06-30 08:59:46.800606+00	0.00
-1	1	9998.50	9896.50	102.00	9998.50	USD	2026-06-15 16:31:06.51595+00	2026-06-30 13:44:47.738+00	0.00
-2	2	55.00	13.00	52.00	65.00	USD	2026-06-15 16:31:06.612958+00	2026-06-30 15:27:46.126+00	0.00
+2	2	56.00	14.00	52.00	66.00	USD	2026-06-15 16:31:06.612958+00	2026-06-30 21:55:53.704+00	0.00
+1	1	10006.50	9904.50	102.00	10006.50	USD	2026-06-15 16:31:06.51595+00	2026-06-30 22:03:16.236+00	0.00
 \.
 
 
@@ -11483,7 +11503,7 @@ SELECT pg_catalog.setval('public.highlights_id_seq', 5, true);
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 7, true);
+SELECT pg_catalog.setval('public.notifications_id_seq', 14, true);
 
 
 --
@@ -11525,7 +11545,7 @@ SELECT pg_catalog.setval('public.streams_id_seq', 16, true);
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 23, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 36, true);
 
 
 --
@@ -11718,6 +11738,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: users users_google_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_google_id_unique UNIQUE (google_id);
+
+
+--
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -11731,6 +11759,14 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.vouchers
     ADD CONSTRAINT vouchers_code_key UNIQUE (code);
+
+
+--
+-- Name: vouchers vouchers_code_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.vouchers
+    ADD CONSTRAINT vouchers_code_unique UNIQUE (code);
 
 
 --
@@ -11904,5 +11940,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict SbhjxEm7e79IlOfzILg6YDZaCt3lohWSyVMLExhkzSfZrUIWfKwvyiybzhMj3gW
+\unrestrict N6xmcD3FPBIbXTrqEZivrXPYj7I3IHdm7g0e2p9ek35ch3Un1SucbeMx3FtpKcx
 
