@@ -580,6 +580,42 @@ router.post("/pawapay/callback/payout", async (req, res): Promise<void> => {
   }
 });
 
+router.post("/pawapay/callback/refund", async (req, res): Promise<void> => {
+  res.status(200).json({ ok: true }); // Acknowledge immediately
+  const { refundId, depositId, status, amount } = req.body as {
+    refundId?: string;
+    depositId?: string;
+    status?: string;
+    amount?: number;
+  };
+
+  logger.info({ refundId, depositId, status, amount }, "PawaPay refund callback received");
+
+  if (!depositId || !status) return;
+
+  // Find the original deposit transaction
+  const [tx] = await db.select().from(transactionsTable)
+    .where(eq(transactionsTable.transactionId, depositId)).limit(1);
+  if (!tx) {
+    logger.warn({ refundId, depositId }, "PawaPay refund: original deposit transaction not found");
+    return;
+  }
+
+  if (status === "COMPLETED") {
+    const refundAmt = amount ? parseFloat(String(amount)) : parseFloat(tx.amount as string);
+    // Deduct refunded amount from wallet
+    await db.update(walletsTable).set({
+      balance: sql`balance - ${refundAmt}`,
+      withdrawableBalance: sql`withdrawable_balance - ${refundAmt}`,
+      availableBalance: sql`available_balance - ${refundAmt}`,
+    }).where(eq(walletsTable.userId, tx.userId));
+    await notify(tx.userId, "deposit_received", "Deposit Refunded", `A refund of $${refundAmt.toFixed(2)} has been processed on your account.`);
+    logger.info({ refundId, depositId, refundAmt }, "PawaPay refund completed");
+  } else if (status === "FAILED" || status === "CANCELLED") {
+    logger.warn({ refundId, depositId, status }, "PawaPay refund failed or cancelled");
+  }
+});
+
 router.post("/pawapay/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
   const { amount, phoneNumber, provider } = req.body;
   if (!amount || Number(amount) <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
