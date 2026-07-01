@@ -1,0 +1,63 @@
+ => ERROR [api deps 10/10] RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store     17.8s
+------
+ > [api deps 10/10] RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store     pnpm install --frozen-lockfile:
+1.277 Scope: all 8 workspace projects
+1.421 ? Verifying lockfile against supply-chain policies (589 entries)...
+1.436 Lockfile is up to date, resolution step is skipped
+1.597 Progress: resolved 1, reused 0, downloaded 0, added 0
+1.693 Packages: +584
+1.693 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2.609 Progress: resolved 584, reused 62, downloaded 0, added 0
+3.631 Progress: resolved 584, reused 150, downloaded 0, added 0
+4.086
+4.086    ╭──────────────────────────────────────────────╮
+4.086    │                                              │
+4.086    │      Update available! 11.8.0 → 11.9.0.      │
+4.086    │     Changelog: https://pnpm.io/v/11.9.0      │
+4.086    │   To update, run: corepack use pnpm@11.9.0   │
+4.086    │                                              │
+4.086    ╰──────────────────────────────────────────────╯
+4.086
+4.650 Progress: resolved 584, reused 225, downloaded 0, added 0
+5.656 Progress: resolved 584, reused 363, downloaded 0, added 0
+6.660 Progress: resolved 584, reused 546, downloaded 0, added 0
+7.216 ✓ Lockfile passes supply-chain policies (589 entries in 5.7s)
+7.660 Progress: resolved 584, reused 584, downloaded 0, added 11
+8.660 Progress: resolved 584, reused 584, downloaded 0, added 188
+9.661 Progress: resolved 584, reused 584, downloaded 0, added 328
+10.66 Progress: resolved 584, reused 584, downloaded 0, added 354
+11.66 Progress: resolved 584, reused 584, downloaded 0, added 363
+12.66 Progress: resolved 584, reused 584, downloaded 0, added 368
+13.67 Progress: resolved 584, reused 584, downloaded 0, added 369
+14.66 Progress: resolved 584, reused 584, downloaded 0, added 382
+15.66 Progress: resolved 584, reused 584, downloaded 0, added 485
+16.35 Progress: resolved 584, reused 584, downloaded 0, added 584, done
+17.07
+17.07 devDependencies:
+17.07 + prettier 3.8.3
+17.07 + typescript 5.9.3
+17.07
+17.09 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+17.17 . preinstall: Done
+17.35 [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: bcrypt@5.1.1, bcrypt@6.0.0, esbuild@0.27.3
+17.35
+17.35 Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+------
+[+] build 0/2
+ ⠙ Image ata-api   Building                                                             18.3s
+ ⠙ Image ata-nginx Building                                                             18.3s
+Dockerfile:29
+
+--------------------
+
+  28 |
+
+  29 | >>> RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+
+  30 | >>>     pnpm install --frozen-lockfile
+
+  31 |
+
+--------------------
+
+target api: failed to solve: process "/bin/sh -c pnpm install --frozen-lockfile" did not complete successfully: exit code: 1

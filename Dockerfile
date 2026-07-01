@@ -27,7 +27,8 @@ COPY artifacts/api-server/package.json  artifacts/api-server/
 COPY artifacts/ata-platform/package.json artifacts/ata-platform/
 
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+    pnpm install --frozen-lockfile \
+      --config.onlyBuiltDependencies=bcrypt,esbuild,@swc/core,msw,unrs-resolver
 
 # -----------------------------------------------------------------------------
 # Stage 3 — builder: compile API server + frontend
