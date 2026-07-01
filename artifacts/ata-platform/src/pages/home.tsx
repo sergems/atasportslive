@@ -93,6 +93,10 @@ const sliderStyles = `
     from { transform: translateY(14px); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
   }
+  @keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+  }
 `;
 
 function HeroSlider({ slides }: { slides: Slide[] }) {
@@ -215,15 +219,19 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
           )}
 
           {slide.buttonText && slide.buttonUrl && (
-            <div className="mt-4 sm:mt-8 flex flex-row items-center justify-center gap-3 sm:gap-x-6">
+            <div className="mt-4 sm:mt-8 flex flex-col items-center gap-3">
+              <Link href="/streams" className="flex items-center gap-2 group">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600" />
+                </span>
+                <span className="text-red-500 font-bold tracking-widest uppercase text-sm group-hover:text-red-400 transition-colors" style={{ animation: 'livePulse 2s ease-in-out infinite' }}>
+                  Live Stream
+                </span>
+              </Link>
               <Link href={slide.buttonUrl}>
                 <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 sm:px-8 shadow-lg shadow-amber-500/20 transition-all hover:scale-105">
                   {slide.buttonText}
-                </Button>
-              </Link>
-              <Link href="/streams">
-                <Button size="sm" variant="outline" className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10 transition-all hover:scale-105 px-4 sm:px-6">
-                  <Play className="mr-2 h-4 w-4" /> Live Streams
                 </Button>
               </Link>
             </div>
@@ -287,15 +295,19 @@ function DefaultHero() {
         <p className="mt-4 sm:mt-6 max-w-2xl text-sm sm:text-xl text-slate-300 drop-shadow">
           Watch live grassroots Pool and Boxing matches. Bet peer-to-peer in real-time. High stakes, zero clutter.
         </p>
-        <div className="mt-5 sm:mt-8 flex flex-row items-center justify-center gap-3 sm:gap-x-6">
+        <div className="mt-5 sm:mt-8 flex flex-col items-center gap-3">
+          <Link href="/streams" className="flex items-center gap-2 group">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600" />
+            </span>
+            <span className="text-red-500 font-bold tracking-widest uppercase text-sm group-hover:text-red-400 transition-colors" style={{ animation: 'livePulse 2s ease-in-out infinite' }}>
+              Live Stream
+            </span>
+          </Link>
           <Link href="/register">
             <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 sm:px-8 shadow-lg shadow-amber-500/20 transition-all hover:scale-105">
               Join the movement
-            </Button>
-          </Link>
-          <Link href="/streams">
-            <Button size="sm" variant="outline" className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10 transition-all hover:scale-105 px-4 sm:px-6">
-              <Play className="mr-2 h-4 w-4" /> Live Streams
             </Button>
           </Link>
         </div>
