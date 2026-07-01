@@ -40,6 +40,13 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
     return;
   }
 
+  // Block betting once the event start time has passed
+  const eventStart = new Date(`${game.eventDate}T${game.eventTime || "00:00"}:00`);
+  if (new Date() >= eventStart) {
+    res.status(400).json({ error: "Betting is closed — this event has already started" });
+    return;
+  }
+
   const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
   if (!wallet || parseFloat(wallet.availableBalance as string) < stake) {
     res.status(400).json({ error: "Insufficient wallet balance" });

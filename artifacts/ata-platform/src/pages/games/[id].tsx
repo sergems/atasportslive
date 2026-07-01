@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Users, TrendingUp, Clock, AlertCircle, ChevronLeft, CalendarClock, MapPin, Swords } from 'lucide-react';
+import { Trophy, Users, TrendingUp, Clock, AlertCircle, ChevronLeft, CalendarClock, MapPin, Swords, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -50,6 +50,10 @@ export default function GameDetail() {
   const { data: game, isLoading } = useGetGame(gameId);
   const { data: betsData } = useListGameBets(gameId);
   const placeBet = usePlaceBet();
+
+  const hasStarted = game
+    ? new Date() >= new Date(`${game.eventDate}T${(game as any).eventTime || '00:00'}`)
+    : false;
 
   const isContainer = CONTAINER_TYPES.has((game as any)?.type ?? '');
 
@@ -206,6 +210,19 @@ export default function GameDetail() {
         </div>
       </Card>
 
+      {/* Betting closed banner — shown for non-container matches that have started but aren't settled */}
+      {!isContainer && hasStarted && game.status !== 'completed' && (
+        <div className="flex items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-5 py-4">
+          <Lock className="h-5 w-5 text-orange-400 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-orange-300">Betting is closed for this event</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              This match has started. All existing matched bets will be settled once the result is confirmed by an admin.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Competition / Tour: show child matches to bet on */}
       {isContainer ? (
         <div className="space-y-4">
@@ -260,7 +277,7 @@ export default function GameDetail() {
       ) : (
         /* Single match: bet form + stats */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {game.status === 'upcoming' && (
+          {game.status === 'upcoming' && !hasStarted && (
             <Card className="lg:col-span-2 bg-slate-900 border-primary/20">
               <CardHeader>
                 <CardTitle className="text-white">Place Your Bet</CardTitle>

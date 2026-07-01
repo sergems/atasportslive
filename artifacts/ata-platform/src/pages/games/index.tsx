@@ -4,7 +4,7 @@ import { useListGames } from '@workspace/api-client-react';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Trophy, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { MapPin, Trophy, TrendingUp, CheckCircle2, Lock, Hourglass } from 'lucide-react';
 
 function FlagImg({ code, className = '' }: { code?: string | null; className?: string }) {
   if (!code || code.trim().length < 2) return null;
@@ -53,7 +53,12 @@ function StatusPill({ status }: { status: string }) {
   return <span className="rounded bg-slate-700/40 border border-slate-700/60 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 capitalize">{status}</span>;
 }
 
-function GameCard({ game, competitionName, showResult }: { game: Game; competitionName?: string | null; showResult?: boolean }) {
+function gameHasStarted(game: Game): boolean {
+  const timeStr = game.eventTime || '00:00';
+  return new Date() >= new Date(`${game.eventDate}T${timeStr}`);
+}
+
+function GameCard({ game, competitionName, showResult, locked }: { game: Game; competitionName?: string | null; showResult?: boolean; locked?: boolean }) {
   const sportColor: Record<string, string> = {
     pool: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
     boxing: 'text-red-400 bg-red-500/10 border-red-500/20',
@@ -65,7 +70,7 @@ function GameCard({ game, competitionName, showResult }: { game: Game; competiti
 
   return (
     <Link href={`/games/${game.id}`}>
-      <div className="group relative overflow-hidden rounded-lg border border-slate-800 bg-slate-900/80 hover:border-amber-500/40 hover:bg-slate-900 transition-all duration-200 cursor-pointer">
+      <div className={`group relative overflow-hidden rounded-lg border bg-slate-900/80 transition-all duration-200 cursor-pointer ${locked ? 'border-slate-700/60 opacity-80 hover:border-slate-600' : 'border-slate-800 hover:border-amber-500/40 hover:bg-slate-900'}`}>
         {/* Faded ATA watermark */}
         <img
           src="/ata-logo.png"
@@ -73,6 +78,12 @@ function GameCard({ game, competitionName, showResult }: { game: Game; competiti
           aria-hidden
           className="pointer-events-none absolute right-1 bottom-1 h-14 w-14 object-contain opacity-[0.045] select-none"
         />
+        {/* Lock badge for started events */}
+        {locked && (
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded bg-slate-800/90 border border-slate-700 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
+            <Lock className="h-2.5 w-2.5" /> BETTING CLOSED
+          </div>
+        )}
 
         <div className="relative p-3 flex flex-col gap-2">
           {/* Competition label */}
@@ -144,7 +155,7 @@ function GameCard({ game, competitionName, showResult }: { game: Game; competiti
   );
 }
 
-type Tab = 'betting' | 'results';
+type Tab = 'betting' | 'awaiting' | 'results';
 
 export default function Games() {
   const [tab, setTab] = useState<Tab>('betting');
@@ -175,10 +186,13 @@ export default function Games() {
   });
 
   const singleMatches = allGames.filter((g) => !containerTypes.has(g.type ?? ''));
-  const bettingGames = singleMatches.filter((g) => g.status === 'upcoming');
-  const resultGames = singleMatches.filter((g) => g.status === 'live' || g.status === 'completed');
+  const bettingGames = singleMatches.filter((g) => g.status === 'upcoming' && !gameHasStarted(g));
+  const awaitingGames = singleMatches.filter(
+    (g) => (g.status === 'upcoming' || g.status === 'live') && gameHasStarted(g),
+  );
+  const resultGames = singleMatches.filter((g) => g.status === 'completed');
 
-  const displayed = tab === 'betting' ? bettingGames : resultGames;
+  const displayed = tab === 'betting' ? bettingGames : tab === 'awaiting' ? awaitingGames : resultGames;
 
   return (
     <div className="space-y-6">
@@ -204,10 +218,10 @@ export default function Games() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-slate-800">
+      <div className="flex items-center gap-1 border-b border-slate-800 overflow-x-auto">
         <button
           onClick={() => setTab('betting')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
             tab === 'betting'
               ? 'border-amber-400 text-amber-400'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -222,8 +236,24 @@ export default function Games() {
           )}
         </button>
         <button
+          onClick={() => setTab('awaiting')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+            tab === 'awaiting'
+              ? 'border-orange-400 text-orange-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Hourglass className="h-4 w-4" />
+          Awaiting Settlement
+          {awaitingGames.length > 0 && (
+            <span className="rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center">
+              {awaitingGames.length}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setTab('results')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
             tab === 'results'
               ? 'border-teal-400 text-teal-400'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -252,11 +282,16 @@ export default function Games() {
                 game={game}
                 competitionName={game.parentId ? containerMap.get(game.parentId) : null}
                 showResult={tab === 'results'}
+                locked={tab === 'awaiting'}
               />
             ))
           : (
             <div className="col-span-full py-16 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl text-sm">
-              {tab === 'betting' ? 'No upcoming games available for betting.' : 'No results yet.'}
+              {tab === 'betting'
+                ? 'No upcoming games available for betting.'
+                : tab === 'awaiting'
+                ? 'No events are currently awaiting settlement.'
+                : 'No results yet.'}
             </div>
           )}
       </div>
