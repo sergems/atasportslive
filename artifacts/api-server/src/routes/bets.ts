@@ -35,8 +35,8 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
   }
 
   const [game] = await db.select().from(gamesTable).where(eq(gamesTable.id, gameId)).limit(1);
-  if (!game || !["upcoming", "live"].includes(game.status)) {
-    res.status(400).json({ error: "Game not available for betting" });
+  if (!game || game.status !== "upcoming") {
+    res.status(400).json({ error: "Betting is only available for upcoming events" });
     return;
   }
 
