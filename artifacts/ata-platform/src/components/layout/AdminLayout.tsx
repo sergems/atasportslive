@@ -58,11 +58,30 @@ function useApprovedWithdrawalCount() {
   });
 }
 
+function useNeedsSettlementCount() {
+  const token = useAuthStore.getState().token;
+  return useQuery({
+    queryKey: ['admin-settlement-count'],
+    queryFn: async () => {
+      if (!token) return 0;
+      const res = await fetch('/api/games?status=live&limit=100', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      const games: any[] = data.games || [];
+      return games.filter((g) => g.matchedBetsCount > 0).length;
+    },
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+}
+
 const navItems = [
   { href: '/admin',                  label: 'Dashboard',     icon: LayoutDashboard, exact: true },
   { href: '/admin/slides',           label: 'Hero Slides',   icon: GalleryHorizontalEnd },
   { href: '/admin/streams',          label: 'Streams',       icon: Radio },
-  { href: '/admin/games',            label: 'Games',         icon: Trophy },
+  { href: '/admin/games',            label: 'Games',         icon: Trophy, settleBadge: true },
   { href: '/admin/bets',             label: 'Bets',          icon: Swords },
   { href: '/admin/highlights',       label: 'Highlights',    icon: Clapperboard },
   { href: '/admin/announcements',    label: 'Announcements', icon: Megaphone },
@@ -81,15 +100,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { data: pendingCount = 0 } = usePendingWithdrawalCount();
   const { data: approvedCount = 0 } = useApprovedWithdrawalCount();
+  const { data: settlementCount = 0 } = useNeedsSettlementCount();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location === href : location.startsWith(href);
 
   const NavContent = ({ onNav }: { onNav?: () => void }) => (
     <nav className="flex flex-col gap-1">
-      {navItems.map(({ href, label, icon: Icon, exact, badge }) => {
+      {navItems.map(({ href, label, icon: Icon, exact, badge, settleBadge }) => {
         const active = isActive(href, exact);
         const isWithdrawals = badge;
+        const isGames = settleBadge;
         return (
           <Link key={href} href={href} onClick={onNav}>
             <div
@@ -101,6 +122,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             >
               <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-teal-400' : ''}`} />
               <span className="flex-1">{label}</span>
+              {isGames && settlementCount > 0 && (
+                <span
+                  title={`${settlementCount} live game${settlementCount !== 1 ? 's' : ''} need${settlementCount === 1 ? 's' : ''} settling`}
+                  className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none animate-pulse"
+                >
+                  {settlementCount > 99 ? '99+' : settlementCount}
+                </span>
+              )}
               {isWithdrawals && (
                 <span className="flex items-center gap-1">
                   {pendingCount > 0 && (
