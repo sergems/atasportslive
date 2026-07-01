@@ -61,6 +61,11 @@ function outcomeLabel(outcome: string, game: any): string {
   return outcome?.replace(/_/g, ' ') ?? '';
 }
 
+function displayName(user: any): string {
+  if (!user) return '…';
+  return user.fullName?.trim() || user.email?.split('@')[0] || `ID:${user.id}`;
+}
+
 export default function AdminBets() {
   useEffect(() => { document.title = 'Bet Management - Admin'; }, []);
 
@@ -108,6 +113,9 @@ export default function AdminBets() {
 
   const bets = data?.bets || [];
   const totalPages = data ? Math.ceil(data.total / 50) : 1;
+
+  // Build a map of bet id → bet so we can look up the matched opponent
+  const betMap = new Map(bets.map((b: any) => [b.id, b]));
 
   const filtered = search.trim()
     ? bets.filter((b: any) => {
@@ -205,11 +213,27 @@ export default function AdminBets() {
                         <span className="text-[10px] text-slate-600">#{bet.id}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-white font-medium truncate max-w-[180px]">
-                          {user
-                            ? (user.fullName ? `${user.fullName} (${user.email})` : user.email)
-                            : `Unknown user (ID: ${bet.userId})`}
-                        </span>
+                        {(() => {
+                          const opponent = bet.matchedBetId ? betMap.get(bet.matchedBetId) : null;
+                          const opponentUser = opponent ? userMap.get(opponent.userId) : null;
+                          const thisWon = bet.status === 'won';
+                          const opponentWon = bet.status === 'lost';
+                          return (
+                            <span className="text-sm flex items-center gap-1 flex-wrap">
+                              <span className={thisWon ? 'text-white font-bold' : 'text-slate-300'}>
+                                {displayName(user)}
+                              </span>
+                              {opponent && (
+                                <>
+                                  <span className="text-slate-600 text-xs">vs</span>
+                                  <span className={opponentWon ? 'text-white font-bold' : 'text-slate-300'}>
+                                    {displayName(opponentUser)}
+                                  </span>
+                                </>
+                              )}
+                            </span>
+                          );
+                        })()}
                         <span className="text-xs text-slate-500">
                           · {outcomeLabel(bet.outcome, gameMap.get(bet.gameId))}
                         </span>
