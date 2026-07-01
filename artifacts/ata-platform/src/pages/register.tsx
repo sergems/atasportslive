@@ -13,6 +13,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { GoogleLogin } from '@react-oauth/google';
+import { Gift } from 'lucide-react';
+
+/** Read ?ref=CODE from the URL at page load. */
+function getReferralCodeFromUrl(): string | null {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('ref');
+    return code ? code.toUpperCase().trim() : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function Register() {
   const { isAuthenticated, login } = useAuth();
@@ -21,6 +33,7 @@ export default function Register() {
   const registerMutation = useRegister();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  const [referralCode] = useState<string | null>(() => getReferralCodeFromUrl());
 
   const form = useForm({
     resolver: zodResolver(registerSchema),
@@ -41,26 +54,32 @@ export default function Register() {
 
   const onSubmit = (data: any) => {
     setGoogleError(null);
-    registerMutation.mutate({ data }, {
-      onSuccess: (res: any) => {
-        login(res.accessToken, res.user);
-        toast.success('Registration successful');
-        setLocation('/dashboard');
-      },
-      onError: (err: any) => {
-        toast.error('Registration failed', { description: err?.message || 'Something went wrong' });
+    registerMutation.mutate(
+      { data: { ...data, ...(referralCode ? { referralCode } : {}) } },
+      {
+        onSuccess: (res: any) => {
+          login(res.accessToken, res.user);
+          toast.success('Registration successful');
+          setLocation('/dashboard');
+        },
+        onError: (err: any) => {
+          toast.error('Registration failed', { description: err?.message || 'Something went wrong' });
+        },
       }
-    });
+    );
   };
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setGoogleLoading(true);
     setGoogleError(null);
     try {
+      const body: Record<string, string> = { credential: credentialResponse.credential };
+      if (referralCode) body.referralCode = referralCode;
+
       const res = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: credentialResponse.credential }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Google sign-in failed');
@@ -83,6 +102,14 @@ export default function Register() {
           <CardDescription className="text-muted-foreground">
             Join the ultimate sports streaming & betting platform
           </CardDescription>
+          {referralCode && (
+            <div className="flex items-center justify-center gap-1.5 mt-1 rounded-lg bg-teal-500/10 border border-teal-500/20 px-3 py-1.5">
+              <Gift className="h-3.5 w-3.5 text-teal-400 shrink-0" />
+              <span className="text-xs text-teal-300 font-medium">
+                Referral code <span className="font-mono font-bold">{referralCode}</span> applied
+              </span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {clientId && (

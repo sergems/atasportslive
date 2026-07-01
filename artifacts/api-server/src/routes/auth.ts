@@ -13,6 +13,31 @@ import {
 
 const router = Router();
 
+/** Generate a unique 8-char alphanumeric referral code (no confusable chars). */
+function generateReferralCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+/** Generate a guaranteed-unique referral code, retrying on collision. */
+async function createUniqueReferralCode(): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const code = generateReferralCode();
+    const existing = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.referralCode, code))
+      .limit(1);
+    if (existing.length === 0) return code;
+  }
+  // Fallback: prefix with timestamp to guarantee uniqueness
+  return "R" + Date.now().toString(36).toUpperCase().slice(-7);
+}
+
 function userPayload(user: typeof usersTable.$inferSelect) {
   return {
     id: user.id,
@@ -24,12 +49,13 @@ function userPayload(user: typeof usersTable.$inferSelect) {
     avatarUrl: user.avatarUrl,
     googleLinked: !!user.googleId,
     hasPassword: !!user.passwordHash,
+    referralCode: user.referralCode ?? null,
     createdAt: user.createdAt,
   };
 }
 
 router.post("/register", async (req, res): Promise<void> => {
-  const { email, password, fullName, phone } = req.body;
+  const { email, password, fullName, phone, referralCode } = req.body;
   if (!email || !password || !fullName) {
     res.status(400).json({ error: "email, password, fullName required" });
     return;
@@ -39,10 +65,32 @@ router.post("/register", async (req, res): Promise<void> => {
     res.status(409).json({ error: "Email already registered" });
     return;
   }
+
+  // Resolve referrer if a code was provided
+  let referredById: number | null = null;
+  if (referralCode) {
+    const [referrer] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.referralCode, (referralCode as string).toUpperCase().trim()))
+      .limit(1);
+    if (referrer) referredById = referrer.id;
+  }
+
   const passwordHash = await bcrypt.hash(password, 10);
+  const newReferralCode = await createUniqueReferralCode();
+
   const [user] = await db
     .insert(usersTable)
-    .values({ email, passwordHash, fullName, phone: phone || null, role: "user" })
+    .values({
+      email,
+      passwordHash,
+      fullName,
+      phone: phone || null,
+      role: "user",
+      referralCode: newReferralCode,
+      referredBy: referredById,
+    })
     .returning();
   await db.insert(walletsTable).values({ userId: user.id });
   const sv = generateSessionToken();
@@ -168,7 +216,7 @@ router.get("/google/config", (_req, res): void => {
 });
 
 router.post("/google", async (req, res): Promise<void> => {
-  const { credential } = req.body as { credential?: string };
+  const { credential, referralCode } = req.body as { credential?: string; referralCode?: string };
   if (!credential) {
     res.status(400).json({ error: "credential required" });
     return;
@@ -196,6 +244,18 @@ router.post("/google", async (req, res): Promise<void> => {
     }
 
     if (!user) {
+      // Resolve referrer for new Google sign-ups
+      let referredById: number | null = null;
+      if (referralCode) {
+        const [referrer] = await db
+          .select({ id: usersTable.id })
+          .from(usersTable)
+          .where(eq(usersTable.referralCode, (referralCode as string).toUpperCase().trim()))
+          .limit(1);
+        if (referrer) referredById = referrer.id;
+      }
+
+      const newReferralCode = await createUniqueReferralCode();
       const [created] = await db
         .insert(usersTable)
         .values({
@@ -205,6 +265,8 @@ router.post("/google", async (req, res): Promise<void> => {
           avatarUrl: picture || null,
           googleId: payload.sub,
           role: "user",
+          referralCode: newReferralCode,
+          referredBy: referredById,
         })
         .returning();
       user = created;
@@ -292,10 +354,16 @@ router.patch("/password", authMiddleware, async (req: AuthRequest, res): Promise
 });
 
 router.get("/me", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
+  let [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
+  }
+  // Lazy-generate a referral code for legacy users that don't have one
+  if (!user.referralCode) {
+    const code = await createUniqueReferralCode();
+    await db.update(usersTable).set({ referralCode: code }).where(eq(usersTable.id, user.id));
+    user = { ...user, referralCode: code };
   }
   res.json(userPayload(user));
 });

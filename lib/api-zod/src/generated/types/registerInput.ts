@@ -11,4 +11,6 @@ export interface RegisterInput {
   password: string;
   fullName: string;
   phone: string;
+  /** Optional referral code from an existing user */
+  referralCode?: string;
 }

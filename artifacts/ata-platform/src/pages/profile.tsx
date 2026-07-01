@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { CheckCircle, Mail, Phone, User, Link2, Unlink, KeyRound } from 'lucide-react';
+import { CheckCircle, Mail, Phone, User, Link2, Unlink, KeyRound, Gift, Copy, Check } from 'lucide-react';
 
 export default function Profile() {
   useSEO({ title: 'Profile Settings', path: '/profile', noindex: true });
@@ -125,6 +125,17 @@ export default function Profile() {
     }
   };
 
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyReferral = () => {
+    const link = `${window.location.origin}/register?ref=${user?.referralCode}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      toast.success('Referral link copied!');
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   if (!user) return null;
 
   const getToken = () => {
@@ -195,6 +206,48 @@ export default function Profile() {
             )}
           </CardContent>
         </Card>
+
+        {/* Refer & Earn */}
+        {user.referralCode && (
+          <Card className="bg-card/50 backdrop-blur-sm border-teal-500/20">
+            <CardHeader>
+              <CardTitle className="text-white text-lg flex items-center gap-2">
+                <Gift className="h-4 w-4 text-teal-400" /> Refer &amp; Earn
+              </CardTitle>
+              <CardDescription>
+                Share your link — earn <span className="text-teal-400 font-semibold">5% bonus</span> into your bonus wallet every time a referred user buys their first stream.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Referral code */}
+              <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900 border border-slate-700 px-3 py-2">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Your code</p>
+                  <p className="font-mono text-lg font-bold text-teal-400 tracking-widest">{user.referralCode}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10 h-8 gap-1.5 shrink-0"
+                  onClick={handleCopyReferral}
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? 'Copied!' : 'Copy Link'}
+                </Button>
+              </div>
+              {/* Referral link preview */}
+              <div className="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Your referral link</p>
+                <p className="text-xs text-slate-400 font-mono break-all">
+                  {window.location.origin}/register?ref={user.referralCode}
+                </p>
+              </div>
+              <p className="text-xs text-slate-500">
+                Bonus is credited once the referred user makes their first paid stream purchase. Bonus expires after 90 days.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sign-in methods */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">

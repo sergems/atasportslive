@@ -18,5 +18,10 @@ export interface User {
   status: UserStatus;
   /** @nullable */
   avatarUrl?: string | null;
+  /**
+     * The user's unique referral code
+     * @nullable
+     */
+  referralCode?: string | null;
   createdAt: string;
 }

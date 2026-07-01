@@ -1170,6 +1170,9 @@ components:
           type: string
         phone:
           type: string
+        referralCode:
+          type: string
+          description: Optional referral code from an existing user
 
     LoginInput:
       type: object
@@ -1219,6 +1222,9 @@ components:
           enum: [active, suspended]
         avatarUrl:
           type: ["string", "null"]
+        referralCode:
+          type: ["string", "null"]
+          description: The user's unique referral code
         createdAt:
           type: string
 

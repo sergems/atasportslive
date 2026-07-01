@@ -23,7 +23,8 @@ export const RegisterBody = zod.object({
   "email": zod.string(),
   "password": zod.string(),
   "fullName": zod.string(),
-  "phone": zod.string()
+  "phone": zod.string(),
+  "referralCode": zod.string().optional().describe('Optional referral code from an existing user')
 })
 
 
@@ -46,6 +47,7 @@ export const LoginResponse = zod.object({
   "role": zod.enum(['guest', 'user', 'moderator', 'admin']),
   "status": zod.enum(['active', 'suspended']),
   "avatarUrl": zod.string().nullish(),
+  "referralCode": zod.string().nullish().describe('The user\'s unique referral code'),
   "createdAt": zod.string()
 })
 })
@@ -69,6 +71,7 @@ export const RefreshTokenResponse = zod.object({
   "role": zod.enum(['guest', 'user', 'moderator', 'admin']),
   "status": zod.enum(['active', 'suspended']),
   "avatarUrl": zod.string().nullish(),
+  "referralCode": zod.string().nullish().describe('The user\'s unique referral code'),
   "createdAt": zod.string()
 })
 })
@@ -93,6 +96,7 @@ export const GetMeResponse = zod.object({
   "role": zod.enum(['guest', 'user', 'moderator', 'admin']),
   "status": zod.enum(['active', 'suspended']),
   "avatarUrl": zod.string().nullish(),
+  "referralCode": zod.string().nullish().describe('The user\'s unique referral code'),
   "createdAt": zod.string()
 })
 
@@ -119,6 +123,7 @@ export const ListUsersResponse = zod.object({
   "role": zod.enum(['guest', 'user', 'moderator', 'admin']),
   "status": zod.enum(['active', 'suspended']),
   "avatarUrl": zod.string().nullish(),
+  "referralCode": zod.string().nullish().describe('The user\'s unique referral code'),
   "createdAt": zod.string()
 })),
   "total": zod.number(),
@@ -142,6 +147,7 @@ export const GetUserResponse = zod.object({
   "role": zod.enum(['guest', 'user', 'moderator', 'admin']),
   "status": zod.enum(['active', 'suspended']),
   "avatarUrl": zod.string().nullish(),
+  "referralCode": zod.string().nullish().describe('The user\'s unique referral code'),
   "createdAt": zod.string()
 })
 
@@ -167,6 +173,7 @@ export const UpdateUserResponse = zod.object({
   "role": zod.enum(['guest', 'user', 'moderator', 'admin']),
   "status": zod.enum(['active', 'suspended']),
   "avatarUrl": zod.string().nullish(),
+  "referralCode": zod.string().nullish().describe('The user\'s unique referral code'),
   "createdAt": zod.string()
 })
 
@@ -190,6 +197,7 @@ export const UpdateUserRoleResponse = zod.object({
   "role": zod.enum(['guest', 'user', 'moderator', 'admin']),
   "status": zod.enum(['active', 'suspended']),
   "avatarUrl": zod.string().nullish(),
+  "referralCode": zod.string().nullish().describe('The user\'s unique referral code'),
   "createdAt": zod.string()
 })
 
@@ -214,6 +222,7 @@ export const SuspendUserResponse = zod.object({
   "role": zod.enum(['guest', 'user', 'moderator', 'admin']),
   "status": zod.enum(['active', 'suspended']),
   "avatarUrl": zod.string().nullish(),
+  "referralCode": zod.string().nullish().describe('The user\'s unique referral code'),
   "createdAt": zod.string()
 })
 

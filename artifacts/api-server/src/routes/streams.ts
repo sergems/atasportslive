@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, streamsTable, streamAccessTable, walletsTable, transactionsTable, gamesTable, bonusTransactionsTable } from "@workspace/db";
-import { eq, desc, sql, and, gt, ne, or, gte } from "drizzle-orm";
+import { db, streamsTable, streamAccessTable, walletsTable, transactionsTable, gamesTable, bonusTransactionsTable, usersTable } from "@workspace/db";
+import { eq, desc, sql, and, gt, ne, or, gte, isNull } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
 
@@ -204,6 +204,17 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
     return;
   }
 
+  // Check prior PAID stream_access count BEFORE inserting — determines if this is the first paid purchase
+  const [{ priorCount }] = await db
+    .select({ priorCount: sql<number>`count(*)` })
+    .from(transactionsTable)
+    .where(and(
+      eq(transactionsTable.userId, userId),
+      eq(transactionsTable.type, "stream_access"),
+      gt(transactionsTable.amount, "0"),
+    ));
+  const isFirstPurchase = Number(priorCount) === 0;
+
   // Use bonus first, then cash for remainder
   const bonusUsed = Math.min(bonusAvailable, price);
   const cashUsed = Math.round((price - bonusUsed) * 100) / 100;
@@ -249,6 +260,66 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
 
   const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   await db.insert(streamAccessTable).values({ userId, streamId, grantedAt: now, expiresAt });
+
+  // ── Referral bonus: 5% of stream price to referrer on first paid purchase ──
+  if (isFirstPurchase) {
+    const [userRecord] = await db
+      .select({ referredBy: usersTable.referredBy, fullName: usersTable.fullName, email: usersTable.email })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    if (userRecord?.referredBy) {
+      const bonusAmount = Math.round(price * 0.05 * 100) / 100;
+      if (bonusAmount > 0) {
+        const [referrerWallet] = await db
+          .select()
+          .from(walletsTable)
+          .where(eq(walletsTable.userId, userRecord.referredBy))
+          .limit(1);
+
+        if (referrerWallet) {
+          // Idempotency guard — ensure we haven't already credited this referral
+          const referralRef = `REF-USER-${userId}`;
+          const [alreadyCredited] = await db
+            .select({ id: bonusTransactionsTable.id })
+            .from(bonusTransactionsTable)
+            .where(and(
+              eq(bonusTransactionsTable.userId, userRecord.referredBy),
+              eq(bonusTransactionsTable.reference, referralRef),
+            ))
+            .limit(1);
+
+          if (!alreadyCredited) {
+            const referrerBonusBefore = parseFloat(referrerWallet.bonusBalance as string || "0");
+            const referrerBonusAfter = referrerBonusBefore + bonusAmount;
+
+            await db.update(walletsTable).set({
+              bonusBalance: sql`bonus_balance + ${bonusAmount}`,
+            }).where(eq(walletsTable.userId, userRecord.referredBy));
+
+            await db.insert(bonusTransactionsTable).values({
+              userId: userRecord.referredBy,
+              type: "earned",
+              amount: bonusAmount.toFixed(2),
+              balanceBefore: referrerBonusBefore.toFixed(2),
+              balanceAfter: referrerBonusAfter.toFixed(2),
+              reference: referralRef,
+              description: `5% referral bonus — ${userRecord.fullName || userRecord.email} purchased their first stream`,
+              expiresAt: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000), // 90-day expiry
+            });
+
+            await notify(
+              userRecord.referredBy,
+              "general",
+              "Referral Bonus Earned! 🎉",
+              `You earned a ${bonusAmount.toFixed(2)} bonus — ${userRecord.fullName || "Your referral"} just purchased their first stream!`
+            );
+          }
+        }
+      }
+    }
+  }
 
   // Low balance check
   const [updatedWallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);

@@ -18,6 +18,8 @@ export interface RegisterInput {
   password: string;
   fullName: string;
   phone: string;
+  /** Optional referral code from an existing user */
+  referralCode?: string;
 }
 
 export interface LoginInput {
@@ -57,6 +59,11 @@ export interface User {
   status: UserStatus;
   /** @nullable */
   avatarUrl?: string | null;
+  /**
+     * The user's unique referral code
+     * @nullable
+     */
+  referralCode?: string | null;
   createdAt: string;
 }
 
