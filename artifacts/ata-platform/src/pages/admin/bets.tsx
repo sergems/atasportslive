@@ -46,13 +46,26 @@ const STATUS_COLORS: Record<string, string> = {
   refunded:  'bg-blue-500/20 text-blue-400 border-blue-500/30',
 };
 
-const FILTERS = ['all', 'pending', 'matched', 'won', 'lost', 'cancelled', 'refunded'];
+const FILTERS = ['pending', 'matched', 'won', 'lost', 'cancelled', 'refunded'];
+
+async function fetchGames() {
+  const res = await fetch('/api/games?limit=500', { headers: authHeaders() });
+  if (!res.ok) return { games: [] };
+  return res.json();
+}
+
+function outcomeLabel(outcome: string, game: any): string {
+  if (!game) return outcome?.replace(/_/g, ' ') ?? '';
+  if (outcome === 'player_a_wins') return `${game.playerA} Wins`;
+  if (outcome === 'player_b_wins') return `${game.playerB} Wins`;
+  return outcome?.replace(/_/g, ' ') ?? '';
+}
 
 export default function AdminBets() {
   useEffect(() => { document.title = 'Bet Management - Admin'; }, []);
 
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('pending');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [cancelConfirm, setCancelConfirm] = useState<number | null>(null);
@@ -68,8 +81,17 @@ export default function AdminBets() {
     staleTime: 60_000,
   });
 
+  const { data: gamesData } = useQuery({
+    queryKey: ['admin-games-list'],
+    queryFn: fetchGames,
+    staleTime: 60_000,
+  });
+
   const userList: any[] = Array.isArray(usersData) ? usersData : (usersData as any)?.users || [];
   const userMap = new Map(userList.map((u: any) => [u.id, u]));
+
+  const gameList: any[] = (gamesData as any)?.games || [];
+  const gameMap = new Map(gameList.map((g: any) => [g.id, g]));
 
   const cancel = useMutation({
     mutationFn: (id: number) => cancelBet(id),
@@ -184,10 +206,12 @@ export default function AdminBets() {
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm text-white font-medium truncate max-w-[180px]">
-                          {user ? `${user.fullName} (${user.email})` : `User #${bet.userId}`}
+                          {user
+                            ? (user.fullName ? `${user.fullName} (${user.email})` : user.email)
+                            : `Unknown user (ID: ${bet.userId})`}
                         </span>
-                        <span className="text-xs text-slate-500 capitalize">
-                          · {bet.outcome?.replace(/_/g, ' ')}
+                        <span className="text-xs text-slate-500">
+                          · {outcomeLabel(bet.outcome, gameMap.get(bet.gameId))}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">

@@ -80,9 +80,9 @@ function useNeedsSettlementCount() {
 const navItems = [
   { href: '/admin',                  label: 'Dashboard',     icon: LayoutDashboard, exact: true },
   { href: '/admin/slides',           label: 'Hero Slides',   icon: GalleryHorizontalEnd },
-  { href: '/admin/streams',          label: 'Streams',       icon: Radio },
-  { href: '/admin/games',            label: 'Games',         icon: Trophy, settleBadge: true },
-  { href: '/admin/bets',             label: 'Bets',          icon: Swords },
+  { href: '/admin/streams',          label: 'Livestream',    icon: Radio },
+  { href: '/admin/games',            label: 'Bets',          icon: Trophy, settleBadge: true },
+  { href: '/admin/bets',             label: 'Manage Bets',   icon: Swords },
   { href: '/admin/highlights',       label: 'Highlights',    icon: Clapperboard },
   { href: '/admin/announcements',    label: 'Announcements', icon: Megaphone },
   { href: '/admin/users',            label: 'Users',         icon: Users },
