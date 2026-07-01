@@ -1,0 +1,44 @@
+ => ERROR [api builder 4/4] RUN PORT=3000 BASE_PATH=/ pnpm --filter @workspace/ata-pla  4.4s
+------
+ > [api builder 4/4] RUN PORT=3000 BASE_PATH=/ pnpm --filter @workspace/ata-platform run build:
+0.636
+0.636 > @workspace/ata-platform@0.0.0 build /app/artifacts/ata-platform
+0.636 > vite build --config vite.config.ts
+0.636
+1.102 vite v7.3.3 building client environment for production...
+1.244 transforming...
+4.261 ✓ 1113 modules transformed.
+4.266 ✗ Build failed in 3.12s
+4.266 error during build:
+4.266 [vite:asset] Could not load /app/attached_assets/6491beebed5bfcd9b9608baf_tigo_pesa_1782470222582.webp (imported by src/pages/home.tsx): ENOENT: no such file or directory, open '/app/attached_assets/6491beebed5bfcd9b9608baf_tigo_pesa_1782470222582.webp'
+4.266     at async open (node:internal/fs/promises:640:25)
+4.266     at async Object.readFile (node:internal/fs/promises:1290:14)
+4.266     at async fileToBuiltUrl (file:///app/node_modules/.pnpm/vite@7.3.3_@types+node@25.6.2_jiti@2.7.0_lightningcss@1.32.0_tsx@4.21.0_yaml@2.8.4/node_modules/vite/dist/node/chunks/config.js:8793:18)
+4.266     at async Object.handler (file:///app/node_modules/.pnpm/vite@7.3.3_@types+node@25.6.2_jiti@2.7.0_lightningcss@1.32.0_tsx@4.21.0_yaml@2.8.4/node_modules/vite/dist/node/chunks/config.js:8687:17)
+4.266     at async PluginDriver.hookFirstAndGetPlugin (file:///app/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/es/shared/node-entry.js:22869:28)
+4.266     at async file:///app/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/es/shared/node-entry.js:21853:33
+4.266     at async Queue.work (file:///app/node_modules/.pnpm/rollup@4.60.3/node_modules/rollup/dist/es/shared/node-entry.js:23097:32)
+4.372 /app/artifacts/ata-platform:
+4.372  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/ata-platform@0.0.0 build: `vite build --config vite.config.ts`
+4.372 Exit status 1
+------
+[+] build 0/2
+ ⠙ Image ata-api   Building                                                             34.1s
+ ⠙ Image ata-nginx Building                                                             34.1s
+Dockerfile:45
+
+--------------------
+
+  43 |     # Build frontend (Vite → artifacts/ata-platform/dist/public)
+
+  44 |     # PORT and BASE_PATH are validated at vite.config.ts load time even for builds
+
+  45 | >>> RUN PORT=3000 BASE_PATH=/ pnpm --filter @workspace/ata-platform run build
+
+  46 |
+
+  47 |     # -----------------------------------------------------------------------------
+
+--------------------
+
+target api: failed to solve: process "/bin/sh -c PORT=3000 BASE_PATH=/ pnpm --filter @workspace/ata-platform run build" did not complete successfully: exit code: 1
