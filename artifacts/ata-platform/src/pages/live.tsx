@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
@@ -534,11 +534,13 @@ function CommentSection({
   token,
   userId,
   isAuthenticated,
+  onReaction,
 }: {
   streamId: number | undefined;
   token: string | null;
   userId: number | undefined;
   isAuthenticated: boolean;
+  onReaction?: (emoji: string) => void;
 }) {
   const [comments, setComments] = useState<LiveComment[]>([]);
   const [input, setInput] = useState('');
@@ -548,6 +550,8 @@ function CommentSection({
   const wsRef = useRef<WebSocket | null>(null);
   const emojiPanelRef = useRef<HTMLDivElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
+  const onReactionRef = useRef(onReaction);
+  useEffect(() => { onReactionRef.current = onReaction; }, [onReaction]);
 
   // Close emoji panel on outside click
   useEffect(() => {
@@ -593,6 +597,8 @@ function CommentSection({
             setComments((prev) =>
               prev.some((c) => c.id === data.comment.id) ? prev : [...prev, data.comment],
             );
+          } else if (data.type === 'stream_reaction' && data.emoji) {
+            onReactionRef.current?.(data.emoji);
           }
         } catch {}
       };
@@ -712,6 +718,79 @@ function CommentSection({
           </Link>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Floating Emoji Reactions ─────────────────────────────────────────────────
+
+const FLOAT_KEYFRAMES = `
+@keyframes floatUp {
+  0%   { transform: translateY(0) scale(1);    opacity: 1; }
+  70%  { transform: translateY(-140px) scale(1.35); opacity: 0.85; }
+  100% { transform: translateY(-200px) scale(0.9);  opacity: 0; }
+}`;
+
+interface FloatingReaction { id: string; emoji: string; x: number }
+
+const REACTION_EMOJIS = ['🔥', '❤️', '💪', '👏', '😂', '🎯'] as const;
+
+function FloatingReactionsLayer({ reactions }: { reactions: FloatingReaction[] }) {
+  return (
+    <>
+      <style>{FLOAT_KEYFRAMES}</style>
+      {reactions.map((r) => (
+        <div
+          key={r.id}
+          className="absolute bottom-14 pointer-events-none text-3xl select-none drop-shadow-lg"
+          style={{ left: `${r.x}%`, animation: 'floatUp 2.4s ease-out forwards' }}
+        >
+          {r.emoji}
+        </div>
+      ))}
+    </>
+  );
+}
+
+function ReactionBar({
+  streamId,
+  token,
+  isAuthenticated,
+}: {
+  streamId: number | undefined;
+  token: string | null;
+  isAuthenticated: boolean;
+}) {
+  const [cooldown, setCooldown] = useState(false);
+
+  const sendReaction = async (emoji: string) => {
+    if (!streamId || !token || cooldown) return;
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 800);
+    try {
+      await fetch(`/api/streams/${streamId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ emoji }),
+      });
+    } catch {}
+  };
+
+  if (!isAuthenticated || !streamId) return null;
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {REACTION_EMOJIS.map((emoji) => (
+        <button
+          key={emoji}
+          onClick={() => sendReaction(emoji)}
+          disabled={cooldown}
+          className="text-xl leading-none px-1.5 py-1 rounded-lg hover:bg-slate-800 hover:scale-125 active:scale-110 transition-all disabled:opacity-50 disabled:scale-100"
+          title="React"
+        >
+          {emoji}
+        </button>
+      ))}
     </div>
   );
 }
@@ -890,6 +969,14 @@ export default function Live() {
   const qc = useQueryClient();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
+
+  const handleReaction = useCallback((emoji: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    const x = 8 + Math.random() * 60; // 8–68% from left
+    setFloatingReactions((prev) => [...prev, { id, emoji, x }]);
+    setTimeout(() => setFloatingReactions((prev) => prev.filter((r) => r.id !== id)), 2500);
+  }, []);
 
   const { data: stream, isLoading: loadingStream } = useLiveStream();
   const { data: settings, isLoading: loadingSettings } = useGlobalSettings();
@@ -990,6 +1077,7 @@ export default function Live() {
           token={token}
           userId={user?.id}
           isAuthenticated={isAuthenticated}
+          onReaction={handleReaction}
         />
       </div>
     </div>
@@ -1014,6 +1102,7 @@ export default function Live() {
             {/* Player */}
             <div className="relative flex-1 min-w-0 aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
               {playerEl}
+              <FloatingReactionsLayer reactions={floatingReactions} />
             </div>
             {/* Right: sidebar — collapsible, same height as player */}
             {sidebarOpen && sidebar}
@@ -1050,6 +1139,11 @@ export default function Live() {
               )}
             </div>
             <div className="flex items-center gap-3 shrink-0">
+              <ReactionBar
+                streamId={paywallStreamId}
+                token={token}
+                isAuthenticated={isAuthenticated}
+              />
               {isAdmin && (
                 <div className="flex items-center gap-1.5 text-slate-400 text-sm">
                   <Users className="h-4 w-4 text-teal-500" />
@@ -1096,6 +1190,7 @@ export default function Live() {
               token={token}
               userId={user?.id}
               isAuthenticated={isAuthenticated}
+              onReaction={handleReaction}
             />
           </div>
         </div>

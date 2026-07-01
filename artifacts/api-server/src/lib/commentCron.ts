@@ -3,7 +3,7 @@ import { lt } from "drizzle-orm";
 import { logger } from "./logger";
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
-const RUN_INTERVAL_MS = 60 * 60 * 1000; // run every hour
+const RUN_INTERVAL_MS = 2 * 60 * 60 * 1000; // run every 2 hours
 
 async function deleteExpiredComments(): Promise<void> {
   const cutoff = new Date(Date.now() - SIX_HOURS_MS);

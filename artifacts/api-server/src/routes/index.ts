@@ -16,6 +16,7 @@ import settingsRouter from "./settings";
 import slidesRouter from "./slides";
 import promotionsRouter from "./promotions";
 import commentsRouter from "./comments";
+import reactionsRouter from "./reactions";
 
 const router: IRouter = Router();
 
@@ -25,6 +26,7 @@ router.use("/users", usersRouter);
 router.use("/wallet", walletRouter);
 router.use("/streams", streamsRouter);
 router.use("/streams/:id/comments", commentsRouter);
+router.use("/streams/:id/reactions", reactionsRouter);
 router.use("/games", gamesRouter);
 router.use("/bets", betsRouter);
 router.use("/notifications", notificationsRouter);
