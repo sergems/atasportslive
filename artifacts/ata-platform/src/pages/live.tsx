@@ -833,6 +833,7 @@ export default function Live() {
   const { isAuthenticated } = useAuth();
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const qc = useQueryClient();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -996,11 +997,13 @@ export default function Live() {
               )}
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <div className="flex items-center gap-1.5 text-slate-400 text-sm">
-                <Users className="h-4 w-4 text-teal-500" />
-                <span className="font-mono text-white">{stream?.viewerCount ?? 0}</span>
-                <span className="text-slate-500">watching</span>
-              </div>
+              {isAdmin && (
+                <div className="flex items-center gap-1.5 text-slate-400 text-sm">
+                  <Users className="h-4 w-4 text-teal-500" />
+                  <span className="font-mono text-white">{stream?.viewerCount ?? 0}</span>
+                  <span className="text-slate-500">watching</span>
+                </div>
+              )}
               <button
                 onClick={() => setSidebarOpen((v) => !v)}
                 title={sidebarOpen ? 'Hide panel' : 'Show chat & bets'}

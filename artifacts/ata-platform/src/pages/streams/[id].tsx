@@ -8,10 +8,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Lock, Play, Users, ChevronLeft, Clock, CalendarClock } from 'lucide-react';
 import Hls from 'hls.js';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
 
 export default function StreamDetail() {
   const [, params] = useRoute('/streams/:id');
   const streamId = params?.id ? parseInt(params.id) : 0;
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   const { data: stream, isLoading: loadingStream } = useGetStream(streamId);
   const { data: access, isLoading: loadingAccess, refetch: refetchAccess } = useCheckStreamAccess(streamId);
@@ -128,10 +131,12 @@ export default function StreamDetail() {
           <p className="text-slate-400 mt-2 max-w-3xl">{stream.description}</p>
         </div>
         <div className="flex items-center gap-6 text-sm text-slate-400">
-          <div className="flex flex-col items-end">
-            <span className="uppercase text-[10px] font-bold tracking-wider text-slate-500">Viewers</span>
-            <span className="font-mono text-lg text-white flex items-center"><Users className="h-4 w-4 mr-2 text-teal-500" /> {stream.viewerCount || 0}</span>
-          </div>
+          {isAdmin && (
+            <div className="flex flex-col items-end">
+              <span className="uppercase text-[10px] font-bold tracking-wider text-slate-500">Viewers</span>
+              <span className="font-mono text-lg text-white flex items-center"><Users className="h-4 w-4 mr-2 text-teal-500" /> {stream.viewerCount || 0}</span>
+            </div>
+          )}
           <div className="flex flex-col items-end">
              <span className="uppercase text-[10px] font-bold tracking-wider text-slate-500">Access</span>
              <span className="font-mono text-lg text-amber-400">{stream.accessPrice ? `$${stream.accessPrice.toFixed(2)}` : 'FREE'}</span>

@@ -119,8 +119,8 @@ function StreamCard({ stream, isAuthenticated }: { stream: Stream; isAuthenticat
             </div>
           )}
 
-          {/* Bottom-left: viewer count if live */}
-          {isLive && (stream.viewerCount ?? 0) > 0 && (
+          {/* Bottom-left: viewer count if live — admin only */}
+          {isAdmin && isLive && (stream.viewerCount ?? 0) > 0 && (
             <div className="absolute bottom-2 left-2.5">
               <span className="flex items-center gap-1 text-[10px] text-white/70 font-mono">
                 <Eye className="h-2.5 w-2.5" /> {stream.viewerCount}
@@ -247,14 +247,16 @@ function LiveLeaderboard({ streams }: { streams: Stream[] }) {
                   </div>
                 </div>
 
-                {/* Viewer count */}
-                <div className="shrink-0 flex flex-col items-end gap-0.5">
-                  <div className={`flex items-center gap-1 font-mono font-bold text-sm ${style.text}`}>
-                    <Users className="h-3 w-3" />
-                    {viewers.toLocaleString()}
+                {/* Viewer count — admin only */}
+                {isAdmin && (
+                  <div className="shrink-0 flex flex-col items-end gap-0.5">
+                    <div className={`flex items-center gap-1 font-mono font-bold text-sm ${style.text}`}>
+                      <Users className="h-3 w-3" />
+                      {viewers.toLocaleString()}
+                    </div>
+                    <span className="text-[10px] text-slate-600">watching</span>
                   </div>
-                  <span className="text-[10px] text-slate-600">watching</span>
-                </div>
+                )}
               </div>
             </Link>
           );
@@ -278,7 +280,8 @@ function StreamCardSkeleton() {
 
 export default function Streams() {
   const [status, setStatus] = useState<string>('all');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   useSEO({
     title: 'Live Streams',

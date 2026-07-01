@@ -147,7 +147,7 @@ export default function Dashboard() {
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{liveStream.sport}</span>
                 </div>
                 <p className="text-white font-semibold truncate text-sm">{liveStream.title}</p>
-                {liveStream.viewerCount != null && (
+                {isAdmin && liveStream.viewerCount != null && (
                   <p className="text-slate-500 text-xs">{liveStream.viewerCount} watching</p>
                 )}
               </div>
