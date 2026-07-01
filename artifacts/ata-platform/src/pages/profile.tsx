@@ -127,8 +127,10 @@ export default function Profile() {
 
   const [copied, setCopied] = useState(false);
 
+  const SITE_ORIGIN = 'https://atasportslive.com';
+
   const handleCopyReferral = () => {
-    const link = `${window.location.origin}/register?ref=${user?.referralCode}`;
+    const link = `${SITE_ORIGIN}/register?ref=${user?.referralCode}`;
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
       toast.success('Referral link copied!');
@@ -239,7 +241,7 @@ export default function Profile() {
               <div className="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Your referral link</p>
                 <p className="text-xs text-slate-400 font-mono break-all">
-                  {window.location.origin}/register?ref={user.referralCode}
+                  {SITE_ORIGIN}/register?ref={user.referralCode}
                 </p>
               </div>
               <p className="text-xs text-slate-500">
