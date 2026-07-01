@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRoute, useLocation, Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
-import { useGetGame, usePlaceBet, useListGameBets, getGetWalletQueryKey, getListMyBetsQueryKey } from '@workspace/api-client-react';
+import { useGetGame, usePlaceBet, useAcceptNearMatch, useListGameBets, getGetWalletQueryKey, getListMyBetsQueryKey } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,10 +46,14 @@ export default function GameDetail() {
   const [stakeAmount, setStakeAmount] = useState('');
   const [nearMatches, setNearMatches] = useState<{ betId: number; stake: number; difference: number }[]>([]);
   const [matchStatus, setMatchStatus] = useState<string | null>(null);
+  const [myPlacedBetId, setMyPlacedBetId] = useState<number | null>(null);
+  const [myPlacedStake, setMyPlacedStake] = useState<number>(0);
+  const [dismissedMatches, setDismissedMatches] = useState<Set<number>>(new Set());
 
   const { data: game, isLoading } = useGetGame(gameId);
   const { data: betsData } = useListGameBets(gameId);
   const placeBet = usePlaceBet();
+  const acceptNearMatch = useAcceptNearMatch();
 
   const hasStarted = game
     ? new Date() >= new Date(`${game.eventDate}T${(game as any).eventTime || '00:00'}`)
@@ -86,10 +90,13 @@ export default function GameDetail() {
       queryClient.invalidateQueries({ queryKey: getListMyBetsQueryKey() });
       setMatchStatus(result.matchStatus);
       setNearMatches(result.nearMatches || []);
+      setMyPlacedBetId((result as any).bet?.id ?? null);
+      setMyPlacedStake(stake);
+      setDismissedMatches(new Set());
       if (result.matchStatus === 'exact_match') {
         toast.success('Bet Matched!', { description: 'Your bet was instantly matched.' });
       } else if (result.matchStatus === 'near_match') {
-        toast.info('Near Matches Found', { description: 'Check below to accept a near match.' });
+        toast.info('Near Matches Found', { description: 'Check below to accept or reject each near match.' });
       } else {
         toast.success('Bet Placed', { description: 'Your bet is in the queue waiting for a match.' });
       }
@@ -98,6 +105,31 @@ export default function GameDetail() {
     } catch (err: any) {
       toast.error(err?.data?.error || 'Failed to place bet');
     }
+  };
+
+  const handleAcceptNearMatch = async (opponentBetId: number, opponentStake: number, myStake: number) => {
+    if (!myPlacedBetId) return;
+    try {
+      await acceptNearMatch.mutateAsync({ id: myPlacedBetId, data: { opponentBetId } });
+      queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getListMyBetsQueryKey() });
+      const diff = opponentStake - myStake;
+      if (diff > 0) {
+        toast.success('Bet Matched!', { description: `$${diff.toFixed(2)} was charged from your wallet. Matched at $${opponentStake.toFixed(2)}.` });
+      } else if (diff < 0) {
+        toast.success('Bet Matched!', { description: `$${Math.abs(diff).toFixed(2)} refunded to your wallet. Matched at $${opponentStake.toFixed(2)}.` });
+      } else {
+        toast.success('Bet Matched!', { description: `Matched at $${opponentStake.toFixed(2)}.` });
+      }
+      setNearMatches([]);
+      setMyPlacedBetId(null);
+    } catch (err: any) {
+      toast.error(err?.data?.error || 'Failed to accept match');
+    }
+  };
+
+  const handleRejectNearMatch = (betId: number) => {
+    setDismissedMatches((prev) => new Set([...prev, betId]));
   };
 
   if (isLoading) {
@@ -367,22 +399,69 @@ export default function GameDetail() {
                   {placeBet.isPending ? 'Placing Bet...' : 'Place Bet'}
                 </Button>
 
-                {nearMatches.length > 0 && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-amber-400 font-semibold mb-3">
-                      <AlertCircle className="h-4 w-4" />
-                      Near Matches Available
-                    </div>
-                    <p className="text-sm text-slate-400 mb-3">
-                      These open bets are within 20% of your stake. You can accept one to get matched now.
-                    </p>
-                    {nearMatches.map((nm) => (
-                      <div key={nm.betId} className="flex items-center justify-between bg-slate-800 rounded-lg p-3 mb-2">
-                        <span className="text-sm text-slate-300">Stake: ${nm.stake.toFixed(2)} (diff: ${nm.difference.toFixed(2)})</span>
+                {nearMatches.filter((nm) => !dismissedMatches.has(nm.betId)).length > 0 && myPlacedBetId && (() => {
+                  const visible = nearMatches.filter((nm) => !dismissedMatches.has(nm.betId));
+                  return (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-amber-400 font-semibold">
+                        <AlertCircle className="h-4 w-4" />
+                        Near Matches Available
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <p className="text-sm text-slate-400">
+                        These open bets are within 20% of your stake. Accept to get matched now — your wallet will be adjusted to the matched amount.
+                      </p>
+                      {visible.map((nm) => {
+                        const myStake = myPlacedStake;
+                        const opponentStake = nm.stake;
+                        const diff = opponentStake - myStake;
+                        const isAccepting = acceptNearMatch.isPending;
+                        return (
+                          <div key={nm.betId} className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="space-y-0.5">
+                                <div className="text-slate-300">
+                                  Opponent stake: <span className="font-mono font-bold text-white">${opponentStake.toFixed(2)}</span>
+                                </div>
+                                <div className="text-slate-400">
+                                  Your stake: <span className="font-mono">${myStake.toFixed(2)}</span>
+                                  {' · '}Difference: <span className="font-mono text-amber-400">${nm.difference.toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                            {diff > 0 ? (
+                              <p className="text-xs text-amber-300 bg-amber-500/10 rounded px-2 py-1">
+                                ⚡ Accepting will <strong>charge ${diff.toFixed(2)}</strong> from your wallet to top up to ${opponentStake.toFixed(2)}.
+                              </p>
+                            ) : diff < 0 ? (
+                              <p className="text-xs text-teal-300 bg-teal-500/10 rounded px-2 py-1">
+                                💰 Accepting will <strong>refund ${Math.abs(diff).toFixed(2)}</strong> to your wallet (matched at ${opponentStake.toFixed(2)}).
+                              </p>
+                            ) : null}
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-teal-600 hover:bg-teal-500 text-white font-semibold h-9"
+                                disabled={isAccepting}
+                                onClick={() => handleAcceptNearMatch(nm.betId, opponentStake, myStake)}
+                              >
+                                {isAccepting ? 'Accepting…' : diff > 0 ? `Accept & Pay $${diff.toFixed(2)}` : diff < 0 ? `Accept & Get $${Math.abs(diff).toFixed(2)} Back` : 'Accept Match'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white h-9"
+                                disabled={isAccepting}
+                                onClick={() => handleRejectNearMatch(nm.betId)}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           )}

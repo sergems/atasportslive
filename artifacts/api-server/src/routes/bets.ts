@@ -304,19 +304,84 @@ router.post("/:id/accept-near-match", authMiddleware, async (req: AuthRequest, r
 
   const [opponentBet] = await db.select().from(betsTable).where(and(eq(betsTable.id, opponentBetId), eq(betsTable.status, "pending"))).limit(1);
   if (!opponentBet) {
-    res.status(404).json({ error: "Opponent bet not found" });
+    res.status(404).json({ error: "Opponent bet not found or already matched" });
     return;
   }
 
   const myStake = parseFloat(myBet.stake as string);
   const opStake = parseFloat(opponentBet.stake as string);
-  const minStake = Math.min(myStake, opStake);
-  const pool = minStake * 2;
+  // Always match at the opponent's exact stake amount
+  const matchStake = opStake;
+  const pool = matchStake * 2;
   const fee = pool * BROKERAGE_FEE;
   const winnerPayout = pool - fee;
 
-  await db.update(betsTable).set({ status: "matched", matchedBetId: opponentBet.id, potentialReturn: winnerPayout.toString() }).where(eq(betsTable.id, id));
-  await db.update(betsTable).set({ status: "matched", matchedBetId: id, potentialReturn: winnerPayout.toString() }).where(eq(betsTable.id, opponentBetId));
+  // Reconcile my stake against the match amount
+  if (myStake > matchStake) {
+    // I staked more — refund the difference back to my wallet
+    const refund = myStake - matchStake;
+    await db.update(walletsTable).set({
+      balance: sql`balance + ${refund}`,
+      availableBalance: sql`available_balance + ${refund}`,
+      pendingBalance: sql`pending_balance - ${refund}`,
+    }).where(eq(walletsTable.userId, userId));
+    await db.insert(transactionsTable).values({
+      transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
+      userId,
+      type: "bet_stake",
+      amount: refund.toString(),
+      status: "completed",
+      paymentMethod: "internal",
+      description: `Stake refund — near-match settled at $${matchStake.toFixed(2)} (original $${myStake.toFixed(2)})`,
+    });
+  } else if (myStake < matchStake) {
+    // I staked less — top-up required; deduct the difference from my wallet
+    const topUp = matchStake - myStake;
+    const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
+    if (!wallet || parseFloat(wallet.availableBalance as string) < topUp) {
+      res.status(400).json({ error: `Insufficient balance — you need $${topUp.toFixed(2)} more to accept this match` });
+      return;
+    }
+    await db.update(walletsTable).set({
+      balance: sql`balance - ${topUp}`,
+      availableBalance: sql`available_balance - ${topUp}`,
+      pendingBalance: sql`pending_balance + ${topUp}`,
+    }).where(eq(walletsTable.userId, userId));
+    await db.insert(transactionsTable).values({
+      transactionId: `TOP-${uuidv4().split("-")[0].toUpperCase()}`,
+      userId,
+      type: "bet_stake",
+      amount: topUp.toString(),
+      status: "completed",
+      paymentMethod: "internal",
+      description: `Stake top-up — near-match settled at $${matchStake.toFixed(2)} (original $${myStake.toFixed(2)})`,
+    });
+  }
+
+  // Update both bets to matched at the reconciled stake
+  await db.update(betsTable).set({
+    status: "matched",
+    matchedBetId: opponentBet.id,
+    stake: matchStake.toString(),
+    potentialReturn: winnerPayout.toString(),
+  }).where(eq(betsTable.id, id));
+
+  await db.update(betsTable).set({
+    status: "matched",
+    matchedBetId: id,
+    potentialReturn: winnerPayout.toString(),
+  }).where(eq(betsTable.id, opponentBetId));
+
+  // Brokerage fee record
+  await db.insert(transactionsTable).values({
+    transactionId: `FEE-${uuidv4().split("-")[0].toUpperCase()}`,
+    userId: 1,
+    type: "brokerage_fee",
+    amount: fee.toString(),
+    status: "completed",
+    paymentMethod: "internal",
+    description: `10% brokerage fee for near-match on game #${myBet.gameId}`,
+  });
 
   await db.update(gamesTable).set({
     matchedBetsCount: sql`matched_bets_count + 1`,
@@ -324,8 +389,8 @@ router.post("/:id/accept-near-match", authMiddleware, async (req: AuthRequest, r
     totalBetPool: sql`total_bet_pool + ${pool}`,
   }).where(eq(gamesTable.id, myBet.gameId));
 
-  await notify(opponentBet.userId, "bet_matched", "Bet Matched!", `Your bet has been matched for $${minStake}!`);
-  await notify(userId, "bet_matched", "Bet Matched!", `Your bet has been matched for $${minStake}!`);
+  await notify(opponentBet.userId, "bet_matched", "Bet Matched!", `Your bet has been matched for $${matchStake.toFixed(2)}!`);
+  await notify(userId, "bet_matched", "Bet Matched!", `Your bet has been matched for $${matchStake.toFixed(2)}!`);
 
   const [updated] = await db.select().from(betsTable).where(eq(betsTable.id, id)).limit(1);
   const [game] = await db.select().from(gamesTable).where(eq(gamesTable.id, myBet.gameId)).limit(1);
