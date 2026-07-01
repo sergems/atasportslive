@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict oQlT6JRPCYo4wcSGVFnreSut0jBxTCNBvKm9J6AWEkRkX8lBInaRcgM0xXHBhPa
+\restrict ZbCWbPtrcxhb28Big61Em5NJLkiGdCs4U8vjWLriRbjp58kvsVe4llGNCL5qfRg
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1286,9 +1286,6 @@ COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, creat
 --
 
 COPY public.stream_comments (id, stream_id, user_id, username, content, created_at) FROM stdin;
-1	1	2	Demo User	Great game!	2026-06-30 14:15:42.162731+00
-2	16	1	ATA Admin	awe	2026-06-30 14:16:27.022557+00
-3	16	1	ATA Admin	no	2026-06-30 14:17:00.103218+00
 \.
 
 
@@ -11949,5 +11946,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict oQlT6JRPCYo4wcSGVFnreSut0jBxTCNBvKm9J6AWEkRkX8lBInaRcgM0xXHBhPa
+\unrestrict ZbCWbPtrcxhb28Big61Em5NJLkiGdCs4U8vjWLriRbjp58kvsVe4llGNCL5qfRg
 
