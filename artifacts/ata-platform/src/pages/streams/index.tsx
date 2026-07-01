@@ -39,7 +39,7 @@ const SPORT_COLOR: Record<string, string> = {
   tournament: 'text-violet-400 bg-violet-500/10 border-violet-500/30',
 };
 
-function StreamCard({ stream, isAuthenticated }: { stream: Stream; isAuthenticated: boolean }) {
+function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAuthenticated: boolean; isAdmin: boolean }) {
   const isPaid = !!stream.accessPrice && stream.accessPrice > 0;
   const isEnded = stream.status === 'ended';
   const isLive = stream.status === 'live';
@@ -167,7 +167,7 @@ const RANK_STYLES = [
   { medal: '🥉', bar: 'bg-orange-600', text: 'text-orange-400', border: 'border-orange-700/30', bg: 'bg-orange-900/10' },
 ];
 
-function LiveLeaderboard({ streams }: { streams: Stream[] }) {
+function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boolean }) {
   const live = [...streams]
     .filter((s) => s.status === 'live')
     .sort((a, b) => (b.viewerCount ?? 0) - (a.viewerCount ?? 0));
@@ -304,7 +304,7 @@ export default function Streams() {
   return (
     <div className="space-y-6">
       {/* Live leaderboard — only shown when there are live streams */}
-      {!isLoading && <LiveLeaderboard streams={streams} />}
+      {!isLoading && <LiveLeaderboard streams={streams} isAdmin={isAdmin} />}
 
       {/* Filter */}
       <div className="flex justify-end">
@@ -330,6 +330,7 @@ export default function Streams() {
                 key={stream.id}
                 stream={stream}
                 isAuthenticated={isAuthenticated}
+                isAdmin={isAdmin}
               />
             ))
           : (
