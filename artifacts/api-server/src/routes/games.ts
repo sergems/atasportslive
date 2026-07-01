@@ -152,7 +152,9 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
 
   const [game] = await db.update(gamesTable).set({ status: "completed", result }).where(eq(gamesTable.id, id)).returning();
 
-  // Settle matched bets
+  const gameName = `${game.playerA} vs ${game.playerB}`;
+
+  // 1. Settle all matched bets
   const matchedBets = await db.select().from(betsTable).where(and(eq(betsTable.gameId, id), eq(betsTable.status, "matched")));
 
   for (const bet of matchedBets) {
@@ -164,11 +166,12 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
     if (newStatus === "won") {
       const payout = parseFloat(bet.potentialReturn as string);
       const betStake = parseFloat(bet.stake as string);
+      // Credit winnings and move stake out of pending
       await db.update(walletsTable).set({
         balance: sql`balance + ${payout}`,
         availableBalance: sql`available_balance + ${payout}`,
         withdrawableBalance: sql`withdrawable_balance + ${payout}`,
-        pendingBalance: sql`pending_balance - ${betStake}`,
+        pendingBalance: sql`GREATEST(0, pending_balance - ${betStake})`,
       }).where(eq(walletsTable.userId, bet.userId));
       await db.insert(transactionsTable).values({
         transactionId: `WIN-${uuidv4().split("-")[0].toUpperCase()}`,
@@ -177,7 +180,7 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
         amount: payout.toString(),
         status: "completed",
         paymentMethod: "internal",
-        description: `Bet win payout for game #${id}`,
+        description: `Bet win — ${gameName} · ticket ${bet.ticketId}`,
       });
       await notify(bet.userId, "bet_won", "You Won!", `Congratulations! You won $${payout.toFixed(2)} on your bet.`);
       const [winUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
@@ -189,7 +192,7 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
             name: winUser.fullName ?? winUser.email,
             stake: parseFloat(bet.stake as string),
             payout,
-            gameName: `${game.playerA} vs ${game.playerB}`,
+            gameName,
           }),
         }).catch(() => {});
       }
@@ -198,7 +201,7 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
       await db.update(walletsTable).set({
         balance: sql`balance + ${refund}`,
         availableBalance: sql`available_balance + ${refund}`,
-        pendingBalance: sql`pending_balance - ${refund}`,
+        pendingBalance: sql`GREATEST(0, pending_balance - ${refund})`,
       }).where(eq(walletsTable.userId, bet.userId));
       await db.insert(transactionsTable).values({
         transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
@@ -207,16 +210,26 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
         amount: refund.toString(),
         status: "completed",
         paymentMethod: "internal",
-        description: `Bet refund (draw) for game #${id}`,
+        description: `Bet refund (draw) — ${gameName} · ticket ${bet.ticketId}`,
       });
       await notify(bet.userId, "bet_refunded", "Bet Refunded", `Your bet was refunded due to a draw.`);
     } else {
-      // Lost — clear the stake from pending (money is gone)
+      // Lost — move stake out of pending (money already deducted at bet time)
       const lostStake = parseFloat(bet.stake as string);
       await db.update(walletsTable).set({
-        pendingBalance: sql`pending_balance - ${lostStake}`,
+        pendingBalance: sql`GREATEST(0, pending_balance - ${lostStake})`,
       }).where(eq(walletsTable.userId, bet.userId));
-      await notify(bet.userId, "bet_lost", "Bet Lost", `Your bet on game #${id} did not win.`);
+      // Create a record so the transaction history is complete
+      await db.insert(transactionsTable).values({
+        transactionId: `LST-${uuidv4().split("-")[0].toUpperCase()}`,
+        userId: bet.userId,
+        type: "bet_stake",
+        amount: lostStake.toString(),
+        status: "completed",
+        paymentMethod: "internal",
+        description: `Bet lost — ${gameName} · ticket ${bet.ticketId}`,
+      });
+      await notify(bet.userId, "bet_lost", "Bet Lost", `Your bet on ${gameName} did not win. Better luck next time!`);
       const [lostUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
       if (lostUser?.email) {
         sendMail({
@@ -225,13 +238,38 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), as
           html: templates.betLost({
             name: lostUser.fullName ?? lostUser.email,
             stake: parseFloat(bet.stake as string),
-            gameName: `${game.playerA} vs ${game.playerB}`,
+            gameName,
           }),
         }).catch(() => {});
       }
     }
-    await notify(bet.userId, "match_result", "Match Result", `Game #${id} result: ${result.replace(/_/g, " ")}`);
+    await notify(bet.userId, "match_result", "Match Result", `${gameName} result: ${result.replace(/_/g, " ")}`);
   }
+
+  // 2. Refund all still-pending (unmatched) bets — the event is over, they can no longer be matched
+  const pendingBets = await db.select().from(betsTable).where(and(eq(betsTable.gameId, id), eq(betsTable.status, "pending")));
+
+  for (const bet of pendingBets) {
+    const refund = parseFloat(bet.stake as string);
+    await db.update(betsTable).set({ status: "refunded", settledAt: new Date() }).where(eq(betsTable.id, bet.id));
+    await db.update(walletsTable).set({
+      balance: sql`balance + ${refund}`,
+      availableBalance: sql`available_balance + ${refund}`,
+      pendingBalance: sql`GREATEST(0, pending_balance - ${refund})`,
+    }).where(eq(walletsTable.userId, bet.userId));
+    await db.insert(transactionsTable).values({
+      transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
+      userId: bet.userId,
+      type: "bet_refund",
+      amount: refund.toString(),
+      status: "completed",
+      paymentMethod: "internal",
+      description: `Unmatched bet refund — ${gameName} · ticket ${bet.ticketId}`,
+    });
+    await notify(bet.userId, "bet_refunded", "Unmatched Bet Refunded", `Your unmatched bet of $${refund.toFixed(2)} on ${gameName} has been refunded.`);
+  }
+
+  await db.update(gamesTable).set({ openBetsCount: 0 }).where(eq(gamesTable.id, id));
 
   res.json(toGame(game));
 });
