@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict eB71ksTAy2lqetxkvjyV7X3igQl4ttdzrJunoW7UJ1cipmfXPoouKPTurhesmV8
+\restrict oQlT6JRPCYo4wcSGVFnreSut0jBxTCNBvKm9J6AWEkRkX8lBInaRcgM0xXHBhPa
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1127,11 +1127,11 @@ COPY public.audit_logs (id, user_id, action, entity_type, entity_id, details, ip
 
 COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_return, status, matched_bet_id, settled_at, created_at, updated_at) FROM stdin;
 1	TKT-80CBCB97	2	2	player_b_wins	40.00	0.00	pending	\N	\N	2026-06-15 16:42:22.409097+00	2026-06-15 16:42:22.409097+00
-2	TKT-94544E67	2	3	player_a_wins	2.00	0.00	pending	\N	\N	2026-06-15 21:22:49.715996+00	2026-06-15 21:22:49.715996+00
-3	TKT-F426B032	1	3	player_a_wins	2.00	0.00	pending	\N	\N	2026-06-25 22:53:12.644571+00	2026-06-25 22:53:12.644571+00
-4	TKT-52359471	1	13	player_a_wins	20.00	0.00	pending	\N	\N	2026-06-30 09:21:15.590905+00	2026-06-30 09:21:15.590905+00
-5	TKT-20924702	1	13	player_b_wins	80.00	0.00	pending	\N	\N	2026-06-30 11:53:25.68106+00	2026-06-30 11:53:25.68106+00
-6	TKT-9477C43C	2	16	player_a_wins	10.00	0.00	pending	\N	\N	2026-06-30 15:27:46.172215+00	2026-06-30 15:27:46.172215+00
+4	TKT-52359471	1	13	player_a_wins	20.00	0.00	cancelled	\N	\N	2026-06-30 09:21:15.590905+00	2026-07-01 21:39:35.115+00
+5	TKT-20924702	1	13	player_b_wins	80.00	0.00	cancelled	\N	\N	2026-06-30 11:53:25.68106+00	2026-07-01 21:39:35.115+00
+6	TKT-9477C43C	2	16	player_a_wins	10.00	0.00	cancelled	\N	\N	2026-06-30 15:27:46.172215+00	2026-07-01 21:47:14.394+00
+3	TKT-F426B032	1	3	player_a_wins	2.00	0.00	cancelled	\N	\N	2026-06-25 22:53:12.644571+00	2026-07-01 21:47:29.915+00
+2	TKT-94544E67	2	3	player_a_wins	2.00	0.00	cancelled	\N	\N	2026-06-15 21:22:49.715996+00	2026-07-01 21:47:33.123+00
 \.
 
 
@@ -1150,7 +1150,6 @@ COPY public.bonus_transactions (id, user_id, promotion_id, type, amount, balance
 COPY public.games (id, sport, player_a, player_b, event_date, event_time, status, result, total_bet_pool, open_bets_count, matched_bets_count, created_at, updated_at, event_end_date, event_end_time, city, country, type, parent_id, player_a_country, player_b_country) FROM stdin;
 5	pool	Samuel Kagwa	Alex Mutumba	2026-06-13	17:00	completed	player_a_wins	240.00	0	8	2026-06-15 16:31:06.632179+00	2026-06-15 16:31:06.632179+00	\N	\N	\N	\N	single	\N	\N	\N
 1	pool	Hassan Mukasa	David Ssemwanga	2026-06-15	19:00	completed	player_b_wins	90.00	5	3	2026-06-15 16:31:06.632179+00	2026-06-15 21:17:47.146+00	\N	\N	\N	\N	single	\N	\N	\N
-3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	completed	player_a_wins	0.00	2	0	2026-06-15 16:31:06.632179+00	2026-06-29 19:11:12.311+00	\N	\N	\N	\N	single	\N	\N	\N
 2	boxing	Moses Nkosi	Emmanuel Atiku	2026-06-16	20:00	completed	draw	0.00	1	0	2026-06-15 16:31:06.632179+00	2026-06-29 19:11:21.125+00	\N	\N	\N	\N	single	\N	\N	\N
 9	pool	Caesar Chandinga	Serge	2026-06-18	18:00	completed	player_a_wins	0.00	0	0	2026-06-15 19:52:47.086143+00	2026-06-29 19:11:33.366+00	\N	\N	Lagos	Nigeria	single	8	\N	\N
 10	pool	Siyabonga Shezi	Caesar Chandinga	2026-06-19	18:00	completed	player_a_wins	0.00	0	0	2026-06-15 19:53:28.784467+00	2026-06-29 19:11:39.972+00	\N	\N	Lagos	Nigeria	single	8	ZA	UG
@@ -1161,9 +1160,10 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 7	pool	Ali Hassan	John Doe	2026-06-20	15:00	completed	player_a_wins	0.00	0	0	2026-06-15 19:06:10.922877+00	2026-06-29 19:12:25.66+00	\N	\N	\N	\N	single	\N	\N	\N
 4	boxing	Joseph Kato	Richard Wanyama	2026-06-22	18:00	completed	player_a_wins	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-06-29 19:12:30.428+00	\N	\N	\N	\N	single	\N	\N	\N
 14	pool	Babalayo Ntusi	Kakule Mbanza	2026-07-02	18:00	upcoming	\N	0.00	0	0	2026-06-29 19:14:51.287195+00	2026-06-29 19:14:51.287195+00	\N	\N	Kigali	Rwanda	single	\N	ZA	CD
-13	pool	Jam Hun	Alec Boldic	2026-07-01	10:30	upcoming	\N	0.00	2	0	2026-06-29 19:13:42.015308+00	2026-06-30 11:53:25.685+00	\N	\N	Kigoma	Tanzania	single	\N	JP	KE
-15	pool	Caesar Chandinga	Babalayo Ntusi	2026-06-30	14:00	live	\N	0.00	0	0	2026-06-30 15:26:07.005147+00	2026-06-30 15:26:07.005147+00	\N	\N	Kampala	Uganda	single	\N	\N	\N
-16	boxing	Joseph Kato	Matavu Ukasha	2026-06-30	16:00	live	\N	0.00	1	0	2026-06-30 15:26:07.005147+00	2026-06-30 15:27:46.177+00	\N	\N	Kampala	Uganda	single	\N	\N	\N
+3	pool	Brian Lubega	Patrick Okello	2026-06-16	15:00	completed	player_a_wins	0.00	0	0	2026-06-15 16:31:06.632179+00	2026-07-01 21:47:33.132+00	\N	\N	\N	\N	single	\N	\N	\N
+15	pool	Caesar Chandinga	Babalayo Ntusi	2026-06-30	14:00	completed	player_a_wins	0.00	0	0	2026-06-30 15:26:07.005147+00	2026-07-01 21:50:54.81+00	\N	\N	Kampala	Uganda	single	\N	\N	\N
+16	boxing	Joseph Kato	Matavu Ukasha	2026-06-30	16:00	completed	player_a_wins	0.00	0	0	2026-06-30 15:26:07.005147+00	2026-07-01 21:51:00.034+00	\N	\N	Kampala	Uganda	single	\N	\N	\N
+13	pool	Jam Hun	Alec Boldic	2026-07-01	10:30	completed	player_a_wins	0.00	0	0	2026-06-29 19:13:42.015308+00	2026-07-01 21:51:04.12+00	\N	\N	Kigoma	Tanzania	single	\N	JP	KE
 \.
 
 
@@ -1209,6 +1209,8 @@ COPY public.notifications (id, user_id, type, title, message, read, created_at) 
 12	1	withdrawal_rejected	Withdrawal Failed	Your withdrawal of $1000.00 via PawaPay failed. Funds returned to wallet.	t	2026-06-30 21:57:54.443036+00
 13	1	withdrawal_rejected	Withdrawal Failed	Your withdrawal of $200.00 via PawaPay failed. Funds returned to wallet.	t	2026-06-30 21:58:41.273352+00
 14	1	withdrawal_approved	Withdrawal Sent	$1.00 has been sent to your mobile money account.	t	2026-06-30 22:03:16.239765+00
+15	1	bet_matched	Bet Refunded	Your $20.00 bet on Jam Hun vs Alec Boldic was refunded because the event started before it could be matched.	t	2026-07-01 21:39:35.436133+00
+16	1	bet_matched	Bet Refunded	Your $80.00 bet on Jam Hun vs Alec Boldic was refunded because the event started before it could be matched.	t	2026-07-01 21:39:35.450911+00
 \.
 
 
@@ -1355,6 +1357,11 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 34	a3a528e0-f949-4820-8961-e2e7c3821a53	1	withdrawal	1000.00	rejected	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:57:53.908792+00	2026-06-30 21:57:54.432+00
 35	cd572056-1037-4867-bb2e-28d15dc2253a	1	withdrawal	200.00	rejected	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 21:58:40.681769+00	2026-06-30 21:58:41.257+00
 36	11ee2cdf-d6e0-4b38-8c1f-d2a7dc5ef4b8	1	withdrawal	1.00	completed	pawapay	256753456789	Instant withdrawal via PawaPay (MTN_MOMO_UGA) to 256753456789	\N	2026-06-30 22:03:15.244808+00	2026-06-30 22:03:16.231+00
+37	REF-A431F3BA	1	bet_stake	20.00	completed	internal	\N	Bet refunded — Jam Hun vs Alec Boldic started before bet was matched (ticket: TKT-52359471)	\N	2026-07-01 21:39:35.40007+00	2026-07-01 21:39:35.40007+00
+38	REF-A6C1CE76	1	bet_stake	80.00	completed	internal	\N	Bet refunded — Jam Hun vs Alec Boldic started before bet was matched (ticket: TKT-20924702)	\N	2026-07-01 21:39:35.447434+00	2026-07-01 21:39:35.447434+00
+39	CAN-DD2DCF4C	2	bet_stake	10.00	completed	internal	\N	Bet cancelled by admin (bet #6) — stake refunded	\N	2026-07-01 21:47:14.456378+00	2026-07-01 21:47:14.456378+00
+40	CAN-D8F647DC	1	bet_stake	2.00	completed	internal	\N	Bet cancelled by admin (bet #3) — stake refunded	\N	2026-07-01 21:47:29.927124+00	2026-07-01 21:47:29.927124+00
+41	CAN-51AB8B0D	2	bet_stake	2.00	completed	internal	\N	Bet cancelled by admin (bet #2) — stake refunded	\N	2026-07-01 21:47:33.218839+00	2026-07-01 21:47:33.218839+00
 \.
 
 
@@ -6393,7 +6400,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5030	clintonabcbill@gmail.com	MUST_SET_PASSWORD	Akampurira Ciboss	0753094499	user	active	\N	\N	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	\N	\N	\N	t	\N	\N
 5031	johm@try.co.za	$2b$10$9YzCt9Xc6KYJMh63h6yZaePOORc17dl8mHqBm3uQsIzREGscYfAPG	Alex	+27748448457	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzEsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4MDk5ODYsImV4cCI6MTc4NTQwMTk4Nn0.yJFBFZwZw743At1p7hYMTlw7hdXeVZ7Mfq7dQIOSDJ0	2026-06-30 08:59:46.506546+00	2026-06-30 08:59:46.92+00	\N	\N	\N	f	\N	\N
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiIwYTA2MWY5ZC1lZGNjLTQ1NTctYTk5OS0wYTcyNDYyMGUyMjciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mjg1NjU2MywiZXhwIjoxNzg1NDQ4NTYzfQ.pVRD0vgBgW0h9WBQgZ-ue1e-N_TCxUNwlHkr5mn4kfE	2026-06-15 16:31:06.605107+00	2026-06-30 21:56:03.532+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	0a061f9d-edcc-4557-a999-0a724620e227	\N
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	ATA Admin	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiNTU3NmRhNDMtNmRiZS00MzE1LThhZWItYWM0Zjc1ZmU3YTZmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4NTkyMjUsImV4cCI6MTc4NTQ1MTIyNX0.IwiKFPjT5Dis6DW3ZUKNCbUjMMn7gSPBGG1UghuacxY	2026-06-15 16:31:06.226579+00	2026-06-30 22:40:25.996+00	\N	\N	\N	f	5576da43-6dbe-4315-8aeb-ac4f75fe7a6f	\N
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiMTRmM2RlNTMtM2ZjMy00NGYzLWExOWItMGJlYjNhMzg1OTRlIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI5NDIyODcsImV4cCI6MTc4NTUzNDI4N30.vn1NHjEOaoFD58efW0GjqZR88W_p3lGyi549T4lUDqU	2026-06-15 16:31:06.226579+00	2026-07-01 21:53:43.737+00	\N	\N	\N	f	14f3de53-3fc3-44f3-a19b-0beb3a38594e	\N
 \.
 
 
@@ -11447,8 +11454,8 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 5028	5029	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.449374+00	2026-06-26 13:40:33.449374+00	0.00
 5029	5030	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	0.00
 5030	5031	0.00	0.00	0.00	0.00	USD	2026-06-30 08:59:46.800606+00	2026-06-30 08:59:46.800606+00	0.00
-2	2	56.00	14.00	52.00	66.00	USD	2026-06-15 16:31:06.612958+00	2026-06-30 21:55:53.704+00	0.00
-1	1	10006.50	9904.50	102.00	10006.50	USD	2026-06-15 16:31:06.51595+00	2026-06-30 22:03:16.236+00	0.00
+1	1	10108.50	10006.50	0.00	10006.50	USD	2026-06-15 16:31:06.51595+00	2026-07-01 21:47:29.919+00	0.00
+2	2	68.00	26.00	40.00	66.00	USD	2026-06-15 16:31:06.612958+00	2026-07-01 21:47:33.127+00	0.00
 \.
 
 
@@ -11505,7 +11512,7 @@ SELECT pg_catalog.setval('public.highlights_id_seq', 5, true);
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 14, true);
+SELECT pg_catalog.setval('public.notifications_id_seq', 16, true);
 
 
 --
@@ -11547,7 +11554,7 @@ SELECT pg_catalog.setval('public.streams_id_seq', 16, true);
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 36, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 41, true);
 
 
 --
@@ -11942,5 +11949,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict eB71ksTAy2lqetxkvjyV7X3igQl4ttdzrJunoW7UJ1cipmfXPoouKPTurhesmV8
+\unrestrict oQlT6JRPCYo4wcSGVFnreSut0jBxTCNBvKm9J6AWEkRkX8lBInaRcgM0xXHBhPa
 
