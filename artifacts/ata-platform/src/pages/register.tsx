@@ -33,7 +33,8 @@ export default function Register() {
   const registerMutation = useRegister();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
-  const [referralCode] = useState<string | null>(() => getReferralCodeFromUrl());
+  const [referralCode, setReferralCode] = useState<string | null>(() => getReferralCodeFromUrl());
+  const [referralInput, setReferralInput] = useState(() => getReferralCodeFromUrl() ?? '');
 
   const form = useForm({
     resolver: zodResolver(registerSchema),
@@ -52,10 +53,12 @@ export default function Register() {
     }
   }, [isAuthenticated, setLocation]);
 
+  const effectiveReferralCode = referralInput.trim().toUpperCase() || null;
+
   const onSubmit = (data: any) => {
     setGoogleError(null);
     registerMutation.mutate(
-      { data: { ...data, ...(referralCode ? { referralCode } : {}) } },
+      { data: { ...data, ...(effectiveReferralCode ? { referralCode: effectiveReferralCode } : {}) } },
       {
         onSuccess: (res: any) => {
           login(res.accessToken, res.user);
@@ -74,7 +77,7 @@ export default function Register() {
     setGoogleError(null);
     try {
       const body: Record<string, string> = { credential: credentialResponse.credential };
-      if (referralCode) body.referralCode = referralCode;
+      if (effectiveReferralCode) body.referralCode = effectiveReferralCode;
 
       const res = await fetch('/api/auth/google', {
         method: 'POST',
@@ -102,11 +105,11 @@ export default function Register() {
           <CardDescription className="text-muted-foreground">
             Join the ultimate sports streaming & betting platform
           </CardDescription>
-          {referralCode && (
+          {effectiveReferralCode && (
             <div className="flex items-center justify-center gap-1.5 mt-1 rounded-lg bg-teal-500/10 border border-teal-500/20 px-3 py-1.5">
               <Gift className="h-3.5 w-3.5 text-teal-400 shrink-0" />
               <span className="text-xs text-teal-300 font-medium">
-                Referral code <span className="font-mono font-bold">{referralCode}</span> applied
+                Referral code <span className="font-mono font-bold">{effectiveReferralCode}</span> applied
               </span>
             </div>
           )}
@@ -189,6 +192,26 @@ export default function Register() {
                   </FormItem>
                 )}
               />
+              {/* Referral code — optional manual entry */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-white flex items-center gap-1.5">
+                  <Gift className="h-3.5 w-3.5 text-teal-400" />
+                  Referral Code <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                <Input
+                  placeholder="e.g. ABCD1234"
+                  value={referralInput}
+                  onChange={e => setReferralInput(e.target.value.toUpperCase())}
+                  className="bg-background/50 border-input text-white font-mono tracking-widest placeholder:font-sans placeholder:tracking-normal"
+                  maxLength={10}
+                />
+                {effectiveReferralCode && (
+                  <p className="text-xs text-teal-400 flex items-center gap-1">
+                    <Gift className="h-3 w-3" /> Code applied — you'll help someone earn a bonus!
+                  </p>
+                )}
+              </div>
+
               <Button type="submit" className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold" disabled={registerMutation.isPending || googleLoading}>
                 {registerMutation.isPending ? 'Creating account...' : 'Create Account'}
               </Button>
