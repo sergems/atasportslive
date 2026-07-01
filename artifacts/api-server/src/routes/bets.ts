@@ -8,6 +8,9 @@ import { sendMail, templates } from "../lib/mailer";
 
 const router = Router();
 
+// Named constant — avoids silent bugs if the system user ID ever changes
+const ATA_SYSTEM_USER_ID = parseInt(process.env.ATA_SYSTEM_USER_ID ?? "1", 10);
+
 const toBet = (b: typeof betsTable.$inferSelect, game?: any) => ({
   id: b.id,
   ticketId: b.ticketId,
@@ -120,7 +123,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
     // ATA fee
     await db.insert(transactionsTable).values({
       transactionId: `FEE-${uuidv4().split("-")[0].toUpperCase()}`,
-      userId: 1, // ATA system account
+      userId: ATA_SYSTEM_USER_ID,
       type: "brokerage_fee",
       amount: fee.toString(),
       status: "completed",
@@ -375,7 +378,7 @@ router.post("/:id/accept-near-match", authMiddleware, async (req: AuthRequest, r
   // Brokerage fee record
   await db.insert(transactionsTable).values({
     transactionId: `FEE-${uuidv4().split("-")[0].toUpperCase()}`,
-    userId: 1,
+    userId: ATA_SYSTEM_USER_ID,
     type: "brokerage_fee",
     amount: fee.toString(),
     status: "completed",

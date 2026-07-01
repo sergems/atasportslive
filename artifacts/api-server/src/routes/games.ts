@@ -303,19 +303,25 @@ router.post("/:id/cancel", authMiddleware, requireRole("admin"), async (req: Aut
   res.json(toGame(game));
 });
 
-router.get("/:id/bets", async (req, res): Promise<void> => {
-  const bets = await db.select().from(betsTable).where(eq(betsTable.gameId, Number(req.params.id)));
-  const games = await db.select().from(gamesTable).where(eq(gamesTable.id, Number(req.params.id))).limit(1);
+// Auth required — stakes and user IDs must not be public
+router.get("/:id/bets", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const gameId = Number(req.params.id);
+  const bets = await db.select().from(betsTable).where(eq(betsTable.gameId, gameId));
+  const games = await db.select().from(gamesTable).where(eq(gamesTable.id, gameId)).limit(1);
   const game = games[0];
+  const requesterId = req.userId!;
   res.json(bets.map((b) => ({
     id: b.id,
     ticketId: b.ticketId,
-    userId: b.userId,
+    // Only expose userId to the owner of the bet; others see null
+    userId: b.userId === requesterId ? b.userId : null,
+    isOwn: b.userId === requesterId,
     gameId: b.gameId,
     game: game ? toGame(game) : null,
     outcome: b.outcome,
-    stake: parseFloat(b.stake as string),
-    potentialReturn: parseFloat(b.potentialReturn as string),
+    // Only expose stake to the owner; others see null
+    stake: b.userId === requesterId ? parseFloat(b.stake as string) : null,
+    potentialReturn: b.userId === requesterId ? parseFloat(b.potentialReturn as string) : null,
     status: b.status,
     matchedBetId: b.matchedBetId,
     createdAt: b.createdAt,

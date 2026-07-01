@@ -35,12 +35,12 @@ export default function StreamDetail() {
         hls.loadSource(stream.hlsUrl);
         hls.attachMedia(videoRef.current);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          videoRef.current?.play().catch(e => console.error("Playback failed", e));
+          videoRef.current?.play().catch(() => { /* autoplay blocked by browser — user can press play */ });
         });
         return () => hls.destroy();
       } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
         videoRef.current.src = stream.hlsUrl;
-        videoRef.current.play().catch(e => console.error("Playback failed", e));
+        videoRef.current.play().catch(() => { /* autoplay blocked by browser — user can press play */ });
       }
     }
     return undefined;

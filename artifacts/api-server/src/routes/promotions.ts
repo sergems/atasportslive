@@ -141,13 +141,13 @@ router.post("/validate-code", authMiddleware, async (req: AuthRequest, res): Pro
     )
   ).limit(1);
 
-  if (!promo) { res.json({ valid: false, reason: "Code not found or expired" }); return; }
+  if (!promo) { res.status(404).json({ valid: false, reason: "Code not found or expired" }); return; }
   if (promo.maxUses && promo.usedCount >= promo.maxUses) {
-    res.json({ valid: false, reason: "This promotion has reached its usage limit" }); return;
+    res.status(400).json({ valid: false, reason: "This promotion has reached its usage limit" }); return;
   }
   const minDep = parseFloat(promo.minDeposit as string);
   if (depositAmount && Number(depositAmount) < minDep) {
-    res.json({ valid: false, reason: `Minimum deposit of $${minDep.toFixed(2)} required` }); return;
+    res.status(400).json({ valid: false, reason: `Minimum deposit of ${minDep.toFixed(2)} required` }); return;
   }
 
   const bonusAmount = calcBonus(promo, Number(depositAmount) || minDep);

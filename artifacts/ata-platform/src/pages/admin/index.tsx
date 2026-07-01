@@ -60,7 +60,8 @@ function useSettlementDue() {
 }
 
 function timeAgo(dateStr: string, timeStr: string): string {
-  const start = new Date(`${dateStr}T${timeStr || '00:00'}`);
+  // Include seconds so Safari's Date constructor parses correctly (T00:00 alone can fail)
+  const start = new Date(`${dateStr}T${timeStr || '00:00'}:00`);
   const diffMs = Date.now() - start.getTime();
   const diffMins = Math.floor(diffMs / 60_000);
   if (diffMins < 60) return `${diffMins}m ago`;
@@ -249,7 +250,7 @@ export default function AdminDashboard() {
               <div>
                 {/* Urgency banner if any game started over 3 hours ago */}
                 {settlementGames.some((g: any) => {
-                  const start = new Date(`${g.eventDate}T${g.eventTime || '00:00'}`);
+                  const start = new Date(`${g.eventDate}T${g.eventTime || '00:00'}:00`);
                   return Date.now() - start.getTime() > 3 * 60 * 60 * 1000;
                 }) && (
                   <div className="flex items-center gap-2 mb-4 rounded-lg bg-red-500/10 border border-red-500/25 px-3 py-2.5 text-xs text-red-300">
