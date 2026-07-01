@@ -5,6 +5,7 @@ import { logger } from "./lib/logger";
 import { wsClients, wsStreamClients } from "./lib/notify";
 import { startBonusCron } from "./lib/bonusCron";
 import { startGameCron } from "./lib/gameCron";
+import { startCommentCron } from "./lib/commentCron";
 
 const rawPort = process.env["PORT"];
 
@@ -63,4 +64,5 @@ httpServer.listen(port, (err?: Error) => {
   logger.info({ port }, "ATA Platform server listening");
   startBonusCron();
   startGameCron();
+  startCommentCron();
 });
