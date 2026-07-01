@@ -399,8 +399,35 @@ function GameCard({ game, isChild = false, ctx }: { game: any; isChild?: boolean
   );
 }
 
+function PastGamesSection({ pastTopLevel, ctx }: { pastTopLevel: any[]; ctx: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? pastTopLevel : pastTopLevel.slice(0, 1);
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 pt-2">
+        <div className="h-px flex-1 bg-slate-800" />
+        <div className="text-slate-500 text-xs font-semibold uppercase tracking-widest">
+          Past / Completed ({pastTopLevel.length})
+        </div>
+        <div className="h-px flex-1 bg-slate-800" />
+      </div>
+      {shown.map((game: any) => <GameCard key={game.id} game={game} ctx={ctx} />)}
+      {pastTopLevel.length > 1 && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="w-full text-xs text-slate-500 hover:text-teal-400 transition-colors py-1.5 border border-dashed border-slate-800 rounded-lg hover:border-teal-500/30"
+        >
+          {expanded
+            ? '▲ Show less'
+            : `▼ View all ${pastTopLevel.length} past / completed bets`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function AdminGames() {
-  useEffect(() => { document.title = 'Manage Games - Admin'; }, []);
+  useEffect(() => { document.title = 'Manage Bets - Admin'; }, []);
 
   const qc = useQueryClient();
   const token = useAuthStore((s) => s.token);
@@ -603,7 +630,7 @@ export default function AdminGames() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-amber-400" /> Manage Games
+          <Trophy className="h-6 w-6 text-amber-400" /> Manage Bets
         </h1>
         <Button
           onClick={() => { setShowForm(!showForm); setEditId(null); setAddMatchParentId(null); }}
@@ -640,16 +667,7 @@ export default function AdminGames() {
           </div>
 
           {pastTopLevel.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 pt-2">
-                <div className="h-px flex-1 bg-slate-800" />
-                <div className="text-slate-500 text-xs font-semibold uppercase tracking-widest">
-                  Past / Completed ({pastTopLevel.length})
-                </div>
-                <div className="h-px flex-1 bg-slate-800" />
-              </div>
-              {pastTopLevel.map((game) => <GameCard key={game.id} game={game} ctx={ctx} />)}
-            </div>
+            <PastGamesSection pastTopLevel={pastTopLevel} ctx={ctx} />
           )}
         </>
       )}
