@@ -219,11 +219,11 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
           )}
 
           <div className="mt-4 sm:mt-8 flex flex-col items-center">
-            <Link href="/streams">
-              <Button size="sm" className="bg-red-600 hover:bg-red-500 text-white font-bold px-6 sm:px-10 shadow-lg shadow-red-600/30 transition-all hover:scale-105 flex items-center gap-2">
+            <Link href="/live">
+              <Button size="sm" variant="outline" className="bg-transparent border-2 border-red-500 text-red-500 hover:bg-red-500/10 font-bold px-6 sm:px-10 transition-all hover:scale-105 flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-300 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
                 </span>
                 <span className="tracking-widest uppercase" style={{ animation: 'livePulse 2s ease-in-out infinite' }}>Live Stream</span>
               </Button>
@@ -289,11 +289,11 @@ function DefaultHero() {
           Watch live grassroots Pool and Boxing matches. Bet peer-to-peer in real-time. High stakes, zero clutter.
         </p>
         <div className="mt-5 sm:mt-8 flex flex-col items-center">
-          <Link href="/streams">
-            <Button size="sm" className="bg-red-600 hover:bg-red-500 text-white font-bold px-6 sm:px-10 shadow-lg shadow-red-600/30 transition-all hover:scale-105 flex items-center gap-2">
+          <Link href="/live">
+            <Button size="sm" variant="outline" className="bg-transparent border-2 border-red-500 text-red-500 hover:bg-red-500/10 font-bold px-6 sm:px-10 transition-all hover:scale-105 flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-300 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
               </span>
               <span className="tracking-widest uppercase" style={{ animation: 'livePulse 2s ease-in-out infinite' }}>Live Stream</span>
             </Button>
