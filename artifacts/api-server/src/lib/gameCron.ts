@@ -101,6 +101,31 @@ async function activateStartedGames(): Promise<void> {
         { gameId: game.id, cancelledBets: pendingBets.length },
         "Game activated — all unmatched bets cancelled and refunded",
       );
+
+      // 4. Notify matched-bet holders that the match has started
+      const matchedBets = await db
+        .select()
+        .from(betsTable)
+        .where(and(eq(betsTable.gameId, game.id), eq(betsTable.status, "matched")));
+
+      const notifiedUsers = new Set<number>();
+      for (const bet of matchedBets) {
+        if (notifiedUsers.has(bet.userId)) continue;
+        notifiedUsers.add(bet.userId);
+
+        const stake = parseFloat(bet.stake as string);
+        await notify(
+          bet.userId,
+          "bet_matched",
+          "Match has started! ⚽",
+          `${game.player_a} vs ${game.player_b} is now live. Your $${stake.toFixed(2)} bet is locked in and will be settled once the result is confirmed.`,
+        );
+
+        logger.info(
+          { gameId: game.id, userId: bet.userId },
+          "Match-start notification sent to matched-bet holder",
+        );
+      }
     } catch (err) {
       logger.error({ err, gameId: game.id }, "Failed to activate game / cancel bets");
     }
