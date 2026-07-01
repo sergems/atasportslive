@@ -110,12 +110,12 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Home', exact: true },
-    { href: '/live', label: 'Live', pulse: isLive, mobileHide: true },
-    { href: '/streams', label: 'Streams' },
+    { href: '/live', label: 'Livestream', pulse: isLive, mobileHide: true },
+    { href: '/streams', label: 'Events' },
     { href: '/upcoming', label: 'Upcoming' },
     { href: '/highlights', label: 'Highlights' },
     { href: '/fixtures', label: 'Fixtures' },
-    ...(isAuthenticated ? [{ href: '/games', label: 'Games' }] : []),
+    ...(isAuthenticated ? [{ href: '/games', label: 'Bets' }] : []),
   ];
 
   return (
