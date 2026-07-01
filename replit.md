@@ -58,6 +58,14 @@ A full-stack sports streaming and P2P betting exchange platform for Kampala, Uga
 - Admin: `admin@ata.ug` / `admin123`
 - User: `demo@ata.ug` / `demo123`
 
+## Replit setup
+
+- Database schema applied from `database.sql` on initial setup (Replit's built-in PostgreSQL)
+- `DATABASE_URL` and `PGHOST/PGUSER/PGPASSWORD/PGDATABASE` are runtime-managed by Replit — do not set manually
+- `SESSION_SECRET` is stored as a Replit Secret ✓
+- SMTP vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `NOTIFY_EMAIL`) are optional — email is silently skipped when absent
+- Two workflows: **ATA Platform** (port 5000, frontend) and **API Server** (port 8080, backend)
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
