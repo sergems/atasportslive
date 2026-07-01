@@ -1,20 +1,27 @@
 import { Router } from "express";
 import { db, streamCommentsTable, usersTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, gte } from "drizzle-orm";
 import { authMiddleware, type AuthRequest } from "../middlewares/auth";
 import { broadcastToStream } from "../lib/notify";
 
 const router = Router({ mergeParams: true });
 
-// GET /api/streams/:id/comments  — last 100 comments, oldest first
+const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+
+// GET /api/streams/:id/comments  — last 100 comments from the past 6 hours, oldest first
 router.get("/", async (req, res): Promise<void> => {
   const streamId = parseInt((req.params as { id: string }).id);
   if (isNaN(streamId)) { res.status(400).json({ error: "Invalid stream id" }); return; }
 
+  const cutoff = new Date(Date.now() - SIX_HOURS_MS);
+
   const rows = await db
     .select()
     .from(streamCommentsTable)
-    .where(eq(streamCommentsTable.streamId, streamId))
+    .where(and(
+      eq(streamCommentsTable.streamId, streamId),
+      gte(streamCommentsTable.createdAt, cutoff),
+    ))
     .orderBy(desc(streamCommentsTable.createdAt))
     .limit(100);
 

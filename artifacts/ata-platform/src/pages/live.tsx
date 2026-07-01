@@ -521,6 +521,14 @@ interface LiveComment {
   createdAt: string;
 }
 
+const COMMENT_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+const QUICK_EMOJIS = [
+  '😂','❤️','🔥','👏','💪','🎯','🥊','🏆','😮','👍',
+  '😅','🤣','😁','💯','🙌','👀','😱','🤩','🎉','💥',
+  '⚡','🥳','😤','👊','🏅','🎊','🤝','💰','😎','🫡',
+];
+
 function CommentSection({
   streamId,
   token,
@@ -535,8 +543,24 @@ function CommentSection({
   const [comments, setComments] = useState<LiveComment[]>([]);
   const [input, setInput] = useState('');
   const [posting, setPosting] = useState(false);
+  const [showEmojis, setShowEmojis] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const emojiPanelRef = useRef<HTMLDivElement>(null);
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Close emoji panel on outside click
+  useEffect(() => {
+    if (!showEmojis) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        !emojiPanelRef.current?.contains(e.target as Node) &&
+        !emojiBtnRef.current?.contains(e.target as Node)
+      ) setShowEmojis(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showEmojis]);
 
   // Fetch existing comments
   useEffect(() => {
@@ -564,6 +588,8 @@ function CommentSection({
         try {
           const data = JSON.parse(e.data);
           if (data.type === 'stream_comment' && data.comment) {
+            const age = Date.now() - new Date(data.comment.createdAt).getTime();
+            if (age > COMMENT_TTL_MS) return;
             setComments((prev) =>
               prev.some((c) => c.id === data.comment.id) ? prev : [...prev, data.comment],
             );
@@ -631,25 +657,52 @@ function CommentSection({
       {/* Input */}
       <div className="shrink-0 border-t border-slate-800 px-2 py-2">
         {isAuthenticated ? (
-          <div className="flex items-center gap-2">
-            <input
-              className="flex-1 bg-slate-800 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-teal-500/50 min-w-0"
-              placeholder="Say something…"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); postComment(); } }}
-              maxLength={280}
-            />
-            <button
-              onClick={postComment}
-              disabled={posting || !input.trim()}
-              className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-teal-500 hover:bg-teal-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {posting
-                ? <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
-                : <Send className="h-3.5 w-3.5 text-slate-950" />
-              }
-            </button>
+          <div className="relative">
+            {/* Emoji picker panel */}
+            {showEmojis && (
+              <div
+                ref={emojiPanelRef}
+                className="absolute bottom-full mb-1 left-0 right-0 bg-slate-800 border border-slate-700 rounded-xl p-2 grid grid-cols-6 gap-0.5 z-20 shadow-xl"
+              >
+                {QUICK_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => { setInput((p) => p + emoji); setShowEmojis(false); }}
+                    className="text-lg hover:bg-slate-700 rounded-lg p-1 transition-colors text-center leading-none"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <button
+                ref={emojiBtnRef}
+                onClick={() => setShowEmojis((s) => !s)}
+                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-base transition-colors"
+                title="Add emoji"
+              >
+                😊
+              </button>
+              <input
+                className="flex-1 bg-slate-800 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-600 outline-none focus:ring-1 focus:ring-teal-500/50 min-w-0"
+                placeholder="Say something…"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); postComment(); } }}
+                maxLength={280}
+              />
+              <button
+                onClick={postComment}
+                disabled={posting || !input.trim()}
+                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-teal-500 hover:bg-teal-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {posting
+                  ? <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />
+                  : <Send className="h-3.5 w-3.5 text-slate-950" />
+                }
+              </button>
+            </div>
           </div>
         ) : (
           <Link href="/login">
