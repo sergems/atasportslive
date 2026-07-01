@@ -1,0 +1,78 @@
+ => ERROR [nginx deps 10/10] RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store   28.5s
+ => [api native-deps 3/4] WORKDIR /deps                                                 0.1s
+ => [api native-deps 4/4] RUN npm install --save-exact         bcrypt@6.0.0         no  2.0s
+ => [api api 3/5] COPY --from=native-deps /deps/node_modules ./node_modules             0.1s
+------
+ > [nginx deps 10/10] RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store     pnpm install --frozen-lockfile       --config.onlyBuiltDependencies=bcrypt,esbuild,@swc/core,msw,unrs-resolver:
+1.658 Scope: all 8 workspace projects
+1.889 ? Verifying lockfile against supply-chain policies (589 entries)...
+1.926 Lockfile is up to date, resolution step is skipped
+2.239 Progress: resolved 1, reused 0, downloaded 0, added 0
+2.321 Packages: +584
+2.321 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+3.246 Progress: resolved 584, reused 0, downloaded 0, added 0
+4.287 Progress: resolved 584, reused 0, downloaded 4, added 0
+5.308 Progress: resolved 584, reused 0, downloaded 16, added 0
+6.337 Progress: resolved 584, reused 0, downloaded 53, added 0
+7.396 Progress: resolved 584, reused 0, downloaded 74, added 4
+7.416
+7.416    ╭──────────────────────────────────────────────╮
+7.416    │                                              │
+7.416    │      Update available! 11.8.0 → 11.9.0.      │
+7.416    │     Changelog: https://pnpm.io/v/11.9.0      │
+7.416    │   To update, run: corepack use pnpm@11.9.0   │
+7.416    │                                              │
+7.416    ╰──────────────────────────────────────────────╯
+7.416
+8.445 Progress: resolved 584, reused 0, downloaded 113, added 4
+9.455 Progress: resolved 584, reused 0, downloaded 126, added 4
+10.46 Progress: resolved 584, reused 0, downloaded 151, added 8
+11.57 Progress: resolved 584, reused 0, downloaded 190, added 11
+12.72 Progress: resolved 584, reused 0, downloaded 252, added 13
+12.91 ✓ Lockfile passes supply-chain policies (589 entries in 11s)
+13.73 Progress: resolved 584, reused 0, downloaded 312, added 16
+14.74 Progress: resolved 584, reused 0, downloaded 353, added 20
+15.74 Progress: resolved 584, reused 0, downloaded 359, added 20
+16.74 Progress: resolved 584, reused 0, downloaded 365, added 20
+17.74 Progress: resolved 584, reused 0, downloaded 375, added 20
+18.75 Progress: resolved 584, reused 0, downloaded 480, added 28
+19.74 Progress: resolved 584, reused 0, downloaded 584, added 148
+20.74 Progress: resolved 584, reused 0, downloaded 584, added 334
+21.75 Progress: resolved 584, reused 0, downloaded 584, added 353
+22.75 Progress: resolved 584, reused 0, downloaded 584, added 359
+23.75 Progress: resolved 584, reused 0, downloaded 584, added 364
+24.76 Progress: resolved 584, reused 0, downloaded 584, added 365
+25.76 Progress: resolved 584, reused 0, downloaded 584, added 419
+26.76 Progress: resolved 584, reused 0, downloaded 584, added 530
+27.16 Progress: resolved 584, reused 0, downloaded 584, added 584, done
+27.81
+27.81 devDependencies:
+27.81 + prettier 3.8.3
+27.81 + typescript 5.9.3
+27.81
+27.83 . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+27.87 . preinstall: Done
+28.01 [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: bcrypt@5.1.1, bcrypt@6.0.0, esbuild@0.27.3
+28.01
+28.01 Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+------
+[+] build 0/2
+ ⠙ Image ata-api   Building                                                             32.6s
+ ⠙ Image ata-nginx Building                                                             32.6s
+Dockerfile:29
+
+--------------------
+
+  28 |
+
+  29 | >>> RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+
+  30 | >>>     pnpm install --frozen-lockfile \
+
+  31 | >>>       --config.onlyBuiltDependencies=bcrypt,esbuild,@swc/core,msw,unrs-resolver
+
+  32 |
+
+--------------------
+
+target nginx: failed to solve: process "/bin/sh -c pnpm install --frozen-lockfile       --config.onlyBuiltDependencies=bcrypt,esbuild,@swc/core,msw,unrs-resolver" did not complete successfully: exit code: 1

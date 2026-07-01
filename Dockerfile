@@ -1,15 +1,16 @@
 # =============================================================================
 # ATA Platform — Multi-stage Dockerfile
-# Node.js 24 slim  |  pnpm 11.8.0  |  Express 5.x
+# Node.js 24 slim  |  pnpm 10.26.1  |  Express 5.x
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Stage 1 — base: Node 24 slim + pnpm 11.8.0
+# Stage 1 — base: Node 24 slim + pnpm 10.26.1
+# (matches the pnpm version used in dev so the lockfile is fully compatible)
 # -----------------------------------------------------------------------------
 FROM node:24-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@11.8.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.26.1 --activate
 
 # -----------------------------------------------------------------------------
 # Stage 2 — deps: install full workspace dependencies
@@ -27,8 +28,7 @@ COPY artifacts/api-server/package.json  artifacts/api-server/
 COPY artifacts/ata-platform/package.json artifacts/ata-platform/
 
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile \
-      --config.onlyBuiltDependencies=bcrypt,esbuild,@swc/core,msw,unrs-resolver
+    pnpm install --frozen-lockfile
 
 # -----------------------------------------------------------------------------
 # Stage 3 — builder: compile API server + frontend
