@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Settings, Radio, Save, ExternalLink, CheckCircle2, AlertCircle,
   CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Tv2, Zap, Power,
-  Database, Download,
+  Database, Download, Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,6 +26,8 @@ export default function AdminSettings() {
   const token = useAuthStore((s) => s.token);
   const qc = useQueryClient();
   const { data: settings, isLoading } = useSettings();
+
+  const [referralBonusPct, setReferralBonusPct] = useState('10');
 
   const [liveStreamUrl, setLiveStreamUrl] = useState('');
   // Mux default stream settings
@@ -96,6 +98,7 @@ export default function AdminSettings() {
 
   useEffect(() => {
     if (settings) {
+      setReferralBonusPct(settings.referral_bonus_pct ?? '10');
       setLiveStreamUrl(settings.liveStreamUrl ?? '');
       setMuxPlaybackId(settings.mux_playback_id ?? '');
       setMuxIsLive(settings.mux_is_live === 'true');
@@ -253,6 +256,54 @@ export default function AdminSettings() {
           <p className="text-slate-400 text-sm mt-0.5">Global platform configuration</p>
         </div>
       </div>
+
+      {/* ── Referral Program ── */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Users className="h-4 w-4 text-teal-400" /> Referral Program
+          </CardTitle>
+          <CardDescription className="text-slate-400">
+            When a referred user purchases their first livestream, the referrer earns this percentage of the stream price as a bonus credit (valid 90 days).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-end gap-3">
+            <div className="space-y-1.5 w-40">
+              <Label className="text-slate-300 text-sm">Bonus Percentage</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={referralBonusPct}
+                  onChange={e => setReferralBonusPct(e.target.value)}
+                  className="bg-slate-800 border-slate-700 text-white font-mono text-sm pr-8"
+                  disabled={isLoading}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">%</span>
+              </div>
+            </div>
+            <Button
+              onClick={() => {
+                const v = parseFloat(referralBonusPct);
+                if (isNaN(v) || v < 0 || v > 100) { toast.error('Enter a value between 0 and 100'); return; }
+                saveMutation.mutate({ referral_bonus_pct: v.toString() });
+              }}
+              disabled={saveMutation.isPending || isLoading}
+              className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {saveMutation.isPending ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500">
+            Current rate: <span className="text-teal-400 font-mono font-semibold">{settings?.referral_bonus_pct ?? '10'}%</span> of the stream access price.
+            Set to <span className="font-mono">0</span> to disable referral bonuses entirely.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* ── Email / SMTP ── */}
       <Card className="bg-slate-900 border-slate-700">

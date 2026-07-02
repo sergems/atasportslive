@@ -261,7 +261,7 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
   const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   await db.insert(streamAccessTable).values({ userId, streamId, grantedAt: now, expiresAt });
 
-  // ── Referral bonus: 5% of stream price to referrer on first paid purchase ──
+  // ── Referral bonus: configurable % of stream price to referrer on first paid purchase ──
   if (isFirstPurchase) {
     const [userRecord] = await db
       .select({ referredBy: usersTable.referredBy, fullName: usersTable.fullName, email: usersTable.email })
@@ -270,7 +270,10 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
       .limit(1);
 
     if (userRecord?.referredBy) {
-      const bonusAmount = Math.round(price * 0.05 * 100) / 100;
+      const pctRows = await db.execute(sql`SELECT value FROM settings WHERE key = 'referral_bonus_pct' LIMIT 1`);
+      const pctRow = (pctRows.rows as { value: string }[])[0];
+      const referralPct = pctRow?.value ? Math.min(Math.max(parseFloat(pctRow.value), 0), 100) / 100 : 0.10;
+      const bonusAmount = Math.round(price * referralPct * 100) / 100;
       if (bonusAmount > 0) {
         const [referrerWallet] = await db
           .select()
@@ -305,7 +308,7 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
               balanceBefore: referrerBonusBefore.toFixed(2),
               balanceAfter: referrerBonusAfter.toFixed(2),
               reference: referralRef,
-              description: `5% referral bonus — ${userRecord.fullName || userRecord.email} purchased their first stream`,
+              description: `${(referralPct * 100).toFixed(0)}% referral bonus — ${userRecord.fullName || userRecord.email} purchased their first stream`,
               expiresAt: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000), // 90-day expiry
             });
 
