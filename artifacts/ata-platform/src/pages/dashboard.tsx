@@ -75,7 +75,7 @@ export default function Dashboard() {
   const nextGames = (upcomingGames ?? []).slice(0, 2);
 
   const referralLink = user?.referralCode
-    ? `${window.location.origin}/register?ref=${user.referralCode}`
+    ? `https://atasportslive.com/register?ref=${user.referralCode}`
     : null;
 
   function copyReferralLink() {
