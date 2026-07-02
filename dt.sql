@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Nd75RSZ2f8jIQH6p45SugiX2tOFlUCZ3HeDYY7fls3oLly1uOPYwajoQkExjQDr
+\restrict yS8KNhOEcXBbN2uVAnHYvIZTDgF55LFlDv0iheZKCd6jrdcM8b6a6teUPZcWuPO
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1269,6 +1269,12 @@ pesapal_consumer_secret	y6frhAV12Vl7JJLIvLQiF8FJDkU=	2026-06-30 23:08:02.296451+
 pesapal_environment	live	2026-06-30 23:08:02.299421+00
 pesapal_currency	USD	2026-06-30 23:08:02.301844+00
 pesapal_ipn_id		2026-06-30 23:08:02.304654+00
+smtp_host	mail.atasportslive.com	2026-07-02 13:57:08.693627+00
+smtp_port	465	2026-07-02 13:57:08.693627+00
+smtp_user	noreply@atasportslive.com	2026-07-02 13:57:08.693627+00
+smtp_pass	Hy6z~0r=H!O&fDB[	2026-07-02 13:57:08.693627+00
+smtp_secure	true	2026-07-02 13:57:08.693627+00
+smtp_from	ATA Sports Live <noreply@atasportslive.com>	2026-07-02 13:57:08.693627+00
 \.
 
 
@@ -6401,7 +6407,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5030	clintonabcbill@gmail.com	MUST_SET_PASSWORD	Akampurira Ciboss	0753094499	user	active	\N	\N	2026-06-26 13:40:33.453804+00	2026-06-26 13:40:33.453804+00	\N	\N	\N	t	\N	\N	13A616DB	\N
 5031	johm@try.co.za	$2b$10$9YzCt9Xc6KYJMh63h6yZaePOORc17dl8mHqBm3uQsIzREGscYfAPG	Alex	+27748448457	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzEsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4MDk5ODYsImV4cCI6MTc4NTQwMTk4Nn0.yJFBFZwZw743At1p7hYMTlw7hdXeVZ7Mfq7dQIOSDJ0	2026-06-30 08:59:46.506546+00	2026-06-30 08:59:46.92+00	\N	\N	\N	f	\N	\N	13A75054	\N
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiIwYTA2MWY5ZC1lZGNjLTQ1NTctYTk5OS0wYTcyNDYyMGUyMjciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mjg1NjU2MywiZXhwIjoxNzg1NDQ4NTYzfQ.pVRD0vgBgW0h9WBQgZ-ue1e-N_TCxUNwlHkr5mn4kfE	2026-06-15 16:31:06.605107+00	2026-06-30 21:56:03.532+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	0a061f9d-edcc-4557-a999-0a724620e227	\N	0002CF32	\N
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiMjU5ODc1MTgtZGQ0OC00YjkxLWIwMjctZjJlMGY5NWVmMTZjIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI5NTE4ODIsImV4cCI6MTc4NTU0Mzg4Mn0.d9oyZrG4KdIKTYaGBN8NmpJc3lYHx-cmxLAjHbW-cK0	2026-06-15 16:31:06.226579+00	2026-07-02 00:24:42.914+00	\N	\N	\N	f	25987518-dd48-4b91-b027-f2e0f95ef16c	\N	00016EFF	\N
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	0700000000	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiMGJhMmE0YzctNzE0Ni00NjQwLTlmNTctMzhjOWEyNGM3NTM1IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI5OTY2MzIsImV4cCI6MTc4NTU4ODYzMn0.g-s_nf_M-SUZlWTR4HFpap2zOIuO_WQvrC2nTCtE9jU	2026-06-15 16:31:06.226579+00	2026-07-02 12:50:32.755+00	\N	\N	\N	f	0ba2a4c7-7146-4640-9f57-38c9a24c7535	\N	00016EFF	\N
 \.
 
 
@@ -11966,5 +11972,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Nd75RSZ2f8jIQH6p45SugiX2tOFlUCZ3HeDYY7fls3oLly1uOPYwajoQkExjQDr
+\unrestrict yS8KNhOEcXBbN2uVAnHYvIZTDgF55LFlDv0iheZKCd6jrdcM8b6a6teUPZcWuPO
 
