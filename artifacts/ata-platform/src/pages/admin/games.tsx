@@ -72,43 +72,38 @@ function GameForm({
 
   return (
     <Card className={`bg-slate-900 border ${accentClass}`}>
-      <CardHeader>
-        <CardTitle className="text-white text-base">{title}</CardTitle>
+      <CardHeader className="py-2 px-3 border-b border-slate-800">
+        <CardTitle className="text-white text-xs uppercase tracking-wider">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardContent className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
         {!isChild && (
-          <div className="md:col-span-2 space-y-2">
-            <Label className="text-slate-300">Type</Label>
-            <div className="flex gap-3">
+          <div className="md:col-span-2 space-y-1.5">
+            <Label className="text-xs text-slate-400">Type</Label>
+            <div className="flex gap-2">
               {(['single', 'competition'] as GameType[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setForm({ ...form, type: t })}
-                  className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors capitalize
+                  className={`flex-1 py-1.5 px-3 rounded border text-[10px] font-bold uppercase tracking-wider transition-colors
                     ${form.type === t
                       ? t === 'competition'
                         ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
                         : 'bg-teal-500/20 border-teal-500/50 text-teal-300'
-                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'}`}
+                      : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'}`}
                 >
-                  {t === 'single' ? '⚔️ Single Match' : '🏆 Competition'}
+                  {t === 'single' ? 'Single Match' : 'Competition'}
                 </button>
               ))}
             </div>
-            {isCompetition && (
-              <p className="text-xs text-slate-500">
-                A competition spans multiple dates and can have individual matches added under it.
-              </p>
-            )}
           </div>
         )}
 
         <div className="space-y-1">
-          <Label className="text-slate-300">Sport <span className="text-red-400">*</span></Label>
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Sport <span className="text-red-400">*</span></Label>
           <select
             value={form.sport}
             onChange={(e: any) => setForm({ ...form, sport: e.target.value })}
-            className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white text-sm capitalize"
+            className="w-full bg-slate-950 border border-slate-800 rounded px-2 h-8 text-white text-xs capitalize focus-visible:ring-1 focus-visible:ring-teal-500/50 outline-none"
           >
             {SPORTS.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
           </select>
@@ -116,98 +111,95 @@ function GameForm({
 
         {isCompetition ? (
           <div className="space-y-1">
-            <Label className="text-slate-300">Competition Name <span className="text-red-400">*</span></Label>
+            <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Competition Name <span className="text-red-400">*</span></Label>
             <Input
               value={form.playerA}
               onChange={(e: any) => setForm({ ...form, playerA: e.target.value })}
               placeholder="e.g. Kampala Pool Open 2026"
-              className="bg-slate-800 border-slate-700 text-white"
+              className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50"
             />
           </div>
         ) : (
           <>
             <div className="space-y-1">
-              <Label className="text-slate-300">Player A <span className="text-red-400">*</span></Label>
-              <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. John Doe" className="bg-slate-800 border-slate-700 text-white" />
+              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A <span className="text-red-400">*</span></Label>
+              <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. John Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
             </div>
             <div className="space-y-1">
-              <Label className="text-slate-300">Player A Country <span className="text-slate-500 font-normal text-xs">(2-letter ISO, e.g. UG)</span></Label>
-              <Input value={form.playerACountry} onChange={(e: any) => setForm({ ...form, playerACountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="UG" maxLength={2} className="bg-slate-800 border-slate-700 text-white uppercase" />
+              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A Country <span className="text-slate-500 font-normal lowercase">(2-letter ISO)</span></Label>
+              <Input value={form.playerACountry} onChange={(e: any) => setForm({ ...form, playerACountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="UG" maxLength={2} className="bg-slate-950 border-slate-800 text-white h-8 text-xs uppercase focus-visible:ring-1 focus-visible:ring-teal-500/50" />
             </div>
             <div className="space-y-1">
-              <Label className="text-slate-300">Player B <span className="text-red-400">*</span></Label>
-              <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Jane Doe" className="bg-slate-800 border-slate-700 text-white" />
+              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B <span className="text-red-400">*</span></Label>
+              <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Jane Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
             </div>
             <div className="space-y-1">
-              <Label className="text-slate-300">Player B Country <span className="text-slate-500 font-normal text-xs">(2-letter ISO, e.g. KE)</span></Label>
-              <Input value={form.playerBCountry} onChange={(e: any) => setForm({ ...form, playerBCountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="KE" maxLength={2} className="bg-slate-800 border-slate-700 text-white uppercase" />
+              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B Country <span className="text-slate-500 font-normal lowercase">(2-letter ISO)</span></Label>
+              <Input value={form.playerBCountry} onChange={(e: any) => setForm({ ...form, playerBCountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="KE" maxLength={2} className="bg-slate-950 border-slate-800 text-white h-8 text-xs uppercase focus-visible:ring-1 focus-visible:ring-teal-500/50" />
             </div>
           </>
         )}
 
         <div className="space-y-1">
-          <Label className="text-slate-300">{isCompetition ? 'Start Date' : 'Date'} <span className="text-red-400">*</span></Label>
-          <Input type="date" value={form.eventDate} onChange={(e: any) => setForm({ ...form, eventDate: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isCompetition ? 'Start Date' : 'Date'} <span className="text-red-400">*</span></Label>
+          <Input type="date" value={form.eventDate} onChange={(e: any) => setForm({ ...form, eventDate: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
         <div className="space-y-1">
-          <Label className="text-slate-300">{isCompetition ? 'Start Time' : 'Time'} <span className="text-red-400">*</span></Label>
-          <Input type="time" value={form.eventTime} onChange={(e: any) => setForm({ ...form, eventTime: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isCompetition ? 'Start Time' : 'Time'} <span className="text-red-400">*</span></Label>
+          <Input type="time" value={form.eventTime} onChange={(e: any) => setForm({ ...form, eventTime: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
 
         <div className="space-y-1">
-          <Label className="text-slate-300">{isCompetition ? 'End Date' : 'End Date (optional)'}</Label>
-          <Input type="date" value={form.eventEndDate} onChange={(e: any) => setForm({ ...form, eventEndDate: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isCompetition ? 'End Date' : 'End Date (opt)'}</Label>
+          <Input type="date" value={form.eventEndDate} onChange={(e: any) => setForm({ ...form, eventEndDate: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
         <div className="space-y-1">
-          <Label className="text-slate-300">{isCompetition ? 'End Time' : 'End Time (optional)'}</Label>
-          <Input type="time" value={form.eventEndTime} onChange={(e: any) => setForm({ ...form, eventEndTime: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isCompetition ? 'End Time' : 'End Time (opt)'}</Label>
+          <Input type="time" value={form.eventEndTime} onChange={(e: any) => setForm({ ...form, eventEndTime: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
 
         <div className="space-y-1">
-          <Label className="text-slate-300">City</Label>
-          <Input value={form.city} onChange={(e: any) => setForm({ ...form, city: e.target.value })} placeholder={parentGame?.city || 'e.g. Kampala'} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">City</Label>
+          <Input value={form.city} onChange={(e: any) => setForm({ ...form, city: e.target.value })} placeholder={parentGame?.city || 'e.g. Kampala'} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
         <div className="space-y-1">
-          <Label className="text-slate-300">Country</Label>
-          <Input value={form.country} onChange={(e: any) => setForm({ ...form, country: e.target.value })} placeholder={parentGame?.country || 'e.g. Uganda'} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Country</Label>
+          <Input value={form.country} onChange={(e: any) => setForm({ ...form, country: e.target.value })} placeholder={parentGame?.country || 'e.g. Uganda'} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
 
-        {/* Stream toggle — only on top-level single-match create form */}
+        {/* Stream toggle */}
         {!isChild && !isCompetition && setCreateStream && setStreamPrice && (
-          <div className="md:col-span-2 rounded-lg border border-teal-500/20 bg-teal-500/5 p-4 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer select-none">
+          <div className="md:col-span-2 rounded border border-teal-500/20 bg-teal-500/5 p-3 space-y-2 mt-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
               <div
                 onClick={() => setCreateStream(!createStream)}
-                className={`relative w-10 h-5 rounded-full transition-colors ${createStream ? 'bg-teal-500' : 'bg-slate-700'}`}
+                className={`relative w-8 h-4 rounded-full transition-colors ${createStream ? 'bg-teal-500' : 'bg-slate-700'}`}
               >
-                <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${createStream ? 'translate-x-5' : ''}`} />
+                <span className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${createStream ? 'translate-x-4' : ''}`} />
               </div>
-              <div className="flex items-center gap-2">
-                <Radio className="h-4 w-4 text-teal-400" />
-                <span className="text-sm font-medium text-slate-200">Also create a stream for this game</span>
+              <div className="flex items-center gap-1.5">
+                <Radio className="h-3.5 w-3.5 text-teal-400" />
+                <span className="text-xs font-medium text-slate-300">Create stream</span>
               </div>
             </label>
             {createStream && (
-              <div className="space-y-1 pl-13">
-                <Label className="text-slate-400 text-xs">Access price (USD/day)</Label>
+              <div className="space-y-1 pl-10">
+                <Label className="text-slate-400 text-[10px] uppercase tracking-wider">Access price (USD)</Label>
                 <Input
                   type="number" step="0.01" value={streamPrice}
                   onChange={(e: any) => setStreamPrice(e.target.value)}
-                  className="bg-slate-800 border-slate-700 text-white w-32 h-8 text-sm"
+                  className="bg-slate-950 border-slate-800 text-white w-24 h-7 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50"
                 />
-                <p className="text-xs text-slate-500">
-                  A stream titled "<span className="text-slate-300">{form.playerA || 'Player A'} VS {form.playerB || 'Player B'}</span>" will be created automatically.
-                </p>
               </div>
             )}
           </div>
         )}
 
-        <div className="md:col-span-2 flex gap-3">
-          <Button onClick={onSave} disabled={saving} className="bg-amber-500 hover:bg-amber-400 text-slate-950">
+        <div className="md:col-span-2 flex gap-2 mt-2">
+          <Button size="sm" onClick={onSave} disabled={saving} className="bg-amber-500 hover:bg-amber-400 text-slate-950 h-8 px-4 text-xs font-bold">
             {saving ? 'Saving…' : 'Save'}
           </Button>
-          <Button variant="ghost" onClick={onCancel} className="text-slate-400">Cancel</Button>
+          <Button size="sm" variant="ghost" onClick={onCancel} className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 px-3 text-xs">Cancel</Button>
         </div>
       </CardContent>
     </Card>
@@ -290,46 +282,47 @@ function GameCard({ game, isChild = false, ctx }: { game: any; isChild?: boolean
 
   return (
     <div>
-      <Card className={`bg-slate-900 border-primary/20 ${editId === game.id ? 'border-amber-500/40' : ''} ${isChild ? 'bg-slate-950/60' : ''}`}>
-        <CardContent className="py-3 px-5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+      <Card className={`bg-slate-900 border-slate-800 ${editId === game.id ? 'border-amber-500/40' : ''} ${isChild ? 'bg-slate-950/60' : ''}`}>
+        <CardContent className="py-2 px-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-2 flex-1 min-w-0 w-full">
             {isCompetition && (
-              <button onClick={() => toggleExpand(game.id)} className="text-slate-500 hover:text-slate-300 flex-shrink-0">
+              <button onClick={() => toggleExpand(game.id)} className="text-slate-500 hover:text-slate-300 flex-shrink-0 mt-1 sm:mt-0">
                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </button>
             )}
-            {isChild && <Swords className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />}
+            {isChild && <Swords className="h-3 w-3 text-slate-600 flex-shrink-0 mt-1.5 sm:mt-0" />}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                 {isCompetition && (
-                  <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs">Competition</Badge>
+                  <span className="px-1.5 py-0 rounded border border-purple-500/30 bg-purple-500/20 text-purple-300 text-[9px] font-bold uppercase tracking-wider">Comp</span>
                 )}
-                <Badge className={`${STATUS_COLORS[game.status]} border text-xs`}>{game.status}</Badge>
-                <span className="text-xs text-slate-500 capitalize">{game.sport}</span>
+                <span className={`px-1.5 py-0 rounded border text-[9px] font-bold uppercase tracking-wider ${STATUS_COLORS[game.status]}`}>{game.status}</span>
+                <span className="text-[10px] text-slate-500 capitalize">{game.sport}</span>
                 {!isCompetition && (
-                  <span className="text-xs text-slate-600">{game.openBetsCount} open · {game.matchedBetsCount} matched</span>
+                  <span className="text-[10px] text-slate-600 font-mono">B:{game.openBetsCount} M:{game.matchedBetsCount}</span>
                 )}
               </div>
-              <p className="text-white font-semibold text-sm">
+              <p className="text-white font-semibold text-sm sm:text-xs truncate">
                 {isCompetition
                   ? game.playerA
-                  : <>{game.playerA} <span className="text-slate-500 font-normal text-xs">vs</span> {game.playerB}</>}
+                  : <>{game.playerA} <span className="text-slate-500 font-normal text-[10px]">vs</span> {game.playerB}</>}
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {formatDateRange(game)}
-                {(game.city || game.country) ? ` · ${[game.city, game.country].filter(Boolean).join(', ')}` : ''}
-                {isCompetition && children.length > 0 ? ` · ${children.length} match${children.length !== 1 ? 'es' : ''}` : ''}
-                {!isCompetition ? ` · Pool: $${(game.totalBetPool || 0).toFixed(2)}` : ''}
-              </p>
-              {game.result && <p className="text-xs text-teal-400 mt-0.5">Result: {game.result.replace(/_/g, ' ')}</p>}
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
+                <span>{formatDateRange(game)}</span>
+                {(game.city || game.country) && <span>· {[game.city, game.country].filter(Boolean).join(', ')}</span>}
+                {isCompetition && children.length > 0 && <span>· {children.length} match{children.length !== 1 ? 'es' : ''}</span>}
+                {!isCompetition && <span className="text-teal-400 font-mono font-bold">· P:${(game.totalBetPool || 0).toFixed(2)}</span>}
+              </div>
+              {game.result && <p className="text-[10px] text-teal-400 mt-0.5 font-bold uppercase tracking-wider">Result: {game.result.replace(/_/g, ' ')}</p>}
             </div>
           </div>
 
-          <div className="flex gap-1.5 flex-shrink-0 items-center flex-wrap justify-end">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end sm:justify-end border-t border-slate-800 sm:border-0 pt-2 sm:pt-0 shrink-0">
             <Button
               size="sm" variant="ghost"
               onClick={() => editId === game.id ? setEditId(null) : startEdit(game)}
-              className="h-7 w-7 p-0 text-slate-400 hover:text-amber-400"
+              className="h-7 w-7 p-0 text-slate-500 hover:text-amber-400 bg-slate-800/50 hover:bg-amber-500/10 rounded"
+              title="Edit"
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
@@ -338,15 +331,15 @@ function GameCard({ game, isChild = false, ctx }: { game: any; isChild?: boolean
               settleId === game.id
                 ? <SettlePanel game={game} onDone={() => setSettleId(null)} />
                 : (
-                  <Button size="sm" onClick={() => setSettleId(game.id)} className="bg-teal-500/20 text-teal-400 border border-teal-500/30 h-7 text-xs">
+                  <Button size="sm" onClick={() => setSettleId(game.id)} className="bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 border border-teal-500/30 h-7 px-2 text-[10px] font-bold uppercase tracking-wider">
                     <CheckCircle className="h-3 w-3 mr-1" /> Settle
                   </Button>
                 )
             )}
 
             {['upcoming', 'live'].includes(game.status) && (
-              <Button size="sm" variant="destructive" onClick={() => handleCancel(game.id)} className="h-7 text-xs">
-                <XCircle className="h-3 w-3 mr-1" /> Cancel
+              <Button size="sm" variant="ghost" onClick={() => handleCancel(game.id)} className="h-7 w-7 p-0 text-slate-500 hover:text-red-400 bg-slate-800/50 hover:bg-red-500/10 rounded" title="Cancel Game">
+                <XCircle className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
@@ -367,7 +360,7 @@ function GameCard({ game, isChild = false, ctx }: { game: any; isChild?: boolean
 
       {/* Competition children */}
       {isCompetition && isExpanded && (
-        <div className="ml-6 mt-2 space-y-2 border-l-2 border-slate-800 pl-4">
+        <div className="ml-2 sm:ml-6 mt-2 space-y-2 border-l-2 border-slate-800 pl-2 sm:pl-4">
           {children.map((child) => (
             <GameCard key={child.id} game={child} isChild ctx={ctx} />
           ))}
@@ -388,9 +381,9 @@ function GameCard({ game, isChild = false, ctx }: { game: any; isChild?: boolean
                 setAddMatchParentId(game.id);
                 setChildForm({ ...EMPTY_SINGLE, sport: game.sport, city: game.city || '', country: game.country || '' });
               }}
-              className="w-full py-2 px-4 rounded-lg border border-dashed border-slate-700 text-slate-500 hover:text-teal-400 hover:border-teal-500/40 text-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full py-1.5 px-3 rounded border border-dashed border-slate-700 bg-slate-900/50 text-slate-500 hover:text-teal-400 hover:border-teal-500/40 text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
             >
-              <Plus className="h-4 w-4" /> Add Match
+              <Plus className="h-3 w-3" /> Add Match
             </button>
           )}
         </div>
@@ -403,23 +396,25 @@ function PastGamesSection({ pastTopLevel, ctx }: { pastTopLevel: any[]; ctx: any
   const [expanded, setExpanded] = useState(false);
   const shown = expanded ? pastTopLevel : pastTopLevel.slice(0, 1);
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3 pt-2">
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 pt-2 pb-1">
         <div className="h-px flex-1 bg-slate-800" />
-        <div className="text-slate-500 text-xs font-semibold uppercase tracking-widest">
+        <div className="text-slate-500 text-[10px] font-semibold uppercase tracking-widest">
           Past / Completed ({pastTopLevel.length})
         </div>
         <div className="h-px flex-1 bg-slate-800" />
       </div>
-      {shown.map((game: any) => <GameCard key={game.id} game={game} ctx={ctx} />)}
+      <div className="space-y-2">
+        {shown.map((game: any) => <GameCard key={game.id} game={game} ctx={ctx} />)}
+      </div>
       {pastTopLevel.length > 1 && (
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="w-full text-xs text-slate-500 hover:text-teal-400 transition-colors py-1.5 border border-dashed border-slate-800 rounded-lg hover:border-teal-500/30"
+          className="w-full text-[10px] font-bold uppercase tracking-wider text-slate-500 hover:text-teal-400 transition-colors py-1.5 border border-dashed border-slate-800 rounded bg-slate-900 hover:bg-slate-800/50 hover:border-teal-500/30"
         >
           {expanded
             ? '▲ Show less'
-            : `▼ View all ${pastTopLevel.length} past / completed bets`}
+            : `▼ View all ${pastTopLevel.length} past / completed`}
         </button>
       )}
     </div>

@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Wallet, CheckCircle, XCircle, CreditCard, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -85,113 +84,128 @@ export default function AdminWallets() {
     : userList;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Wallet className="h-6 w-6 text-green-400" /> Wallet Management</h1>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+          <Wallet className="h-5 w-5 text-green-400" /> Wallet Adjustments
+        </h1>
+      </div>
 
       {/* Credit / Debit */}
-      <Card className="bg-slate-900 border-primary/20">
-        <CardHeader><CardTitle className="text-white text-base flex items-center gap-2"><CreditCard className="h-5 w-5 text-teal-400" /> Credit / Debit Account</CardTitle></CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-slate-400 text-xs">Search & Select User</Label>
+      <Card className="bg-slate-900 border-slate-800">
+        <CardHeader className="py-2 px-3 border-b border-slate-800">
+          <CardTitle className="text-white text-xs uppercase tracking-wider flex items-center gap-2">
+            <CreditCard className="h-3.5 w-3.5 text-teal-400" /> Credit / Debit Account
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3">
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Search & Select User</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
                 <Input
                   placeholder="Search by name or email…"
                   value={userSearch}
                   onChange={e => setUserSearch(e.target.value)}
-                  className="pl-9 bg-slate-800 border-slate-700 text-white"
+                  className="pl-8 bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50"
                 />
               </div>
               {userSearch && filteredUsers.length > 0 && !selectedUserId && (
-                <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden max-h-40 overflow-y-auto">
+                <div className="bg-slate-950 border border-slate-800 rounded mt-1 overflow-hidden max-h-40 overflow-y-auto">
                   {filteredUsers.slice(0, 8).map((u: any) => (
                     <button key={u.id} onClick={() => { setSelectedUserId(String(u.id)); setUserSearch(`${u.fullName} (${u.email})`); }}
-                      className="w-full text-left px-4 py-2 text-sm text-white hover:bg-slate-700 flex justify-between items-center">
-                      <span>{u.fullName}</span>
-                      <span className="text-slate-400 text-xs">{u.email}</span>
+                      className="w-full text-left px-3 py-1.5 text-xs text-white hover:bg-slate-800 flex justify-between items-center transition-colors">
+                      <span className="font-medium truncate mr-2">{u.fullName}</span>
+                      <span className="text-slate-500 text-[10px] truncate">{u.email}</span>
                     </button>
                   ))}
                 </div>
               )}
               {selectedUserId && (
-                <Button variant="ghost" size="sm" className="text-xs text-slate-500 hover:text-slate-300 h-6 px-2"
-                  onClick={() => { setSelectedUserId(''); setUserSearch(''); }}>Clear selection</Button>
+                <div className="flex justify-end pt-1">
+                  <Button variant="ghost" size="sm" className="text-[10px] text-slate-500 hover:text-white h-5 px-1.5"
+                    onClick={() => { setSelectedUserId(''); setUserSearch(''); }}>Clear selection</Button>
+                </div>
               )}
             </div>
 
-            <div className="flex flex-wrap gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-slate-400 text-xs">Type</Label>
-                <Select value={adjustType} onValueChange={v => setAdjustType(v as 'credit' | 'debit')}>
-                  <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="credit" className="text-teal-400">Credit (+)</SelectItem>
-                    <SelectItem value="debit" className="text-red-400">Debit (−)</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="space-y-1 w-full sm:w-28 shrink-0">
+                <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Type</Label>
+                <select
+                  value={adjustType}
+                  onChange={(e) => setAdjustType(e.target.value as 'credit' | 'debit')}
+                  className="w-full bg-slate-950 border border-slate-800 rounded px-2 h-8 text-white text-xs font-bold focus-visible:ring-1 focus-visible:ring-teal-500/50 outline-none"
+                >
+                  <option value="credit">CREDIT (+)</option>
+                  <option value="debit">DEBIT (-)</option>
+                </select>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-slate-400 text-xs">Amount (USD)</Label>
+              <div className="space-y-1 w-full sm:w-32 shrink-0">
+                <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Amount (USD)</Label>
                 <Input
                   type="number" min="0.01" step="0.01" placeholder="0.00"
                   value={adjustAmount} onChange={e => setAdjustAmount(e.target.value)}
-                  className="w-32 bg-slate-800 border-slate-700 text-white"
+                  className="w-full bg-slate-950 border-slate-800 text-white font-mono text-xs h-8 focus-visible:ring-1 focus-visible:ring-teal-500/50"
                 />
               </div>
-              <div className="flex-1 min-w-48 space-y-1.5">
-                <Label className="text-slate-400 text-xs">Note (optional)</Label>
+              <div className="flex-1 min-w-[200px] space-y-1">
+                <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Note (opt)</Label>
                 <Input placeholder="Reason for adjustment…" value={adjustNote} onChange={e => setAdjustNote(e.target.value)}
-                  className="bg-slate-800 border-slate-700 text-white" />
+                  className="w-full bg-slate-950 border-slate-800 text-white text-xs h-8 focus-visible:ring-1 focus-visible:ring-teal-500/50" />
               </div>
+              <Button
+                size="sm"
+                onClick={() => adjust.mutate()}
+                disabled={!selectedUserId || !adjustAmount || adjust.isPending}
+                className={`h-8 px-4 text-xs font-bold w-full sm:w-auto mt-1 sm:mt-0 ${adjustType === 'credit'
+                  ? 'bg-teal-500 hover:bg-teal-400 text-slate-950'
+                  : 'bg-red-500 hover:bg-red-400 text-white'}`}
+              >
+                {adjust.isPending ? 'Processing…' : adjustType === 'credit' ? `Credit ${adjustAmount || '0.00'}` : `Debit ${adjustAmount || '0.00'}`}
+              </Button>
             </div>
-
-            <Button
-              onClick={() => adjust.mutate()}
-              disabled={!selectedUserId || !adjustAmount || adjust.isPending}
-              className={adjustType === 'credit'
-                ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:bg-teal-500/30'
-                : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'}
-            >
-              {adjust.isPending ? 'Processing…' : adjustType === 'credit' ? `Credit $${adjustAmount || '0.00'}` : `Debit $${adjustAmount || '0.00'}`}
-            </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Pending withdrawals */}
-      <Card className="bg-slate-900 border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-white">
-            Pending Withdrawals{' '}
-            {withdrawals?.length ? <Badge className="ml-2 bg-amber-500/20 text-amber-400 border border-amber-500/30">{withdrawals.length}</Badge> : null}
+      <Card className="bg-slate-900 border-slate-800">
+        <CardHeader className="py-2 px-3 border-b border-slate-800 flex flex-row justify-between items-center">
+          <CardTitle className="text-white text-xs uppercase tracking-wider">
+            Pending Withdrawals
           </CardTitle>
+          {withdrawals?.length ? <span className="min-w-[18px] h-4 px-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-bold flex items-center justify-center">{withdrawals.length}</span> : null}
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16 bg-slate-800 rounded" />)}</div>
+            <div className="p-3 space-y-2">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full bg-slate-800 rounded" />)}</div>
           ) : !withdrawals?.length ? (
-            <p className="text-slate-500 text-sm text-center py-8">No pending withdrawals.</p>
+            <p className="text-slate-500 text-xs text-center py-6">No pending withdrawals.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-slate-800">
               {withdrawals.map((tx: any) => (
-                <div key={tx.id} className="flex items-center justify-between bg-slate-800 rounded-lg px-4 py-3">
-                  <div>
-                    <div className="text-white font-semibold">{tx.userFullName || `User #${tx.userId}`}</div>
-                    <div className="text-slate-400 text-xs mt-0.5">{METHOD_LABELS[tx.paymentMethod] || tx.paymentMethod} · {tx.reference}</div>
-                    <div className="text-slate-500 text-xs">{new Date(tx.createdAt).toLocaleString()} · {tx.transactionId}</div>
+                <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-3 py-2 hover:bg-slate-800/50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                      <span className="text-white font-semibold text-xs truncate max-w-[150px]">{tx.userFullName || `User #${tx.userId}`}</span>
+                      <span className="text-slate-500 text-[10px] truncate max-w-[150px]">· {METHOD_LABELS[tx.paymentMethod] || tx.paymentMethod}</span>
+                      <span className="text-slate-600 text-[10px] font-mono truncate">· {tx.reference}</span>
+                    </div>
+                    <div className="text-slate-500 text-[10px]">
+                      {new Date(tx.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })} · <span className="font-mono">{tx.transactionId}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-amber-400 font-mono font-bold text-lg">${tx.amount.toFixed(2)}</div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleApprove(tx.id)} className="bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:bg-teal-500/30 h-8">
-                        <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                  
+                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-1 sm:mt-0">
+                    <div className="text-amber-400 font-mono font-bold text-sm shrink-0">${tx.amount.toFixed(2)}</div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => handleApprove(tx.id)} className="h-7 w-7 p-0 text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 rounded-full" title="Approve">
+                        <CheckCircle className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleReject(tx.id)} className="h-8">
-                        <XCircle className="h-4 w-4 mr-1" /> Reject
+                      <Button size="sm" variant="ghost" onClick={() => handleReject(tx.id)} className="h-7 w-7 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-full" title="Reject">
+                        <XCircle className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

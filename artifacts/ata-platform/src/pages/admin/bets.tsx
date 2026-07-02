@@ -136,66 +136,66 @@ export default function AdminBets() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-        <Swords className="h-6 w-6 text-amber-400" /> Bet Management
-      </h1>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+          <Swords className="h-5 w-5 text-amber-400" /> Bets
+        </h1>
+      </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Total Bets',    value: stats.total,   color: 'text-white' },
-          { label: 'Pending',       value: stats.pending, color: 'text-amber-400' },
-          { label: 'Matched',       value: stats.matched, color: 'text-teal-400' },
+          { label: 'Total', value: stats.total, color: 'text-white' },
+          { label: 'Pending', value: stats.pending, color: 'text-amber-400' },
+          { label: 'Matched', value: stats.matched, color: 'text-teal-400' },
         ].map(({ label, value, color }) => (
-          <Card key={label} className="bg-slate-900 border-primary/20">
-            <CardContent className="pt-4 pb-3 px-4">
-              <div className={`text-2xl font-bold font-mono ${color}`}>{value}</div>
-              <div className="text-slate-500 text-xs mt-0.5">{label}</div>
+          <Card key={label} className="bg-slate-900 border-slate-800">
+            <CardContent className="py-2 px-3">
+              <div className="text-slate-500 text-[10px] uppercase tracking-wider">{label}</div>
+              <div className={`text-lg font-bold font-mono leading-tight ${color}`}>{value}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card className="bg-slate-900 border-primary/20">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Status filter */}
-            <div className="flex flex-wrap gap-1.5">
-              {FILTERS.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => { setStatusFilter(f); setPage(1); }}
-                  className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
-                    statusFilter === f ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-            {/* Search */}
-            <div className="relative sm:ml-auto sm:w-60">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-              <Input
-                placeholder="Search user or ticket…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-8 bg-slate-800 border-slate-700 text-white text-sm h-8"
-              />
-            </div>
+      <Card className="bg-slate-900 border-slate-800">
+        <CardHeader className="py-2 px-3 border-b border-slate-800 flex flex-col sm:flex-row gap-2">
+          {/* Status filter */}
+          <div className="flex flex-wrap gap-1">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => { setStatusFilter(f); setPage(1); }}
+                className={`px-2 py-0.5 rounded text-[10px] font-semibold capitalize transition-colors ${
+                  statusFilter === f ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'bg-slate-800/50 text-slate-400 border border-transparent hover:bg-slate-800'
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          {/* Search */}
+          <div className="relative sm:ml-auto w-full sm:w-48">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <Input
+              placeholder="Search user or ticket…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-7 bg-slate-950 border-slate-800 text-white text-xs h-7 focus-visible:ring-1 focus-visible:ring-teal-500/50"
+            />
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-2">{[...Array(8)].map((_, i) => <Skeleton key={i} className="h-16 bg-slate-800 rounded-lg" />)}</div>
+            <div className="p-3 space-y-2">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full bg-slate-800 rounded" />)}</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <Trophy className="h-10 w-10 text-slate-700 mx-auto mb-3" />
-              <p className="text-slate-500 text-sm">No bets found.</p>
+            <div className="text-center py-8">
+              <Trophy className="h-8 w-8 text-slate-700 mx-auto mb-2" />
+              <p className="text-slate-500 text-xs">No bets found.</p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-slate-800">
               {filtered.map((bet) => {
                 const user = userMap.get(bet.userId);
                 const isPending = bet.status === 'pending';
@@ -203,31 +203,30 @@ export default function AdminBets() {
                 return (
                   <div
                     key={bet.id}
-                    className="flex items-center gap-3 bg-slate-800/60 rounded-lg px-4 py-3 hover:bg-slate-800 transition-colors"
+                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-800/50 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <Badge className={`${STATUS_COLORS[bet.status]} border text-[10px] font-semibold px-1.5 py-0`}>
+                      <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                        <span className={`px-1.5 py-0 rounded-full border text-[9px] font-bold uppercase tracking-wider ${STATUS_COLORS[bet.status]}`}>
                           {bet.status}
-                        </Badge>
-                        <span className="text-xs text-slate-500 font-mono">{bet.ticketId}</span>
-                        <span className="text-[10px] text-slate-600">#{bet.id}</span>
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono">{bet.ticketId}</span>
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap text-xs">
                         {(() => {
                           const opponent = bet.matchedBetId ? betMap.get(bet.matchedBetId) : undefined;
                           const opponentUser = opponent ? userMap.get(opponent.userId) : undefined;
                           const thisWon = bet.status === 'won';
                           const opponentWon = bet.status === 'lost';
                           return (
-                            <span className="text-sm flex items-center gap-1 flex-wrap">
-                              <span className={thisWon ? 'text-white font-bold' : 'text-slate-300'}>
+                            <span className="flex items-center gap-1 flex-wrap">
+                              <span className={`truncate max-w-[100px] sm:max-w-[150px] ${thisWon ? 'text-white font-bold' : 'text-slate-300'}`}>
                                 {displayName(user)}
                               </span>
                               {opponent && (
                                 <>
-                                  <span className="text-slate-600 text-xs">vs</span>
-                                  <span className={opponentWon ? 'text-white font-bold' : 'text-slate-300'}>
+                                  <span className="text-slate-600 text-[10px]">vs</span>
+                                  <span className={`truncate max-w-[100px] sm:max-w-[150px] ${opponentWon ? 'text-white font-bold' : 'text-slate-300'}`}>
                                     {displayName(opponentUser)}
                                   </span>
                                 </>
@@ -235,42 +234,37 @@ export default function AdminBets() {
                             </span>
                           );
                         })()}
-                        <span className="text-xs text-slate-500">
+                        <span className="text-[10px] text-slate-500 truncate max-w-[120px]">
                           · {outcomeLabel(bet.outcome, gameMap.get(bet.gameId))}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Clock className="h-3 w-3 text-slate-600" />
-                        <span className="text-[10px] text-slate-600">
-                          {new Date(bet.createdAt).toLocaleString('en-UG', { dateStyle: 'medium', timeStyle: 'short' })}
-                        </span>
-                      </div>
                     </div>
+                    
                     <div className="text-right shrink-0">
-                      <div className="text-white font-mono font-bold">${bet.stake.toFixed(2)}</div>
-                      <div className="text-[10px] text-slate-500">stake</div>
+                      <div className="text-white font-mono text-xs font-bold">${bet.stake.toFixed(2)}</div>
                       {(bet.potentialReturn ?? 0) > 0 && (
-                        <div className="text-teal-400 font-mono text-xs">${(bet.potentialReturn ?? 0).toFixed(2)} payout</div>
+                        <div className="text-teal-400 font-mono text-[10px]">${(bet.potentialReturn ?? 0).toFixed(2)}</div>
                       )}
                     </div>
-                    {isPending && (
-                      <div className="shrink-0 ml-2">
-                        {confirming ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-amber-400 whitespace-nowrap">Refund ${bet.stake.toFixed(2)}?</span>
+                    
+                    <div className="w-16 flex justify-end shrink-0">
+                      {isPending && (
+                        confirming ? (
+                          <div className="flex items-center gap-1">
                             <Button
                               size="sm"
                               variant="destructive"
-                              className="h-7 text-xs px-2"
+                              className="h-6 w-6 p-0 rounded-full"
                               onClick={() => cancel.mutate(bet.id)}
                               disabled={cancel.isPending}
+                              title="Confirm Cancel"
                             >
-                              {cancel.isPending ? '…' : 'Yes'}
+                              <XCircle className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-7 text-xs px-2 text-slate-400"
+                              className="h-6 text-[10px] px-1.5 text-slate-400 hover:text-white"
                               onClick={() => setCancelConfirm(null)}
                             >
                               No
@@ -279,15 +273,16 @@ export default function AdminBets() {
                         ) : (
                           <Button
                             size="sm"
-                            variant="outline"
-                            className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 gap-1"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-full"
                             onClick={() => setCancelConfirm(bet.id)}
+                            title="Cancel Bet"
                           >
-                            <XCircle className="h-3 w-3" /> Cancel Bet
+                            <XCircle className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    )}
+                        )
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -296,13 +291,13 @@ export default function AdminBets() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-800">
-              <span className="text-xs text-slate-500">Page {page} of {totalPages} · {data?.total} total</span>
-              <div className="flex gap-2">
+            <div className="flex items-center justify-between p-2 border-t border-slate-800 bg-slate-900/50">
+              <span className="text-[10px] text-slate-500">Page {page} of {totalPages} · {data?.total}</span>
+              <div className="flex gap-1">
                 <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-                  className="h-7 text-xs border-slate-700 text-slate-400">Previous</Button>
+                  className="h-6 px-2 text-[10px] border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700">Prev</Button>
                 <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
-                  className="h-7 text-xs border-slate-700 text-slate-400">Next</Button>
+                  className="h-6 px-2 text-[10px] border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700">Next</Button>
               </div>
             </div>
           )}

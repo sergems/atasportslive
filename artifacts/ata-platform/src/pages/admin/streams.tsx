@@ -45,70 +45,72 @@ function StreamForm({
 }: any) {
   return (
     <Card className={`bg-slate-900 border ${accentClass}`}>
-      <CardHeader><CardTitle className="text-white">{title}</CardTitle></CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardHeader className="py-2 px-3 border-b border-slate-800">
+        <CardTitle className="text-white text-xs uppercase tracking-wider">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label className="text-slate-300">Title <span className="text-red-400">*</span></Label>
-          <Input value={form.title} onChange={(e: any) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Kampala Pool Championship" className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Title <span className="text-red-400">*</span></Label>
+          <Input value={form.title} onChange={(e: any) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Kampala Pool Championship" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
         <div className="space-y-1">
-          <Label className="text-slate-300">Sport <span className="text-red-400">*</span></Label>
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Sport <span className="text-red-400">*</span></Label>
           <select value={form.sport} onChange={(e: any) => setForm({ ...form, sport: e.target.value, playerA: '', playerB: '' })}
-            className="w-full bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white text-sm capitalize">
+            className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-0 h-8 text-white text-xs capitalize focus-visible:ring-1 focus-visible:ring-teal-500/50 outline-none">
             {SPORTS.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
           </select>
         </div>
 
         {!isTournament && (<>
           <div className="space-y-1">
-            <Label className="text-slate-300">Player A <span className="text-red-400">*</span></Label>
-            <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. John Doe" className="bg-slate-800 border-slate-700 text-white" />
+            <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A <span className="text-red-400">*</span></Label>
+            <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. John Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
           </div>
           <div className="space-y-1">
-            <Label className="text-slate-300">Player B <span className="text-red-400">*</span></Label>
-            <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Jane Doe" className="bg-slate-800 border-slate-700 text-white" />
+            <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B <span className="text-red-400">*</span></Label>
+            <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Jane Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
           </div>
         </>)}
 
         <div className="space-y-1">
-          <Label className="text-slate-300">{isTournament ? 'Start Date & Time' : 'Date & Time'} <span className="text-red-400">*</span></Label>
-          <Input type="datetime-local" value={form.startTime} onChange={(e: any) => setForm({ ...form, startTime: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isTournament ? 'Start Date & Time' : 'Date & Time'} <span className="text-red-400">*</span></Label>
+          <Input type="datetime-local" value={form.startTime} onChange={(e: any) => setForm({ ...form, startTime: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
         <div className="space-y-1">
-          <Label className="text-slate-300">{isTournament ? 'End Date & Time' : 'End Time (optional)'}</Label>
-          <Input type="datetime-local" value={form.endTime} onChange={(e: any) => setForm({ ...form, endTime: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
-        </div>
-
-        <div className="space-y-1">
-          <Label className="text-slate-300">City</Label>
-          <Input value={form.city} onChange={(e: any) => setForm({ ...form, city: e.target.value })} placeholder="e.g. Kampala" className="bg-slate-800 border-slate-700 text-white" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-slate-300">Country</Label>
-          <Input value={form.country} onChange={(e: any) => setForm({ ...form, country: e.target.value })} placeholder="e.g. Uganda" className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isTournament ? 'End Date & Time' : 'End Time (opt)'}</Label>
+          <Input type="datetime-local" value={form.endTime} onChange={(e: any) => setForm({ ...form, endTime: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
 
         <div className="space-y-1">
-          <Label className="text-slate-300">Access Price (USD/day)</Label>
-          <Input type="number" step="0.01" value={form.accessPrice} onChange={(e: any) => setForm({ ...form, accessPrice: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">City</Label>
+          <Input value={form.city} onChange={(e: any) => setForm({ ...form, city: e.target.value })} placeholder="e.g. Kampala" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Country</Label>
+          <Input value={form.country} onChange={(e: any) => setForm({ ...form, country: e.target.value })} placeholder="e.g. Uganda" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Price (USD)</Label>
+          <Input type="number" step="0.01" value={form.accessPrice} onChange={(e: any) => setForm({ ...form, accessPrice: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
 
         {onFileChange && (
           <div className="space-y-1">
-            <Label className="text-slate-300">Thumbnail</Label>
-            <div className="flex items-center gap-3">
-              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="border-slate-700 text-slate-300 hover:bg-slate-800">
-                <Upload className="h-4 w-4 mr-1" /> Upload Image
+            <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Thumbnail</Label>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="h-8 border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 text-xs">
+                <Upload className="h-3 w-3 mr-1" /> Upload
               </Button>
               {thumbnailPreview && (
-                <Button type="button" variant="ghost" size="sm" onClick={onClearThumb} className="text-slate-400 hover:text-red-400 px-1">
-                  <X className="h-4 w-4" />
+                <Button type="button" variant="ghost" size="sm" onClick={onClearThumb} className="h-8 px-2 text-slate-400 hover:text-red-400">
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               )}
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={onFileChange} />
             </div>
             {thumbnailPreview && (
-              <div className="mt-2 w-32 h-20 rounded-md overflow-hidden border border-slate-700">
+              <div className="mt-1.5 w-24 h-16 rounded overflow-hidden border border-slate-700">
                 <img src={thumbnailPreview} alt="preview" className="w-full h-full object-cover" />
               </div>
             )}
@@ -116,21 +118,21 @@ function StreamForm({
         )}
 
         <div className="md:col-span-2 space-y-1">
-          <Label className="text-slate-300">Description</Label>
-          <Input value={form.description} onChange={(e: any) => setForm({ ...form, description: e.target.value })} className="bg-slate-800 border-slate-700 text-white" />
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Description</Label>
+          <Input value={form.description} onChange={(e: any) => setForm({ ...form, description: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
 
         {!isTournament && onFileChange && (
-          <p className="md:col-span-2 text-xs text-teal-400/80">
-            A matching game will be automatically created for betting when this stream is saved.
+          <p className="md:col-span-2 text-[10px] text-teal-400/80">
+            Matching game will be automatically created for betting.
           </p>
         )}
 
-        <div className="md:col-span-2 flex gap-3">
-          <Button onClick={onSave} disabled={saving} className="bg-teal-500 hover:bg-teal-400 text-slate-950">
+        <div className="md:col-span-2 flex gap-2 mt-1">
+          <Button size="sm" onClick={onSave} disabled={saving} className="bg-teal-500 hover:bg-teal-400 text-slate-950 h-8 px-4 text-xs font-bold">
             {saving ? 'Saving…' : 'Save'}
           </Button>
-          <Button variant="ghost" onClick={onCancel} className="text-slate-400">Cancel</Button>
+          <Button size="sm" variant="ghost" onClick={onCancel} className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 px-3 text-xs">Cancel</Button>
         </div>
       </CardContent>
     </Card>
@@ -145,70 +147,77 @@ function StreamRow({
 }: any) {
   return (
     <div>
-      <Card className={`bg-slate-900 border-primary/20 ${editId === stream.id ? 'border-amber-500/40' : ''}`}>
-        <CardContent className="py-4 px-5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 flex-1 min-w-0">
-            <div className="flex-shrink-0 w-14 h-10 rounded overflow-hidden bg-slate-800 flex items-center justify-center">
+      <Card className={`bg-slate-900 border-slate-800 ${editId === stream.id ? 'border-amber-500/40' : ''}`}>
+        <CardContent className="py-2 px-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0 w-full">
+            <div className="flex-shrink-0 w-16 h-10 rounded overflow-hidden bg-slate-800/50 flex items-center justify-center border border-slate-800">
               {stream.thumbnailUrl
                 ? <img src={stream.thumbnailUrl} alt={stream.title} className="w-full h-full object-cover" />
-                : <ImageIcon className="h-5 w-5 text-slate-600" />}
+                : <ImageIcon className="h-4 w-4 text-slate-600" />}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge className={`${STATUS_COLORS[stream.status] || 'bg-slate-700 text-slate-300'} border text-xs`}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className={`px-1.5 py-0 rounded-full border text-[9px] font-bold uppercase tracking-wider ${STATUS_COLORS[stream.status] || 'bg-slate-700 text-slate-300 border-slate-600'}`}>
                   {stream.status}
-                </Badge>
-                <span className="text-xs text-slate-500 capitalize">{stream.sport}</span>
+                </span>
+                <span className="text-[10px] text-slate-500 capitalize">{stream.sport}</span>
               </div>
-              <p className="text-white font-semibold truncate">{stream.title}</p>
-              <p className="text-xs text-slate-400">
-                {new Date(stream.startTime).toLocaleString()}
-                {stream.endTime ? ` → ${new Date(stream.endTime).toLocaleString()}` : ''}
-                {(stream.city || stream.country) ? ` · ${[stream.city, stream.country].filter(Boolean).join(', ')}` : ''}
-                {` · $${stream.accessPrice}/day`}
-              </p>
+              <p className="text-white font-semibold text-sm sm:text-xs truncate">{stream.title}</p>
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
+                <span>{new Date(stream.startTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>
+                {stream.endTime && <span>→ {new Date(stream.endTime).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>}
+                {(stream.city || stream.country) && <span>· {[stream.city, stream.country].filter(Boolean).join(', ')}</span>}
+                <span className="text-amber-400 font-mono font-bold">· ${stream.accessPrice}/d</span>
+              </div>
             </div>
           </div>
-          <div className="flex gap-2 flex-shrink-0 items-center">
+
+          <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end border-t border-slate-800 sm:border-0 pt-2 sm:pt-0 shrink-0">
             <Button
               size="sm" variant="ghost"
               onClick={() => editId === stream.id ? setEditId(null) : startEdit(stream)}
-              className="h-8 w-8 p-0 text-slate-400 hover:text-amber-400"
+              className="h-7 w-7 p-0 text-slate-500 hover:text-amber-400 bg-slate-800/50 hover:bg-amber-500/10 rounded"
+              title="Edit"
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
+            
             {stream.status === 'upcoming' && (
               goLiveId === stream.id ? (
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-1.5 items-center">
                   <Input
                     value={hlsUrl} onChange={(e: any) => setHlsUrl(e.target.value)}
                     placeholder="HLS URL…"
-                    className="bg-slate-800 border-slate-700 text-white w-48 h-8 text-xs"
+                    className="bg-slate-950 border-slate-700 text-white w-32 h-7 text-[10px]"
                   />
-                  <Button size="sm" onClick={() => handleGoLive(stream.id)} className="bg-teal-500 hover:bg-teal-400 text-slate-950 h-8 text-xs">Go Live</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setGoLiveId(null)} className="text-slate-400 h-8 text-xs">Cancel</Button>
+                  <Button size="sm" onClick={() => handleGoLive(stream.id)} className="bg-teal-500 hover:bg-teal-400 text-slate-950 h-7 px-2 text-[10px] font-bold">Go</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setGoLiveId(null)} className="h-7 w-7 p-0 text-slate-400 hover:text-white"><X className="h-3.5 w-3.5" /></Button>
                 </div>
               ) : (
-                <Button size="sm" onClick={() => setGoLiveId(stream.id)} className="bg-teal-500/20 text-teal-400 border border-teal-500/30 hover:bg-teal-500/30 h-8 text-xs">
-                  <Play className="h-3 w-3 mr-1" /> Go Live
+                <Button size="sm" onClick={() => setGoLiveId(stream.id)} className="bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 border border-teal-500/30 h-7 px-2 text-[10px] font-bold uppercase tracking-wider">
+                  <Play className="h-3 w-3 mr-1" /> Live
                 </Button>
               )
             )}
+            
             {stream.status === 'live' && (
-              <Button size="sm" variant="destructive" onClick={() => handleEnd(stream.id)} className="h-8 text-xs">
+              <Button size="sm" variant="destructive" onClick={() => handleEnd(stream.id)} className="h-7 px-2 text-[10px] font-bold uppercase tracking-wider">
                 <Square className="h-3 w-3 mr-1" /> End
               </Button>
             )}
+            
             <Button
               size="sm" variant="ghost"
               onClick={() => handleDelete(stream.id, stream.title)}
-              className="h-8 w-8 p-0 text-slate-600 hover:text-red-400"
+              className="h-7 w-7 p-0 text-slate-600 hover:text-red-400 bg-slate-800/50 hover:bg-red-500/10 rounded"
+              title="Delete"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </CardContent>
       </Card>
+      
       {editId === stream.id && (
         <div className="mt-2">
           <StreamForm
