@@ -147,7 +147,7 @@ router.post("/validate-code", authMiddleware, async (req: AuthRequest, res): Pro
   }
   const minDep = parseFloat(promo.minDeposit as string);
   if (depositAmount && Number(depositAmount) < minDep) {
-    res.status(400).json({ valid: false, reason: `Minimum deposit of ${minDep.toFixed(2)} required` }); return;
+    res.status(200).json({ valid: false, reason: `Minimum deposit of ${minDep.toFixed(2)} required` }); return;
   }
 
   const bonusAmount = calcBonus(promo, Number(depositAmount) || minDep);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Bet, BetListResponse, Game, GameListResponse, User, UserListResponse } from '@workspace/api-client-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,12 +18,12 @@ function authHeaders() {
   return headers;
 }
 
-async function fetchAllBets(status?: string, search?: string, page = 1) {
+async function fetchAllBets(status?: string, search?: string, page = 1): Promise<BetListResponse> {
   const params = new URLSearchParams({ page: String(page), limit: '50' });
   if (status && status !== 'all') params.set('status', status);
   const res = await fetch(`/api/bets/all?${params}`, { headers: authHeaders() });
   if (!res.ok) throw new Error('Failed to load bets');
-  return res.json() as Promise<{ bets: any[]; total: number; page: number; limit: number }>;
+  return res.json() as Promise<BetListResponse>;
 }
 
 async function cancelBet(id: number) {
@@ -31,10 +32,10 @@ async function cancelBet(id: number) {
   return res.json();
 }
 
-async function fetchUsers() {
+async function fetchUsers(): Promise<UserListResponse> {
   const res = await fetch('/api/users', { headers: authHeaders() });
-  if (!res.ok) return { users: [] };
-  return res.json();
+  if (!res.ok) return { users: [], total: 0, page: 1, limit: 50 };
+  return res.json() as Promise<UserListResponse>;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -48,20 +49,20 @@ const STATUS_COLORS: Record<string, string> = {
 
 const FILTERS = ['pending', 'matched', 'won', 'lost', 'cancelled', 'refunded'];
 
-async function fetchGames() {
+async function fetchGames(): Promise<GameListResponse> {
   const res = await fetch('/api/games?limit=500', { headers: authHeaders() });
-  if (!res.ok) return { games: [] };
-  return res.json();
+  if (!res.ok) return { games: [], total: 0, page: 1, limit: 500 };
+  return res.json() as Promise<GameListResponse>;
 }
 
-function outcomeLabel(outcome: string, game: any): string {
+function outcomeLabel(outcome: string, game: Game | undefined): string {
   if (!game) return outcome?.replace(/_/g, ' ') ?? '';
   if (outcome === 'player_a_wins') return `${game.playerA} Wins`;
   if (outcome === 'player_b_wins') return `${game.playerB} Wins`;
   return outcome?.replace(/_/g, ' ') ?? '';
 }
 
-function displayName(user: any): string {
+function displayName(user: User | undefined): string {
   if (!user) return '…';
   return user.fullName?.trim() || user.email?.split('@')[0] || `ID:${user.id}`;
 }
@@ -92,11 +93,11 @@ export default function AdminBets() {
     staleTime: 60_000,
   });
 
-  const userList: any[] = Array.isArray(usersData) ? usersData : (usersData as any)?.users || [];
-  const userMap = new Map(userList.map((u: any) => [u.id, u]));
+  const userList: User[] = usersData?.users ?? [];
+  const userMap = new Map(userList.map((u) => [u.id, u]));
 
-  const gameList: any[] = (gamesData as any)?.games || [];
-  const gameMap = new Map(gameList.map((g: any) => [g.id, g]));
+  const gameList: Game[] = gamesData?.games ?? [];
+  const gameMap = new Map(gameList.map((g) => [g.id, g]));
 
   const cancel = useMutation({
     mutationFn: (id: number) => cancelBet(id),
@@ -105,7 +106,7 @@ export default function AdminBets() {
       setCancelConfirm(null);
       queryClient.invalidateQueries({ queryKey: ['admin-bets'] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || 'Failed to cancel bet');
       setCancelConfirm(null);
     },
@@ -115,10 +116,10 @@ export default function AdminBets() {
   const totalPages = data ? Math.ceil(data.total / 50) : 1;
 
   // Build a map of bet id → bet so we can look up the matched opponent
-  const betMap = new Map(bets.map((b: any) => [b.id, b]));
+  const betMap = new Map(bets.map((b) => [b.id, b]));
 
   const filtered = search.trim()
-    ? bets.filter((b: any) => {
+    ? bets.filter((b) => {
         const user = userMap.get(b.userId);
         const name = (user?.fullName || '').toLowerCase();
         const email = (user?.email || '').toLowerCase();
@@ -129,8 +130,8 @@ export default function AdminBets() {
     : bets;
 
   const stats = {
-    pending: bets.filter((b: any) => b.status === 'pending').length,
-    matched: bets.filter((b: any) => b.status === 'matched').length,
+    pending: bets.filter((b) => b.status === 'pending').length,
+    matched: bets.filter((b) => b.status === 'matched').length,
     total: data?.total || 0,
   };
 
@@ -195,7 +196,7 @@ export default function AdminBets() {
             </div>
           ) : (
             <div className="space-y-2">
-              {filtered.map((bet: any) => {
+              {filtered.map((bet) => {
                 const user = userMap.get(bet.userId);
                 const isPending = bet.status === 'pending';
                 const confirming = cancelConfirm === bet.id;
@@ -214,8 +215,8 @@ export default function AdminBets() {
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         {(() => {
-                          const opponent = bet.matchedBetId ? betMap.get(bet.matchedBetId) : null;
-                          const opponentUser = opponent ? userMap.get(opponent.userId) : null;
+                          const opponent = bet.matchedBetId ? betMap.get(bet.matchedBetId) : undefined;
+                          const opponentUser = opponent ? userMap.get(opponent.userId) : undefined;
                           const thisWon = bet.status === 'won';
                           const opponentWon = bet.status === 'lost';
                           return (
@@ -248,8 +249,8 @@ export default function AdminBets() {
                     <div className="text-right shrink-0">
                       <div className="text-white font-mono font-bold">${bet.stake.toFixed(2)}</div>
                       <div className="text-[10px] text-slate-500">stake</div>
-                      {bet.potentialReturn > 0 && (
-                        <div className="text-teal-400 font-mono text-xs">${bet.potentialReturn.toFixed(2)} payout</div>
+                      {(bet.potentialReturn ?? 0) > 0 && (
+                        <div className="text-teal-400 font-mono text-xs">${(bet.potentialReturn ?? 0).toFixed(2)} payout</div>
                       )}
                     </div>
                     {isPending && (
