@@ -59,7 +59,7 @@ COPY lib/db/ lib/db/
 # DATABASE_URL must be supplied at runtime via docker compose environment
 ENV NODE_ENV=production
 
-CMD ["pnpm", "--filter", "@workspace/db", "run", "push"]
+CMD ["pnpm", "--filter", "@workspace/db", "run", "push-force"]
 
 # -----------------------------------------------------------------------------
 # Stage 5 — native-deps: compile bcrypt native addon in isolation

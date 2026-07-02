@@ -246,23 +246,31 @@ You should see the list of image files printed at the end. If the output says `D
 
 ---
 
-## Part 8 — Start all services
+## Part 8 — Drop legacy columns before starting
+
+The `dt.sql` dump includes three old columns (`payout_method`, `payout_account`, `payout_method_set_at`) that no longer exist in the codebase. Drop them now so the migrate service exits cleanly and the API starts without issues:
+
+```bash
+docker compose exec db psql -U ata_user -d ata_db -c "
+ALTER TABLE users DROP COLUMN IF EXISTS payout_method;
+ALTER TABLE users DROP COLUMN IF EXISTS payout_account;
+ALTER TABLE users DROP COLUMN IF EXISTS payout_method_set_at;
+"
+```
+
+---
+
+## Part 9 — Start all services
 
 ```bash
 docker compose up -d
 ```
 
-The `migrate` service runs automatically. Because `dt.sql` already created all the tables, it will detect no changes and exit cleanly with:
-
-```
-No changes detected — database is up to date.
-```
-
-Then `api` and `nginx` start.
+The `migrate` service runs automatically. With the legacy columns gone it will find no schema changes and exit cleanly. Then `api` and `nginx` start.
 
 ---
 
-## Part 9 — Verify everything is running
+## Part 10 — Verify everything is running
 
 ```bash
 docker compose ps
@@ -294,7 +302,7 @@ You should see the ATA Platform home page. ✓
 
 ---
 
-## Part 10 — Admin setup
+## Part 11 — Admin setup
 
 ### 10.1 Log in as admin
 
@@ -310,7 +318,7 @@ Each gateway has a toggle switch in **Admin → Settings**. Turn them **ON** whe
 
 ---
 
-## Part 11 — Set up automatic database backups
+## Part 12 — Set up automatic database backups
 
 ### 11.1 Make the scripts executable
 
@@ -369,7 +377,7 @@ crontab -l
 
 ---
 
-## Part 12 — Point the domain and install SSL
+## Part 13 — Point the domain and install SSL
 
 > **Do this only after `hatasportslive.com` is registered and you are ready to go live.**  
 > The site works fine on the IP address until then.
