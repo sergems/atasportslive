@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
+import { useAuth } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ function useSettings() {
 export default function AdminSettings() {
   useEffect(() => { document.title = 'Settings - Admin - ATA Platform'; }, []);
 
+  const { isAdmin } = useAuth();
   const token = useAuthStore((s) => s.token);
   const qc = useQueryClient();
   const { data: settings, isLoading } = useSettings();
@@ -305,6 +307,7 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
+      {isAdmin && (<>
       {/* ── Email / SMTP ── */}
       <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
@@ -784,6 +787,7 @@ export default function AdminSettings() {
           </div>
         </CardContent>
       </Card>
+      </>)}
 
       {/* ── Mux Default Stream ── */}
       <Card className="bg-slate-900 border-slate-700">
@@ -970,8 +974,9 @@ export default function AdminSettings() {
         </CardContent>
       </Card>
 
-      {/* ── Database Backup ── */}
+      {isAdmin && (
       <Card className="bg-slate-900 border-slate-700">
+        {/* ── Database Backup (admin only) ── */}
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Database className="h-4 w-4 text-teal-400" />
@@ -1002,6 +1007,7 @@ export default function AdminSettings() {
           <p className="text-[11px] text-slate-500">Admin only — includes all users, wallets, bets, transactions, streams, and settings.</p>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

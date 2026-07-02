@@ -10,7 +10,7 @@ import { notify } from "../lib/notify";
 
 const router = Router();
 
-router.get("/stats", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/stats", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const [{ totalUsers }] = await db.select({ totalUsers: sql<number>`count(*)` }).from(usersTable);
   const [{ activeUsers }] = await db.select({ activeUsers: sql<number>`count(*)` }).from(usersTable).where(eq(usersTable.status, "active"));
   const [{ totalWalletBalance }] = await db.select({ totalWalletBalance: sql<number>`sum(balance)` }).from(walletsTable);
@@ -90,7 +90,7 @@ router.get("/revenue", authMiddleware, requireRole("admin"), async (req: AuthReq
   res.json({ period, data });
 });
 
-router.get("/activity", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/activity", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const limit = Number(req.query.limit) || 20;
   const txs = await db
     .select({ tx: transactionsTable, user: usersTable })
@@ -110,7 +110,7 @@ router.get("/activity", authMiddleware, requireRole("admin", "moderator"), async
   })));
 });
 
-router.get("/pending-withdrawals", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/pending-withdrawals", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const txs = await db
     .select({ tx: transactionsTable, user: usersTable })
     .from(transactionsTable)
@@ -128,7 +128,7 @@ router.get("/pending-withdrawals", authMiddleware, requireRole("admin"), async (
 });
 
 // Approved withdrawals waiting for finance to pay
-router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "finance"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const txs = await db
     .select({ tx: transactionsTable, user: usersTable })
     .from(transactionsTable)
@@ -146,7 +146,7 @@ router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "financ
 });
 
 // Finance dashboard stats
-router.get("/finance-stats", authMiddleware, requireRole("admin", "finance"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/finance-stats", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const [{ pendingCount }] = await db.select({ pendingCount: sql<number>`count(*)` })
     .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved")));
   const [{ pendingValue }] = await db.select({ pendingValue: sql<number>`coalesce(sum(amount::numeric),0)` })
@@ -196,7 +196,7 @@ function generateCode(): string {
   return code;
 }
 
-router.post("/vouchers", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/vouchers", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const { amount, quantity = 1 } = req.body;
   if (!VOUCHER_VALUES.includes(Number(amount))) {
     res.status(400).json({ error: `Amount must be one of: ${VOUCHER_VALUES.join(", ")}` });
@@ -220,7 +220,7 @@ router.post("/vouchers", authMiddleware, requireRole("admin"), async (req: AuthR
   res.status(201).json(vouchers.map(v => ({ id: v.id, code: v.code, amount: parseFloat(v.amount as string), isRedeemed: v.isRedeemed, createdAt: v.createdAt })));
 });
 
-router.get("/vouchers", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/vouchers", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const vouchers = await db
     .select({ v: vouchersTable, redeemedByUser: usersTable })
     .from(vouchersTable)
@@ -242,7 +242,7 @@ router.get("/vouchers", authMiddleware, requireRole("admin"), async (req: AuthRe
 
 // ── Admin wallet adjustments ─────────────────────────────────────────────────
 
-router.post("/wallets/:userId/adjust", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/wallets/:userId/adjust", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const userId = Number(req.params.userId);
   const { type, amount, note } = req.body;
   if (!["credit", "debit"].includes(type)) { res.status(400).json({ error: "type must be credit or debit" }); return; }
@@ -284,7 +284,7 @@ router.post("/wallets/:userId/adjust", authMiddleware, requireRole("admin"), asy
 
 // ── Imported-user activation emails ──────────────────────────────────────────
 
-router.get("/pending-activation", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/pending-activation", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(usersTable)
@@ -292,7 +292,7 @@ router.get("/pending-activation", authMiddleware, requireRole("admin"), async (r
   res.json({ count: Number(count) });
 });
 
-router.post("/notify-pending", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/notify-pending", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const { smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, siteUrl } = req.body as Record<string, string>;
 
   if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
@@ -380,7 +380,7 @@ router.post("/notify-pending", authMiddleware, requireRole("admin"), async (req:
 
 // ── Promotions Admin CRUD ─────────────────────────────────────────────────────
 
-router.get("/promotions/stats", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/promotions/stats", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const [total] = await db.select({ count: sql<number>`count(*)` }).from(promotionsTable);
   const [active] = await db.select({ count: sql<number>`count(*)` }).from(promotionsTable).where(eq(promotionsTable.status, "active"));
   const [issued] = await db.select({ sum: sql<number>`COALESCE(SUM(amount),0)` }).from(bonusTransactionsTable).where(eq(bonusTransactionsTable.type, "earned"));
@@ -396,7 +396,7 @@ router.get("/promotions/stats", authMiddleware, requireRole("admin"), async (req
   });
 });
 
-router.get("/promotions", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/promotions", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const promos = await db.select().from(promotionsTable).orderBy(desc(promotionsTable.createdAt));
   res.json(promos.map(p => ({
     id: p.id, name: p.name, code: p.code, type: p.type, bonusType: p.bonusType,
@@ -410,7 +410,7 @@ router.get("/promotions", authMiddleware, requireRole("admin"), async (req: Auth
   })));
 });
 
-router.post("/promotions", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/promotions", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const { name, code, type, bonusType, percentage, fixedAmount, minDeposit, maxBonus, maxUses, startDate, endDate, status, description, termsConditions, bonusExpiryDays } = req.body;
   if (!name) { res.status(400).json({ error: "name is required" }); return; }
   if (bonusType === "percentage" && !percentage) { res.status(400).json({ error: "percentage required for percentage bonus" }); return; }
@@ -429,7 +429,7 @@ router.post("/promotions", authMiddleware, requireRole("admin"), async (req: Aut
   res.status(201).json(promo);
 });
 
-router.patch("/promotions/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/promotions/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const { name, code, type, bonusType, percentage, fixedAmount, minDeposit, maxBonus, maxUses, startDate, endDate, status, description, termsConditions, bonusExpiryDays } = req.body;
   const updates: Record<string, any> = {};
@@ -455,13 +455,13 @@ router.patch("/promotions/:id", authMiddleware, requireRole("admin"), async (req
   res.json(updated);
 });
 
-router.delete("/promotions/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.delete("/promotions/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   await db.delete(promotionsTable).where(eq(promotionsTable.id, id));
   res.json({ ok: true });
 });
 
-router.post("/promotions/:id/revoke/:userId", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/promotions/:id/revoke/:userId", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const promotionId = Number(req.params.id);
   const targetUserId = Number(req.params.userId);
   const { reason } = req.body;

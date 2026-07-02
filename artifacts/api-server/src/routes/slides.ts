@@ -27,7 +27,7 @@ router.get("/", async (_req, res): Promise<void> => {
   res.json(rows.map(toSlide));
 });
 
-router.get("/all", authMiddleware, requireRole("admin"), async (_req, res): Promise<void> => {
+router.get("/all", authMiddleware, requireRole("admin", "manager", "content_editor"), async (_req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(heroSlidesTable)
@@ -35,7 +35,7 @@ router.get("/all", authMiddleware, requireRole("admin"), async (_req, res): Prom
   res.json(rows.map(toSlide));
 });
 
-router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const { title, subtitle, buttonText, buttonUrl, imageUrl, sortOrder, isActive } = req.body;
   if (!title) {
     res.status(400).json({ error: "title is required" });
@@ -56,7 +56,7 @@ router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, 
   res.status(201).json(toSlide(row));
 });
 
-router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/:id", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const { title, subtitle, buttonText, buttonUrl, imageUrl, sortOrder, isActive } = req.body;
   const updates: Record<string, any> = { updatedAt: new Date() };
@@ -76,7 +76,7 @@ router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthReque
   res.json(toSlide(row));
 });
 
-router.delete("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.delete("/:id", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   await db.delete(heroSlidesTable).where(eq(heroSlidesTable.id, Number(req.params.id)));
   res.json({ message: "Deleted" });
 });

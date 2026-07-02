@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth';
 import { useListUsers, useUpdateUserRole, useSuspendUser } from '@workspace/api-client-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -324,6 +325,7 @@ function WalletAdjustPanel({ userId, onClose }: { userId: number; onClose: () =>
 export default function AdminUsers() {
   useEffect(() => { document.title = 'Manage Users - Admin'; }, []);
 
+  const { canManageUsers, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -401,7 +403,8 @@ export default function AdminUsers() {
                       </div>
                     </div>
 
-                    {/* Actions & Role */}
+                    {/* Actions & Role — managers and admins only */}
+                    {canManageUsers && (
                     <div className="flex items-center gap-2 shrink-0 md:justify-end">
                       <select
                         value={user.role}
@@ -409,8 +412,9 @@ export default function AdminUsers() {
                         className="bg-slate-950 border border-slate-800 rounded px-1.5 py-0 h-6 text-slate-300 text-[10px] font-semibold uppercase tracking-wider focus:outline-none"
                       >
                         <option value="user">USER</option>
-                        <option value="moderator">MODERATOR</option>
-                        <option value="admin">ADMIN</option>
+                        <option value="content_editor">CONTENT EDITOR</option>
+                        <option value="manager">MANAGER</option>
+                        {isAdmin && <option value="admin">ADMIN</option>}
                       </select>
 
                       <div className="flex items-center gap-1 bg-slate-950 rounded border border-slate-800 p-0.5">
@@ -440,6 +444,7 @@ export default function AdminUsers() {
                         </Button>
                       </div>
                     </div>
+                    )}
 
                   </div>
 

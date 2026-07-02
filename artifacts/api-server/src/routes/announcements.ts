@@ -27,7 +27,7 @@ router.get("/active", async (_req, res): Promise<void> => {
   res.json(rows.map(toAnnouncement));
 });
 
-router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const { title, content, isActive, priority } = req.body;
   if (!title || !content) {
     res.status(400).json({ error: "title and content required" });
@@ -42,7 +42,7 @@ router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, 
   res.status(201).json(toAnnouncement(row));
 });
 
-router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/:id", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const { title, content, isActive, priority } = req.body;
   const updates: Record<string, any> = {};
@@ -55,7 +55,7 @@ router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthReque
   res.json(toAnnouncement(row));
 });
 
-router.delete("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.delete("/:id", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   await db.delete(announcementsTable).where(eq(announcementsTable.id, Number(req.params.id)));
   res.json({ message: "Deleted" });
 });

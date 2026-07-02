@@ -285,7 +285,7 @@ router.get("/transactions", authMiddleware, async (req: AuthRequest, res): Promi
   res.json({ transactions: txs.map((t) => toTxResponse(t)), total: Number(count), page, limit });
 });
 
-router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   if (!tx || tx.type !== "withdrawal" || tx.status !== "pending") {
@@ -342,7 +342,7 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
 });
 
 // Finance: mark approved withdrawal as paid (actual payment confirmed)
-router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("finance", "admin"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   if (!tx || tx.type !== "withdrawal" || tx.status !== "approved") {
@@ -376,7 +376,7 @@ router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("finance", "a
   res.json(toTxResponse(updated));
 });
 
-router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const { note } = req.body as { note?: string };
   const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
@@ -410,7 +410,7 @@ router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"
   res.json(toTxResponse(updated));
 });
 
-router.patch("/admin/deposit/:id/confirm", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/admin/deposit/:id/confirm", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   if (!tx || tx.type !== "deposit" || tx.status !== "pending") {
@@ -463,7 +463,7 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
   res.json({ success: true, amount, transaction: toTxResponse(tx) });
 });
 
-router.get("/admin/wallets", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/admin/wallets", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
   const offset = (page - 1) * limit;
@@ -872,7 +872,7 @@ router.get("/pesapal/status", authMiddleware, async (req: AuthRequest, res): Pro
   res.json({ status: tx.status, amount: parseFloat(tx.amount as string) });
 });
 
-router.post("/admin/adjust", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/admin/adjust", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const { userId, amount, type, description } = req.body;
   if (!userId || !amount || !type) {
     res.status(400).json({ error: "userId, amount, type required" });

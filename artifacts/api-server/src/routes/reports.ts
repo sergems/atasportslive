@@ -238,7 +238,7 @@ function getDateRange(period: string, from?: string, to?: string): { start: Date
   return { start, end, labels };
 }
 
-router.get("/streaming", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/streaming", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const period = (req.query.period as string) || "monthly";
   const { start, end, labels } = getDateRange(period, req.query.from as string, req.query.to as string);
   const [{ totalRevenue }] = await db.select({ totalRevenue: sql<number>`coalesce(sum(amount::numeric), 0)` }).from(transactionsTable).where(and(eq(transactionsTable.type, "stream_access"), gte(transactionsTable.createdAt, start)));
@@ -247,7 +247,7 @@ router.get("/streaming", authMiddleware, requireRole("admin", "moderator"), asyn
   res.json({ period, totalRevenue: parseFloat(totalRevenue as any) || 0, totalAccesses: Number(totalAccesses), data });
 });
 
-router.get("/betting", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/betting", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const period = (req.query.period as string) || "monthly";
   const { start, end, labels } = getDateRange(period, req.query.from as string, req.query.to as string);
   const [{ brokerageRevenue }] = await db.select({ brokerageRevenue: sql<number>`coalesce(sum(amount::numeric), 0)` }).from(transactionsTable).where(and(eq(transactionsTable.type, "brokerage_fee"), gte(transactionsTable.createdAt, start)));
@@ -258,7 +258,7 @@ router.get("/betting", authMiddleware, requireRole("admin", "moderator"), async 
   res.json({ period, brokerageRevenue: parseFloat(brokerageRevenue as any) || 0, totalBetsPlaced: Number(totalBetsPlaced), totalBetsMatched: Number(totalBetsMatched), totalBetPool: parseFloat(totalBetPool as any) || 0, data });
 });
 
-router.get("/wallets", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/wallets", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const period = (req.query.period as string) || "monthly";
   const { start, end, labels } = getDateRange(period, req.query.from as string, req.query.to as string);
   const [{ totalDeposits }] = await db.select({ totalDeposits: sql<number>`coalesce(sum(amount::numeric), 0)` }).from(transactionsTable).where(and(eq(transactionsTable.type, "deposit"), eq(transactionsTable.status, "completed"), gte(transactionsTable.createdAt, start)));
@@ -269,7 +269,7 @@ router.get("/wallets", authMiddleware, requireRole("admin", "moderator"), async 
   res.json({ period, totalDeposits: dep, totalWithdrawals: wit, netFlow: dep - wit, data });
 });
 
-router.get("/revenue-breakdown", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/revenue-breakdown", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const period = (req.query.period as string) || "monthly";
   const { start, end, labels } = getDateRange(period, req.query.from as string, req.query.to as string);
   const data = labels.map((label) => ({ label, streaming: 0, brokerage: 0 }));

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
+import { useAuth } from '@/lib/auth';
 import {
   LayoutDashboard,
   Radio,
@@ -79,27 +80,35 @@ function useNeedsSettlementCount() {
   });
 }
 
+// minLevel: 1=content_editor, 2=manager, 3=admin
+const ROLE_LEVELS: Record<string, number> = {
+  user: 0, content_editor: 1, manager: 2, admin: 3,
+};
+
 const navItems = [
-  { href: '/admin',                  label: 'Dashboard',     icon: LayoutDashboard, exact: true },
-  { href: '/admin/slides',           label: 'Hero Slides',   icon: GalleryHorizontalEnd },
-  { href: '/admin/streams',          label: 'Livestream',    icon: Radio },
-  { href: '/admin/games',            label: 'Bets',          icon: Trophy, settleBadge: true },
-  { href: '/admin/bets',             label: 'Manage Bets',   icon: Swords },
-  { href: '/admin/highlights',       label: 'Highlights',    icon: Clapperboard },
-  { href: '/admin/announcements',    label: 'Announcements', icon: Megaphone },
-  { href: '/admin/users',            label: 'Users',         icon: Users },
-  { href: '/admin/wallets',          label: 'Wallets',       icon: Wallet },
-  { href: '/admin/withdrawals',      label: 'Withdrawals',   icon: ArrowUpRight, badge: true },
-  { href: '/admin/promotions',       label: 'Promotions',    icon: Gift },
-  { href: '/admin/vouchers',         label: 'Vouchers',      icon: Ticket },
-  { href: '/admin/ads',              label: 'Ad Slots',      icon: ImagePlus },
-  { href: '/admin/reports',          label: 'Reports',       icon: BarChart2 },
-  { href: '/admin/settings',         label: 'Settings',      icon: Settings },
+  { href: '/admin',                  label: 'Dashboard',     icon: LayoutDashboard, exact: true,          minLevel: 1 },
+  { href: '/admin/slides',           label: 'Hero Slides',   icon: GalleryHorizontalEnd,                  minLevel: 1 },
+  { href: '/admin/highlights',       label: 'Highlights',    icon: Clapperboard,                          minLevel: 1 },
+  { href: '/admin/announcements',    label: 'Announcements', icon: Megaphone,                             minLevel: 1 },
+  { href: '/admin/ads',              label: 'Ad Slots',      icon: ImagePlus,                             minLevel: 1 },
+  { href: '/admin/users',            label: 'Users',         icon: Users,                                 minLevel: 1 },
+  { href: '/admin/streams',          label: 'Livestream',    icon: Radio,                                 minLevel: 2 },
+  { href: '/admin/games',            label: 'Bets',          icon: Trophy, settleBadge: true,             minLevel: 2 },
+  { href: '/admin/bets',             label: 'Manage Bets',   icon: Swords,                                minLevel: 2 },
+  { href: '/admin/wallets',          label: 'Wallets',       icon: Wallet,                                minLevel: 2 },
+  { href: '/admin/withdrawals',      label: 'Withdrawals',   icon: ArrowUpRight, badge: true,             minLevel: 2 },
+  { href: '/admin/promotions',       label: 'Promotions',    icon: Gift,                                  minLevel: 2 },
+  { href: '/admin/vouchers',         label: 'Vouchers',      icon: Ticket,                                minLevel: 2 },
+  { href: '/admin/reports',          label: 'Reports',       icon: BarChart2,                             minLevel: 2 },
+  { href: '/admin/settings',         label: 'Settings',      icon: Settings,                              minLevel: 2 },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { user } = useAuth();
+  const userLevel = ROLE_LEVELS[user?.role ?? ''] ?? 0;
+  const visibleNavItems = navItems.filter(item => userLevel >= item.minLevel);
   
   // Sidebar collapsed state
   const [collapsed, setCollapsed] = useState(() => {
@@ -120,7 +129,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const NavContent = ({ onNav, isIconOnly = false }: { onNav?: () => void, isIconOnly?: boolean }) => (
     <nav className="flex flex-col gap-1">
-      {navItems.map(({ href, label, icon: Icon, exact, badge, settleBadge }) => {
+      {visibleNavItems.map(({ href, label, icon: Icon, exact, badge, settleBadge }) => {
         const active = isActive(href, exact);
         const isWithdrawals = badge;
         const isGames = settleBadge;
@@ -173,7 +182,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     </nav>
   );
 
-  const currentItem = navItems.find(({ href, exact }) => isActive(href, exact));
+  const currentItem = visibleNavItems.find(({ href, exact }) => isActive(href, exact));
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">

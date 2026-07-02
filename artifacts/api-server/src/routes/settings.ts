@@ -15,13 +15,20 @@ router.get("/", async (_req, res): Promise<void> => {
   res.json(obj);
 });
 
-router.put("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+// Keys that only admin may write (payment gateways, SMTP, DB backup)
+const ADMIN_ONLY_SETTING_PREFIXES = ["smtp_", "pesapal_", "pawapay_"];
+
+router.put("/", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const updates = req.body as Record<string, string>;
   if (!updates || typeof updates !== "object") {
     res.status(400).json({ error: "Body must be an object of key/value pairs" });
     return;
   }
   for (const [key, value] of Object.entries(updates)) {
+    // Block managers from writing restricted keys
+    if (req.userRole !== "admin" && ADMIN_ONLY_SETTING_PREFIXES.some(p => key.startsWith(p))) {
+      continue; // silently skip — frontend never sends these for managers
+    }
     await db.execute(
       sql`INSERT INTO settings (key, value, updated_at) VALUES (${key}, ${value}, NOW())
           ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
@@ -32,7 +39,7 @@ router.put("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, r
 
 // Sync the Mux default stream record in the streams table so existing
 // stream-access infrastructure handles the paywall automatically.
-router.post("/sync-mux", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/sync-mux", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'mux_%'`);
   const s: Record<string, string> = {};
   for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";

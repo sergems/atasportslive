@@ -72,7 +72,7 @@ router.get("/upcoming", async (req, res): Promise<void> => {
   })));
 });
 
-router.post("/", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const { title, description, sport, thumbnailUrl, startTime, endTime, accessPrice, playerA, playerB, city, country } = req.body;
   if (!title || !sport || !startTime) {
     res.status(400).json({ error: "title, sport, startTime required" });
@@ -129,7 +129,7 @@ router.get("/:id", async (req, res): Promise<void> => {
   res.json(toStream(stream));
 });
 
-router.patch("/:id", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const { title, description, sport, thumbnailUrl, startTime, endTime, status, hlsUrl, accessPrice, city, country } = req.body;
   const updates: Record<string, any> = {};
@@ -356,7 +356,7 @@ router.get("/:id/access/check", authMiddleware, async (req: AuthRequest, res): P
   }
 });
 
-router.patch("/:id/go-live", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/:id/go-live", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const { hlsUrl, streamKey } = req.body;
   const [stream] = await db
     .update(streamsTable)
@@ -366,7 +366,7 @@ router.patch("/:id/go-live", authMiddleware, requireRole("admin", "moderator"), 
   res.json(toStream(stream));
 });
 
-router.patch("/:id/end", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/:id/end", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const [stream] = await db
     .update(streamsTable)
     .set({ status: "ended", endTime: new Date() })

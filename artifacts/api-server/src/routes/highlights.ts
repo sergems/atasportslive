@@ -24,12 +24,12 @@ router.get("/", async (_req, res): Promise<void> => {
   res.json(rows.map(toHighlight));
 });
 
-router.get("/all", authMiddleware, requireRole("admin"), async (_req, res): Promise<void> => {
+router.get("/all", authMiddleware, requireRole("admin", "manager", "content_editor"), async (_req, res): Promise<void> => {
   const rows = await db.select().from(highlightsTable).orderBy(desc(highlightsTable.createdAt));
   res.json(rows.map(toHighlight));
 });
 
-router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const { title, description, youtubeUrl, isPublished } = req.body;
   if (!title || !youtubeUrl) {
     res.status(400).json({ error: "title and youtubeUrl are required" });
@@ -42,7 +42,7 @@ router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, 
   res.status(201).json(toHighlight(row));
 });
 
-router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/:id", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const { title, description, youtubeUrl, isPublished } = req.body;
   const updates: Record<string, any> = {};
@@ -55,7 +55,7 @@ router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthReque
   res.json(toHighlight(row));
 });
 
-router.delete("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+router.delete("/:id", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   await db.delete(highlightsTable).where(eq(highlightsTable.id, Number(req.params.id)));
   res.json({ message: "Deleted" });
 });
