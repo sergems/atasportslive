@@ -178,7 +178,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
       {/* Desktop sidebar */}
-      <aside className={`hidden md:flex flex-col border-r border-slate-800 bg-slate-900/60 pt-4 pb-4 transition-all duration-200 ${collapsed ? 'w-12 px-1' : 'w-[200px] px-2 lg:flex md:w-12 md:px-1'}`}>
+      <aside className={`hidden md:flex flex-col border-r border-slate-800 bg-slate-900/60 pt-4 pb-4 transition-all duration-200 ${collapsed ? 'w-12 px-1' : 'w-[200px] px-2'}`}>
         <div className={`mb-4 ${collapsed ? 'text-center' : 'px-2'}`}>
           <span className={`text-[10px] font-semibold uppercase tracking-widest text-slate-500 ${collapsed ? 'hidden' : 'block'}`}>Admin</span>
         </div>
