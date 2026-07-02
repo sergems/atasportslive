@@ -49,6 +49,11 @@ import RefundPolicy from "@/pages/refund-policy";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import Terms from "@/pages/terms";
 
+// Role sets used by route guards
+const CE_ROLES  = ['admin', 'manager', 'content_editor']; // content editor and above
+const MGR_ROLES = ['admin', 'manager'];                   // manager and above
+const ADM_ROLES = ['admin'];                              // admin only
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -58,27 +63,30 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * ProtectedRoute — redirects to /login if not authenticated, to /dashboard if
+ * authenticated but the user's role is not in `allowedRoles`.
+ * If `allowedRoles` is omitted any authenticated user may access the route.
+ */
 function ProtectedRoute({
   component: Component,
-  adminOnly = false,
-  financeOnly = false,
+  allowedRoles,
 }: {
   component: React.ComponentType;
-  adminOnly?: boolean;
-  financeOnly?: boolean;
+  allowedRoles?: string[];
 }) {
-  const { isAuthenticated, isAdmin, isFinance } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (!isAuthenticated) { setLocation("/login"); return; }
-    if (adminOnly && !isAdmin) setLocation("/dashboard");
-    if (financeOnly && !isFinance && !isAdmin) setLocation("/dashboard");
-  }, [isAuthenticated, isAdmin, isFinance, setLocation, adminOnly, financeOnly]);
+    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+      setLocation("/dashboard");
+    }
+  }, [isAuthenticated, user?.role, setLocation]);
 
   if (!isAuthenticated) return null;
-  if (adminOnly && !isAdmin) return null;
-  if (financeOnly && !isFinance && !isAdmin) return null;
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) return null;
   return <Component />;
 }
 
@@ -93,6 +101,7 @@ function Router() {
     <RootLayout>
       <ScrollToTop />
       <Switch>
+        {/* ── Public routes ─────────────────────────────────────────────────── */}
         <Route path="/" component={Home} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
@@ -102,6 +111,12 @@ function Router() {
         <Route path="/upcoming" component={Upcoming} />
         <Route path="/fixtures" component={Fixtures} />
         <Route path="/highlights" component={Highlights} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/privacy-policy" component={PrivacyPolicy} />
+        <Route path="/refund-policy" component={RefundPolicy} />
+        <Route path="/set-password" component={SetPassword} />
+
+        {/* ── Authenticated user routes ──────────────────────────────────── */}
         <Route path="/games">
           {() => <ProtectedRoute component={Games} />}
         </Route>
@@ -123,64 +138,67 @@ function Router() {
         <Route path="/notifications">
           {() => <ProtectedRoute component={Notifications} />}
         </Route>
-        <Route path="/admin">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminDashboard /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/streams">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminStreams /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/games">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminGames /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/users">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminUsers /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/wallets">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminWallets /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/reports">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminReports /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/vouchers">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminVouchers /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/announcements">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminAnnouncements /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/highlights">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminHighlights /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/slides">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminSlides /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/settings">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminSettings /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/withdrawals">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminWithdrawals /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/ads">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminAds /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/promotions">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminPromotions /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/admin/bets">
-          {() => <ProtectedRoute component={() => <AdminLayout><AdminBets /></AdminLayout>} adminOnly />}
-        </Route>
-        <Route path="/finance/dashboard">
-          {() => <ProtectedRoute component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} financeOnly />}
-        </Route>
-        <Route path="/finance/withdrawals">
-          {() => <ProtectedRoute component={() => <FinanceLayout><FinanceWithdrawals /></FinanceLayout>} financeOnly />}
-        </Route>
         <Route path="/profile">
           {() => <ProtectedRoute component={Profile} />}
         </Route>
-        <Route path="/set-password" component={SetPassword} />
-        <Route path="/terms" component={Terms} />
-        <Route path="/privacy-policy" component={PrivacyPolicy} />
-        <Route path="/refund-policy" component={RefundPolicy} />
+
+        {/* ── Admin panel — content_editor + manager + admin ─────────────── */}
+        <Route path="/admin">
+          {() => <ProtectedRoute allowedRoles={CE_ROLES} component={() => <AdminLayout><AdminDashboard /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/slides">
+          {() => <ProtectedRoute allowedRoles={CE_ROLES} component={() => <AdminLayout><AdminSlides /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/highlights">
+          {() => <ProtectedRoute allowedRoles={CE_ROLES} component={() => <AdminLayout><AdminHighlights /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/announcements">
+          {() => <ProtectedRoute allowedRoles={CE_ROLES} component={() => <AdminLayout><AdminAnnouncements /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/ads">
+          {() => <ProtectedRoute allowedRoles={CE_ROLES} component={() => <AdminLayout><AdminAds /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/users">
+          {() => <ProtectedRoute allowedRoles={CE_ROLES} component={() => <AdminLayout><AdminUsers /></AdminLayout>} />}
+        </Route>
+
+        {/* ── Admin panel — manager + admin only ────────────────────────── */}
+        <Route path="/admin/streams">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminStreams /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/games">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminGames /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/bets">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminBets /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/wallets">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminWallets /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/withdrawals">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminWithdrawals /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/promotions">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminPromotions /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/vouchers">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminVouchers /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/reports">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminReports /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/settings">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminSettings /></AdminLayout>} />}
+        </Route>
+
+        {/* ── Finance routes (manager + admin) ─────────────────────────── */}
+        <Route path="/finance/dashboard">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
+        </Route>
+        <Route path="/finance/withdrawals">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <FinanceLayout><FinanceWithdrawals /></FinanceLayout>} />}
+        </Route>
+
         <Route component={NotFound} />
       </Switch>
     </RootLayout>
