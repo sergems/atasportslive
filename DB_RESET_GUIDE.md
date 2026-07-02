@@ -290,9 +290,9 @@ UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
 \q
 ```
 
-### 12.2 Reconfigure payment gateways
+### 12.2 Payment gateway settings
 
-Log into the admin panel at **http://173.230.131.210** and go to **Admin → Settings** to re-enter your Pesapal and PawaPay credentials (they were in the old `settings` table which was wiped).
+Your Pesapal and PawaPay credentials are stored in the `settings` table, which is included in `dt.sql`. They will be restored automatically — no need to re-enter anything. You can verify in **Admin → Settings** that the values are present.
 
 ---
 
