@@ -2,7 +2,8 @@
 
 **Server IP:** `173.230.131.210`  
 **App directory:** `/opt/ata`  
-**Domain:** `atasportslive.com`
+**Domain:** `atasportslive.com`  
+**Stack:** Node.js 24 · pnpm 10.26.1 · Express 5 · PostgreSQL 16 · nginx · Docker
 
 ---
 
@@ -11,8 +12,9 @@
 - [Part A — Push Code Updates to the Server](#part-a--push-code-updates-to-the-server)
 - [Part B — Safely Update the Database (Preserve Users)](#part-b--safely-update-the-database-preserve-users)
 - [Part C — Accessing the Site via IP Address](#part-c--accessing-the-site-via-ip-address)
-- [Part D — Point atasportslive.com to Your Server](#part-d--point-atasportslivecOM-to-your-server)
+- [Part D — Point atasportslive.com to Your Server](#part-d--point-atasportslivecom-to-your-server)
 - [Part E — Install the SSL Certificate (HTTPS)](#part-e--install-the-ssl-certificate-https)
+- [Part F — Upgrading an Existing Server (Role Migration)](#part-f--upgrading-an-existing-server-role-migration)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -72,13 +74,31 @@ git pull origin main
 
 ---
 
-### Step 6 — Rebuild the Docker images
+### Step 6 — ⚠️ Check if this update changes the role system
+
+> **Only needed when upgrading from a version that used `moderator` or `finance` roles.**  
+> Skip to Step 7 if this is a fresh server or you have already run Part F.
+
+If your production database may have users with old roles, run Part F now — **before** rebuilding — then come back here.
+
+How to check quickly:
+
+```bash
+docker compose exec db psql -U ata_user ata_db \
+  -c "SELECT role, COUNT(*) FROM users GROUP BY role;"
+```
+
+If any row shows `moderator` or `finance`, follow **[Part F](#part-f--upgrading-an-existing-server-role-migration)** first.
+
+---
+
+### Step 7 — Rebuild the Docker images
 
 ```bash
 docker compose build
 ```
 
-This rebuilds the API server and frontend. It uses Docker's build cache so unchanged layers are fast. Add `--no-cache` if you want a completely clean build:
+This rebuilds the API server and frontend. Docker's build cache means unchanged layers are fast. Add `--no-cache` if you want a completely clean build:
 
 ```bash
 docker compose build --no-cache
@@ -86,9 +106,10 @@ docker compose build --no-cache
 
 ---
 
-### Step 7 — Apply database schema changes
+### Step 8 — Apply database schema changes (optional manual check)
 
-This syncs the database structure with the latest code. It compares the current schema definition to the live database and applies the differences.
+> **Note:** Migrations run automatically every time you run `docker compose up -d` in Step 9.  
+> You only need this step if you want to inspect the migration output *before* restarting.
 
 ```bash
 docker compose run --rm migrate
@@ -104,19 +125,21 @@ Expected output (if new columns/tables were added):
 [✓] Applied schema changes successfully
 ```
 
-> ⚠️ **Read the output carefully.** If drizzle-kit reports it would drop any tables or columns, **stop immediately** — type `n` or press `Ctrl+C`. Restore from the backup taken in Step 4 and contact your developer. Never skip the backup in Step 4.
+> ⚠️ **Read the output carefully.** If drizzle-kit reports it would drop any tables or columns, **stop immediately** — press `Ctrl+C`. Restore from the backup taken in Step 4 and contact your developer. Never skip the backup in Step 4.
 
 ---
 
-### Step 8 — Restart the application
+### Step 9 — Restart the application
 
 ```bash
 docker compose up -d
 ```
 
+`docker compose up -d` automatically runs the `migrate` step before starting the API server. There is no need to run migrations separately unless you want to inspect the output first (Step 8).
+
 ---
 
-### Step 9 — Confirm everything is running
+### Step 10 — Confirm everything is running
 
 ```bash
 docker compose ps
@@ -142,7 +165,7 @@ You should get a JSON response, not an error.
 
 ## Part B — Safely Update the Database (Preserve Users)
 
-The schema migration in Step 7 above handles structural changes automatically. But if you also want to clear the transaction and activity history on the server (the same cleanup done in development) while keeping every user account intact, run this:
+The schema migration in Step 8 above handles structural changes automatically. But if you also want to clear the transaction and activity history (the same cleanup done in development) while keeping every user account intact, run this:
 
 ```bash
 docker compose exec db psql -U ata_user ata_db
@@ -401,6 +424,82 @@ crontab -l
 
 ---
 
+## Part F — Upgrading an Existing Server (Role Migration)
+
+> **Only needed if your production database was deployed from an older version** of this app that used the roles `moderator` or `finance`. These roles no longer exist — they have been replaced by `manager`. If this is a fresh install, skip this entire section.
+
+The database now uses a PostgreSQL enum type (`user_role`) for the role column. If existing users have the old role values `moderator` or `finance`, the schema migration (`migrate` service) will fail with a type conflict error.
+
+### Step F.1 — Check if you are affected
+
+```bash
+docker compose exec db psql -U ata_user ata_db \
+  -c "SELECT role, COUNT(*) FROM users GROUP BY role;"
+```
+
+If you see `moderator` or `finance` in the output, continue with the steps below. If you only see `user`, `content_editor`, `manager`, or `admin`, you are not affected — skip to Part A Step 7.
+
+---
+
+### Step F.2 — Convert old roles to the new system
+
+Run this **before** rebuilding the Docker images or running the migration:
+
+```bash
+docker compose exec db psql -U ata_user ata_db
+```
+
+Then paste this SQL:
+
+```sql
+BEGIN;
+
+-- Rename the old role column to a plain text type so we can update values freely.
+-- (Only needed if the column is currently a constrained type or enum.)
+ALTER TABLE users ALTER COLUMN role TYPE text;
+
+-- Map old roles to their new equivalents:
+--   moderator → manager  (had moderation powers; manager is the direct replacement)
+--   finance   → manager  (had payment-approval powers; manager now handles this)
+UPDATE users SET role = 'manager'
+  WHERE role IN ('moderator', 'finance');
+
+-- Confirm no old values remain
+SELECT role, COUNT(*) FROM users GROUP BY role;
+
+COMMIT;
+```
+
+Exit psql:
+```
+\q
+```
+
+You should see only `user`, `content_editor`, `manager`, or `admin` in the output.
+
+---
+
+### Step F.3 — Continue the normal update
+
+Now go back to **Part A Step 7** and proceed normally. The schema migration will create the `user_role` enum and convert the `role` column cleanly because the data no longer contains any unrecognised values.
+
+---
+
+### New role structure reference
+
+The platform now uses four roles:
+
+| Role | Admin panel access | What they can do |
+|------|--------------------|-----------------|
+| `user` | None | Public/registered user |
+| `content_editor` | Dashboard, Hero Slides, Highlights, Announcements, Ad Slots, Users (view only) | Manage site content |
+| `manager` | Everything except SMTP / Pesapal / PawaPay / DB Backup settings | Credit/debit/suspend users, approve withdrawals, manage promotions |
+| `admin` | Full access | All of the above plus payment gateway settings and DB backup |
+
+> **Note:** A `manager` cannot manage other managers or admins — only users below their own level.
+
+---
+
 ## Troubleshooting
 
 ### Services not starting after update
@@ -412,7 +511,51 @@ docker compose logs nginx --tail=50
 docker compose logs db --tail=50
 ```
 
-### Database migration failed
+### Migration fails with "invalid input value for enum user_role"
+
+Your database has users with old role values (`moderator` or `finance`). Follow **[Part F](#part-f--upgrading-an-existing-server-role-migration)** to convert them, then re-run the update.
+
+```bash
+# Quick diagnosis
+docker compose exec db psql -U ata_user ata_db \
+  -c "SELECT role, COUNT(*) FROM users GROUP BY role;"
+```
+
+### Migration fails with "cannot drop type" or enum conflict
+
+The `user_role` enum already exists in the database but with different values. Before dropping it, confirm nothing else depends on it:
+
+```bash
+docker compose exec db psql -U ata_user ata_db
+```
+
+```sql
+-- Check what depends on the enum (should only be users.role)
+SELECT pg_class.relname AS table, pg_attribute.attname AS column
+FROM pg_type
+JOIN pg_attribute ON pg_attribute.atttypid = pg_type.oid
+JOIN pg_class     ON pg_class.oid = pg_attribute.attrelid
+WHERE pg_type.typname = 'user_role';
+```
+
+If only `users.role` is listed, it is safe to continue:
+
+```sql
+-- Convert role column to plain text so the enum can be dropped
+ALTER TABLE users ALTER COLUMN role TYPE text;
+
+-- Drop the old enum (safe only after confirming no other dependencies above)
+DROP TYPE IF EXISTS user_role;
+```
+
+If the dependency check shows other tables using `user_role`, **do not drop the enum** — restore from the backup taken in Step 4 and contact your developer.
+
+Exit psql, then re-run the migration:
+```bash
+docker compose run --rm migrate
+```
+
+### Database migration failed (other reasons)
 
 Restore from the backup you took in Step 4:
 ```bash
@@ -459,3 +602,7 @@ ufw allow 443/tcp
 ### Check Linode firewall (if site is unreachable)
 
 Log in to cloud.linode.com → Your server → Firewalls → ensure ports 22, 80, and 443 are allowed for inbound traffic.
+
+### Admin panel shows wrong role options for users
+
+The admin user management page now shows four roles: `user`, `content_editor`, `manager`, `admin`. If you see old labels like `moderator` in the dropdown, hard-refresh the browser (`Ctrl+Shift+R`) to clear the cached frontend bundle.
