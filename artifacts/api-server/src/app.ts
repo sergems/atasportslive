@@ -35,7 +35,6 @@ app.use(cors({
       /\.replit\.dev$/,
       /\.repl\.co$/,
       /^https?:\/\/(www\.)?atasportslive\.com\/?$/,
-      /^https?:\/\/(www\.)?hatasportslive\.com\/?$/,
       /^https?:\/\/45\.79\.219\.243(:\d+)?\/?$/,
     ];
     if (allowed.some((r) => r.test(origin))) return callback(null, true);
