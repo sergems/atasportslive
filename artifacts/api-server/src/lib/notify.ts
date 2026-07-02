@@ -1,4 +1,5 @@
 import { db, notificationsTable } from "@workspace/db";
+import type { InferInsertModel } from "drizzle-orm";
 import type { WebSocket } from "ws";
 
 export const wsClients = new Map<number, WebSocket>();
@@ -13,18 +14,7 @@ export function broadcastToStream(streamId: number, message: object): void {
   }
 }
 
-type NotificationType =
-  | "bet_matched"
-  | "near_match"
-  | "deposit_received"
-  | "withdrawal_approved"
-  | "withdrawal_rejected"
-  | "stream_expiring"
-  | "bet_won"
-  | "bet_lost"
-  | "match_result"
-  | "bet_refunded"
-  | "low_balance";
+type NotificationType = InferInsertModel<typeof notificationsTable>["type"];
 
 export async function notify(
   userId: number,

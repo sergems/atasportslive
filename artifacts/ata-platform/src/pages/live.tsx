@@ -965,7 +965,7 @@ export default function Live() {
   const { isAuthenticated } = useAuth();
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const isAdmin = user?.role === 'admin';
   const qc = useQueryClient();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);

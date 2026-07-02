@@ -121,7 +121,8 @@ CREATE TYPE public.notification_type AS ENUM (
     'match_result',
     'bet_refunded',
     'low_balance',
-    'bonus_expiry_warning'
+    'bonus_expiry_warning',
+    'general'
 );
 
 

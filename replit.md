@@ -60,7 +60,7 @@ A full-stack sports streaming and P2P betting exchange platform for Kampala, Uga
 
 ## Replit setup
 
-- Database schema applied from `database.sql` on initial setup (Replit's built-in PostgreSQL)
+- Database schema applied from `dt.sql` on initial setup (Replit's built-in PostgreSQL)
 - `DATABASE_URL` and `PGHOST/PGUSER/PGPASSWORD/PGDATABASE` are runtime-managed by Replit — do not set manually
 - `SESSION_SECRET` is stored as a Replit Secret ✓
 - SMTP vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `NOTIFY_EMAIL`) are optional — email is silently skipped when absent

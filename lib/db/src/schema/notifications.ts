@@ -16,6 +16,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "bet_refunded",
   "low_balance",
   "bonus_expiry_warning",
+  "general",
 ]);
 
 export const notificationsTable = pgTable("notifications", {
