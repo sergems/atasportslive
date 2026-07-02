@@ -231,6 +231,21 @@ You will see output from multiple build stages (deps → builder → api → ngi
 
 ---
 
+## Part 7b — Copy uploaded images into the Docker volume
+
+The image files live in the Git repo at `artifacts/api-server/uploads/` but Docker uses a named volume (`uploads`) that starts empty — the repo files are never copied in automatically. Run this once to seed the volume:
+
+```bash
+docker run --rm \
+  -v ata_uploads:/target \
+  -v /opt/ata/artifacts/api-server/uploads:/source:ro \
+  alpine sh -c "cp -r /source/. /target/ && echo 'Done' && ls /target"
+```
+
+You should see the list of image files printed at the end. If the output says `Done` and lists files, you are good to continue.
+
+---
+
 ## Part 8 — Start all services
 
 ```bash
@@ -478,6 +493,13 @@ cd /opt/ata
 ./deploy/backup.sh          # always back up first
 git pull origin main
 docker compose build
+
+# Copy uploaded images into the Docker volume
+docker run --rm \
+  -v ata_uploads:/target \
+  -v /opt/ata/artifacts/api-server/uploads:/source:ro \
+  alpine sh -c "cp -r /source/. /target/"
+
 docker compose up -d
 docker compose ps           # confirm all services are Up
 ```
