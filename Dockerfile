@@ -45,7 +45,24 @@ RUN pnpm --filter @workspace/api-server run build
 RUN PORT=3000 BASE_PATH=/ pnpm --filter @workspace/ata-platform run build
 
 # -----------------------------------------------------------------------------
-# Stage 4 — native-deps: compile bcrypt native addon in isolation
+# Stage 4 — migrate: run drizzle-kit schema push before the API boots
+#   • Inherits all node_modules from the deps stage (includes drizzle-kit)
+#   • Copies only the lib/db source (schema + drizzle.config.ts)
+#   • docker compose run --rm migrate  →  applies diffs, never drops data
+# -----------------------------------------------------------------------------
+FROM deps AS migrate
+WORKDIR /app
+
+# Copy the database package source (schema definitions + drizzle config)
+COPY lib/db/ lib/db/
+
+# DATABASE_URL must be supplied at runtime via docker compose environment
+ENV NODE_ENV=production
+
+CMD ["pnpm", "--filter", "@workspace/db", "run", "push"]
+
+# -----------------------------------------------------------------------------
+# Stage 5 — native-deps: compile bcrypt native addon in isolation
 #            (keeps build tools OUT of the production image)
 # -----------------------------------------------------------------------------
 FROM node:24-slim AS native-deps

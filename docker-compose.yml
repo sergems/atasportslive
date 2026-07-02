@@ -19,6 +19,24 @@ services:
       retries: 5
 
   # ---------------------------------------------------------------------------
+  # Migrate — applies drizzle-kit schema changes then exits
+  # Run manually:  docker compose run --rm migrate
+  # Runs automatically before the API on every  docker compose up
+  # ---------------------------------------------------------------------------
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://ata_user:${POSTGRES_PASSWORD}@db:5432/ata_db
+    depends_on:
+      db:
+        condition: service_healthy
+    # Run once and exit — never restart
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
   # API Server — Express 5 + WebSocket
   # ---------------------------------------------------------------------------
   api:
@@ -37,6 +55,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   # ---------------------------------------------------------------------------
   # nginx — reverse proxy + static frontend files
@@ -51,8 +71,14 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      # Bind-mount the nginx config so swapping HTTP→HTTPS only needs a restart,
+      # not a full image rebuild. Copy deploy/nginx-ssl.conf → deploy/nginx.conf
+      # then run: docker compose restart nginx
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       # SSL certificates (populated later with Certbot)
       - ./deploy/ssl:/etc/nginx/ssl:ro
+      # Let's Encrypt certificates (mounted after running certbot)
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       # Serve uploaded files directly for performance
       - uploads:/app/uploads:ro
     depends_on:
