@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown, Menu, X, Settings } from 'lucide-react';
+import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown, Menu, X, Settings, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
 import { useQuery } from '@tanstack/react-query';
@@ -176,11 +176,22 @@ export function Navbar() {
           {isAuthenticated ? (
             <>
               <Link href="/wallet">
-                <div className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-md bg-slate-900 border border-slate-800 hover:border-teal-500/30 transition-colors cursor-pointer">
-                  <Wallet className="h-4 w-4 text-teal-500" />
-                  <span className="font-mono text-sm font-semibold text-amber-400">
+                <div className="hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-md bg-slate-900 border border-slate-800 hover:border-teal-500/30 transition-colors cursor-pointer">
+                  <Wallet className="h-4 w-4 text-teal-500 shrink-0" />
+                  <span className="font-mono text-sm font-semibold text-white">
                     ${(wallet?.balance ?? 0).toFixed(2)}
                   </span>
+                  {(wallet?.bonusBalance ?? 0) > 0 && (
+                    <>
+                      <span className="w-px h-3.5 bg-slate-700" />
+                      <span className="flex items-center gap-1">
+                        <Gift className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
+                        <span className="font-mono text-sm font-semibold text-yellow-400">
+                          ${(wallet.bonusBalance ?? 0).toFixed(2)}
+                        </span>
+                      </span>
+                    </>
+                  )}
                 </div>
               </Link>
               <Link href="/notifications">

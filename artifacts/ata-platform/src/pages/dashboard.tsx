@@ -7,7 +7,7 @@ import { Link } from 'wouter';
 import {
   Wallet, Activity, TrendingUp, History, Radio, Swords,
   Film, ArrowDownCircle, ChevronRight, Trophy, Clock,
-  Zap, Star, Target
+  Zap, Star, Target, Gift
 } from 'lucide-react';
 
 interface LiveStream {
@@ -92,12 +92,21 @@ export default function Dashboard() {
 
           {/* Balance pill */}
           <div className="sm:text-right">
-            <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Wallet Balance</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Cash Balance</p>
             {loadingWallet ? (
               <Skeleton className="h-9 w-28 bg-slate-800 rounded-lg" />
             ) : (
               <div className="text-3xl sm:text-4xl font-bold font-mono text-teal-400 leading-none">
                 ${wallet?.balance?.toFixed(2) ?? '0.00'}
+              </div>
+            )}
+            {!loadingWallet && (wallet?.bonusBalance ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 mt-1.5 sm:justify-end">
+                <Gift className="h-3.5 w-3.5 text-yellow-400" />
+                <span className="font-mono text-base font-bold text-yellow-400">
+                  ${(wallet?.bonusBalance ?? 0).toFixed(2)}
+                </span>
+                <span className="text-xs text-yellow-600">bonus</span>
               </div>
             )}
             <Link href="/wallet">
@@ -158,7 +167,7 @@ export default function Dashboard() {
       )}
 
       {/* ── Stat cards ────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {/* Available */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex items-center justify-between mb-3">
@@ -172,7 +181,23 @@ export default function Dashboard() {
           ) : (
             <p className="text-xl sm:text-2xl font-bold font-mono text-white">${wallet?.availableBalance?.toFixed(2) ?? '0.00'}</p>
           )}
-          <p className="text-slate-600 text-[10px] mt-1">Ready to use</p>
+          <p className="text-slate-600 text-[10px] mt-1">Cash ready to use</p>
+        </div>
+
+        {/* Bonus */}
+        <div className={`rounded-2xl border bg-slate-900/80 px-4 py-4 sm:px-5 sm:py-5 transition-colors ${(wallet?.bonusBalance ?? 0) > 0 ? 'border-yellow-500/30 bg-yellow-950/10' : 'border-slate-800'}`}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Bonus</p>
+            <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${(wallet?.bonusBalance ?? 0) > 0 ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-slate-800 border border-slate-700'}`}>
+              <Gift className={`h-3.5 w-3.5 ${(wallet?.bonusBalance ?? 0) > 0 ? 'text-yellow-400' : 'text-slate-600'}`} />
+            </div>
+          </div>
+          {loadingWallet ? (
+            <Skeleton className="h-7 w-24 bg-slate-800 rounded" />
+          ) : (
+            <p className={`text-xl sm:text-2xl font-bold font-mono ${(wallet?.bonusBalance ?? 0) > 0 ? 'text-yellow-400' : 'text-slate-600'}`}>${(wallet?.bonusBalance ?? 0).toFixed(2)}</p>
+          )}
+          <p className="text-slate-600 text-[10px] mt-1">Streams only · 90d expiry</p>
         </div>
 
         {/* Pending */}
@@ -192,7 +217,7 @@ export default function Dashboard() {
         </div>
 
         {/* Withdrawable */}
-        <div className="col-span-2 sm:col-span-1 rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Withdrawable</p>
             <div className="h-7 w-7 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">

@@ -478,11 +478,11 @@ export default function Wallet() {
         {[
           { label: 'Total Balance',  value: (wallet?.balance || 0) + (wallet?.bonusBalance || 0), color: 'text-teal-400' },
           { label: 'Cash Balance',   value: wallet?.availableBalance,    color: 'text-white' },
-          { label: 'Bonus Balance',  value: wallet?.bonusBalance,        color: 'text-purple-400', icon: Gift },
+          { label: 'Bonus Balance',  value: wallet?.bonusBalance,        color: 'text-yellow-400', icon: Gift },
           { label: 'Pending',        value: wallet?.pendingBalance,      color: 'text-amber-400' },
           { label: 'Withdrawable',   value: wallet?.withdrawableBalance, color: 'text-green-400' },
         ].map(({ label, value, color, icon: Icon }) => (
-          <Card key={label} className={`bg-slate-900 border-primary/20 ${label === 'Bonus Balance' && (wallet?.bonusBalance || 0) > 0 ? 'border-purple-500/40' : ''}`}>
+          <Card key={label} className={`bg-slate-900 border-primary/20 ${label === 'Bonus Balance' && (wallet?.bonusBalance || 0) > 0 ? 'border-yellow-500/40 bg-yellow-950/10' : ''}`}>
             <CardContent className="pt-3 pb-3 px-3 sm:pt-5 sm:pb-3 sm:px-4">
               {loadingWallet
                 ? <Skeleton className="h-6 sm:h-7 w-20 bg-slate-800" />
@@ -492,7 +492,7 @@ export default function Wallet() {
                   </div>
               }
               <div className="text-slate-400 text-[10px] sm:text-xs mt-0.5 sm:mt-1">{label}</div>
-              {label === 'Bonus Balance' && <div className="text-[9px] text-purple-500 mt-0.5">Streaming only</div>}
+              {label === 'Bonus Balance' && <div className="text-[9px] text-yellow-600 mt-0.5">Streaming only · 90d expiry</div>}
             </CardContent>
           </Card>
         ))}
