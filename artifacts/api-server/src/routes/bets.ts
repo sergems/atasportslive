@@ -288,7 +288,7 @@ router.get("/:id", authMiddleware, async (req: AuthRequest, res): Promise<void> 
 });
 
 // Admin-only: cancel any pending bet and refund the user
-router.post("/:id/cancel", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/:id/cancel", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const [bet] = await db.select().from(betsTable).where(eq(betsTable.id, id)).limit(1);
   if (!bet || bet.status !== "pending") {

@@ -187,7 +187,7 @@ export function Navbar() {
                       <span className="flex items-center gap-1">
                         <Gift className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
                         <span className="font-mono text-sm font-semibold text-yellow-400">
-                          ${(wallet.bonusBalance ?? 0).toFixed(2)}
+                          ${(wallet?.bonusBalance ?? 0).toFixed(2)}
                         </span>
                       </span>
                     </>

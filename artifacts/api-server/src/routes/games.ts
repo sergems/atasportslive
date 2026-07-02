@@ -142,7 +142,7 @@ router.patch("/:id", authMiddleware, requireRole("admin"), async (req: AuthReque
   res.json(toGame(game));
 });
 
-router.post("/:id/settle", authMiddleware, requireRole("admin", "moderator"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/:id/settle", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const { result } = req.body;
   if (!["player_a_wins", "player_b_wins", "draw"].includes(result)) {

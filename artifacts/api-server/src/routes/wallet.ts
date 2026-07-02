@@ -311,8 +311,8 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
     }).catch(() => {});
   }
 
-  // Email all finance users
-  const financeUsers = await db.select().from(usersTable).where(eq(usersTable.role as any, "finance" as any));
+  // Email all manager-level users (finance notifications)
+  const financeUsers = await db.select().from(usersTable).where(eq(usersTable.role as any, "manager" as any));
   const approvedList = await db.select().from(transactionsTable).where(
     eq(transactionsTable.status, "approved")
   );

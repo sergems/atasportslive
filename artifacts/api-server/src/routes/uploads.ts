@@ -33,7 +33,7 @@ const upload = multer({
 router.post(
   "/thumbnail",
   authMiddleware,
-  requireRole("admin", "moderator"),
+  requireRole("admin", "manager"),
   upload.single("thumbnail"),
   (req: AuthRequest, res): void => {
     if (!req.file) {
