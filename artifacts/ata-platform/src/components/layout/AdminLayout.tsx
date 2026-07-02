@@ -91,7 +91,7 @@ const navItems = [
   { href: '/admin/highlights',       label: 'Highlights',    icon: Clapperboard,                          minLevel: 1 },
   { href: '/admin/announcements',    label: 'Announcements', icon: Megaphone,                             minLevel: 1 },
   { href: '/admin/ads',              label: 'Ad Slots',      icon: ImagePlus,                             minLevel: 1 },
-  { href: '/admin/users',            label: 'Users',         icon: Users,                                 minLevel: 1 },
+  { href: '/admin/users',            label: 'Manage Users',  icon: Users,                                 minLevel: 1 },
   { href: '/admin/streams',          label: 'Livestream',    icon: Radio,                                 minLevel: 2 },
   { href: '/admin/games',            label: 'Bets',          icon: Trophy, settleBadge: true,             minLevel: 2 },
   { href: '/admin/bets',             label: 'Manage Bets',   icon: Swords,                                minLevel: 2 },

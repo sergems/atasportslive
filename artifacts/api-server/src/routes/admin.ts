@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { randomBytes } from "crypto";
+import bcrypt from "bcrypt";
 import { spawn } from "child_process";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
@@ -490,6 +491,21 @@ router.post("/promotions/:id/revoke/:userId", authMiddleware, requireRole("admin
     `Your bonus balance has been revoked. ${reason ? `Reason: ${reason}` : ""}`);
 
   res.json({ ok: true, revokedAmount: bonusBal });
+});
+
+// Admin reset a user's password
+router.post("/users/:id/reset-password", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = Number(req.params.id);
+  const { newPassword } = req.body as { newPassword?: string };
+  if (!newPassword || newPassword.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters" });
+    return;
+  }
+  const [user] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  const hash = await bcrypt.hash(newPassword, 10);
+  await db.update(usersTable).set({ passwordHash: hash, mustSetPassword: false }).where(eq(usersTable.id, userId));
+  res.json({ ok: true });
 });
 
 router.get("/db-export", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {

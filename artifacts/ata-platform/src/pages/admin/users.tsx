@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
-  CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet
+  CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet, KeyRound
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -252,6 +252,66 @@ function ActivationEmailPanel() {
   );
 }
 
+function ResetPasswordPanel({ userId, onClose }: { userId: number; onClose: () => void }) {
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ newPassword: password }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed');
+      return d;
+    },
+    onSuccess: () => { toast.success('Password reset successfully'); onClose(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const mismatch = confirm.length > 0 && password !== confirm;
+  const canSubmit = password.length >= 8 && password === confirm && !mutation.isPending;
+
+  return (
+    <div className="bg-slate-900 border border-blue-500/30 rounded p-3 mt-2 shadow-lg space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+          <KeyRound className="h-3.5 w-3.5" /> Reset Password
+        </span>
+        <button onClick={onClose} className="text-slate-500 hover:text-white"><X className="h-3.5 w-3.5" /></button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-slate-400 text-[10px] uppercase tracking-wider">New Password</Label>
+          <Input
+            type="password" value={password} onChange={e => setPassword(e.target.value)}
+            placeholder="Min. 8 characters"
+            className="bg-slate-950 border-slate-800 text-white text-xs h-8 focus-visible:ring-1 focus-visible:ring-blue-500/50"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-slate-400 text-[10px] uppercase tracking-wider">Confirm Password</Label>
+          <Input
+            type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
+            placeholder="Repeat password"
+            className={`bg-slate-950 border-slate-800 text-white text-xs h-8 focus-visible:ring-1 ${mismatch ? 'border-red-500/50 focus-visible:ring-red-500/50' : 'focus-visible:ring-blue-500/50'}`}
+          />
+          {mismatch && <p className="text-red-400 text-[10px]">Passwords do not match</p>}
+        </div>
+        <div className="sm:col-span-2 flex justify-end gap-2 mt-1">
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-slate-400 hover:text-white hover:bg-slate-800 h-7 px-3 text-xs">Cancel</Button>
+          <Button size="sm" onClick={() => mutation.mutate()} disabled={!canSubmit}
+            className="bg-blue-500 hover:bg-blue-400 text-white font-bold h-7 px-4 text-xs">
+            {mutation.isPending ? 'Saving…' : 'Reset Password'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WalletAdjustPanel({ userId, onClose }: { userId: number; onClose: () => void }) {
   const [type, setType] = useState<'credit' | 'debit'>('credit');
   const [amount, setAmount] = useState('');
@@ -331,6 +391,7 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [editingPayoutFor, setEditingPayoutFor] = useState<number | null>(null);
   const [walletAdjustFor, setWalletAdjustFor] = useState<number | null>(null);
+  const [resetPasswordFor, setResetPasswordFor] = useState<number | null>(null);
 
   const { data, isLoading } = useListUsers({ page, limit: 20, search: search || undefined });
   const updateRole = useUpdateUserRole();
@@ -358,7 +419,7 @@ export default function AdminUsers() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-          <Users className="h-5 w-5 text-blue-400" /> Users
+          <Users className="h-5 w-5 text-blue-400" /> User Management
         </h1>
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
@@ -420,7 +481,7 @@ export default function AdminUsers() {
                       <div className="flex items-center gap-1 bg-slate-950 rounded border border-slate-800 p-0.5">
                         <Button
                           size="sm" variant="ghost"
-                          onClick={() => { setWalletAdjustFor(walletAdjustFor === user.id ? null : user.id); setEditingPayoutFor(null); }}
+                          onClick={() => { setWalletAdjustFor(walletAdjustFor === user.id ? null : user.id); setEditingPayoutFor(null); setResetPasswordFor(null); }}
                           className={`h-5 w-6 p-0 rounded-sm ${walletAdjustFor === user.id ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
                           title="Adjust Wallet"
                         >
@@ -428,11 +489,19 @@ export default function AdminUsers() {
                         </Button>
                         <Button
                           size="sm" variant="ghost"
-                          onClick={() => { setEditingPayoutFor(editingPayoutFor === user.id ? null : user.id); setWalletAdjustFor(null); }}
+                          onClick={() => { setEditingPayoutFor(editingPayoutFor === user.id ? null : user.id); setWalletAdjustFor(null); setResetPasswordFor(null); }}
                           className={`h-5 w-6 p-0 rounded-sm ${editingPayoutFor === user.id ? 'bg-teal-500/20 text-teal-400' : 'text-slate-400 hover:text-teal-400 hover:bg-slate-800'}`}
                           title="Edit Payout Method"
                         >
                           <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm" variant="ghost"
+                          onClick={() => { setResetPasswordFor(resetPasswordFor === user.id ? null : user.id); setWalletAdjustFor(null); setEditingPayoutFor(null); }}
+                          className={`h-5 w-6 p-0 rounded-sm ${resetPasswordFor === user.id ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-blue-400 hover:bg-slate-800'}`}
+                          title="Reset Password"
+                        >
+                          <KeyRound className="h-3 w-3" />
                         </Button>
                         <Button
                           size="sm" variant="ghost"
@@ -458,6 +527,9 @@ export default function AdminUsers() {
                       onClose={() => setEditingPayoutFor(null)}
                       onSaved={() => queryClient.invalidateQueries({ queryKey: ['admin-payout', user.id] })}
                     />
+                  )}
+                  {resetPasswordFor === user.id && (
+                    <ResetPasswordPanel userId={user.id} onClose={() => setResetPasswordFor(null)} />
                   )}
                 </div>
               ))}
