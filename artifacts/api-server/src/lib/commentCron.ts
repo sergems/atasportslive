@@ -20,13 +20,20 @@ async function deleteExpiredComments(): Promise<void> {
 export function startCommentCron(): void {
   logger.info("Comment expiry cron started");
 
-  deleteExpiredComments().catch((err) =>
-    logger.error({ err }, "Comment expiry run failed on startup"),
-  );
+  let running = false;
 
-  setInterval(() => {
-    deleteExpiredComments().catch((err) =>
-      logger.error({ err }, "Comment expiry run failed"),
-    );
-  }, RUN_INTERVAL_MS);
+  const tick = () => {
+    if (running) {
+      logger.warn("Comment expiry cron: previous run still in progress, skipping");
+      return;
+    }
+    running = true;
+    deleteExpiredComments()
+      .catch((err) => logger.error({ err }, "Comment expiry run failed"))
+      .finally(() => { running = false; });
+  };
+
+  tick();
+
+  setInterval(tick, RUN_INTERVAL_MS);
 }

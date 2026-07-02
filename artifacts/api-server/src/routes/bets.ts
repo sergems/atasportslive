@@ -57,25 +57,9 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
   }
 
   const oppositeOutcome = outcome === "player_a_wins" ? "player_b_wins" : "player_a_wins";
+  const ticketId = `TKT-${uuidv4().split("-")[0].toUpperCase()}`;
 
-  // Lock stake — deduct from balance immediately so the user sees the deduction right away
-  await db.update(walletsTable).set({
-    balance: sql`balance - ${stake}`,
-    availableBalance: sql`available_balance - ${stake}`,
-    pendingBalance: sql`pending_balance + ${stake}`,
-  }).where(eq(walletsTable.userId, userId));
-
-  await db.insert(transactionsTable).values({
-    transactionId: `BET-${uuidv4().split("-")[0].toUpperCase()}`,
-    userId,
-    type: "bet_stake",
-    amount: stake.toString(),
-    status: "completed",
-    paymentMethod: "internal",
-    description: `Bet stake on game #${gameId}`,
-  });
-
-  // Try exact match
+  // Read candidates outside the transaction (non-blocking reads)
   const exactMatches = await db
     .select()
     .from(betsTable)
@@ -90,7 +74,27 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
     )
     .limit(1);
 
-  let ticketId = `TKT-${uuidv4().split("-")[0].toUpperCase()}`;
+  const nearMatchCandidates = exactMatches.length === 0
+    ? await db.select().from(betsTable).where(
+        and(
+          eq(betsTable.gameId, gameId),
+          eq(betsTable.outcome, oppositeOutcome),
+          eq(betsTable.status, "pending"),
+          ne(betsTable.userId, userId)
+        )
+      ).limit(10)
+    : [];
+
+  const nearMatches = nearMatchCandidates
+    .map((b) => ({ betId: b.id, stake: parseFloat(b.stake as string), difference: Math.abs(parseFloat(b.stake as string) - stake) }))
+    .filter((b) => b.difference / stake <= 0.2)
+    .sort((a, b) => a.difference - b.difference)
+    .slice(0, 3);
+
+  // --- All financial writes wrapped in a single atomic transaction ---
+  let newBet: typeof betsTable.$inferSelect;
+  let matchStatus: string;
+  let opponentId: number | null = null;
 
   if (exactMatches.length > 0) {
     const opponent = exactMatches[0];
@@ -98,64 +102,81 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
     const fee = pool * BROKERAGE_FEE;
     const winnerPayout = pool - fee;
 
-    const [newBet] = await db.insert(betsTable).values({
-      ticketId,
-      userId,
-      gameId,
-      outcome,
-      stake: stake.toString(),
-      potentialReturn: winnerPayout.toString(),
-      status: "matched",
-      matchedBetId: opponent.id,
-    }).returning();
+    newBet = await db.transaction(async (tx) => {
+      // 1. Lock stake from bettor's wallet
+      await tx.update(walletsTable).set({
+        balance: sql`balance - ${stake}`,
+        availableBalance: sql`available_balance - ${stake}`,
+        pendingBalance: sql`pending_balance + ${stake}`,
+      }).where(eq(walletsTable.userId, userId));
 
-    await db.update(betsTable).set({
-      status: "matched",
-      matchedBetId: newBet.id,
-      potentialReturn: winnerPayout.toString(),
-    }).where(eq(betsTable.id, opponent.id));
+      await tx.insert(transactionsTable).values({
+        transactionId: `BET-${uuidv4().split("-")[0].toUpperCase()}`,
+        userId,
+        type: "bet_stake",
+        amount: stake.toString(),
+        status: "completed",
+        paymentMethod: "internal",
+        description: `Bet stake on game #${gameId}`,
+      });
 
-    await db.update(gamesTable).set({
-      matchedBetsCount: sql`matched_bets_count + 1`,
-      totalBetPool: sql`total_bet_pool + ${pool}`,
-    }).where(eq(gamesTable.id, gameId));
+      // 2. Insert the new bet (matched immediately)
+      const [inserted] = await tx.insert(betsTable).values({
+        ticketId,
+        userId,
+        gameId,
+        outcome,
+        stake: stake.toString(),
+        potentialReturn: winnerPayout.toString(),
+        status: "matched",
+        matchedBetId: opponent.id,
+      }).returning();
 
-    // ATA fee
-    await db.insert(transactionsTable).values({
-      transactionId: `FEE-${uuidv4().split("-")[0].toUpperCase()}`,
-      userId: ATA_SYSTEM_USER_ID,
-      type: "brokerage_fee",
-      amount: fee.toString(),
-      status: "completed",
-      paymentMethod: "internal",
-      description: `10% brokerage fee for game #${gameId}`,
+      // 3. Update opponent bet
+      await tx.update(betsTable).set({
+        status: "matched",
+        matchedBetId: inserted.id,
+        potentialReturn: winnerPayout.toString(),
+      }).where(eq(betsTable.id, opponent.id));
+
+      // 4. Update game pool
+      await tx.update(gamesTable).set({
+        matchedBetsCount: sql`matched_bets_count + 1`,
+        totalBetPool: sql`total_bet_pool + ${pool}`,
+      }).where(eq(gamesTable.id, gameId));
+
+      // 5. ATA brokerage fee record
+      await tx.insert(transactionsTable).values({
+        transactionId: `FEE-${uuidv4().split("-")[0].toUpperCase()}`,
+        userId: ATA_SYSTEM_USER_ID,
+        type: "brokerage_fee",
+        amount: fee.toString(),
+        status: "completed",
+        paymentMethod: "internal",
+        description: `10% brokerage fee for game #${gameId}`,
+      });
+
+      return inserted;
     });
 
-    await notify(userId, "bet_matched", "Bet Matched!", `Your bet of $${stake} has been matched!`);
-    await notify(opponent.userId, "bet_matched", "Bet Matched!", `Your bet of $${stake} has been matched!`);
+    matchStatus = "exact_match";
+    opponentId = exactMatches[0].userId;
 
-    // Email both users
+    // Side-effects outside the transaction (non-critical — failures don't corrupt data)
+    await notify(userId, "bet_matched", "Bet Matched!", `Your bet of ${stake} has been matched!`);
+    await notify(opponentId, "bet_matched", "Bet Matched!", `Your bet of ${stake} has been matched!`);
+
     const [betUser, oppUser] = await Promise.all([
-      db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1).then((r: typeof usersTable.$inferSelect[]) => r[0]),
-      db.select().from(usersTable).where(eq(usersTable.id, opponent.userId)).limit(1).then((r: typeof usersTable.$inferSelect[]) => r[0]),
+      db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1).then((r) => r[0]),
+      db.select().from(usersTable).where(eq(usersTable.id, opponentId)).limit(1).then((r) => r[0]),
     ]);
     const gameName = `${game.playerA} vs ${game.playerB}`;
-    const betEmailPairs: [typeof betUser, string][] = [
-      [betUser, outcome],
-      [oppUser, oppositeOutcome],
-    ];
-    for (const [u, betOutcome] of betEmailPairs) {
+    for (const [u, betOutcome] of [[betUser, outcome], [oppUser, oppositeOutcome]] as [typeof betUser, string][]) {
       if (u?.email) {
         sendMail({
           to: u.email,
           subject: "Bet Matched – ATA Sports Live",
-          html: templates.betMatched({
-            name: u.fullName ?? u.email,
-            stake,
-            outcome: betOutcome,
-            potentialReturn: winnerPayout,
-            gameName,
-          }),
+          html: templates.betMatched({ name: u.fullName ?? u.email, stake, outcome: betOutcome, potentialReturn: (stake * 2) * (1 - BROKERAGE_FEE), gameName }),
         }).catch(() => {});
       }
     }
@@ -164,43 +185,44 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
     return;
   }
 
-  // Find near matches (within 20%)
-  const nearMatchCandidates = await db
-    .select()
-    .from(betsTable)
-    .where(
-      and(
-        eq(betsTable.gameId, gameId),
-        eq(betsTable.outcome, oppositeOutcome),
-        eq(betsTable.status, "pending"),
-        ne(betsTable.userId, userId)
-      )
-    )
-    .limit(10);
+  // No exact match — place pending bet atomically
+  newBet = await db.transaction(async (tx) => {
+    await tx.update(walletsTable).set({
+      balance: sql`balance - ${stake}`,
+      availableBalance: sql`available_balance - ${stake}`,
+      pendingBalance: sql`pending_balance + ${stake}`,
+    }).where(eq(walletsTable.userId, userId));
 
-  const nearMatches = nearMatchCandidates
-    .map((b) => ({ betId: b.id, stake: parseFloat(b.stake as string), difference: Math.abs(parseFloat(b.stake as string) - stake) }))
-    .filter((b) => b.difference / stake <= 0.2)
-    .sort((a, b) => a.difference - b.difference)
-    .slice(0, 3);
+    await tx.insert(transactionsTable).values({
+      transactionId: `BET-${uuidv4().split("-")[0].toUpperCase()}`,
+      userId,
+      type: "bet_stake",
+      amount: stake.toString(),
+      status: "completed",
+      paymentMethod: "internal",
+      description: `Bet stake on game #${gameId}`,
+    });
 
-  const [newBet] = await db.insert(betsTable).values({
-    ticketId,
-    userId,
-    gameId,
-    outcome,
-    stake: stake.toString(),
-    potentialReturn: "0",
-    status: "pending",
-  }).returning();
+    const [inserted] = await tx.insert(betsTable).values({
+      ticketId,
+      userId,
+      gameId,
+      outcome,
+      stake: stake.toString(),
+      potentialReturn: "0",
+      status: "pending",
+    }).returning();
 
-  await db.update(gamesTable).set({
-    openBetsCount: sql`open_bets_count + 1`,
-  }).where(eq(gamesTable.id, gameId));
+    await tx.update(gamesTable).set({
+      openBetsCount: sql`open_bets_count + 1`,
+    }).where(eq(gamesTable.id, gameId));
 
-  const matchStatus = nearMatches.length > 0 ? "near_match" : "unmatched";
+    return inserted;
+  });
+
+  matchStatus = nearMatches.length > 0 ? "near_match" : "unmatched";
   if (nearMatches.length > 0) {
-    await notify(userId, "near_match", "Near Match Found", `A near match was found for your $${stake} bet!`);
+    await notify(userId, "near_match", "Near Match Found", `A near match was found for your ${stake} bet!`);
   }
 
   res.status(201).json({ bet: toBet(newBet), matchStatus, nearMatches });

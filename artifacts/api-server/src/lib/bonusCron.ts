@@ -166,13 +166,23 @@ async function sendExpiryWarnings(): Promise<void> {
 export function startBonusCron(): void {
   logger.info("Bonus expiry cron started");
 
+  let running = false;
+
+  const tick = () => {
+    if (running) {
+      logger.warn("Bonus expiry cron: previous run still in progress, skipping");
+      return;
+    }
+    running = true;
+    Promise.all([
+      expireOldBonuses().catch((err) => logger.error({ err }, "Bonus expiry run failed")),
+      sendExpiryWarnings().catch((err) => logger.error({ err }, "Expiry warning run failed")),
+    ]).finally(() => { running = false; });
+  };
+
   // Run immediately on startup (catches up on any missed expirations)
-  expireOldBonuses().catch((err) => logger.error({ err }, "Bonus expiry run failed"));
-  sendExpiryWarnings().catch((err) => logger.error({ err }, "Expiry warning run failed"));
+  tick();
 
   // Then run every hour
-  setInterval(() => {
-    expireOldBonuses().catch((err) => logger.error({ err }, "Bonus expiry run failed"));
-    sendExpiryWarnings().catch((err) => logger.error({ err }, "Expiry warning run failed"));
-  }, HOUR_MS);
+  setInterval(tick, HOUR_MS);
 }

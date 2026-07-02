@@ -135,15 +135,22 @@ async function activateStartedGames(): Promise<void> {
 export function startGameCron(): void {
   logger.info("Game activation cron started (checks every minute)");
 
+  let running = false;
+
+  const tick = () => {
+    if (running) {
+      logger.warn("Game activation cron: previous run still in progress, skipping");
+      return;
+    }
+    running = true;
+    activateStartedGames()
+      .catch((err) => logger.error({ err }, "Game activation cron run failed"))
+      .finally(() => { running = false; });
+  };
+
   // Run immediately on startup to catch up on any missed transitions
-  activateStartedGames().catch((err) =>
-    logger.error({ err }, "Game activation startup run failed"),
-  );
+  tick();
 
   // Then run every minute
-  setInterval(() => {
-    activateStartedGames().catch((err) =>
-      logger.error({ err }, "Game activation cron run failed"),
-    );
-  }, MINUTE_MS);
+  setInterval(tick, MINUTE_MS);
 }

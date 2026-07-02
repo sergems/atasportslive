@@ -26,7 +26,21 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, server-to-server, same-origin via proxy)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      /^https?:\/\/localhost(:\d+)?$/,
+      /\.replit\.dev$/,
+      /\.repl\.co$/,
+      /^https:\/\/(www\.)?atasportslive\.com$/,
+    ];
+    if (allowed.some((r) => r.test(origin))) return callback(null, true);
+    callback(new Error(`CORS: origin not allowed — ${origin}`));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

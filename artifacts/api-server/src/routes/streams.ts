@@ -218,48 +218,49 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
   // Use bonus first, then cash for remainder
   const bonusUsed = Math.min(bonusAvailable, price);
   const cashUsed = Math.round((price - bonusUsed) * 100) / 100;
-
-  if (bonusUsed > 0) {
-    await db.update(walletsTable).set({
-      bonusBalance: sql`bonus_balance - ${bonusUsed}`,
-    }).where(eq(walletsTable.userId, userId));
-
-    const balBefore = bonusAvailable;
-    const balAfter = bonusAvailable - bonusUsed;
-    await db.insert(bonusTransactionsTable).values({
-      userId,
-      type: "used",
-      amount: bonusUsed.toFixed(2),
-      balanceBefore: balBefore.toFixed(2),
-      balanceAfter: balAfter.toFixed(2),
-      description: `Bonus used for: ${stream.title}`,
-    });
-  }
-
-  if (cashUsed > 0) {
-    await db.update(walletsTable).set({
-      balance: sql`balance - ${cashUsed}`,
-      availableBalance: sql`available_balance - ${cashUsed}`,
-      withdrawableBalance: sql`withdrawable_balance - ${cashUsed}`,
-    }).where(eq(walletsTable.userId, userId));
-  }
-
   const desc_txt = bonusUsed > 0
-    ? `24h access to: ${stream.title} (bonus $${bonusUsed.toFixed(2)} + cash $${cashUsed.toFixed(2)})`
+    ? `24h access to: ${stream.title} (bonus ${bonusUsed.toFixed(2)} + cash ${cashUsed.toFixed(2)})`
     : `24h access to: ${stream.title}`;
-
-  await db.insert(transactionsTable).values({
-    transactionId: `STR-${uuidv4().split("-")[0].toUpperCase()}`,
-    userId,
-    type: "stream_access",
-    amount: price.toString(),
-    status: "completed",
-    paymentMethod: "internal",
-    description: desc_txt,
-  });
-
   const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  await db.insert(streamAccessTable).values({ userId, streamId, grantedAt: now, expiresAt });
+
+  // Wrap all financial writes in a single atomic transaction so a mid-flight
+  // failure cannot leave the wallet debited but no access granted (or vice versa).
+  await db.transaction(async (tx) => {
+    if (bonusUsed > 0) {
+      await tx.update(walletsTable).set({
+        bonusBalance: sql`bonus_balance - ${bonusUsed}`,
+      }).where(eq(walletsTable.userId, userId));
+
+      await tx.insert(bonusTransactionsTable).values({
+        userId,
+        type: "used",
+        amount: bonusUsed.toFixed(2),
+        balanceBefore: bonusAvailable.toFixed(2),
+        balanceAfter: (bonusAvailable - bonusUsed).toFixed(2),
+        description: `Bonus used for: ${stream.title}`,
+      });
+    }
+
+    if (cashUsed > 0) {
+      await tx.update(walletsTable).set({
+        balance: sql`balance - ${cashUsed}`,
+        availableBalance: sql`available_balance - ${cashUsed}`,
+        withdrawableBalance: sql`withdrawable_balance - ${cashUsed}`,
+      }).where(eq(walletsTable.userId, userId));
+    }
+
+    await tx.insert(transactionsTable).values({
+      transactionId: `STR-${uuidv4().split("-")[0].toUpperCase()}`,
+      userId,
+      type: "stream_access",
+      amount: price.toString(),
+      status: "completed",
+      paymentMethod: "internal",
+      description: desc_txt,
+    });
+
+    await tx.insert(streamAccessTable).values({ userId, streamId, grantedAt: now, expiresAt });
+  });
 
   // ── Referral bonus: configurable % of stream price to referrer on first paid purchase ──
   if (isFirstPurchase) {

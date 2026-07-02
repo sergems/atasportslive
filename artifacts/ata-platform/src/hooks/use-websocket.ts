@@ -93,6 +93,11 @@ export function useWebSocket() {
         }
       };
 
+      ws.onerror = (event) => {
+        // Errors are followed by onclose, which handles reconnection
+        console.warn('[WS] Connection error', event);
+      };
+
       ws.onclose = () => {
         if (!destroyed) {
           reconnectTimeout = setTimeout(connect, 3000);
