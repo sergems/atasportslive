@@ -72,3 +72,4 @@ channel = "stable-25_05"
 [userenv.shared]
 PORT = "8080"
 NODE_ENV = "development"
+GOOGLE_CLIENT_ID = "546025098386-4tua4bbcropobljhqtrvvn4jkfsbt02e.apps.googleusercontent.com"
