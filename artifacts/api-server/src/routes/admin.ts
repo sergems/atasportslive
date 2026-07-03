@@ -9,9 +9,9 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
-import { eq, sql, desc, and, gte } from "drizzle-orm";
+import { eq, sql, desc, and, gte, isNotNull } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
-import { notify } from "../lib/notify";
+import { notify, wsClients } from "../lib/notify";
 
 const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
 
@@ -664,6 +664,51 @@ router.get("/db-export", authMiddleware, requireRole("admin"), async (req: AuthR
   dump.on("close", (code) => {
     if (code !== 0) req.log.error({ code }, "pg_dump exited with non-zero code");
   });
+});
+
+// ── Active Sessions ────────────────────────────────────────────────────────
+
+router.get("/sessions", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const users = await db
+    .select({
+      id: usersTable.id,
+      fullName: usersTable.fullName,
+      email: usersTable.email,
+      role: usersTable.role,
+      status: usersTable.status,
+      updatedAt: usersTable.updatedAt,
+    })
+    .from(usersTable)
+    .where(isNotNull(usersTable.sessionToken))
+    .orderBy(desc(usersTable.updatedAt));
+
+  const result = users.map((u) => ({
+    ...u,
+    onlineNow: wsClients.has(u.id) && wsClients.get(u.id)!.readyState === 1,
+  }));
+
+  res.json(result);
+});
+
+router.delete("/sessions/:userId", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = parseInt(req.params.userId);
+  if (isNaN(userId)) { res.status(400).json({ error: "Invalid userId" }); return; }
+
+  const ws = wsClients.get(userId);
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({
+      type: "session_displaced",
+      title: "Session ended by administrator",
+      message: "An administrator has ended your session. Please log in again.",
+    }));
+  }
+
+  await db.update(usersTable)
+    .set({ sessionToken: null, refreshToken: null })
+    .where(eq(usersTable.id, userId));
+
+  req.log.info({ adminId: req.user?.id, targetUserId: userId }, "Admin force-logged-out user");
+  res.json({ ok: true });
 });
 
 export default router;

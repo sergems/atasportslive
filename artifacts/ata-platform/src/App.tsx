@@ -39,6 +39,7 @@ import AdminAds from "@/pages/admin/ads";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
 import AdminPromotions from "@/pages/admin/promotions";
 import AdminBets from "@/pages/admin/bets";
+import AdminSessions from "@/pages/admin/sessions";
 import FinanceDashboard from "@/pages/finance/dashboard";
 import FinanceWithdrawals from "@/pages/finance/withdrawals";
 import { FinanceLayout } from "@/components/layout/FinanceLayout";
@@ -190,6 +191,9 @@ function Router() {
         </Route>
         <Route path="/admin/reports">
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminReports /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/sessions">
+          {() => <ProtectedRoute allowedRoles={ADM_ROLES} component={() => <AdminLayout><AdminSessions /></AdminLayout>} />}
         </Route>
         <Route path="/admin/settings">
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminSettings /></AdminLayout>} />}

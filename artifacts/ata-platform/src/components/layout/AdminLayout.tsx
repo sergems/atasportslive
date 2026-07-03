@@ -22,7 +22,8 @@ import {
   Gift,
   Swords,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MonitorSmartphone,
 } from 'lucide-react';
 
 function usePendingWithdrawalCount() {
@@ -100,6 +101,7 @@ const navItems = [
   { href: '/admin/promotions',       label: 'Promotions',    icon: Gift,                                  minLevel: 2 },
   { href: '/admin/vouchers',         label: 'Vouchers',      icon: Ticket,                                minLevel: 2 },
   { href: '/admin/reports',          label: 'Reports',       icon: BarChart2,                             minLevel: 2 },
+  { href: '/admin/sessions',         label: 'Sessions',      icon: MonitorSmartphone,                     minLevel: 3 },
   { href: '/admin/settings',         label: 'Settings',      icon: Settings,                              minLevel: 2 },
 ];
 
