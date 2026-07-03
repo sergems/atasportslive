@@ -378,19 +378,9 @@ export default function Subscriptions() {
               <div className="space-y-3 text-slate-400 text-sm">
                 {/* Error state */}
                 {dialogError ? (
-                  <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4 space-y-2">
+                  <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4 space-y-1.5">
                     <p className="text-red-400 font-medium">{dialogError}</p>
-                    <p className="text-slate-500 text-xs">
-                      Visit your{' '}
-                      <a
-                        href="/wallet"
-                        className="text-teal-400 hover:text-teal-300 underline underline-offset-2 font-medium"
-                        onClick={() => { setPendingPlan(null); setDialogError(null); }}
-                      >
-                        wallet
-                      </a>
-                      {' '}to top up, then come back to subscribe.
-                    </p>
+                    <p className="text-slate-500 text-xs">Please check your wallet balance and try again, or top up your wallet first.</p>
                   </div>
                 ) : (
                   <>
@@ -440,7 +430,15 @@ export default function Subscriptions() {
             >
               {dialogError ? 'Close' : 'Cancel'}
             </AlertDialogCancel>
-            {!dialogError && (
+            {dialogError ? (
+              <Button
+                onClick={() => { setPendingPlan(null); setDialogError(null); setLocation('/wallet'); }}
+                className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
+              >
+                <Wallet className="h-4 w-4 mr-2" />
+                Top Up Wallet
+              </Button>
+            ) : (
               <Button
                 onClick={handleConfirm}
                 disabled={mutation.isPending}
