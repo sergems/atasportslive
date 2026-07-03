@@ -31,6 +31,7 @@ export async function sendMail(opts: {
   subject: string;
   html: string;
   text?: string;
+  attachments?: { filename: string; content: string; contentType: string }[];
 }): Promise<boolean> {
   try {
     const transporter = await createTransporter();
