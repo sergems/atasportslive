@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hMavisA9JIjzh7dMqdrkXB0thdtb0P1HMRxfVDYByeGiMgvUy2eAw4tg0LVdHjH
+\restrict uTvPaZZ6jw8uOLXqYRf53bL5SHvdkec7JfBRqLh1EDqbKNUBlcjXGL0vcrBFZJo
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -587,6 +587,46 @@ ALTER SEQUENCE public.notifications_id_seq OWNED BY public.notifications.id;
 
 
 --
+-- Name: platform_subscriptions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.platform_subscriptions (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    subscription_type text DEFAULT 'daily'::text NOT NULL,
+    granted_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    amount numeric(10,2) NOT NULL,
+    transaction_id text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.platform_subscriptions OWNER TO postgres;
+
+--
+-- Name: platform_subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.platform_subscriptions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.platform_subscriptions_id_seq OWNER TO postgres;
+
+--
+-- Name: platform_subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.platform_subscriptions_id_seq OWNED BY public.platform_subscriptions.id;
+
+
+--
 -- Name: promotion_terms_acceptance; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1051,6 +1091,13 @@ ALTER TABLE ONLY public.notifications ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: platform_subscriptions id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.platform_subscriptions ALTER COLUMN id SET DEFAULT nextval('public.platform_subscriptions_id_seq'::regclass);
+
+
+--
 -- Name: promotion_terms_acceptance id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1182,6 +1229,14 @@ COPY public.highlights (id, title, description, youtube_url, is_published, creat
 --
 
 COPY public.notifications (id, user_id, type, title, message, read, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: platform_subscriptions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.platform_subscriptions (id, user_id, subscription_type, granted_at, expires_at, amount, transaction_id, created_at) FROM stdin;
 \.
 
 
@@ -1730,6 +1785,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 420	andevanp@gmail.com	MUST_SET_PASSWORD	Turyahabwe Andrew	0786077898	user	active	\N	\N	2026-06-26 13:40:09.94635+00	2026-06-26 13:40:09.94635+00	\N	\N	\N	t	\N	\N	01A43FBF	\N	turyahabwe_andrew_420	0
 421	jerry.mabe2017@gmail.com	MUST_SET_PASSWORD	Jerry Mabe	0781300442	user	active	\N	\N	2026-06-26 13:40:09.950596+00	2026-06-26 13:40:09.950596+00	\N	\N	\N	t	\N	\N	01A5B60A	\N	jerry_mabe_421	0
 422	turgiks01@gmail.com	MUST_SET_PASSWORD	Turner Turner	0707514481	user	active	\N	\N	2026-06-26 13:40:09.954238+00	2026-06-26 13:40:09.954238+00	\N	\N	\N	t	\N	\N	01A6ACF9	\N	turner_turner_422	0
+658	kingnorisomuzibu@gmail.com	MUST_SET_PASSWORD	King Noris	0753942296	user	active	\N	\N	2026-06-26 13:40:10.979467+00	2026-06-26 13:40:10.979467+00	\N	\N	\N	t	\N	\N	02924038	\N	king_noris_658	0
 423	mushikomadenis2018@gmail.com	MUST_SET_PASSWORD	Denis Mushikoma	0706809428	user	active	\N	\N	2026-06-26 13:40:09.957952+00	2026-06-26 13:40:09.957952+00	\N	\N	\N	t	\N	\N	01A725E7	\N	denis_mushikoma_423	0
 424	harrykitui239@gmail.com	MUST_SET_PASSWORD	Harry Kitui	0711525143	user	active	\N	\N	2026-06-26 13:40:09.961558+00	2026-06-26 13:40:09.961558+00	\N	\N	\N	t	\N	\N	01A89186	\N	harry_kitui_424	0
 425	kabalisharif2222@gmail.com	MUST_SET_PASSWORD	Kabali Sharif	0759777822	user	active	\N	\N	2026-06-26 13:40:09.965569+00	2026-06-26 13:40:09.965569+00	\N	\N	\N	t	\N	\N	01A9A8F7	\N	kabali_sharif_425	0
@@ -1966,7 +2022,6 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 655	kirbymusonda@gmail.com	MUST_SET_PASSWORD	Kirby Kaoma Musonda	0977566326	user	active	\N	\N	2026-06-26 13:40:10.966416+00	2026-06-26 13:40:10.966416+00	\N	\N	\N	t	\N	\N	028F9191	\N	kirby_kaoma_musonda_655	0
 656	shafikwizzy22@gmail.com	MUST_SET_PASSWORD	SHAFIK SSENVUMU	0703453993	user	active	\N	\N	2026-06-26 13:40:10.970762+00	2026-06-26 13:40:10.970762+00	\N	\N	\N	t	\N	\N	029026BA	\N	shafik_ssenvumu_656	0
 657	mukayasimz@gmail.com	MUST_SET_PASSWORD	Mukaya Simz	0976722256	user	active	\N	\N	2026-06-26 13:40:10.974832+00	2026-06-26 13:40:10.974832+00	\N	\N	\N	t	\N	\N	0291D621	\N	mukaya_simz_657	0
-658	kingnorisomuzibu@gmail.com	MUST_SET_PASSWORD	King Noris	0753942296	user	active	\N	\N	2026-06-26 13:40:10.979467+00	2026-06-26 13:40:10.979467+00	\N	\N	\N	t	\N	\N	02924038	\N	king_noris_658	0
 659	kigozimichael33@gmail.com	MUST_SET_PASSWORD	TUMUSIIME ABDUL-KALIIM	0702124625	user	active	\N	\N	2026-06-26 13:40:10.984656+00	2026-06-26 13:40:10.984656+00	\N	\N	\N	t	\N	\N	0293D701	\N	tumusiime_abdul_kaliim_659	0
 660	austinentambo@gmail.com	MUST_SET_PASSWORD	Austine Ntambo	0979958567	user	active	\N	\N	2026-06-26 13:40:10.988777+00	2026-06-26 13:40:10.988777+00	\N	\N	\N	t	\N	\N	02945892	\N	austine_ntambo_660	0
 661	ocira.ocira17@gmail.com	MUST_SET_PASSWORD	Pope Tebere	774451001	user	active	\N	\N	2026-06-26 13:40:10.992633+00	2026-06-26 13:40:10.992633+00	\N	\N	\N	t	\N	\N	029599C4	\N	pope_tebere_661	0
@@ -2153,6 +2208,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 842	sadrabyamugisha@gmail.com	MUST_SET_PASSWORD	SADRA BYAMUGISHA	0787245710	user	active	\N	\N	2026-06-26 13:40:11.791021+00	2026-06-26 13:40:11.791021+00	\N	\N	\N	t	\N	\N	034ADA5A	\N	sadra_byamugisha_842	0
 843	solomonkasule66@gmail.com	MUST_SET_PASSWORD	Solomon Kasule	0753806782	user	active	\N	\N	2026-06-26 13:40:11.795153+00	2026-06-26 13:40:11.795153+00	\N	\N	\N	t	\N	\N	034B953C	\N	solomon_kasule_843	0
 844	kipngenodtoo@gmail.com	MUST_SET_PASSWORD	Dominic Too	0776947298	user	active	\N	\N	2026-06-26 13:40:11.799374+00	2026-06-26 13:40:11.799374+00	\N	\N	\N	t	\N	\N	034C7A1E	\N	dominic_too_844	0
+1312	markterry560@gmail.com	MUST_SET_PASSWORD	Mark Terry	0742211822	user	active	\N	\N	2026-06-26 13:40:13.903692+00	2026-06-26 13:40:13.903692+00	\N	\N	\N	t	\N	\N	0520618C	\N	mark_terry_1312	0
 845	singini.auscar@yahoo.co.uk	MUST_SET_PASSWORD	Auscar Singini	265999381408	user	active	\N	\N	2026-06-26 13:40:11.803767+00	2026-06-26 13:40:11.803767+00	\N	\N	\N	t	\N	\N	034D8DB8	\N	auscar_singini_845	0
 846	shadrackkimutai224@gmail.com	MUST_SET_PASSWORD	Shadrack Kimutai	254726646770	user	active	\N	\N	2026-06-26 13:40:11.807597+00	2026-06-26 13:40:11.807597+00	\N	\N	\N	t	\N	\N	034EA482	\N	shadrack_kimutai_846	0
 847	ronaldbogere23@gmail.com	MUST_SET_PASSWORD	Ronald Bogere	0701641435	user	active	\N	\N	2026-06-26 13:40:11.811695+00	2026-06-26 13:40:11.811695+00	\N	\N	\N	t	\N	\N	034FFCED	\N	ronald_bogere_847	0
@@ -2623,7 +2679,6 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 1309	mulwana.anderson@gmail.com	MUST_SET_PASSWORD	Anderson Mulwana	\N	user	active	\N	\N	2026-06-26 13:40:13.890559+00	2026-06-26 13:40:13.890559+00	\N	\N	\N	t	\N	\N	051D6F20	\N	anderson_mulwana_1309	0
 1310	microssteelbenders@gmail.com	MUST_SET_PASSWORD	Lyton Moreen	0763243583	user	active	\N	\N	2026-06-26 13:40:13.894982+00	2026-06-26 13:40:13.894982+00	\N	\N	\N	t	\N	\N	051EA4F9	\N	lyton_moreen_1310	0
 1311	innowaf@gmail.com	MUST_SET_PASSWORD	Innocent Wafula	0712886020	user	active	\N	\N	2026-06-26 13:40:13.899352+00	2026-06-26 13:40:13.899352+00	\N	\N	\N	t	\N	\N	051FB9C0	\N	innocent_wafula_1311	0
-1312	markterry560@gmail.com	MUST_SET_PASSWORD	Mark Terry	0742211822	user	active	\N	\N	2026-06-26 13:40:13.903692+00	2026-06-26 13:40:13.903692+00	\N	\N	\N	t	\N	\N	0520618C	\N	mark_terry_1312	0
 1313	africanbilliards@gmail.com	MUST_SET_PASSWORD	Siele Kipkemoi	254720374053	user	active	\N	\N	2026-06-26 13:40:13.907591+00	2026-06-26 13:40:13.907591+00	\N	\N	\N	t	\N	\N	0521549C	\N	siele_kipkemoi_1313	0
 1314	kipkorirkevin369@gmail.com	MUST_SET_PASSWORD	Kevin Kipkorir	0711190813	user	active	\N	\N	2026-06-26 13:40:13.911889+00	2026-06-26 13:40:13.911889+00	\N	\N	\N	t	\N	\N	052200F6	\N	kevin_kipkorir_1314	0
 1315	oworijeram123@gmail.com	MUST_SET_PASSWORD	Jerom Owori	0759986331	user	active	\N	\N	2026-06-26 13:40:13.916107+00	2026-06-26 13:40:13.916107+00	\N	\N	\N	t	\N	\N	0523DB35	\N	jerom_owori_1315	0
@@ -6341,7 +6396,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5038	advancedtalentagencyata@gmail.com		ADVANCED TALENT AGENCY ATA	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocJl_vwpannjA_niKt7IuoEFiQB4-0_C7aI2SbMlT6Q3ZLc2qlI=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzgsInJvbGUiOiJ1c2VyIiwic3YiOiI3ZTBjZjFmMy1iMDMyLTQwYWYtYTdhNC1kYTYyOTUyZDdiMzQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MTg2NiwiZXhwIjoxNzg1NjgzODY2fQ.NZkcKsZ-CeWSVVEKo-Htl_RDTAK7BIDQ3Y2CkZMYOVk	2026-07-03 15:17:46.061302+00	2026-07-03 15:17:46.071+00	\N	\N	\N	f	7e0cf1f3-b032-40af-a7a4-da62952d7b34	111789802886065658753	5SCCQBTR	\N	advanced_talent_agency_ata_5038	0
 5032	zetoophiri@gmail.com		Zethu Phiri	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocIoZ492DLotfLTGCUbYw16uY4ECV3rNwcmQg6GnIJnW1PxmFw=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzIsInJvbGUiOiJ1c2VyIiwic3YiOiI3YTc5YmI4YS02NGE3LTQ3MzMtYjhmNC1mOGE1ZDY3YmYyMTMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MjQxMywiZXhwIjoxNzg1Njg0NDEzfQ.oseCeNqEKCVsEKJTCTuDA94C5Bp3PMf5I8TzJGzUmhY	2026-07-02 20:18:19.941937+00	2026-07-03 15:26:53.411+00	\N	\N	\N	f	7a79bb8a-64a7-4733-b8f4-f8a5d67bf213	108479386760493320264	FE64N4D6	\N	zethu_phiri_5032	0
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiJiOWQwOGY2Ni1kODdlLTRkNzgtOGUyMS1iNzMxNTA4MmZlNGIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzEwNTk1OCwiZXhwIjoxNzg1Njk3OTU4fQ.tNOCkufd-FOlyQNJXIozrZf8RWygX_cj_Qmp7_PPyDg	2026-06-15 16:31:06.605107+00	2026-07-03 19:12:38.911+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	b9d08f66-d87e-4d78-8e21-b7315082fe4b	\N	0002CF32	\N	demo_user_2	0
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiZGU2Yzk4NWUtMWY0OS00ZjZjLWI4ZjYtNGMwYWUxY2FkMGVmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMxMDcxNDAsImV4cCI6MTc4NTY5OTE0MH0.IQro0rAdHHnd4xvu7HXO8mG6af-keNM7lLxv7qTTxPo	2026-06-15 16:31:06.226579+00	2026-07-03 19:32:20.023+00	\N	\N	\N	f	de6c985e-1f49-4f6c-b8f6-4c0ae1cad0ef	\N	00016EFF	\N	serge_1	0
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiNzExZjI3ZTAtYjg2OS00ZTQ3LWIxOWItM2ExMzlhYWMzN2NmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMxMTAwODksImV4cCI6MTc4NTcwMjA4OX0.gfD4bMKc0JBIO8_y0Xa8OnkV-rRk_meYTy6fGOOs7dg	2026-06-15 16:31:06.226579+00	2026-07-03 20:21:29.944+00	\N	\N	\N	f	711f27e0-b869-4e47-b19b-3a139aac37cf	\N	00016EFF	\N	serge_1	0
 \.
 
 
@@ -11465,6 +11520,13 @@ SELECT pg_catalog.setval('public.notifications_id_seq', 16, true);
 
 
 --
+-- Name: platform_subscriptions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.platform_subscriptions_id_seq', 1, false);
+
+
+--
 -- Name: promotion_terms_acceptance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -11597,6 +11659,14 @@ ALTER TABLE ONLY public.highlights
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: platform_subscriptions platform_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.platform_subscriptions
+    ADD CONSTRAINT platform_subscriptions_pkey PRIMARY KEY (id);
 
 
 --
@@ -11768,6 +11838,13 @@ ALTER TABLE ONLY public.wallets
 
 
 --
+-- Name: idx_platform_subs_user_expires; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_platform_subs_user_expires ON public.platform_subscriptions USING btree (user_id, expires_at);
+
+
+--
 -- Name: idx_stream_comments_stream; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -11820,6 +11897,14 @@ ALTER TABLE ONLY public.bonus_transactions
 
 ALTER TABLE ONLY public.notifications
     ADD CONSTRAINT notifications_user_id_users_id_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: platform_subscriptions platform_subscriptions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.platform_subscriptions
+    ADD CONSTRAINT platform_subscriptions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --
@@ -11922,5 +12007,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hMavisA9JIjzh7dMqdrkXB0thdtb0P1HMRxfVDYByeGiMgvUy2eAw4tg0LVdHjH
+\unrestrict uTvPaZZ6jw8uOLXqYRf53bL5SHvdkec7JfBRqLh1EDqbKNUBlcjXGL0vcrBFZJo
 

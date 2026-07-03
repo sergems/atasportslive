@@ -246,73 +246,44 @@ export default function Subscriptions() {
           : null;
 
         return (
-          <div className="relative overflow-hidden rounded-2xl border border-teal-500/30 bg-gradient-to-br from-teal-950/60 via-slate-900 to-slate-900 p-6">
-            <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-teal-500/10 blur-3xl" />
-
-            <div className="relative">
-              {/* Top row */}
-              <div className="flex items-start justify-between gap-4 mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0">
-                    <Icon className="h-6 w-6 text-teal-400" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-white font-bold text-lg leading-tight">
-                        {meta?.label ?? planKey} Plan
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-400 text-[10px] font-bold uppercase tracking-widest">
-                        <CheckCircle2 className="h-2.5 w-2.5" /> Active
-                      </span>
-                    </div>
-                    <p className="text-slate-400 text-xs">{meta?.duration} · Unlimited stream access</p>
-                  </div>
-                </div>
-                <a href="/live">
-                  <div className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs px-3.5 py-2 transition-all active:scale-95 cursor-pointer">
-                    <Radio className="h-3.5 w-3.5" /> Watch Live
-                  </div>
-                </a>
+          <div className="relative overflow-hidden rounded-2xl border border-teal-500/30 bg-gradient-to-r from-teal-950/50 via-slate-900 to-slate-900 px-5 py-4">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-teal-500/10 blur-2xl" />
+            <div className="relative flex items-center gap-4">
+              {/* Icon */}
+              <div className="shrink-0 w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center">
+                <Icon className="h-4.5 w-4.5 text-teal-400" />
               </div>
 
-              {/* Stats row */}
-              <div className="grid grid-cols-3 gap-3 mb-5">
-                <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-3 py-2.5 text-center">
-                  <Clock className="h-3.5 w-3.5 mx-auto mb-1 text-teal-400" />
-                  <div className="font-bold text-sm text-white">{formatTimeLeft(remaining)}</div>
-                  <div className="text-slate-500 text-[10px] mt-0.5">Time Left</div>
+              {/* Middle: name + progress */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-white font-semibold text-sm">{meta?.label ?? planKey} Plan</span>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-px rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-400 text-[9px] font-bold uppercase tracking-widest">
+                    <CheckCircle2 className="h-2 w-2" /> Active
+                  </span>
                 </div>
-                <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-3 py-2.5 text-center">
-                  <Calendar className="h-3.5 w-3.5 mx-auto mb-1 text-amber-400" />
-                  <div className="font-bold text-sm text-white">{usedPct}%</div>
-                  <div className="text-slate-500 text-[10px] mt-0.5">Used</div>
-                </div>
-                <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-3 py-2.5 text-center">
-                  <Shield className="h-3.5 w-3.5 mx-auto mb-1 text-violet-400" />
-                  <div className="font-bold text-sm text-white capitalize">{planKey ?? '—'}</div>
-                  <div className="text-slate-500 text-[10px] mt-0.5">Tier</div>
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>Started</span>
-                  <span>{usedPct}% elapsed</span>
-                  <span>Expires</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-teal-500 to-teal-400 transition-all duration-500"
                     style={{ width: `${usedPct}%` }}
                   />
                 </div>
-                {expiryDate && (
-                  <p className="text-right text-[10px] text-slate-500">
-                    Expires <span className="text-slate-300 font-medium">{expiryDate}</span>
-                  </p>
-                )}
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[10px] text-teal-400 flex items-center gap-1">
+                    <Clock className="h-2.5 w-2.5" />{formatTimeLeft(remaining)}
+                  </span>
+                  {expiryDate && (
+                    <span className="text-[10px] text-slate-500">Expires {expiryDate}</span>
+                  )}
+                </div>
               </div>
+
+              {/* Watch Live */}
+              <a href="/live" className="shrink-0">
+                <div className="inline-flex items-center gap-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs px-3 py-1.5 transition-all active:scale-95 cursor-pointer">
+                  <Radio className="h-3.5 w-3.5" /> Watch
+                </div>
+              </a>
             </div>
           </div>
         );
