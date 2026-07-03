@@ -343,7 +343,7 @@ export default function Streams() {
   });
 
   const { data: streamsData, isLoading } = useListStreams(
-    { limit: 100 },
+    { status: 'upcoming', limit: 100 },
     { query: { refetchInterval: 30_000 } as any },
   );
 
@@ -373,9 +373,6 @@ export default function Streams() {
 
   return (
     <div className="space-y-6">
-      {/* Live leaderboard — only shown when there are live streams */}
-      {!isLoading && <LiveLeaderboard streams={allStreams} isAdmin={isAdmin} />}
-
       {/* ── Sport category pills ── */}
       <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
         {allCategories.map(({ value, label, count, icon: Icon, activeStyle }) => {
