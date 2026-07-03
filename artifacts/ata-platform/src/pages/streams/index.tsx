@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { useListStreams, useCheckStreamAccess } from '@workspace/api-client-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Lock, LockOpen, Eye, Play, Radio, Film, Trophy, Users, TrendingUp, Flame,
-  LayoutGrid, Target, Swords, Zap, Star, Circle, Medal,
+  LayoutGrid, Target, Swords, Zap, Star, Circle, Medal, Dumbbell,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
@@ -30,6 +31,7 @@ const SPORT_GRADIENT: Record<string, string> = {
   athletics:  'from-orange-900 via-orange-950 to-slate-950',
   basketball: 'from-amber-900 via-amber-950 to-slate-950',
   tournament: 'from-violet-900 via-violet-950 to-slate-950',
+  other:      'from-slate-700 via-slate-800 to-slate-950',
 };
 
 const SPORT_COLOR: Record<string, string> = {
@@ -39,9 +41,9 @@ const SPORT_COLOR: Record<string, string> = {
   athletics:  'text-orange-400 bg-orange-500/10 border-orange-500/30',
   basketball: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
   tournament: 'text-violet-400 bg-violet-500/10 border-violet-500/30',
+  other:      'text-slate-400 bg-slate-500/10 border-slate-500/30',
 };
 
-// Active pill colours per sport
 const SPORT_PILL_ACTIVE: Record<string, string> = {
   pool:       'bg-teal-500 text-slate-950 border-teal-400',
   boxing:     'bg-red-500 text-white border-red-400',
@@ -49,6 +51,7 @@ const SPORT_PILL_ACTIVE: Record<string, string> = {
   athletics:  'bg-orange-500 text-slate-950 border-orange-400',
   basketball: 'bg-amber-500 text-slate-950 border-amber-400',
   tournament: 'bg-violet-500 text-white border-violet-400',
+  other:      'bg-slate-500 text-white border-slate-400',
 };
 
 const SPORT_ICON: Record<string, React.ElementType> = {
@@ -58,13 +61,18 @@ const SPORT_ICON: Record<string, React.ElementType> = {
   athletics:  Zap,
   basketball: Circle,
   tournament: Trophy,
+  other:      Film,
 };
 
-const STATUS_FILTERS = [
-  { value: 'all',      label: 'All',      icon: LayoutGrid },
-  { value: 'live',     label: 'Live',     icon: Radio },
-  { value: 'upcoming', label: 'Upcoming', icon: Medal },
-];
+const SPORT_LABEL: Record<string, string> = {
+  pool:       'Pool',
+  boxing:     'Boxing',
+  football:   'Football',
+  athletics:  'Athletics',
+  basketball: 'Basketball',
+  tournament: 'Tournament',
+  other:      'Other',
+};
 
 function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAuthenticated: boolean; isAdmin: boolean }) {
   const isPaid = !!stream.accessPrice && stream.accessPrice > 0;
@@ -78,6 +86,7 @@ function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAu
 
   const gradient = SPORT_GRADIENT[stream.sport] ?? 'from-slate-800 via-slate-900 to-slate-950';
   const sportPill = SPORT_COLOR[stream.sport] ?? 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+  const SportIcon = SPORT_ICON[stream.sport] ?? Film;
 
   return (
     <Link href={isLive ? '/live' : `/streams/${stream.id}`}>
@@ -112,7 +121,7 @@ function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAu
           {/* Top-left: sport badge */}
           <div className="absolute top-2.5 left-2.5">
             <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${sportPill}`}>
-              {(() => { const Icon = SPORT_ICON[stream.sport]; return Icon ? <Icon className="h-2.5 w-2.5" /> : null; })()}
+              <SportIcon className="h-2.5 w-2.5" />
               {stream.sport}
             </span>
           </div>
@@ -231,6 +240,7 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
           const viewers = stream.viewerCount ?? 0;
           const barPct = topViewer > 0 ? Math.max(4, Math.round((viewers / topViewer) * 100)) : 4;
           const sportPill = SPORT_COLOR[stream.sport] ?? 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+          const SportIcon = SPORT_ICON[stream.sport] ?? Film;
 
           return (
             <Link key={stream.id} href="/live">
@@ -250,7 +260,7 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className={`shrink-0 inline-flex items-center gap-1 rounded border px-1 py-px text-[9px] font-bold uppercase tracking-wider ${sportPill}`}>
-                      {(() => { const Icon = SPORT_ICON[stream.sport]; return Icon ? <Icon className="h-2 w-2" /> : null; })()}
+                      <SportIcon className="h-2 w-2" />
                       {stream.sport}
                     </span>
                   </div>
@@ -296,16 +306,6 @@ function StreamCardSkeleton() {
   );
 }
 
-// Sport categories derived from the known sports — shown as pills with icons
-const SPORT_CATEGORIES = [
-  { value: 'pool',       label: 'Pool',       icon: Target  },
-  { value: 'boxing',     label: 'Boxing',     icon: Swords  },
-  { value: 'football',   label: 'Football',   icon: Star    },
-  { value: 'athletics',  label: 'Athletics',  icon: Zap     },
-  { value: 'basketball', label: 'Basketball', icon: Circle  },
-  { value: 'tournament', label: 'Tournament', icon: Trophy  },
-];
-
 export default function Streams() {
   const [status, setStatus] = useState<string>('all');
   const [sport, setSport] = useState<string>('all');
@@ -329,14 +329,24 @@ export default function Streams() {
 
   const allStreams = (streamsData?.streams || []) as Stream[];
 
-  // Client-side sport filter
-  const streams = sport === 'all' ? allStreams : allStreams.filter(s => s.sport === sport);
-
-  // Count per sport for badges (from the full unfiltered list)
+  // Derive sport categories dynamically from actual data
   const sportCounts = allStreams.reduce<Record<string, number>>((acc, s) => {
     acc[s.sport] = (acc[s.sport] ?? 0) + 1;
     return acc;
   }, {});
+
+  const dynamicSports = Object.entries(sportCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([value, count]) => ({
+      value,
+      count,
+      label: SPORT_LABEL[value] ?? (value.charAt(0).toUpperCase() + value.slice(1)),
+      icon: SPORT_ICON[value] ?? Film,
+      activeStyle: SPORT_PILL_ACTIVE[value] ?? 'bg-slate-500 text-white border-slate-400',
+    }));
+
+  // Client-side sport filter
+  const streams = sport === 'all' ? allStreams : allStreams.filter(s => s.sport === sport);
 
   return (
     <div className="space-y-6">
@@ -344,36 +354,21 @@ export default function Streams() {
       {!isLoading && <LiveLeaderboard streams={allStreams} isAdmin={isAdmin} />}
 
       {/* ── Filters ── */}
-      <div className="space-y-3">
-        {/* Status row */}
-        <div className="flex items-center gap-2">
-          {STATUS_FILTERS.map(({ value, label, icon: Icon }) => {
-            const active = status === value;
-            return (
-              <button
-                key={value}
-                onClick={() => setStatus(value)}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-                  active
-                    ? 'bg-teal-500 text-slate-950 border-teal-400 shadow-sm shadow-teal-500/20'
-                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white hover:border-slate-600'
-                }`}
-              >
-                <Icon className="h-3 w-3" />
-                {label}
-                {value === 'live' && allStreams.filter(s => s.status === 'live').length > 0 && (
-                  <span className={`ml-0.5 rounded-full px-1.5 text-[9px] font-bold tabular-nums ${active ? 'bg-slate-950/20 text-slate-950' : 'bg-red-500/20 text-red-400'}`}>
-                    {allStreams.filter(s => s.status === 'live').length}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Status dropdown */}
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className="w-[150px] bg-slate-900 border-slate-800 text-white text-sm h-8">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-900 border-slate-800 text-white">
+            <SelectItem value="all">All Streams</SelectItem>
+            <SelectItem value="live">Live Now</SelectItem>
+            <SelectItem value="upcoming">Upcoming</SelectItem>
+          </SelectContent>
+        </Select>
 
-        {/* Sport category pills — scrollable on mobile */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
-          {/* "All Sports" pill */}
+        {/* Sport category pills — dynamically built from actual data */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none flex-1">
           <button
             onClick={() => setSport('all')}
             className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
@@ -383,16 +378,11 @@ export default function Streams() {
             }`}
           >
             <LayoutGrid className="h-3 w-3" />
-            All Sports
+            All
           </button>
 
-          {SPORT_CATEGORIES.filter(({ value }) => {
-            // Only show categories that exist in the current dataset (or all if no data yet)
-            return isLoading || (sportCounts[value] ?? 0) > 0;
-          }).map(({ value, label, icon: Icon }) => {
+          {!isLoading && dynamicSports.map(({ value, label, count, icon: Icon, activeStyle }) => {
             const active = sport === value;
-            const count = sportCounts[value] ?? 0;
-            const activeStyle = SPORT_PILL_ACTIVE[value] ?? 'bg-teal-500 text-slate-950 border-teal-400';
             return (
               <button
                 key={value}
@@ -405,11 +395,9 @@ export default function Streams() {
               >
                 <Icon className="h-3 w-3" />
                 {label}
-                {count > 0 && (
-                  <span className={`ml-0.5 rounded-full px-1.5 text-[9px] font-bold tabular-nums ${active ? 'bg-black/20' : 'bg-slate-800 text-slate-500'}`}>
-                    {count}
-                  </span>
-                )}
+                <span className={`ml-0.5 rounded-full px-1.5 text-[9px] font-bold tabular-nums ${active ? 'bg-black/20' : 'bg-slate-800 text-slate-500'}`}>
+                  {count}
+                </span>
               </button>
             );
           })}
