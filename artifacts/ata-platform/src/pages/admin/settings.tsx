@@ -10,8 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import {
   Settings, Radio, Save, ExternalLink, CheckCircle2, AlertCircle,
   CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Tv2, Zap, Power,
-  Database, Download, Users,
+  Database, Download, Upload, AlertTriangle, Users,
 } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 function useSettings() {
@@ -56,8 +60,11 @@ export default function AdminSettings() {
   const [pesapalEnabled, setPesapalEnabled] = useState(true);
   const [pawapayEnabled, setPawapayEnabled] = useState(true);
 
-  // Database export
+  // Database export / restore
   const [exportingDb, setExportingDb] = useState(false);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restoringDb, setRestoringDb] = useState(false);
+  const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false);
 
   const downloadDbBackup = async () => {
     setExportingDb(true);
@@ -74,16 +81,41 @@ export default function AdminSettings() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'bck.sql';
+      const ts = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      a.download = `ata-backup-${ts}.sql`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success('Database exported', { description: 'bck.sql downloaded to your computer.' });
+      toast.success('Database exported', { description: `ata-backup-${ts}.sql downloaded.` });
     } catch (err: any) {
       toast.error(err.message || 'Export failed');
     } finally {
       setExportingDb(false);
+    }
+  };
+
+  const performRestore = async () => {
+    if (!restoreFile) return;
+    setRestoringDb(true);
+    setRestoreConfirmOpen(false);
+    try {
+      const token = (await import('@/lib/auth-store')).useAuthStore.getState().token;
+      const form = new FormData();
+      form.append('backup', restoreFile);
+      const res = await fetch('/api/admin/db-restore', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'Restore failed');
+      toast.success('Database restored', { description: 'All data has been replaced from the uploaded backup.' });
+      setRestoreFile(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Restore failed');
+    } finally {
+      setRestoringDb(false);
     }
   };
 
@@ -1048,38 +1080,112 @@ export default function AdminSettings() {
 
       {isAdmin && (
       <Card className="bg-slate-900 border-slate-700">
-        {/* ── Database Backup (admin only) ── */}
+        {/* ── Database Backup & Restore (admin only) ── */}
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Database className="h-4 w-4 text-teal-400" />
-            Database Backup
+            Database Backup &amp; Restore
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Export a full SQL dump of the database as <code className="text-teal-400">bck.sql</code>.
-            Upload it to your Linode server to migrate or restore all data.
+            Export a full SQL dump of the live database, or upload a backup file to restore all data.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md bg-slate-800/50 border border-slate-700 px-3 py-2.5 text-xs text-slate-500 space-y-1.5">
-            <p className="font-semibold text-slate-400">How to use</p>
-            <ol className="space-y-1 list-decimal list-inside">
-              <li>Click <strong className="text-slate-300">Download bck.sql</strong> — the file saves to your computer.</li>
-              <li>Upload to your server: <code className="text-teal-400">scp bck.sql root@173.230.131.210:/opt/ata/bck.sql</code></li>
-              <li>Import on the server: <code className="text-teal-400">docker compose exec -T db psql -U ata_user -d ata_db &lt; bck.sql</code></li>
-            </ol>
+        <CardContent className="space-y-6">
+
+          {/* ── Export ── */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-slate-300">Export</p>
+            <p className="text-xs text-slate-500">
+              Downloads a complete SQL dump — includes all users, wallets, bets, transactions, streams, and settings.
+            </p>
+            <Button
+              onClick={downloadDbBackup}
+              disabled={exportingDb}
+              className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {exportingDb ? 'Exporting…' : 'Download Backup (.sql)'}
+            </Button>
           </div>
-          <Button
-            onClick={downloadDbBackup}
-            disabled={exportingDb}
-            className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2"
-          >
-            <Download className="h-4 w-4" />
-            {exportingDb ? 'Exporting…' : 'Download bck.sql'}
-          </Button>
-          <p className="text-[11px] text-slate-500">Admin only — includes all users, wallets, bets, transactions, streams, and settings.</p>
+
+          <div className="border-t border-slate-700" />
+
+          {/* ── Restore ── */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-slate-300">Restore</p>
+            <div className="rounded-md bg-amber-950/40 border border-amber-700/50 px-3 py-2.5 flex gap-2 text-xs text-amber-400">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>
+                Restoring will <strong>permanently delete all current data</strong> and replace it with the contents of the uploaded file. This cannot be undone.
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <label className="flex-1">
+                <input
+                  type="file"
+                  accept=".sql"
+                  className="hidden"
+                  onChange={(e) => setRestoreFile(e.target.files?.[0] ?? null)}
+                />
+                <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-slate-600 bg-slate-800 cursor-pointer hover:border-teal-500 transition-colors text-sm text-slate-400 hover:text-slate-200">
+                  <Upload className="h-4 w-4 shrink-0" />
+                  {restoreFile ? (
+                    <span className="text-teal-400 truncate max-w-[220px]">{restoreFile.name}</span>
+                  ) : (
+                    <span>Choose a .sql backup file…</span>
+                  )}
+                </div>
+              </label>
+
+              <Button
+                onClick={() => setRestoreConfirmOpen(true)}
+                disabled={!restoreFile || restoringDb}
+                variant="destructive"
+                className="gap-2 font-bold shrink-0"
+              >
+                <Upload className="h-4 w-4" />
+                {restoringDb ? 'Restoring…' : 'Restore Database'}
+              </Button>
+            </div>
+            {restoreFile && (
+              <p className="text-[11px] text-slate-500">
+                {(restoreFile.size / 1024 / 1024).toFixed(2)} MB selected
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
       )}
+
+      {/* Restore confirmation dialog */}
+      <AlertDialog open={restoreConfirmOpen} onOpenChange={setRestoreConfirmOpen}>
+        <AlertDialogContent className="bg-slate-900 border-slate-700 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-400">
+              <AlertTriangle className="h-5 w-5" />
+              Restore Database?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              This will <strong className="text-white">drop every table</strong> in the current database and replace all data with{' '}
+              <span className="text-teal-400 font-medium">{restoreFile?.name}</span>.
+              <br /><br />
+              All users, wallets, bets, and transactions will be overwritten. <strong className="text-white">This cannot be undone.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-slate-600 text-slate-300 hover:bg-slate-800">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={performRestore}
+              className="bg-red-600 hover:bg-red-500 text-white font-bold"
+            >
+              Yes, restore now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

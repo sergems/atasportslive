@@ -4,10 +4,16 @@ import bcrypt from "bcrypt";
 import { spawn } from "child_process";
 import { v4 as uuidv4 } from "uuid";
 import nodemailer from "nodemailer";
+import multer from "multer";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
 import { eq, sql, desc, and, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
+
+const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
 
 const router = Router();
 
@@ -560,6 +566,59 @@ router.get("/users/:userId/transactions", authMiddleware, requireRole("admin", "
     total: Number(total),
     page,
   });
+});
+
+router.post("/db-restore", authMiddleware, requireRole("admin"), memUpload.single("backup"), async (req: AuthRequest, res): Promise<void> => {
+  if (!req.file) {
+    res.status(400).json({ error: "No SQL file uploaded" });
+    return;
+  }
+
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) { res.status(500).json({ error: "DATABASE_URL is not set" }); return; }
+
+  let parsed: URL;
+  try { parsed = new URL(dbUrl); } catch {
+    res.status(500).json({ error: "DATABASE_URL is not a valid URL" }); return;
+  }
+
+  const host     = parsed.hostname;
+  const port     = parsed.port || "5432";
+  const database = parsed.pathname.replace(/^\//, "");
+  const username = parsed.username;
+  const password = parsed.password;
+
+  const tmpFile = path.join(os.tmpdir(), `db-restore-${Date.now()}.sql`);
+  fs.writeFileSync(tmpFile, req.file.buffer);
+
+  const pgEnv = { ...process.env, PGPASSWORD: password };
+  const baseArgs = ["-h", host, "-p", port, "-U", username, "-d", database];
+
+  try {
+    // Drop and recreate public schema
+    await new Promise<void>((resolve, reject) => {
+      const drop = spawn("psql", [...baseArgs, "-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"], { env: pgEnv });
+      drop.stderr.on("data", (c: Buffer) => req.log.warn({ msg: "schema reset stderr", detail: c.toString() }));
+      drop.on("close", (code) => code === 0 ? resolve() : reject(new Error(`Schema reset exited ${code}`)));
+      drop.on("error", reject);
+    });
+
+    // Restore from uploaded file
+    await new Promise<void>((resolve, reject) => {
+      const restore = spawn("psql", [...baseArgs, "-f", tmpFile], { env: pgEnv });
+      restore.stderr.on("data", (c: Buffer) => req.log.warn({ msg: "psql restore stderr", detail: c.toString() }));
+      restore.on("close", (code) => code === 0 ? resolve() : reject(new Error(`Restore exited ${code}`)));
+      restore.on("error", reject);
+    });
+
+    req.log.info({ file: req.file.originalname, size: req.file.size }, "Database restored");
+    res.json({ ok: true, message: "Database restored successfully" });
+  } catch (err: any) {
+    req.log.error({ err }, "db-restore failed");
+    res.status(500).json({ error: err.message || "Restore failed" });
+  } finally {
+    fs.unlink(tmpFile, () => {});
+  }
 });
 
 router.get("/db-export", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
