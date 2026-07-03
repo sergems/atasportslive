@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Lock, LockOpen, Eye, Play, Radio, Film, Trophy, Users, TrendingUp, Flame,
-  LayoutGrid, Target, Swords, Zap, Star, Circle, Medal, Dumbbell,
+  LayoutGrid, Target, Swords, Crosshair, Star, Circle, Crown, Gamepad2,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
@@ -27,9 +27,10 @@ interface Stream {
 const SPORT_GRADIENT: Record<string, string> = {
   pool:       'from-teal-900 via-teal-950 to-slate-950',
   boxing:     'from-red-900 via-red-950 to-slate-950',
-  football:   'from-emerald-900 via-emerald-950 to-slate-950',
-  athletics:  'from-orange-900 via-orange-950 to-slate-950',
-  basketball: 'from-amber-900 via-amber-950 to-slate-950',
+  darts:      'from-green-900 via-green-950 to-slate-950',
+  fifa:       'from-emerald-900 via-emerald-950 to-slate-950',
+  chess:      'from-slate-600 via-slate-800 to-slate-950',
+  futsal:     'from-amber-900 via-amber-950 to-slate-950',
   tournament: 'from-violet-900 via-violet-950 to-slate-950',
   other:      'from-slate-700 via-slate-800 to-slate-950',
 };
@@ -37,9 +38,10 @@ const SPORT_GRADIENT: Record<string, string> = {
 const SPORT_COLOR: Record<string, string> = {
   pool:       'text-teal-400 bg-teal-500/10 border-teal-500/30',
   boxing:     'text-red-400 bg-red-500/10 border-red-500/30',
-  football:   'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
-  athletics:  'text-orange-400 bg-orange-500/10 border-orange-500/30',
-  basketball: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
+  darts:      'text-green-400 bg-green-500/10 border-green-500/30',
+  fifa:       'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+  chess:      'text-slate-300 bg-slate-500/10 border-slate-500/30',
+  futsal:     'text-amber-400 bg-amber-500/10 border-amber-500/30',
   tournament: 'text-violet-400 bg-violet-500/10 border-violet-500/30',
   other:      'text-slate-400 bg-slate-500/10 border-slate-500/30',
 };
@@ -47,9 +49,10 @@ const SPORT_COLOR: Record<string, string> = {
 const SPORT_PILL_ACTIVE: Record<string, string> = {
   pool:       'bg-teal-500 text-slate-950 border-teal-400',
   boxing:     'bg-red-500 text-white border-red-400',
-  football:   'bg-emerald-500 text-slate-950 border-emerald-400',
-  athletics:  'bg-orange-500 text-slate-950 border-orange-400',
-  basketball: 'bg-amber-500 text-slate-950 border-amber-400',
+  darts:      'bg-green-500 text-slate-950 border-green-400',
+  fifa:       'bg-emerald-500 text-slate-950 border-emerald-400',
+  chess:      'bg-slate-300 text-slate-950 border-slate-200',
+  futsal:     'bg-amber-500 text-slate-950 border-amber-400',
   tournament: 'bg-violet-500 text-white border-violet-400',
   other:      'bg-slate-500 text-white border-slate-400',
 };
@@ -57,9 +60,10 @@ const SPORT_PILL_ACTIVE: Record<string, string> = {
 const SPORT_ICON: Record<string, React.ElementType> = {
   pool:       Target,
   boxing:     Swords,
-  football:   Star,
-  athletics:  Zap,
-  basketball: Circle,
+  darts:      Crosshair,
+  fifa:       Star,
+  chess:      Crown,
+  futsal:     Circle,
   tournament: Trophy,
   other:      Film,
 };
@@ -67,12 +71,16 @@ const SPORT_ICON: Record<string, React.ElementType> = {
 const SPORT_LABEL: Record<string, string> = {
   pool:       'Pool',
   boxing:     'Boxing',
-  football:   'Football',
-  athletics:  'Athletics',
-  basketball: 'Basketball',
+  darts:      'Darts',
+  fifa:       'FIFA',
+  chess:      'Chess',
+  futsal:     'Futsal',
   tournament: 'Tournament',
   other:      'Other',
 };
+
+// Fixed categories always shown (even with 0 streams)
+const FIXED_SPORT_CATEGORIES = ['pool', 'boxing', 'darts', 'fifa', 'chess', 'futsal'];
 
 function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAuthenticated: boolean; isAdmin: boolean }) {
   const isPaid = !!stream.accessPrice && stream.accessPrice > 0;
@@ -329,21 +337,23 @@ export default function Streams() {
 
   const allStreams = (streamsData?.streams || []) as Stream[];
 
-  // Derive sport categories dynamically from actual data
+  // Count streams per sport from actual data
   const sportCounts = allStreams.reduce<Record<string, number>>((acc, s) => {
     acc[s.sport] = (acc[s.sport] ?? 0) + 1;
     return acc;
   }, {});
 
-  const dynamicSports = Object.entries(sportCounts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([value, count]) => ({
-      value,
-      count,
-      label: SPORT_LABEL[value] ?? (value.charAt(0).toUpperCase() + value.slice(1)),
-      icon: SPORT_ICON[value] ?? Film,
-      activeStyle: SPORT_PILL_ACTIVE[value] ?? 'bg-slate-500 text-white border-slate-400',
-    }));
+  // Always show fixed categories; append any extra DB sports not in the fixed list
+  const extraSports = Object.keys(sportCounts).filter(
+    (s) => !FIXED_SPORT_CATEGORIES.includes(s)
+  );
+  const allCategories = [...FIXED_SPORT_CATEGORIES, ...extraSports].map((value) => ({
+    value,
+    count: sportCounts[value] ?? 0,
+    label: SPORT_LABEL[value] ?? (value.charAt(0).toUpperCase() + value.slice(1)),
+    icon: SPORT_ICON[value] ?? Film,
+    activeStyle: SPORT_PILL_ACTIVE[value] ?? 'bg-slate-500 text-white border-slate-400',
+  }));
 
   // Client-side sport filter
   const streams = sport === 'all' ? allStreams : allStreams.filter(s => s.sport === sport);
@@ -381,7 +391,7 @@ export default function Streams() {
             All
           </button>
 
-          {!isLoading && dynamicSports.map(({ value, label, count, icon: Icon, activeStyle }) => {
+          {allCategories.map(({ value, label, count, icon: Icon, activeStyle }) => {
             const active = sport === value;
             return (
               <button
