@@ -360,22 +360,6 @@ export default function Home() {
         <DefaultHero />
       )}
 
-      {/* Stats strip */}
-      {(!loadingStreams || !loadingGames) && (
-        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 py-3 px-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-sm text-slate-400">Live: <span className="font-bold text-white">{liveCount}</span></span>
-          </div>
-          <div className="text-sm text-slate-400">Events: <span className="font-bold text-white">{upcomingStreams.length}</span></div>
-          {isAuthenticated && (
-            <>
-              <div className="text-sm text-slate-400">Pool: <span className="font-bold text-amber-400">${totalPool.toFixed(2)}</span></div>
-              <div className="text-sm text-slate-400">Open bets: <span className="font-bold text-teal-400">{totalOpenBets}</span></div>
-            </>
-          )}
-        </div>
-      )}
 
       {/* Upcoming Streams */}
       <section>
