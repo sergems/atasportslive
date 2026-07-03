@@ -10,6 +10,7 @@ import {
   authMiddleware,
   type AuthRequest,
 } from "../middlewares/auth";
+import { wsClients } from "../lib/notify";
 
 const router = Router();
 
@@ -150,11 +151,24 @@ router.post("/login", async (req, res): Promise<void> => {
     return;
   }
 
+  // If another session exists, kick it via WebSocket before invalidating it
+  const hadExistingSession = !!user.sessionToken;
+  if (hadExistingSession) {
+    const existingWs = wsClients.get(user.id);
+    if (existingWs && existingWs.readyState === 1) {
+      existingWs.send(JSON.stringify({
+        type: "session_displaced",
+        title: "Signed in on another device",
+        message: "Your account was signed in on a new device. You have been logged out of this session.",
+      }));
+    }
+  }
+
   // Generate a new session token — this invalidates any existing session for this user
   const sv = generateSessionToken();
   const tokens = generateTokens(user.id, user.role, sv);
   await db.update(usersTable).set({ refreshToken: tokens.refreshToken, sessionToken: sv }).where(eq(usersTable.id, user.id));
-  res.json({ ...tokens, user: userPayload(user) });
+  res.json({ ...tokens, user: userPayload(user), displacedExistingSession: hadExistingSession });
 });
 
 // Activated by imported users on their first login

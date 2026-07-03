@@ -63,6 +63,14 @@ export default function Login() {
         login(res.accessToken, res.user);
         const firstName = res.user.fullName?.split(' ')[0] || res.user.email?.split('@')[0] || 'there';
         toast.success(`Welcome back, ${firstName}! 👋`);
+        if (res.displacedExistingSession) {
+          setTimeout(() => {
+            toast.warning('Another session was signed out', {
+              description: 'Your account was already logged in on another device — that session has been ended.',
+              duration: 8000,
+            });
+          }, 800);
+        }
         setLocation(roleRedirect(res.user.role));
       },
       onError: (err: any) => {

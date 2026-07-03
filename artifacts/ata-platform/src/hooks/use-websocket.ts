@@ -11,7 +11,7 @@ import {
 } from '@workspace/api-client-react';
 
 export function useWebSocket() {
-  const { token, user } = useAuthStore();
+  const { token, user, clearAuth } = useAuthStore();
   const isAuthenticated = !!token;
   const queryClient = useQueryClient();
   const wsRef = useRef<WebSocket | null>(null);
@@ -34,6 +34,17 @@ export function useWebSocket() {
         try {
           const data = JSON.parse(event.data);
           switch (data.type) {
+            case 'session_displaced':
+              // Another device signed in — stop reconnecting, show warning, log out
+              destroyed = true;
+              clearTimeout(reconnectTimeout);
+              ws.close();
+              toast.error('Signed out — another device logged in', {
+                description: 'Your account was accessed on another device. For your security, this session has been ended.',
+                duration: 12000,
+              });
+              setTimeout(() => clearAuth(), 1500);
+              break;
             case 'bet_matched':
               toast.success(data.title || 'Bet Matched', { description: data.message });
               queryClient.invalidateQueries({ queryKey: getGetWalletQueryKey() });
