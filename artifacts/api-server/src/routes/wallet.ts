@@ -780,49 +780,63 @@ async function confirmPesapalPayment(orderTrackingId: string, merchantRef: strin
   const config = await getPesapalConfig();
   if (!config) return false;
 
-  const [tx] = await db
-    .select()
-    .from(transactionsTable)
-    .where(eq(transactionsTable.transactionId, merchantRef))
-    .limit(1);
-
-  if (!tx || tx.status !== "pending") return false;
-
   try {
     const token = await getAccessToken(config);
     const status = await getTransactionStatus(config, token, orderTrackingId);
 
-    if (status.statusCode === 1) {
-      await db.update(transactionsTable).set({ status: "completed", reference: orderTrackingId }).where(eq(transactionsTable.id, tx.id));
-      const amt = parseFloat(tx.amount as string);
-      await db.update(walletsTable).set({
-        balance: sql`balance + ${amt}`,
-        availableBalance: sql`available_balance + ${amt}`,
-        withdrawableBalance: sql`withdrawable_balance + ${amt}`,
-      }).where(eq(walletsTable.userId, tx.userId));
-
-      await notify(tx.userId, "deposit_received", "Deposit Confirmed", `$${amt.toFixed(2)} has been added to your wallet via Pesapal.`);
-
-      // Check for matching automatic promotions
-      const matchingPromo = await findMatchingAutoPromo(amt);
-      if (matchingPromo) {
-        const alreadyAccepted = await db.select().from(promotionTermsAcceptanceTable).where(
-          and(eq(promotionTermsAcceptanceTable.userId, tx.userId), eq(promotionTermsAcceptanceTable.promotionId, matchingPromo.id))
-        ).limit(1);
-        if (!alreadyAccepted.length) {
-          await notify(tx.userId, "deposit_received", "🎁 Bonus Waiting!",
-            `You qualify for a bonus from "${matchingPromo.name}"! Go to your Wallet to claim it.`);
-        } else {
-          await creditBonus(tx.userId, matchingPromo, amt);
-        }
-      }
-
-      logger.info({ merchantRef, orderTrackingId }, "Pesapal deposit confirmed");
-      return true;
-    } else if (status.statusCode === 2 || status.statusCode === 3) {
-      await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+    if (status.statusCode === 2 || status.statusCode === 3) {
+      // Payment failed/reversed — mark failed only if still pending (idempotent)
+      await db
+        .update(transactionsTable)
+        .set({ status: "failed" })
+        .where(and(eq(transactionsTable.transactionId, merchantRef), eq(transactionsTable.status, "pending")));
+      return false;
     }
-    return false;
+
+    if (status.statusCode !== 1) {
+      // Still processing or unknown — leave as pending
+      return false;
+    }
+
+    // Atomically claim the pending→completed transition.
+    // If callback and IPN fire concurrently, only one UPDATE will match
+    // (the other finds status already 'completed') — preventing double-credit.
+    const [updated] = await db
+      .update(transactionsTable)
+      .set({ status: "completed", reference: orderTrackingId })
+      .where(and(eq(transactionsTable.transactionId, merchantRef), eq(transactionsTable.status, "pending")))
+      .returning();
+
+    if (!updated) {
+      // Another concurrent call already completed this transaction
+      return true;
+    }
+
+    const amt = parseFloat(updated.amount as string);
+    await db.update(walletsTable).set({
+      balance: sql`balance + ${amt}`,
+      availableBalance: sql`available_balance + ${amt}`,
+      withdrawableBalance: sql`withdrawable_balance + ${amt}`,
+    }).where(eq(walletsTable.userId, updated.userId));
+
+    await notify(updated.userId, "deposit_received", "Deposit Confirmed", `${amt.toFixed(2)} has been added to your wallet via Pesapal.`);
+
+    // Check for matching automatic promotions
+    const matchingPromo = await findMatchingAutoPromo(amt);
+    if (matchingPromo) {
+      const alreadyAccepted = await db.select().from(promotionTermsAcceptanceTable).where(
+        and(eq(promotionTermsAcceptanceTable.userId, updated.userId), eq(promotionTermsAcceptanceTable.promotionId, matchingPromo.id))
+      ).limit(1);
+      if (!alreadyAccepted.length) {
+        await notify(updated.userId, "deposit_received", "🎁 Bonus Waiting!",
+          `You qualify for a bonus from "${matchingPromo.name}"! Go to your Wallet to claim it.`);
+      } else {
+        await creditBonus(updated.userId, matchingPromo, amt);
+      }
+    }
+
+    logger.info({ merchantRef, orderTrackingId }, "Pesapal deposit confirmed");
+    return true;
   } catch (err) {
     logger.error({ err, orderTrackingId }, "Pesapal confirmation error");
     return false;

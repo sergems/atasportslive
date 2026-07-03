@@ -183,6 +183,20 @@ export interface TransactionStatus {
   message: string;
 }
 
+// Raw snake_case shape returned by Pesapal API
+interface PesapalStatusRaw {
+  payment_method?: string;
+  amount?: number;
+  currency?: string;
+  confirmation_code?: string;
+  status_code?: number;
+  merchant_reference?: string;
+  payment_account?: string;
+  message?: string;
+  error?: unknown;
+  status?: string;
+}
+
 export async function getTransactionStatus(
   config: PesapalConfig,
   token: string,
@@ -193,10 +207,21 @@ export async function getTransactionStatus(
     headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
   });
 
-  const data = (await res.json()) as TransactionStatus & { error?: unknown; status?: string };
+  const data = (await res.json()) as PesapalStatusRaw;
   if (!res.ok) {
     logger.error({ data }, "Pesapal GetTransactionStatus failed");
     throw new Error("Pesapal status check failed");
   }
-  return data;
+
+  // Map snake_case API response → camelCase interface
+  return {
+    paymentMethod: data.payment_method ?? "",
+    amount: data.amount ?? 0,
+    currency: data.currency ?? "",
+    confirmationCode: data.confirmation_code ?? "",
+    statusCode: data.status_code ?? -1,
+    merchantReference: data.merchant_reference ?? "",
+    paymentAccount: data.payment_account ?? "",
+    message: data.message ?? "",
+  };
 }
