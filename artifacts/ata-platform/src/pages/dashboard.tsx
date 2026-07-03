@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
-import { useGetWallet, useListMyBets, useListTransactions } from '@workspace/api-client-react';
+import { useGetWallet, useListMyBets, useListTransactions, useListNotifications } from '@workspace/api-client-react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'wouter';
 import {
   Wallet, Activity, TrendingUp, History, Radio, Swords,
   Film, ArrowDownCircle, ChevronRight, Trophy, Clock,
-  Zap, Star, Target, Gift, Copy, Check, Users
+  Zap, Star, Target, Gift, Copy, Check, Users, Bell
 } from 'lucide-react';
 
 interface LiveStream {
@@ -68,6 +68,8 @@ export default function Dashboard() {
   const { data: recentTx, isLoading: loadingTx } = useListTransactions({ limit: 5 });
   const { data: liveStream } = useLive();
   const { data: upcomingGames } = useUpcomingGames();
+  const { data: notifData } = useListNotifications({ unreadOnly: true }, { query: { refetchInterval: 30000 } });
+  const unreadCount = notifData?.unreadCount ?? 0;
 
   const firstName = user?.fullName?.split(' ')[0] ?? 'there';
   const hour = new Date().getHours();
@@ -96,7 +98,19 @@ export default function Dashboard() {
         <div className="relative flex items-center justify-between gap-3">
           <div>
             <p className="text-slate-400 text-xs">{greeting} 👋</p>
-            <h1 className="text-xl font-bold text-white tracking-tight leading-tight">{firstName}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-white tracking-tight leading-tight">{firstName}</h1>
+              <Link href="/notifications">
+                <button className="relative flex items-center justify-center h-6 w-6 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 active:scale-90 transition-all">
+                  <Bell className={`h-3 w-3 ${unreadCount > 0 ? 'text-amber-400' : 'text-slate-500'}`} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-red-500 text-[8px] font-bold text-white flex items-center justify-center leading-none">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </Link>
+            </div>
           </div>
 
           <div className="text-right shrink-0">
