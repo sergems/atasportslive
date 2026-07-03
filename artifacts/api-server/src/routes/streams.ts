@@ -369,6 +369,7 @@ router.get("/:id/access/check", authMiddleware, async (req: AuthRequest, res): P
   const userId = req.userId!;
   const now = new Date();
 
+  // Check per-stream access first
   const [access] = await db
     .select()
     .from(streamAccessTable)
@@ -380,10 +381,26 @@ router.get("/:id/access/check", authMiddleware, async (req: AuthRequest, res): P
     if (secondsRemaining < 3600) {
       await notify(userId, "stream_expiring", "Stream Access Expiring", "Your stream access expires in less than 1 hour.");
     }
-    res.json({ hasAccess: true, expiresAt: access.expiresAt, secondsRemaining });
-  } else {
-    res.json({ hasAccess: false, expiresAt: null, secondsRemaining: null });
+    res.json({ hasAccess: true, expiresAt: access.expiresAt, secondsRemaining, accessType: "stream" });
+    return;
   }
+
+  // Fall through: check for an active platform subscription
+  const [platformSub] = await db.execute(sql`
+    SELECT id, expires_at FROM platform_subscriptions
+    WHERE user_id = ${userId} AND expires_at > ${now}
+    ORDER BY expires_at DESC
+    LIMIT 1
+  `).then((r) => r.rows as { id: number; expires_at: Date }[]);
+
+  if (platformSub) {
+    const expiresAt = new Date(platformSub.expires_at);
+    const secondsRemaining = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
+    res.json({ hasAccess: true, expiresAt, secondsRemaining, accessType: "platform" });
+    return;
+  }
+
+  res.json({ hasAccess: false, expiresAt: null, secondsRemaining: null });
 });
 
 router.patch("/:id/go-live", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {

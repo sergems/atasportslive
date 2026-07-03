@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown, Menu, X, Settings, Gift } from 'lucide-react';
+import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown, Menu, X, Settings, Gift, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
 import { useQuery } from '@tanstack/react-query';
@@ -37,6 +37,7 @@ function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
 
   const items = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/subscriptions', label: 'Subscription', icon: CreditCard },
     { href: '/bets', label: 'My Bets', icon: Trophy },
     { href: '/transactions', label: 'Transactions', icon: History },
     { href: '/profile', label: 'Profile Settings', icon: Settings },

@@ -17,6 +17,7 @@ import slidesRouter from "./slides";
 import promotionsRouter from "./promotions";
 import commentsRouter from "./comments";
 import reactionsRouter from "./reactions";
+import subscriptionsRouter from "./subscriptions";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use("/highlights", highlightsRouter);
 router.use("/settings", settingsRouter);
 router.use("/slides", slidesRouter);
 router.use("/promotions", promotionsRouter);
+router.use("/subscriptions", subscriptionsRouter);
 
 export default router;

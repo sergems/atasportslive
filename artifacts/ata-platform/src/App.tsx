@@ -42,6 +42,7 @@ import AdminBets from "@/pages/admin/bets";
 import FinanceDashboard from "@/pages/finance/dashboard";
 import FinanceWithdrawals from "@/pages/finance/withdrawals";
 import { FinanceLayout } from "@/components/layout/FinanceLayout";
+import Subscriptions from "@/pages/subscriptions";
 import Profile from "@/pages/profile";
 import SetPassword from "@/pages/set-password";
 import NotFound from "@/pages/not-found";
@@ -137,6 +138,9 @@ function Router() {
         </Route>
         <Route path="/notifications">
           {() => <ProtectedRoute component={Notifications} />}
+        </Route>
+        <Route path="/subscriptions">
+          {() => <ProtectedRoute component={Subscriptions} />}
         </Route>
         <Route path="/profile">
           {() => <ProtectedRoute component={Profile} />}
