@@ -675,12 +675,46 @@ export default function AdminUsers() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [ficaPendingOnly, setFicaPendingOnly] = useState(false);
   const [editingPayoutFor, setEditingPayoutFor] = useState<number | null>(null);
   const [walletAdjustFor, setWalletAdjustFor] = useState<number | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<number | null>(null);
   const [txHistoryFor, setTxHistoryFor] = useState<number | null>(null);
 
-  const { data, isLoading } = useListUsers({ page, limit: 20, search: search || undefined });
+  // Standard list (all users or search)
+  const { data: allData, isLoading: allLoading } = useListUsers(
+    { page, limit: 20, search: search || undefined },
+    { query: { enabled: !ficaPendingOnly } }
+  );
+
+  // FICA-pending filtered list — direct fetch, server-side filter
+  const { data: ficaData, isLoading: ficaLoading } = useQuery({
+    queryKey: ['admin-users-fica-pending', page, search],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page: String(page), limit: '20', ficaPending: 'true' });
+      if (search) params.set('search', search);
+      const res = await fetch(`/api/users?${params}`, { headers: authHeaders() });
+      if (!res.ok) throw new Error('Failed');
+      return res.json() as Promise<{ users: any[]; total: number; page: number; limit: number }>;
+    },
+    enabled: ficaPendingOnly,
+    staleTime: 15_000,
+  });
+
+  // FICA pending count — always fetched for the badge
+  const { data: ficaCount } = useQuery({
+    queryKey: ['admin-users-fica-count'],
+    queryFn: async () => {
+      const res = await fetch('/api/users?ficaPending=true&limit=1&page=1', { headers: authHeaders() });
+      if (!res.ok) return { total: 0 };
+      return res.json() as Promise<{ total: number }>;
+    },
+    staleTime: 30_000,
+  });
+
+  const data = ficaPendingOnly ? ficaData : allData;
+  const isLoading = ficaPendingOnly ? ficaLoading : allLoading;
+
   const updateRole = useUpdateUserRole();
   const suspend = useSuspendUser();
 
@@ -702,20 +736,44 @@ export default function AdminUsers() {
     } catch (err: any) { toast.error(err?.data?.error || 'Failed'); }
   };
 
+  const pendingCount = ficaCount?.total ?? 0;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
           <Users className="h-5 w-5 text-blue-400" /> User Management
         </h1>
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-          <Input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search users..."
-            className="pl-8 bg-slate-900 border-slate-800 text-white text-xs h-8 focus-visible:ring-1 focus-visible:ring-teal-500/50"
-          />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* FICA Pending filter toggle */}
+          <button
+            onClick={() => { setFicaPendingOnly(f => !f); setPage(1); }}
+            className={`relative inline-flex items-center gap-1.5 rounded-md border px-2.5 h-8 text-[11px] font-semibold transition-colors shrink-0 ${
+              ficaPendingOnly
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-500/40'
+            }`}
+          >
+            <ShieldCheck className="h-3 w-3" />
+            FICA Pending
+            {pendingCount > 0 && (
+              <span className={`ml-0.5 rounded-full px-1.5 py-0 text-[9px] font-bold tabular-nums ${
+                ficaPendingOnly ? 'bg-amber-500 text-slate-950' : 'bg-amber-500/30 text-amber-400'
+              }`}>
+                {pendingCount}
+              </span>
+            )}
+          </button>
+
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <Input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Search users..."
+              className="pl-8 bg-slate-900 border-slate-800 text-white text-xs h-8 focus-visible:ring-1 focus-visible:ring-teal-500/50"
+            />
+          </div>
         </div>
       </div>
 

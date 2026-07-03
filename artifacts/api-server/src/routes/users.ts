@@ -39,10 +39,11 @@ const toPublicUser = (user: typeof usersTable.$inferSelect) => ({
 
 // ── List users ───────────────────────────────────────────────────────────────
 router.get("/", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
-  const page   = Number(req.query.page)  || 1;
-  const limit  = Number(req.query.limit) || 20;
-  const search = req.query.search as string | undefined;
-  const roleQs = req.query.role  as string | undefined;
+  const page       = Number(req.query.page)  || 1;
+  const limit      = Number(req.query.limit) || 20;
+  const search     = req.query.search     as string | undefined;
+  const roleQs     = req.query.role       as string | undefined;
+  const ficaPending = req.query.ficaPending === "true";
   const offset = (page - 1) * limit;
 
   const allowed = visibleRoles(req.userRole ?? "");
@@ -66,6 +67,11 @@ router.get("/", authMiddleware, requireRole("admin", "manager", "content_editor"
       return;
     }
     conditions.push(sql`${usersTable.role}::text = ${roleQs}`);
+  }
+
+  // Optional FICA pending filter
+  if (ficaPending) {
+    conditions.push(sql`${usersTable.ficaCompleted} = false`);
   }
 
   const where = conditions.length === 0
