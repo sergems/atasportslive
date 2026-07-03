@@ -41,6 +41,18 @@ async function fetchActive(): Promise<{
   return r.json();
 }
 
+function friendlyError(raw: string | undefined): string {
+  if (!raw) return 'Purchase failed. Please try again.';
+  const msg = raw.toLowerCase();
+  if (msg.includes('no token') || msg.includes('invalid') || msg.includes('expired token') || msg.includes('unauthorized'))
+    return 'Not enough funds in your wallet. Please top up and try again.';
+  if (msg.includes('insufficient') || msg.includes('balance'))
+    return 'Not enough funds in your wallet. Please top up and try again.';
+  if (msg.includes('already have an active'))
+    return 'You already have an active subscription. It must expire before purchasing a new one.';
+  return raw;
+}
+
 async function purchaseSubscription(subscriptionType: string): Promise<void> {
   const token = localStorage.getItem('auth_token');
   const r = await fetch('/api/subscriptions/purchase', {
@@ -52,7 +64,7 @@ async function purchaseSubscription(subscriptionType: string): Promise<void> {
     body: JSON.stringify({ subscriptionType }),
   });
   const data = await r.json();
-  if (!r.ok) throw new Error(data.error || 'Purchase failed');
+  if (!r.ok) throw new Error(friendlyError(data.error));
   return data;
 }
 
