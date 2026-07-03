@@ -412,20 +412,74 @@ router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"
 
 router.patch("/admin/deposit/:id/confirm", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
-  const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
-  if (!tx || tx.type !== "deposit" || tx.status !== "pending") {
-    res.status(400).json({ error: "Invalid deposit" });
-    return;
+  if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  // Atomic claim: only the first caller (admin confirm OR IPN/callback) that flips
+  // status from 'pending' → 'completed' will get a row back. The other gets nothing
+  // and exits cleanly, preventing any double-credit.
+  const [claimed] = await db
+    .update(transactionsTable)
+    .set({ status: "completed" })
+    .where(and(eq(transactionsTable.id, id), eq(transactionsTable.status, "pending"), eq(transactionsTable.type, "deposit")))
+    .returning();
+
+  if (!claimed) {
+    // Either not found, wrong type, or already processed by another path
+    const [existing] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+    if (!existing) { res.status(404).json({ error: "Transaction not found" }); return; }
+    if (existing.status === "completed") { res.json({ alreadyCompleted: true, transaction: toTxResponse(existing) }); return; }
+    res.status(400).json({ error: "Must be a pending deposit" }); return;
   }
-  await db.update(transactionsTable).set({ status: "completed" }).where(eq(transactionsTable.id, id));
+
+  const amt = parseFloat(claimed.amount as string);
   await db.update(walletsTable).set({
-    balance: sql`balance + ${parseFloat(tx.amount as string)}`,
-    availableBalance: sql`available_balance + ${parseFloat(tx.amount as string)}`,
-    withdrawableBalance: sql`withdrawable_balance + ${parseFloat(tx.amount as string)}`,
-  }).where(eq(walletsTable.userId, tx.userId));
-  await notify(tx.userId, "deposit_received", "Deposit Confirmed", `$${tx.amount} has been added to your wallet.`);
+    balance: sql`balance + ${amt}`,
+    availableBalance: sql`available_balance + ${amt}`,
+    withdrawableBalance: sql`withdrawable_balance + ${amt}`,
+  }).where(eq(walletsTable.userId, claimed.userId));
+
+  await notify(claimed.userId, "deposit_received", "Deposit Confirmed", `${amt.toFixed(2)} has been added to your wallet.`);
+
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
+});
+
+// Admin: fail a pending deposit (no wallet changes — balance was never credited)
+router.patch("/admin/deposit/:id/fail", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid id" }); return; }
+  const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+  if (!tx || tx.type !== "deposit" || tx.status !== "pending") {
+    res.status(400).json({ error: "Must be a pending deposit" }); return;
+  }
+  await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, id));
+  await notify(tx.userId, "deposit_received", "Deposit Failed",
+    `Your deposit of ${parseFloat(tx.amount as string).toFixed(2)} could not be verified and has been marked failed. Contact support if you believe this is an error.`);
+  const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+  res.json(toTxResponse(updated));
+});
+
+// Admin: re-query Pesapal for a stuck pending deposit and auto-confirm if paid
+router.post("/admin/deposit/:id/recheck", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid id" }); return; }
+  const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+  if (!tx || tx.type !== "deposit" || tx.status !== "pending") {
+    res.status(400).json({ error: "Must be a pending deposit" }); return;
+  }
+
+  // orderTrackingId is stored in reference (after initiation) or inside metadata JSON
+  let orderTrackingId: string | null = tx.reference ?? null;
+  if (!orderTrackingId && tx.metadata) {
+    try { orderTrackingId = (JSON.parse(tx.metadata as string) as any)?.orderTrackingId ?? null; } catch { /* ignore */ }
+  }
+  if (!orderTrackingId) {
+    res.status(400).json({ error: "No gateway reference on this transaction — use manual Confirm instead" }); return;
+  }
+
+  const confirmed = await confirmPesapalPayment(orderTrackingId, tx.transactionId);
+  const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+  res.json({ confirmed, transaction: toTxResponse(updated) });
 });
 
 router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Promise<void> => {

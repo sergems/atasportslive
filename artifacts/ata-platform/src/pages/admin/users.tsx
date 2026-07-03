@@ -10,7 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
   CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet, KeyRound,
-  History, TrendingUp, TrendingDown, ArrowLeftRight, AlertCircle, ChevronLeft, ChevronRight
+  History, TrendingUp, TrendingDown, ArrowLeftRight, AlertCircle, ChevronLeft, ChevronRight,
+  Check, XCircle, RefreshCw, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -454,8 +455,97 @@ const STATUS_STYLE: Record<string, string> = {
   approved:  'bg-blue-500/15 text-blue-400 border-blue-500/30',
 };
 
+// ── Inline action buttons for a single transaction ──────────────────────────
+
+type TxRow = {
+  id: number; transactionId: string; type: string; amount: number;
+  status: string; description: string | null; paymentMethod: string | null;
+  reference: string | null; createdAt: string;
+};
+
+function TxActions({ tx, userId, onDone }: { tx: TxRow; userId: number; onDone: () => void }) {
+  const queryClient = useQueryClient();
+
+  const run = useMutation({
+    mutationFn: async ({ url, method }: { url: string; method: string }) => {
+      const res = await fetch(url, { method, headers: authHeaders() });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Action failed');
+      return d;
+    },
+    onSuccess: (_, { url }) => {
+      // Determine a short label for the toast
+      const label =
+        url.includes('confirm')    ? 'Deposit confirmed ✓' :
+        url.includes('fail')       ? 'Marked as failed' :
+        url.includes('recheck')    ? 'Re-check complete' :
+        url.includes('approve-withdrawal') ? 'Withdrawal approved ✓' :
+        url.includes('reject-withdrawal')  ? 'Withdrawal rejected' :
+        url.includes('mark-paid')  ? 'Marked as paid ✓' : 'Done';
+      toast.success(label);
+      // Invalidate transaction list and wallet badge for this user
+      queryClient.invalidateQueries({ queryKey: ['admin-user-txs', userId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-wallet', userId] });
+      onDone();
+    },
+    onError: (e: any) => toast.error(e.message || 'Action failed'),
+  });
+
+  const btn = (label: string, icon: React.ReactNode, url: string, method: string, style: string) => (
+    <button
+      disabled={run.isPending}
+      onClick={() => run.mutate({ url, method })}
+      title={label}
+      className={`flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border transition-colors disabled:opacity-40 ${style}`}
+    >
+      {run.isPending ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : icon}
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+
+  // Pending deposit
+  if (tx.type === 'deposit' && tx.status === 'pending') return (
+    <div className="flex items-center gap-1 shrink-0">
+      {btn('Confirm', <Check className="h-2.5 w-2.5" />,
+        `/api/wallet/admin/deposit/${tx.id}/confirm`, 'PATCH',
+        'border-teal-500/40 text-teal-400 hover:bg-teal-500/15')}
+      {btn('Fail', <XCircle className="h-2.5 w-2.5" />,
+        `/api/wallet/admin/deposit/${tx.id}/fail`, 'PATCH',
+        'border-red-500/40 text-red-400 hover:bg-red-500/15')}
+      {(tx.reference || tx.paymentMethod?.includes('pesapal')) && btn(
+        'Re-check', <RefreshCw className="h-2.5 w-2.5" />,
+        `/api/wallet/admin/deposit/${tx.id}/recheck`, 'POST',
+        'border-blue-500/40 text-blue-400 hover:bg-blue-500/15')}
+    </div>
+  );
+
+  // Pending withdrawal
+  if (tx.type === 'withdrawal' && tx.status === 'pending') return (
+    <div className="flex items-center gap-1 shrink-0">
+      {btn('Approve', <Check className="h-2.5 w-2.5" />,
+        `/api/wallet/admin/approve-withdrawal/${tx.id}`, 'PATCH',
+        'border-teal-500/40 text-teal-400 hover:bg-teal-500/15')}
+      {btn('Reject', <XCircle className="h-2.5 w-2.5" />,
+        `/api/wallet/admin/reject-withdrawal/${tx.id}`, 'PATCH',
+        'border-red-500/40 text-red-400 hover:bg-red-500/15')}
+    </div>
+  );
+
+  // Approved withdrawal — finance marks it paid
+  if (tx.type === 'withdrawal' && tx.status === 'approved') return (
+    <div className="flex items-center gap-1 shrink-0">
+      {btn('Mark Paid', <Check className="h-2.5 w-2.5" />,
+        `/api/wallet/finance/mark-paid/${tx.id}`, 'PATCH',
+        'border-teal-500/40 text-teal-400 hover:bg-teal-500/15')}
+    </div>
+  );
+
+  return null;
+}
+
 function UserTransactionsPanel({ userId, userName, onClose }: { userId: number; userName: string; onClose: () => void }) {
   const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-user-txs', userId, page],
@@ -463,11 +553,7 @@ function UserTransactionsPanel({ userId, userName, onClose }: { userId: number; 
       const res = await fetch(`/api/admin/users/${userId}/transactions?page=${page}`, { headers: authHeaders() });
       if (!res.ok) throw new Error('Failed to load transactions');
       return res.json() as Promise<{
-        transactions: Array<{
-          id: number; transactionId: string; type: string; amount: number;
-          status: string; description: string | null; paymentMethod: string | null;
-          reference: string | null; createdAt: string;
-        }>;
+        transactions: TxRow[];
         total: number;
         page: number;
       }>;
@@ -476,6 +562,10 @@ function UserTransactionsPanel({ userId, userName, onClose }: { userId: number; 
   });
 
   const totalPages = data ? Math.ceil(data.total / 20) : 1;
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-user-txs', userId] });
+  };
 
   return (
     <div className="bg-slate-950 border border-slate-700 rounded mt-2 shadow-lg overflow-hidden">
@@ -491,9 +581,14 @@ function UserTransactionsPanel({ userId, userName, onClose }: { userId: number; 
             <span className="text-[10px] text-slate-600">({data.total} total)</span>
           )}
         </div>
-        <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
-          <X className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button onClick={refresh} title="Refresh" className="text-slate-500 hover:text-blue-400 transition-colors">
+            <RefreshCw className="h-3 w-3" />
+          </button>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Transactions */}
@@ -509,7 +604,7 @@ function UserTransactionsPanel({ userId, userName, onClose }: { userId: number; 
       ) : (
         <div className="divide-y divide-slate-800/60">
           {data.transactions.map(tx => (
-            <div key={tx.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-900/60 transition-colors">
+            <div key={tx.id} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-900/60 transition-colors">
               {/* Icon */}
               <div className="shrink-0">{txIcon(tx.type)}</div>
 
@@ -518,7 +613,7 @@ function UserTransactionsPanel({ userId, userName, onClose }: { userId: number; 
                 <div className="text-[10px] font-semibold text-slate-200 truncate">
                   {TX_TYPE_LABELS[tx.type] ?? tx.type}
                   {tx.paymentMethod && tx.paymentMethod !== 'internal' && (
-                    <span className="text-slate-500 font-normal ml-1">via {tx.paymentMethod}</span>
+                    <span className="text-slate-500 font-normal ml-1">via {tx.paymentMethod.replace(/_/g, ' ')}</span>
                   )}
                 </div>
                 {tx.description && (
@@ -528,6 +623,9 @@ function UserTransactionsPanel({ userId, userName, onClose }: { userId: number; 
                   <div className="text-[9px] text-slate-600 font-mono">{tx.transactionId}</div>
                 )}
               </div>
+
+              {/* Action buttons — only for actionable states */}
+              <TxActions tx={tx} userId={userId} onDone={refresh} />
 
               {/* Status */}
               <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wider border rounded px-1 py-0 ${STATUS_STYLE[tx.status] ?? 'bg-slate-800 text-slate-400 border-slate-700'}`}>
