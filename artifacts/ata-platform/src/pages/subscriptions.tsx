@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGetWallet } from '@workspace/api-client-react';
 import { useAuth } from '@/lib/auth';
+import { useAuthStore } from '@/lib/auth-store';
 import { useLocation } from 'wouter';
 import {
   Check, Crown, Zap, Calendar, CalendarDays, Sparkles,
@@ -33,7 +34,7 @@ async function fetchActive(): Promise<{
   expiresAt?: string;
   secondsRemaining?: number;
 }> {
-  const token = localStorage.getItem('auth_token');
+  const token = useAuthStore.getState().token;
   const r = await fetch('/api/subscriptions/active', {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -54,7 +55,7 @@ function friendlyError(raw: string | undefined): string {
 }
 
 async function purchaseSubscription(subscriptionType: string): Promise<void> {
-  const token = localStorage.getItem('auth_token');
+  const token = useAuthStore.getState().token;
   const r = await fetch('/api/subscriptions/purchase', {
     method: 'POST',
     headers: {
