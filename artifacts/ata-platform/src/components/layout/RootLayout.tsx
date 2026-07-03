@@ -36,7 +36,7 @@ function MobileBottomNav() {
 
   if (isAuthenticated) {
     const tabs = [
-      { href: '/dashboard', label: 'Home',    icon: LayoutDashboard, badge: unreadCount },
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: unreadCount },
       { href: '/live',      label: 'Live',    icon: Radio,  pulse: isLive },
       { href: '/streams',   label: 'Streams', icon: Film },
       { href: '/games',     label: 'Games',   icon: Swords },

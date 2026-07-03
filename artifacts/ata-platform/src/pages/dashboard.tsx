@@ -87,61 +87,57 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <div className="max-w-3xl mx-auto space-y-3">
 
       {/* ── Hero greeting ─────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/40 px-5 py-6 sm:px-7 sm:py-7">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-teal-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-8 left-0 h-32 w-64 rounded-full bg-amber-500/5 blur-2xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/40 px-4 py-4">
+        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-teal-500/10 blur-3xl" />
 
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="relative flex items-center justify-between gap-3">
           <div>
-            <p className="text-slate-400 text-sm mb-0.5">{greeting} 👋</p>
-            <h1 className="text-2xl font-bold text-white tracking-tight">{firstName}</h1>
-            <p className="text-slate-500 text-xs mt-1">Welcome back to ATA Sports Live</p>
+            <p className="text-slate-400 text-xs">{greeting} 👋</p>
+            <h1 className="text-xl font-bold text-white tracking-tight leading-tight">{firstName}</h1>
           </div>
 
-          <div className="sm:text-right">
-            <p className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Cash Balance</p>
+          <div className="text-right shrink-0">
+            <p className="text-slate-500 text-[9px] uppercase tracking-widest">Cash Balance</p>
             {loadingWallet ? (
-              <Skeleton className="h-9 w-28 bg-slate-800 rounded-lg" />
+              <Skeleton className="h-7 w-24 bg-slate-800 rounded-lg mt-0.5" />
             ) : (
-              <div className="text-3xl font-bold font-mono text-teal-400 leading-none">
+              <div className="text-2xl font-bold font-mono text-teal-400 leading-tight">
                 ${wallet?.balance?.toFixed(2) ?? '0.00'}
               </div>
             )}
             {!loadingWallet && (wallet?.bonusBalance ?? 0) > 0 && (
-              <div className="flex items-center gap-1.5 mt-1.5 sm:justify-end">
-                <Gift className="h-3 w-3 text-yellow-400" />
-                <span className="font-mono text-sm font-bold text-yellow-400">
-                  ${(wallet?.bonusBalance ?? 0).toFixed(2)}
-                </span>
-                <span className="text-[10px] text-yellow-600">bonus</span>
+              <div className="flex items-center gap-1 justify-end mt-0.5">
+                <Gift className="h-2.5 w-2.5 text-yellow-400" />
+                <span className="font-mono text-xs font-bold text-yellow-400">${(wallet?.bonusBalance ?? 0).toFixed(2)}</span>
+                <span className="text-[9px] text-yellow-600">bonus</span>
               </div>
             )}
             <Link href="/wallet">
-              <span className="inline-flex items-center gap-1 mt-2 text-[11px] text-teal-500 hover:text-teal-300 transition-colors cursor-pointer">
-                Manage wallet <ChevronRight className="h-3 w-3" />
+              <span className="inline-flex items-center gap-0.5 mt-1 text-[10px] text-teal-500 hover:text-teal-300 transition-colors cursor-pointer">
+                Manage wallet <ChevronRight className="h-2.5 w-2.5" />
               </span>
             </Link>
           </div>
         </div>
 
         {!isAdmin && (
-          <div className="relative mt-5 flex flex-wrap gap-2">
+          <div className="relative mt-3 flex gap-1.5">
             <Link href="/wallet">
-              <div className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-semibold text-xs px-3.5 py-2 transition-all cursor-pointer">
-                <ArrowDownCircle className="h-3.5 w-3.5" /> Deposit
+              <div className="inline-flex items-center gap-1 rounded-lg bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-semibold text-xs px-3 py-1.5 transition-all cursor-pointer">
+                <ArrowDownCircle className="h-3 w-3" /> Deposit
               </div>
             </Link>
             <Link href="/live">
-              <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3.5 py-2 border border-slate-700 transition-all cursor-pointer">
-                <Radio className="h-3.5 w-3.5 text-red-400" /> Watch Live
+              <div className="inline-flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3 py-1.5 border border-slate-700 transition-all cursor-pointer">
+                <Radio className="h-3 w-3 text-red-400" /> Watch Live
               </div>
             </Link>
             <Link href="/games">
-              <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3.5 py-2 border border-slate-700 transition-all cursor-pointer">
-                <Swords className="h-3.5 w-3.5 text-amber-400" /> Place Bet
+              <div className="inline-flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3 py-1.5 border border-slate-700 transition-all cursor-pointer">
+                <Swords className="h-3 w-3 text-amber-400" /> Place Bet
               </div>
             </Link>
           </div>
@@ -172,69 +168,65 @@ export default function Dashboard() {
       )}
 
       {/* ── Stat cards ────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         {/* Available */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Available</p>
-            <div className="h-6 w-6 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-              <Wallet className="h-3 w-3 text-teal-400" />
-            </div>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5 flex items-center gap-3">
+          <div className="h-7 w-7 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <Wallet className="h-3.5 w-3.5 text-teal-400" />
           </div>
-          {loadingWallet ? (
-            <Skeleton className="h-6 w-20 bg-slate-800 rounded" />
-          ) : (
-            <p className="text-lg font-bold font-mono text-white">${wallet?.availableBalance?.toFixed(2) ?? '0.00'}</p>
-          )}
-          <p className="text-slate-600 text-[10px] mt-1">Cash ready to use</p>
+          <div className="min-w-0">
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">Available</p>
+            {loadingWallet ? (
+              <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
+            ) : (
+              <p className="text-base font-bold font-mono text-white leading-tight">${wallet?.availableBalance?.toFixed(2) ?? '0.00'}</p>
+            )}
+          </div>
         </div>
 
         {/* Bonus */}
-        <div className={`rounded-2xl border px-4 py-4 transition-colors ${(wallet?.bonusBalance ?? 0) > 0 ? 'border-yellow-500/30 bg-yellow-950/10' : 'border-slate-800 bg-slate-900/80'}`}>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Bonus</p>
-            <div className={`h-6 w-6 rounded-lg flex items-center justify-center ${(wallet?.bonusBalance ?? 0) > 0 ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-slate-800 border border-slate-700'}`}>
-              <Gift className={`h-3 w-3 ${(wallet?.bonusBalance ?? 0) > 0 ? 'text-yellow-400' : 'text-slate-600'}`} />
-            </div>
+        <div className={`rounded-xl border px-3 py-2.5 flex items-center gap-3 transition-colors ${(wallet?.bonusBalance ?? 0) > 0 ? 'border-yellow-500/30 bg-yellow-950/10' : 'border-slate-800 bg-slate-900/80'}`}>
+          <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${(wallet?.bonusBalance ?? 0) > 0 ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-slate-800 border border-slate-700'}`}>
+            <Gift className={`h-3.5 w-3.5 ${(wallet?.bonusBalance ?? 0) > 0 ? 'text-yellow-400' : 'text-slate-600'}`} />
           </div>
-          {loadingWallet ? (
-            <Skeleton className="h-6 w-20 bg-slate-800 rounded" />
-          ) : (
-            <p className={`text-lg font-bold font-mono ${(wallet?.bonusBalance ?? 0) > 0 ? 'text-yellow-400' : 'text-slate-600'}`}>${(wallet?.bonusBalance ?? 0).toFixed(2)}</p>
-          )}
-          <p className="text-slate-600 text-[10px] mt-1">Streams only · 90d expiry</p>
+          <div className="min-w-0">
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">Bonus</p>
+            {loadingWallet ? (
+              <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
+            ) : (
+              <p className={`text-base font-bold font-mono leading-tight ${(wallet?.bonusBalance ?? 0) > 0 ? 'text-yellow-400' : 'text-slate-600'}`}>${(wallet?.bonusBalance ?? 0).toFixed(2)}</p>
+            )}
+          </div>
         </div>
 
         {/* In Bets */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">In Bets</p>
-            <div className="h-6 w-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <Activity className="h-3 w-3 text-amber-400" />
-            </div>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5 flex items-center gap-3">
+          <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+            <Activity className="h-3.5 w-3.5 text-amber-400" />
           </div>
-          {loadingWallet ? (
-            <Skeleton className="h-6 w-20 bg-slate-800 rounded" />
-          ) : (
-            <p className="text-lg font-bold font-mono text-white">${wallet?.pendingBalance?.toFixed(2) ?? '0.00'}</p>
-          )}
-          <p className="text-slate-600 text-[10px] mt-1">Locked in markets</p>
+          <div className="min-w-0">
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">In Bets</p>
+            {loadingWallet ? (
+              <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
+            ) : (
+              <p className="text-base font-bold font-mono text-white leading-tight">${wallet?.pendingBalance?.toFixed(2) ?? '0.00'}</p>
+            )}
+          </div>
         </div>
 
         {/* Withdrawable */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Withdrawable</p>
-            <div className="h-6 w-6 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-              <TrendingUp className="h-3 w-3 text-teal-400" />
-            </div>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5 flex items-center gap-3">
+          <div className="h-7 w-7 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+            <TrendingUp className="h-3.5 w-3.5 text-teal-400" />
           </div>
-          {loadingWallet ? (
-            <Skeleton className="h-6 w-20 bg-slate-800 rounded" />
-          ) : (
-            <p className="text-lg font-bold font-mono text-white">${wallet?.withdrawableBalance?.toFixed(2) ?? '0.00'}</p>
-          )}
-          <p className="text-slate-600 text-[10px] mt-1">Ready to withdraw</p>
+          <div className="min-w-0">
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">Withdrawable</p>
+            {loadingWallet ? (
+              <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
+            ) : (
+              <p className="text-base font-bold font-mono text-white leading-tight">${wallet?.withdrawableBalance?.toFixed(2) ?? '0.00'}</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -247,9 +239,9 @@ export default function Dashboard() {
           { href: '/fixtures',label: 'Fixtures', icon: Zap,    color: 'text-teal-400',   bg: 'bg-teal-500/10 border-teal-500/20' },
         ].map(({ href, label, icon: Icon, color, bg }) => (
           <Link key={href} href={href}>
-            <div className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border ${bg} py-3.5 cursor-pointer hover:brightness-110 active:scale-95 transition-all`}>
-              <Icon className={`h-4.5 w-4.5 ${color}`} />
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${color}`}>{label}</span>
+            <div className={`flex flex-col items-center justify-center gap-1 rounded-xl border ${bg} py-2.5 cursor-pointer hover:brightness-110 active:scale-95 transition-all`}>
+              <Icon className={`h-4 w-4 ${color}`} />
+              <span className={`text-[9px] font-bold uppercase tracking-wider ${color}`}>{label}</span>
             </div>
           </Link>
         ))}
