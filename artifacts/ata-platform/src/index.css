@@ -367,3 +367,16 @@
     inset: -1px;
   }
 }
+
+/* ── Mobile safe-area top bar ─────────────────────────────────────────────────
+   On mobile, adds padding-top to the sticky navbar equal to the device's safe
+   area inset (notch / Dynamic Island) with a minimum of 28px (~7mm) so the
+   navbar never touches the phone's status bar. The header's own dark background
+   fills that space, creating a clean black bar on top.
+   viewport-fit=cover in index.html is required for env() to work.
+────────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .safe-area-header {
+    padding-top: max(env(safe-area-inset-top), 28px);
+  }
+}
