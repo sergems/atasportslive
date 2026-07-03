@@ -6,7 +6,8 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useLocation } from 'wouter';
 import {
   Check, Crown, Zap, Calendar, CalendarDays, Sparkles,
-  Wallet, AlertTriangle, Clock, Shield, XCircle, Loader2
+  Wallet, AlertTriangle, Clock, Shield, XCircle, Loader2,
+  Radio, CheckCircle2, Ban
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -138,6 +139,13 @@ function formatTimeLeft(seconds: number): string {
   return `${m}m remaining`;
 }
 
+const PLAN_TOTAL_SECONDS: Record<string, number> = {
+  daily:   86_400,
+  weekly:  604_800,
+  monthly: 2_592_000,
+  yearly:  31_536_000,
+};
+
 // ── Page component ────────────────────────────────────────────────────────
 
 export default function Subscriptions() {
@@ -223,27 +231,100 @@ export default function Subscriptions() {
         </p>
       </div>
 
-      {/* ── Active subscription banner ──────────────────────────────────── */}
-      {active?.hasSubscription && (
-        <div className="relative overflow-hidden rounded-2xl border border-teal-500/30 bg-gradient-to-r from-teal-900/40 to-slate-900 p-5">
-          <div className="absolute inset-0 bg-teal-500/5" />
-          <div className="relative flex items-center gap-4">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-teal-500/20 border border-teal-500/40 flex items-center justify-center">
-              <Shield className="h-5 w-5 text-teal-400" />
+      {/* ── Subscription status card ────────────────────────────────────── */}
+      {activeLoading ? (
+        <div className="h-40 rounded-2xl bg-slate-800/50 animate-pulse" />
+      ) : active?.hasSubscription ? (() => {
+        const planKey = active.subscriptionType as keyof typeof PLAN_META;
+        const meta = PLAN_META[planKey];
+        const Icon = meta?.icon ?? Shield;
+        const totalSec = PLAN_TOTAL_SECONDS[planKey] ?? PLAN_TOTAL_SECONDS.daily;
+        const remaining = active.secondsRemaining ?? 0;
+        const usedPct = Math.max(0, Math.min(100, Math.round((1 - remaining / totalSec) * 100)));
+        const expiryDate = active.expiresAt
+          ? new Date(active.expiresAt).toLocaleDateString('en-UG', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+          : null;
+
+        return (
+          <div className="relative overflow-hidden rounded-2xl border border-teal-500/30 bg-gradient-to-br from-teal-950/60 via-slate-900 to-slate-900 p-6">
+            <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-teal-500/10 blur-3xl" />
+
+            <div className="relative">
+              {/* Top row */}
+              <div className="flex items-start justify-between gap-4 mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0">
+                    <Icon className="h-6 w-6 text-teal-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-white font-bold text-lg leading-tight">
+                        {meta?.label ?? planKey} Plan
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-400 text-[10px] font-bold uppercase tracking-widest">
+                        <CheckCircle2 className="h-2.5 w-2.5" /> Active
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-xs">{meta?.duration} · Unlimited stream access</p>
+                  </div>
+                </div>
+                <a href="/live">
+                  <div className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs px-3.5 py-2 transition-all active:scale-95 cursor-pointer">
+                    <Radio className="h-3.5 w-3.5" /> Watch Live
+                  </div>
+                </a>
+              </div>
+
+              {/* Stats row */}
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-3 py-2.5 text-center">
+                  <Clock className="h-3.5 w-3.5 mx-auto mb-1 text-teal-400" />
+                  <div className="font-bold text-sm text-white">{formatTimeLeft(remaining)}</div>
+                  <div className="text-slate-500 text-[10px] mt-0.5">Time Left</div>
+                </div>
+                <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-3 py-2.5 text-center">
+                  <Calendar className="h-3.5 w-3.5 mx-auto mb-1 text-amber-400" />
+                  <div className="font-bold text-sm text-white">{usedPct}%</div>
+                  <div className="text-slate-500 text-[10px] mt-0.5">Used</div>
+                </div>
+                <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-3 py-2.5 text-center">
+                  <Shield className="h-3.5 w-3.5 mx-auto mb-1 text-violet-400" />
+                  <div className="font-bold text-sm text-white capitalize">{planKey ?? '—'}</div>
+                  <div className="text-slate-500 text-[10px] mt-0.5">Tier</div>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-[10px] text-slate-500">
+                  <span>Started</span>
+                  <span>{usedPct}% elapsed</span>
+                  <span>Expires</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-teal-500 to-teal-400 transition-all duration-500"
+                    style={{ width: `${usedPct}%` }}
+                  />
+                </div>
+                {expiryDate && (
+                  <p className="text-right text-[10px] text-slate-500">
+                    Expires <span className="text-slate-300 font-medium">{expiryDate}</span>
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">
-                Active {PLAN_META[active.subscriptionType as keyof typeof PLAN_META]?.label ?? active.subscriptionType} Subscription
-              </p>
-              <p className="text-sm text-teal-400 flex items-center gap-1.5 mt-0.5">
-                <Clock className="h-3.5 w-3.5 shrink-0" />
-                {active.secondsRemaining ? formatTimeLeft(active.secondsRemaining) : ''}
-              </p>
-            </div>
-            <Badge className="bg-teal-500/20 text-teal-300 border-teal-500/30 text-xs font-semibold">
-              ACTIVE
-            </Badge>
           </div>
+        );
+      })() : (
+        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 py-8 px-6 text-center">
+          <div className="w-11 h-11 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-1">
+            <Ban className="h-5 w-5 text-slate-600" />
+          </div>
+          <p className="text-white font-semibold">No Active Subscription</p>
+          <p className="text-slate-500 text-sm max-w-xs">
+            You don't have an active plan. Pick one below to unlock all live streams instantly.
+          </p>
         </div>
       )}
 
