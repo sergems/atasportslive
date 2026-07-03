@@ -170,29 +170,29 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             {/* Brand */}
-            <div>
+            <div className="text-center md:text-left">
               <p className="text-sm text-slate-400 leading-relaxed">
                 ATA produces, and promotes sporting events in Africa. We bring live sporting events to our sports' fans. We are one of Africa's largest online streaming providers of sports programming; streaming virtually every major sports event on the continent.
               </p>
             </div>
 
             {/* General Contact */}
-            <div>
+            <div className="text-center md:text-left">
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">General Contact</h3>
               <ul className="space-y-3 text-sm text-slate-400">
-                <li className="flex items-start gap-2">
+                <li className="flex items-start gap-2 justify-center md:justify-start">
                   <MapPin className="h-4 w-4 text-teal-500 mt-0.5 shrink-0" />
                   <span>Nsambya, Kampala, Uganda</span>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 justify-center md:justify-start">
                   <Phone className="h-4 w-4 text-teal-500 shrink-0" />
                   <a href="tel:+256788663317" className="hover:text-teal-400 transition-colors">+256 788 663 317</a>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 justify-center md:justify-start">
                   <Phone className="h-4 w-4 text-teal-500 shrink-0" />
                   <a href="tel:+256705663317" className="hover:text-teal-400 transition-colors">+256 705 663 317</a>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 justify-center md:justify-start">
                   <Mail className="h-4 w-4 text-teal-500 shrink-0" />
                   <a href="mailto:info@atasportslive.com" className="hover:text-teal-400 transition-colors">info@atasportslive.com</a>
                 </li>
@@ -200,14 +200,14 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Account Opening + Players & Athletes */}
-            <div>
+            <div className="text-center md:text-left">
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Account Opening</h3>
               <ul className="space-y-3 text-sm text-slate-400">
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 justify-center md:justify-start">
                   <Phone className="h-4 w-4 text-amber-500 shrink-0" />
                   <a href="tel:+256759275456" className="hover:text-amber-400 transition-colors">+256 759 275 456</a>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 justify-center md:justify-start">
                   <Mail className="h-4 w-4 text-amber-500 shrink-0" />
                   <a href="mailto:joel@atasportslive.com" className="hover:text-amber-400 transition-colors">joel@atasportslive.com</a>
                 </li>
@@ -215,7 +215,7 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
               <div className="mt-5 pt-4 border-t border-slate-800">
                 <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Players &amp; Athletes</h4>
                 <ul className="space-y-3 text-sm text-slate-400">
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-2 justify-center md:justify-start">
                     <Mail className="h-4 w-4 text-teal-500 shrink-0" />
                     <a href="mailto:paul@atasportslive.com" className="hover:text-teal-400 transition-colors">paul@atasportslive.com</a>
                   </li>
@@ -224,10 +224,10 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Join the Community — ATA Sports Live */}
-            <div>
+            <div className="text-center md:text-left">
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Join the Community</h3>
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">ATA Sports Live</p>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
                 <a
                   href="https://www.facebook.com/profile.php?id=61567116955397"
                   target="_blank" rel="noopener noreferrer"
@@ -275,7 +275,7 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
           {/* Floating Partners Band */}
           <div className="mt-10 rounded-xl border border-slate-700/60 bg-slate-800/50 backdrop-blur-sm px-6 py-5">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 text-center">Our Partners</p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-start sm:items-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
               {/* Uganda Boxing Federation */}
               <div className="flex flex-col items-center gap-2 min-w-[160px]">
                 <p className="text-xs font-medium text-slate-300">Uganda Boxing Federation</p>
@@ -315,7 +315,7 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Policy Links + Copyright */}
-          <div className="mt-10 pt-4 border-t border-slate-800 flex flex-wrap gap-x-4 gap-y-1 justify-center items-center text-xs text-slate-500">
+          <div className="mt-10 pt-4 border-t border-slate-800 flex flex-wrap gap-x-4 gap-y-1 justify-center items-center text-xs text-slate-500 text-center">
             <Link href="/terms" className="hover:text-slate-300 transition-colors">Terms and Conditions</Link>
             <Link href="/privacy-policy" className="hover:text-slate-300 transition-colors">Privacy Policy</Link>
             <Link href="/refund-policy" className="hover:text-slate-300 transition-colors">Refund Policy</Link>

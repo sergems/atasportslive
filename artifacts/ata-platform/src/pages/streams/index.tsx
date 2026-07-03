@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { useListStreams, useCheckStreamAccess } from '@workspace/api-client-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Lock, LockOpen, Eye, Play, Radio, Film, Trophy, Users, TrendingUp, Flame } from 'lucide-react';
+import {
+  Lock, LockOpen, Eye, Play, Radio, Film, Trophy, Users, TrendingUp, Flame,
+  LayoutGrid, Target, Swords, Zap, Star, Circle, Medal,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 
@@ -38,6 +40,31 @@ const SPORT_COLOR: Record<string, string> = {
   basketball: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
   tournament: 'text-violet-400 bg-violet-500/10 border-violet-500/30',
 };
+
+// Active pill colours per sport
+const SPORT_PILL_ACTIVE: Record<string, string> = {
+  pool:       'bg-teal-500 text-slate-950 border-teal-400',
+  boxing:     'bg-red-500 text-white border-red-400',
+  football:   'bg-emerald-500 text-slate-950 border-emerald-400',
+  athletics:  'bg-orange-500 text-slate-950 border-orange-400',
+  basketball: 'bg-amber-500 text-slate-950 border-amber-400',
+  tournament: 'bg-violet-500 text-white border-violet-400',
+};
+
+const SPORT_ICON: Record<string, React.ElementType> = {
+  pool:       Target,
+  boxing:     Swords,
+  football:   Star,
+  athletics:  Zap,
+  basketball: Circle,
+  tournament: Trophy,
+};
+
+const STATUS_FILTERS = [
+  { value: 'all',      label: 'All',      icon: LayoutGrid },
+  { value: 'live',     label: 'Live',     icon: Radio },
+  { value: 'upcoming', label: 'Upcoming', icon: Medal },
+];
 
 function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAuthenticated: boolean; isAdmin: boolean }) {
   const isPaid = !!stream.accessPrice && stream.accessPrice > 0;
@@ -80,12 +107,12 @@ function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAu
             </div>
           )}
 
-          {/* Dark gradient overlay at the bottom for readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent" />
 
           {/* Top-left: sport badge */}
           <div className="absolute top-2.5 left-2.5">
-            <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${sportPill}`}>
+            <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${sportPill}`}>
+              {(() => { const Icon = SPORT_ICON[stream.sport]; return Icon ? <Icon className="h-2.5 w-2.5" /> : null; })()}
               {stream.sport}
             </span>
           </div>
@@ -110,7 +137,6 @@ function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAu
             )}
           </div>
 
-          {/* Bottom-right: play icon overlay on hover */}
           {!isEnded && (
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <div className="h-12 w-12 rounded-full bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
@@ -119,7 +145,6 @@ function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAu
             </div>
           )}
 
-          {/* Bottom-left: viewer count if live — admin only */}
           {isAdmin && isLive && (stream.viewerCount ?? 0) > 0 && (
             <div className="absolute bottom-2 left-2.5">
               <span className="flex items-center gap-1 text-[10px] text-white/70 font-mono">
@@ -140,7 +165,6 @@ function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAu
               {new Date(stream.startTime).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
 
-            {/* Access badge */}
             {isPaid && !isEnded ? (
               hasAccess ? (
                 <span className="flex items-center gap-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
@@ -178,7 +202,6 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-800">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-red-500/10 border border-red-500/20">
@@ -196,7 +219,6 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
         </div>
       </div>
 
-      {/* Ranked rows */}
       <div className="divide-y divide-slate-800/60">
         {live.map((stream, i) => {
           const style = RANK_STYLES[i] ?? {
@@ -213,10 +235,8 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
           return (
             <Link key={stream.id} href="/live">
               <div className={`group flex items-center gap-3 px-4 py-3 hover:bg-slate-800/40 transition-colors cursor-pointer ${style.bg}`}>
-                {/* Rank */}
                 <div className="w-7 shrink-0 text-center text-base leading-none select-none">{style.medal}</div>
 
-                {/* Thumbnail */}
                 <div className="h-10 w-16 shrink-0 rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
                   {stream.thumbnailUrl ? (
                     <img src={stream.thumbnailUrl} alt="" className="w-full h-full object-cover" />
@@ -227,10 +247,10 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
                   )}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={`shrink-0 inline-flex items-center rounded border px-1 py-px text-[9px] font-bold uppercase tracking-wider ${sportPill}`}>
+                    <span className={`shrink-0 inline-flex items-center gap-1 rounded border px-1 py-px text-[9px] font-bold uppercase tracking-wider ${sportPill}`}>
+                      {(() => { const Icon = SPORT_ICON[stream.sport]; return Icon ? <Icon className="h-2 w-2" /> : null; })()}
                       {stream.sport}
                     </span>
                   </div>
@@ -238,7 +258,6 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
                     {stream.title}
                   </p>
 
-                  {/* Progress bar */}
                   <div className="mt-1.5 h-1 rounded-full bg-slate-800 overflow-hidden w-full">
                     <div
                       className={`h-full rounded-full ${style.bar} transition-all duration-700`}
@@ -247,7 +266,6 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
                   </div>
                 </div>
 
-                {/* Viewer count — admin only */}
                 {isAdmin && (
                   <div className="shrink-0 flex flex-col items-end gap-0.5">
                     <div className={`flex items-center gap-1 font-mono font-bold text-sm ${style.text}`}>
@@ -278,8 +296,19 @@ function StreamCardSkeleton() {
   );
 }
 
+// Sport categories derived from the known sports — shown as pills with icons
+const SPORT_CATEGORIES = [
+  { value: 'pool',       label: 'Pool',       icon: Target  },
+  { value: 'boxing',     label: 'Boxing',     icon: Swords  },
+  { value: 'football',   label: 'Football',   icon: Star    },
+  { value: 'athletics',  label: 'Athletics',  icon: Zap     },
+  { value: 'basketball', label: 'Basketball', icon: Circle  },
+  { value: 'tournament', label: 'Tournament', icon: Trophy  },
+];
+
 export default function Streams() {
   const [status, setStatus] = useState<string>('all');
+  const [sport, setSport] = useState<string>('all');
   const { isAuthenticated, user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
@@ -294,30 +323,97 @@ export default function Streams() {
   });
 
   const { data: streamsData, isLoading } = useListStreams(
-    { status: status !== 'all' ? status : undefined, limit: 40 },
+    { status: status !== 'all' ? status : undefined, limit: 100 },
     { query: { refetchInterval: 30_000 } as any },
   );
 
-  const streams = (streamsData?.streams || []) as Stream[];
-  const liveCount = streams.filter((s) => s.status === 'live').length;
+  const allStreams = (streamsData?.streams || []) as Stream[];
+
+  // Client-side sport filter
+  const streams = sport === 'all' ? allStreams : allStreams.filter(s => s.sport === sport);
+
+  // Count per sport for badges (from the full unfiltered list)
+  const sportCounts = allStreams.reduce<Record<string, number>>((acc, s) => {
+    acc[s.sport] = (acc[s.sport] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-6">
       {/* Live leaderboard — only shown when there are live streams */}
-      {!isLoading && <LiveLeaderboard streams={streams} isAdmin={isAdmin} />}
+      {!isLoading && <LiveLeaderboard streams={allStreams} isAdmin={isAdmin} />}
 
-      {/* Filter */}
-      <div className="flex justify-end">
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[160px] bg-slate-900 border-slate-800 text-white text-sm h-8">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-900 border-slate-800 text-white">
-            <SelectItem value="all">All Streams</SelectItem>
-            <SelectItem value="live">Live Now</SelectItem>
-            <SelectItem value="upcoming">Upcoming</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* ── Filters ── */}
+      <div className="space-y-3">
+        {/* Status row */}
+        <div className="flex items-center gap-2">
+          {STATUS_FILTERS.map(({ value, label, icon: Icon }) => {
+            const active = status === value;
+            return (
+              <button
+                key={value}
+                onClick={() => setStatus(value)}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                  active
+                    ? 'bg-teal-500 text-slate-950 border-teal-400 shadow-sm shadow-teal-500/20'
+                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white hover:border-slate-600'
+                }`}
+              >
+                <Icon className="h-3 w-3" />
+                {label}
+                {value === 'live' && allStreams.filter(s => s.status === 'live').length > 0 && (
+                  <span className={`ml-0.5 rounded-full px-1.5 text-[9px] font-bold tabular-nums ${active ? 'bg-slate-950/20 text-slate-950' : 'bg-red-500/20 text-red-400'}`}>
+                    {allStreams.filter(s => s.status === 'live').length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sport category pills — scrollable on mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+          {/* "All Sports" pill */}
+          <button
+            onClick={() => setSport('all')}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+              sport === 'all'
+                ? 'bg-slate-200 text-slate-950 border-slate-300'
+                : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white hover:border-slate-600'
+            }`}
+          >
+            <LayoutGrid className="h-3 w-3" />
+            All Sports
+          </button>
+
+          {SPORT_CATEGORIES.filter(({ value }) => {
+            // Only show categories that exist in the current dataset (or all if no data yet)
+            return isLoading || (sportCounts[value] ?? 0) > 0;
+          }).map(({ value, label, icon: Icon }) => {
+            const active = sport === value;
+            const count = sportCounts[value] ?? 0;
+            const activeStyle = SPORT_PILL_ACTIVE[value] ?? 'bg-teal-500 text-slate-950 border-teal-400';
+            return (
+              <button
+                key={value}
+                onClick={() => setSport(active ? 'all' : value)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                  active
+                    ? `${activeStyle} shadow-sm`
+                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white hover:border-slate-600'
+                }`}
+              >
+                <Icon className="h-3 w-3" />
+                {label}
+                {count > 0 && (
+                  <span className={`ml-0.5 rounded-full px-1.5 text-[9px] font-bold tabular-nums ${active ? 'bg-black/20' : 'bg-slate-800 text-slate-500'}`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Grid */}
@@ -336,7 +432,7 @@ export default function Streams() {
           : (
             <div className="col-span-full py-20 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl text-sm">
               <Film className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              No streams found.
+              No streams found{sport !== 'all' ? ` for ${sport}` : ''}.
             </div>
           )}
       </div>
