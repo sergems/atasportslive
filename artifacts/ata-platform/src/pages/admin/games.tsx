@@ -19,7 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
-const SPORTS = ['pool', 'boxing', 'football', 'athletics', 'basketball'];
+const SPORTS = ['pool', 'boxing', 'darts', 'fifa', 'chess', 'futsal'];
 
 type GameType = 'single' | 'competition';
 

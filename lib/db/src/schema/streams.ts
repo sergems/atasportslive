@@ -2,7 +2,7 @@ import { pgTable, serial, text, timestamp, integer, numeric, pgEnum } from "driz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const sportEnum = pgEnum("sport_type", ["pool", "boxing", "football", "athletics", "basketball", "tournament", "other"]);
+export const sportEnum = pgEnum("sport_type", ["pool", "boxing", "darts", "fifa", "chess", "futsal", "tournament", "other"]);
 export const streamStatusEnum = pgEnum("stream_status", ["upcoming", "live", "ended", "cancelled"]);
 
 export const streamsTable = pgTable("streams", {

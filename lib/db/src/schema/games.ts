@@ -2,7 +2,7 @@ import { pgTable, serial, text, timestamp, numeric, integer, pgEnum, date } from
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const gameSportEnum = pgEnum("game_sport", ["pool", "boxing", "football", "athletics", "basketball"]);
+export const gameSportEnum = pgEnum("game_sport", ["pool", "boxing", "darts", "fifa", "chess", "futsal"]);
 export const gameStatusEnum = pgEnum("game_status", ["upcoming", "live", "completed", "cancelled"]);
 export const gameResultEnum = pgEnum("game_result", ["player_a_wins", "player_b_wins", "draw"]);
 

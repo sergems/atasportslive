@@ -46,11 +46,14 @@ interface Fixture {
 }
 
 const SPORT_COLORS: Record<string, { pill: string; dot: string; badge: string }> = {
-  pool:       { pill: 'text-teal-400 bg-teal-500/10 border-teal-500/30',         dot: 'bg-teal-400',     badge: 'bg-teal-500' },
-  boxing:     { pill: 'text-red-400 bg-red-500/10 border-red-500/30',            dot: 'bg-red-400',      badge: 'bg-red-500' },
-  football:   { pill: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', dot: 'bg-emerald-400', badge: 'bg-emerald-500' },
-  athletics:  { pill: 'text-orange-400 bg-orange-500/10 border-orange-500/30',   dot: 'bg-orange-400',  badge: 'bg-orange-500' },
-  basketball: { pill: 'text-amber-400 bg-amber-500/10 border-amber-500/30',      dot: 'bg-amber-400',   badge: 'bg-amber-500' },
+  pool:       { pill: 'text-teal-400 bg-teal-500/10 border-teal-500/30',         dot: 'bg-teal-400',      badge: 'bg-teal-500' },
+  boxing:     { pill: 'text-red-400 bg-red-500/10 border-red-500/30',            dot: 'bg-red-400',       badge: 'bg-red-500' },
+  darts:      { pill: 'text-violet-400 bg-violet-500/10 border-violet-500/30',   dot: 'bg-violet-400',    badge: 'bg-violet-500' },
+  fifa:       { pill: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', dot: 'bg-emerald-400',  badge: 'bg-emerald-500' },
+  chess:      { pill: 'text-blue-400 bg-blue-500/10 border-blue-500/30',         dot: 'bg-blue-400',      badge: 'bg-blue-500' },
+  futsal:     { pill: 'text-orange-400 bg-orange-500/10 border-orange-500/30',   dot: 'bg-orange-400',    badge: 'bg-orange-500' },
+  tournament: { pill: 'text-amber-400 bg-amber-500/10 border-amber-500/30',      dot: 'bg-amber-400',     badge: 'bg-amber-500' },
+  other:      { pill: 'text-slate-400 bg-slate-500/10 border-slate-500/30',      dot: 'bg-slate-400',     badge: 'bg-slate-500' },
 };
 
 function getSportColor(sport: string) {

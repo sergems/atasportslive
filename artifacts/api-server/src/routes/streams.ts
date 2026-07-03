@@ -79,7 +79,7 @@ router.post("/", authMiddleware, requireRole("admin", "manager"), async (req: Au
     return;
   }
 
-  const GAME_SPORTS = ["pool", "boxing", "football", "athletics", "basketball"];
+  const GAME_SPORTS = ["pool", "boxing", "darts", "fifa", "chess", "futsal"];
   const createsGame = GAME_SPORTS.includes(sport);
 
   if (createsGame && (!playerA || !playerB)) {

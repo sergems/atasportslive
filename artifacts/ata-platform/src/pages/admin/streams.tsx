@@ -17,7 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
   ended: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
 };
 
-const SPORTS = ['pool', 'boxing', 'football', 'athletics', 'basketball', 'tournament'];
+const SPORTS = ['pool', 'boxing', 'darts', 'fifa', 'chess', 'futsal', 'tournament'];
 
 function defaultStartTime() {
   const d = new Date();

@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarClock, MapPin, ChevronRight, Tv, Swords } from 'lucide-react';
+import { CalendarClock, MapPin, ChevronRight, Tv, Swords, Filter } from 'lucide-react';
 import { useAdSlots, AdCard, HorizontalAdBanner } from '@/components/ads';
 
 interface UpcomingStream {
@@ -45,11 +45,14 @@ interface UnifiedEvent {
 }
 
 const sportColor: Record<string, { pill: string; dot: string }> = {
-  pool:       { pill: 'text-teal-400 bg-teal-500/10 border-teal-500/30',       dot: 'bg-teal-400' },
-  boxing:     { pill: 'text-red-400 bg-red-500/10 border-red-500/30',          dot: 'bg-red-400' },
-  football:   { pill: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', dot: 'bg-emerald-400' },
-  athletics:  { pill: 'text-orange-400 bg-orange-500/10 border-orange-500/30', dot: 'bg-orange-400' },
-  basketball: { pill: 'text-amber-400 bg-amber-500/10 border-amber-500/30',    dot: 'bg-amber-400' },
+  pool:       { pill: 'text-teal-400 bg-teal-500/10 border-teal-500/30',         dot: 'bg-teal-400' },
+  boxing:     { pill: 'text-red-400 bg-red-500/10 border-red-500/30',            dot: 'bg-red-400' },
+  darts:      { pill: 'text-violet-400 bg-violet-500/10 border-violet-500/30',   dot: 'bg-violet-400' },
+  fifa:       { pill: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', dot: 'bg-emerald-400' },
+  chess:      { pill: 'text-blue-400 bg-blue-500/10 border-blue-500/30',         dot: 'bg-blue-400' },
+  futsal:     { pill: 'text-orange-400 bg-orange-500/10 border-orange-500/30',   dot: 'bg-orange-400' },
+  tournament: { pill: 'text-amber-400 bg-amber-500/10 border-amber-500/30',      dot: 'bg-amber-400' },
+  other:      { pill: 'text-slate-400 bg-slate-500/10 border-slate-500/30',      dot: 'bg-slate-400' },
 };
 
 function formatCountdown(seconds: number): string {
@@ -172,7 +175,7 @@ export default function Upcoming() {
   useSEO({
     title: 'Upcoming Events',
     path: '/upcoming',
-    description: 'Upcoming Pool and Boxing matches streaming live on ATA Sports Live. View schedules, countdowns, and book your stream access in advance.',
+    description: 'Upcoming Pool, Boxing, Darts, FIFA, Chess and Futsal matches streaming live on ATA Sports Live. View schedules, countdowns, and book your stream access in advance.',
     jsonLd: makeBreadcrumb([
       { name: 'Home', url: SITE_URL },
       { name: 'Upcoming Events', url: `${SITE_URL}/upcoming` },
@@ -182,7 +185,21 @@ export default function Upcoming() {
   const { events, isLoading } = useUpcomingEvents();
   const adSlots = useAdSlots();
   const now = new Date();
-  const grouped = groupByDate(events);
+
+  const [sportFilter, setSportFilter] = useState('all');
+
+  const availableSports = useMemo(() => {
+    const seen = new Set<string>();
+    events.forEach((e) => seen.add(e.sport));
+    return ['all', ...Array.from(seen)];
+  }, [events]);
+
+  const filteredEvents = useMemo(() => {
+    if (sportFilter === 'all') return events;
+    return events.filter((e) => e.sport === sportFilter);
+  }, [events, sportFilter]);
+
+  const grouped = groupByDate(filteredEvents);
 
   const mainContent = (
     <div className="space-y-6">
@@ -194,8 +211,39 @@ export default function Upcoming() {
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase">Upcoming Events</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white uppercase">Upcoming Events</h1>
+          {!isLoading && filteredEvents.length > 0 && (
+            <span className="text-xs font-semibold bg-teal-500/20 text-teal-400 border border-teal-500/30 rounded-full px-2 py-0.5">
+              {filteredEvents.length}
+            </span>
+          )}
+        </div>
+        {!isLoading && availableSports.length > 2 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Filter className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+            {availableSports.map((s) => {
+              const sc = s === 'all' ? null : (sportColor[s] ?? { pill: 'text-slate-400 bg-slate-500/10 border-slate-500/30', dot: 'bg-slate-400' });
+              const active = sportFilter === s;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setSportFilter(s)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-all border ${
+                    active
+                      ? s === 'all'
+                        ? 'bg-teal-500 text-slate-950 border-teal-500'
+                        : `${sc!.pill} border-current`
+                      : 'text-slate-500 border-slate-800 hover:border-slate-700 hover:text-slate-300'
+                  }`}
+                >
+                  {s === 'all' ? 'All' : s.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -204,10 +252,14 @@ export default function Upcoming() {
             <Skeleton key={i} className="h-20 w-full rounded-2xl bg-slate-800" />
           ))}
         </div>
-      ) : events.length === 0 ? (
+      ) : filteredEvents.length === 0 ? (
         <div className="py-20 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
           <CalendarClock className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No upcoming events right now. Check back soon.</p>
+          <p className="text-sm">
+            {sportFilter === 'all'
+              ? 'No upcoming events right now. Check back soon.'
+              : `No upcoming ${sportFilter.toUpperCase()} events. Try another category.`}
+          </p>
         </div>
       ) : (
         <div className="space-y-8">
