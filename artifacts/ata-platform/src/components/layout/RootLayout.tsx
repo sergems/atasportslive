@@ -314,38 +314,13 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          {/* Policy Links */}
-          <div className="mt-10 pt-6 border-t border-slate-800 flex flex-wrap gap-x-6 gap-y-2 justify-center text-xs text-slate-500">
+          {/* Policy Links + Copyright */}
+          <div className="mt-10 pt-4 border-t border-slate-800 flex flex-wrap gap-x-4 gap-y-1 justify-center items-center text-xs text-slate-500">
             <Link href="/terms" className="hover:text-slate-300 transition-colors">Terms and Conditions</Link>
             <Link href="/privacy-policy" className="hover:text-slate-300 transition-colors">Privacy Policy</Link>
             <Link href="/refund-policy" className="hover:text-slate-300 transition-colors">Refund Policy</Link>
-          </div>
-
-          {/* Copyright + Social — centered full-width */}
-          <div className="mt-6 pt-6 border-t border-slate-800/60 flex flex-col items-center gap-3">
-            <p className="text-xs text-slate-500 text-center">
-              &copy; {new Date().getFullYear()} ATA Sports Live. All rights reserved.
-            </p>
-            <div className="flex items-center gap-3">
-              <a
-                href="https://www.facebook.com/profile.php?id=61567116955397"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="ATA on Facebook"
-                className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-200"
-              >
-                <FaFacebook className="h-4 w-4" />
-              </a>
-              <a
-                href="https://www.youtube.com/channel/UCCMb9rG7jg6g8ClKR-yBYWQ"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="ATA on YouTube"
-                className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white transition-all duration-200"
-              >
-                <FaYoutube className="h-4 w-4" />
-              </a>
-            </div>
+            <span className="text-slate-700">·</span>
+            <span>&copy; {new Date().getFullYear()} ATA Sports Live. All rights reserved.</span>
           </div>
         </div>
       </footer>
