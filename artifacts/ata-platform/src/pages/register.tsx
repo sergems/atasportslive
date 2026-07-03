@@ -40,6 +40,7 @@ export default function Register() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: '',
+      username: '',
       password: '',
       fullName: '',
       phone: '',
@@ -162,6 +163,29 @@ export default function Register() {
                     <FormControl>
                       <Input placeholder="m@example.com" type="email" className="bg-background/50 border-input text-white" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white">Username</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                        <Input
+                          placeholder="your_username"
+                          autoComplete="username"
+                          className="bg-background/50 border-input text-white pl-7"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        />
+                      </div>
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">Letters, numbers and underscores only. Used to log in.</p>
                     <FormMessage />
                   </FormItem>
                 )}

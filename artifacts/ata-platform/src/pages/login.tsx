@@ -11,9 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Mail, AtSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { GoogleLogin } from '@react-oauth/google';
+
+type LoginTab = 'email' | 'username';
 
 export default function Login() {
   useSEO({ title: 'Sign In', path: '/login', noindex: true });
@@ -23,6 +25,7 @@ export default function Login() {
   const loginMutation = useLogin();
   const [loginError, setLoginError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<LoginTab>('email');
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -46,6 +49,13 @@ export default function Login() {
     }
   }, [isAuthenticated, user, setLocation]);
 
+  // Clear identifier when switching tabs
+  const handleTabChange = (tab: LoginTab) => {
+    setActiveTab(tab);
+    form.setValue('identifier', '');
+    setLoginError(null);
+  };
+
   const onSubmit = (data: any) => {
     setLoginError(null);
     loginMutation.mutate({ data }, {
@@ -61,7 +71,7 @@ export default function Login() {
           setLocation(`/set-password?email=${encodeURIComponent(body.email)}`);
           return;
         }
-        const msg = body?.error || err?.message || 'Invalid email or password. Please try again.';
+        const msg = body?.error || err?.message || 'Invalid credentials. Please try again.';
         setLoginError(msg);
       }
     });
@@ -95,12 +105,13 @@ export default function Login() {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold tracking-tight text-white">Welcome back</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Sign in with your email or phone number
+            Sign in to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Google Sign-In */}
           {clientId && (
-            <div className="mb-4 flex flex-col items-center gap-3">
+            <div className="mb-5 flex flex-col items-center gap-3">
               <div className="flex justify-center w-full">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
@@ -114,11 +125,40 @@ export default function Login() {
               </div>
               <div className="flex items-center w-full gap-3">
                 <div className="flex-1 h-px bg-border/50" />
-                <span className="text-xs text-muted-foreground">or sign in with email / phone</span>
+                <span className="text-xs text-muted-foreground">or sign in with</span>
                 <div className="flex-1 h-px bg-border/50" />
               </div>
             </div>
           )}
+
+          {/* Email / Username tabs */}
+          <div className="flex rounded-lg bg-background/40 border border-border/40 p-1 mb-5">
+            <button
+              type="button"
+              onClick={() => handleTabChange('email')}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-all duration-200 ${
+                activeTab === 'email'
+                  ? 'bg-teal-500 text-slate-950 shadow-sm'
+                  : 'text-muted-foreground hover:text-white'
+              }`}
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Email
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('username')}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-all duration-200 ${
+                activeTab === 'username'
+                  ? 'bg-teal-500 text-slate-950 shadow-sm'
+                  : 'text-muted-foreground hover:text-white'
+              }`}
+            >
+              <AtSign className="h-3.5 w-3.5" />
+              Username
+            </button>
+          </div>
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -126,12 +166,14 @@ export default function Login() {
                 name="identifier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white">Email or Phone</FormLabel>
+                    <FormLabel className="text-white">
+                      {activeTab === 'email' ? 'Email or Phone' : 'Username'}
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="email@example.com or 07XXXXXXXX"
-                        type="text"
-                        autoComplete="username"
+                        placeholder={activeTab === 'email' ? 'email@example.com or 07XXXXXXXX' : 'your_username'}
+                        type={activeTab === 'email' ? 'text' : 'text'}
+                        autoComplete={activeTab === 'email' ? 'email' : 'username'}
                         className={`bg-background/50 border-input text-white ${loginError ? 'border-red-500/60' : ''}`}
                         {...field}
                         onChange={(e) => { field.onChange(e); setLoginError(null); }}
@@ -151,6 +193,7 @@ export default function Login() {
                       <Input
                         type="password"
                         placeholder="••••••••"
+                        autoComplete="current-password"
                         className={`bg-background/50 border-input text-white ${loginError ? 'border-red-500/60' : ''}`}
                         {...field}
                         onChange={(e) => { field.onChange(e); setLoginError(null); }}

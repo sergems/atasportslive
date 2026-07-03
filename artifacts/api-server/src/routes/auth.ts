@@ -55,14 +55,27 @@ function userPayload(user: typeof usersTable.$inferSelect) {
 }
 
 router.post("/register", async (req, res): Promise<void> => {
-  const { email, password, fullName, phone, referralCode } = req.body;
-  if (!email || !password || !fullName) {
-    res.status(400).json({ error: "email, password, fullName required" });
+  const { email, username, password, fullName, phone, referralCode } = req.body;
+  if (!email || !password || !fullName || !username) {
+    res.status(400).json({ error: "email, username, password, fullName required" });
     return;
   }
-  const existing = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-  if (existing.length > 0) {
+
+  // Validate username format
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+    res.status(400).json({ error: "Username must be 3–20 characters, letters/numbers/underscores only" });
+    return;
+  }
+
+  // Check uniqueness of email and username
+  const [existingEmail] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, email)).limit(1);
+  if (existingEmail) {
     res.status(409).json({ error: "Email already registered" });
+    return;
+  }
+  const [existingUsername] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username.toLowerCase())).limit(1);
+  if (existingUsername) {
+    res.status(409).json({ error: "Username already taken" });
     return;
   }
 
@@ -84,6 +97,7 @@ router.post("/register", async (req, res): Promise<void> => {
     .insert(usersTable)
     .values({
       email,
+      username: username.toLowerCase(),
       passwordHash,
       fullName,
       phone: phone || null,
@@ -107,7 +121,7 @@ router.post("/login", async (req, res): Promise<void> => {
     return;
   }
   const [user] = await db.select().from(usersTable)
-    .where(or(eq(usersTable.email, login), eq(usersTable.phone, login)))
+    .where(or(eq(usersTable.email, login), eq(usersTable.phone, login), eq(usersTable.username, login.toLowerCase())))
     .limit(1);
   if (!user) {
     res.status(401).json({ error: "Invalid credentials" });

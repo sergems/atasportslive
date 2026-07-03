@@ -16,6 +16,7 @@ export const usersTable = pgTable("users", {
   avatarUrl: text("avatar_url"),
   refreshToken: text("refresh_token"),
   sessionToken: text("session_token"),
+  username: text("username").unique(),
   googleId: text("google_id").unique(),
   mustSetPassword: boolean("must_set_password").notNull().default(false),
   referralCode: text("referral_code").unique(),
