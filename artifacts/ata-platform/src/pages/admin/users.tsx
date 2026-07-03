@@ -495,6 +495,7 @@ export default function AdminUsers() {
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
+                        {isAdmin && (
                         <Button
                           size="sm" variant="ghost"
                           onClick={() => { setResetPasswordFor(resetPasswordFor === user.id ? null : user.id); setWalletAdjustFor(null); setEditingPayoutFor(null); }}
@@ -503,6 +504,7 @@ export default function AdminUsers() {
                         >
                           <KeyRound className="h-3 w-3" />
                         </Button>
+                        )}
                         <Button
                           size="sm" variant="ghost"
                           onClick={() => handleSuspend(user.id, user.status === 'active')}
