@@ -43,6 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       enabled: !!token,
       queryKey: ['/api/auth/me'],
       retry: false,
+      staleTime: 0,
+      refetchInterval: 30_000,
+      refetchOnWindowFocus: true,
     }
   });
 
@@ -52,8 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     if (isError) {
       clearAuth();
+      setLocation('/login');
     }
-  }, [me, isError, setUser, clearAuth]);
+  }, [me, isError, setUser, clearAuth, setLocation]);
 
   const login = (newToken: string, newUser: any) => {
     setAuth(newToken, newUser);

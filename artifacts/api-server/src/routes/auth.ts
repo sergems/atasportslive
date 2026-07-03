@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import { db, usersTable, walletsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import {
   generateTokens,
   generateSessionToken,
@@ -100,12 +100,15 @@ router.post("/register", async (req, res): Promise<void> => {
 });
 
 router.post("/login", async (req, res): Promise<void> => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    res.status(400).json({ error: "email and password required" });
+  const { email, password, identifier } = req.body;
+  const login = (identifier || email || "").trim();
+  if (!login || !password) {
+    res.status(400).json({ error: "Email/phone and password are required" });
     return;
   }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
+  const [user] = await db.select().from(usersTable)
+    .where(or(eq(usersTable.email, login), eq(usersTable.phone, login)))
+    .limit(1);
   if (!user) {
     res.status(401).json({ error: "Invalid credentials" });
     return;

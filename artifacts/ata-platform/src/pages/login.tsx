@@ -27,7 +27,7 @@ export default function Login() {
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      identifier: '',
       password: '',
     },
   });
@@ -35,9 +35,9 @@ export default function Login() {
   const { user } = useAuth();
 
   const roleRedirect = (role?: string) => {
-    if (role === 'admin') return '/admin';
+    if (role === 'admin' || role === 'manager' || role === 'content_editor') return '/admin';
     if (role === 'finance') return '/finance/dashboard';
-    return '/streams';
+    return '/dashboard';
   };
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export default function Login() {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold tracking-tight text-white">Welcome back</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Enter your email to sign in to your account
+            Sign in with your email or phone number
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,7 +114,7 @@ export default function Login() {
               </div>
               <div className="flex items-center w-full gap-3">
                 <div className="flex-1 h-px bg-border/50" />
-                <span className="text-xs text-muted-foreground">or continue with email</span>
+                <span className="text-xs text-muted-foreground">or sign in with email / phone</span>
                 <div className="flex-1 h-px bg-border/50" />
               </div>
             </div>
@@ -123,14 +123,15 @@ export default function Login() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="email"
+                name="identifier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white">Email</FormLabel>
+                    <FormLabel className="text-white">Email or Phone</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="m@example.com"
-                        type="email"
+                        placeholder="email@example.com or 07XXXXXXXX"
+                        type="text"
+                        autoComplete="username"
                         className={`bg-background/50 border-input text-white ${loginError ? 'border-red-500/60' : ''}`}
                         {...field}
                         onChange={(e) => { field.onChange(e); setLoginError(null); }}

@@ -208,7 +208,7 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="hidden md:inline-flex">
+              <Link href="/login">
                 <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">Login</Button>
               </Link>
               <Link href="/register">
