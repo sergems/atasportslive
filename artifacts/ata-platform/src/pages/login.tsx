@@ -171,7 +171,7 @@ export default function Login() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder={activeTab === 'email' ? 'email@example.com or 07XXXXXXXX' : 'your_username'}
+                        placeholder={activeTab === 'email' ? 'email@example.com' : 'username'}
                         type={activeTab === 'email' ? 'text' : 'text'}
                         autoComplete={activeTab === 'email' ? 'email' : 'username'}
                         className={`bg-background/50 border-input text-white ${loginError ? 'border-red-500/60' : ''}`}
