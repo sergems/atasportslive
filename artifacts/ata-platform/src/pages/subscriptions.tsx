@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useGetWallet } from '@workspace/api-client-react';
-import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
+import { useLocation } from 'wouter';
 import {
   Check, Crown, Zap, Calendar, CalendarDays, Sparkles,
-  Wallet, AlertTriangle, Clock, Shield
+  Wallet, AlertTriangle, Clock, Shield, XCircle, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -132,6 +131,8 @@ export default function Subscriptions() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+  const [dialogError, setDialogError] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
 
   const { data: prices, isLoading: pricesLoading } = useQuery({
     queryKey: ['subscription-prices'],
@@ -158,21 +159,28 @@ export default function Subscriptions() {
   const mutation = useMutation({
     mutationFn: purchaseSubscription,
     onSuccess: () => {
-      toast.success('Subscription activated!', {
-        description: 'You now have full access to all live streams.',
-      });
       qc.invalidateQueries({ queryKey: ['subscription-active'] });
       qc.invalidateQueries({ queryKey: ['wallet'] });
+      setPendingPlan(null);
+      setDialogError(null);
+      setLocation('/live');
     },
     onError: (err: any) => {
-      toast.error('Purchase failed', { description: err?.message || 'Please try again.' });
+      setDialogError(err?.message || 'Purchase failed. Please try again.');
     },
   });
 
   const handleConfirm = () => {
     if (!pendingPlan) return;
+    setDialogError(null);
     mutation.mutate(pendingPlan);
-    setPendingPlan(null);
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    if (!open && !mutation.isPending) {
+      setPendingPlan(null);
+      setDialogError(null);
+    }
   };
 
   // Compute per-day cost for savings badges
@@ -340,67 +348,87 @@ export default function Subscriptions() {
       </p>
 
       {/* ── Confirmation dialog ─────────────────────────────────────────── */}
-      <AlertDialog open={!!pendingPlan} onOpenChange={(o) => { if (!o) setPendingPlan(null); }}>
+      <AlertDialog open={!!pendingPlan} onOpenChange={handleDialogClose}>
         <AlertDialogContent className="bg-slate-900 border-slate-700 max-w-md">
           <AlertDialogHeader>
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-amber-400" />
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border ${dialogError ? 'bg-red-500/20 border-red-500/30' : 'bg-amber-500/20 border-amber-500/30'}`}>
+                {dialogError
+                  ? <XCircle className="h-5 w-5 text-red-400" />
+                  : <AlertTriangle className="h-5 w-5 text-amber-400" />
+                }
               </div>
               <AlertDialogTitle className="text-white text-lg">
-                Confirm Subscription
+                {dialogError ? 'Purchase Failed' : 'Confirm Subscription'}
               </AlertDialogTitle>
             </div>
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-slate-400 text-sm">
-                <p>
-                  You are about to purchase a{' '}
-                  <span className="text-white font-semibold">
-                    {pendingPlan ? PLAN_META[pendingPlan as keyof typeof PLAN_META]?.label : ''} subscription
-                  </span>{' '}
-                  for{' '}
-                  <span className="text-white font-semibold font-mono">
-                    ${pendingPlan ? (prices?.[pendingPlan] ?? 0).toFixed(2) : '0.00'}
-                  </span>.
-                </p>
-                <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3 space-y-1.5 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Plan</span>
-                    <span className="text-white font-medium">
-                      {pendingPlan ? PLAN_META[pendingPlan as keyof typeof PLAN_META]?.label : ''} ({pendingPlan ? PLAN_META[pendingPlan as keyof typeof PLAN_META]?.duration : ''})
-                    </span>
+                {/* Error state */}
+                {dialogError ? (
+                  <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-4 space-y-1.5">
+                    <p className="text-red-400 font-medium">{dialogError}</p>
+                    <p className="text-slate-500 text-xs">Please check your wallet balance and try again, or top up your wallet first.</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Amount</span>
-                    <span className="text-white font-mono font-medium">
-                      ${pendingPlan ? (prices?.[pendingPlan] ?? 0).toFixed(2) : '0.00'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Wallet balance</span>
-                    <span className="text-white font-mono font-medium">
-                      ${Number(wallet?.balance ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-amber-400/80 text-xs flex items-start gap-1.5">
-                  <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
-                  This amount will be deducted from your wallet immediately. Bonus balance is used first. This purchase is non-refundable.
-                </p>
+                ) : (
+                  <>
+                    <p>
+                      You are about to purchase a{' '}
+                      <span className="text-white font-semibold">
+                        {pendingPlan ? PLAN_META[pendingPlan as keyof typeof PLAN_META]?.label : ''} subscription
+                      </span>{' '}
+                      for{' '}
+                      <span className="text-white font-semibold font-mono">
+                        ${pendingPlan ? (prices?.[pendingPlan] ?? 0).toFixed(2) : '0.00'}
+                      </span>.
+                    </p>
+                    <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-3 space-y-1.5 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Plan</span>
+                        <span className="text-white font-medium">
+                          {pendingPlan ? PLAN_META[pendingPlan as keyof typeof PLAN_META]?.label : ''} ({pendingPlan ? PLAN_META[pendingPlan as keyof typeof PLAN_META]?.duration : ''})
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Amount</span>
+                        <span className="text-white font-mono font-medium">
+                          ${pendingPlan ? (prices?.[pendingPlan] ?? 0).toFixed(2) : '0.00'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Spendable balance</span>
+                        <span className="text-white font-mono font-medium">
+                          ${(Number(wallet?.availableBalance ?? 0) + Number(wallet?.bonusBalance ?? 0)).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-amber-400/80 text-xs flex items-start gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+                      This amount will be deducted from your wallet immediately. Bonus balance is used first. This purchase is non-refundable.
+                    </p>
+                  </>
+                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirm}
+            <AlertDialogCancel
               disabled={mutation.isPending}
-              className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
+              className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
             >
-              {mutation.isPending ? 'Processing…' : 'Confirm Purchase'}
-            </AlertDialogAction>
+              {dialogError ? 'Close' : 'Cancel'}
+            </AlertDialogCancel>
+            {!dialogError && (
+              <Button
+                onClick={handleConfirm}
+                disabled={mutation.isPending}
+                className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
+              >
+                {mutation.isPending
+                  ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processing…</>
+                  : 'Confirm Purchase'}
+              </Button>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
