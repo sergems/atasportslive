@@ -87,7 +87,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
+    <div className="max-w-3xl mx-auto space-y-5">
 
       {/* ── Hero greeting ─────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/40 px-5 py-6 sm:px-7 sm:py-7">
