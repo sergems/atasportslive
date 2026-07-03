@@ -42,6 +42,8 @@ function userPayload(user: typeof usersTable.$inferSelect) {
   return {
     id: user.id,
     email: user.email,
+    username: user.username ?? null,
+    usernameChangesCount: user.usernameChangesCount ?? 0,
     fullName: user.fullName,
     phone: user.phone,
     role: user.role,
@@ -348,9 +350,60 @@ router.delete("/google/link", authMiddleware, async (req: AuthRequest, res): Pro
 });
 
 router.patch("/profile", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
-  const { fullName, phone } = req.body as { fullName?: string; phone?: string };
+  const { fullName, phone, username } = req.body as { fullName?: string; phone?: string; username?: string };
   if (!fullName?.trim()) { res.status(400).json({ error: "fullName required" }); return; }
-  await db.update(usersTable).set({ fullName: fullName.trim(), phone: phone?.trim() || null }).where(eq(usersTable.id, req.userId!));
+
+  const [current] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
+  if (!current) { res.status(404).json({ error: "User not found" }); return; }
+
+  const updates: Partial<typeof usersTable.$inferSelect> = {
+    fullName: fullName.trim(),
+    phone: phone?.trim() || null,
+  };
+
+  // Handle username change (allowed only once) — done atomically in a transaction
+  let requestedUsername: string | null = null;
+  if (username !== undefined && username.trim() !== "") {
+    const newUsername = username.toLowerCase().trim();
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(newUsername)) {
+      res.status(400).json({ error: "Username must be 3–20 characters, letters/numbers/underscores only" });
+      return;
+    }
+    if (newUsername !== current.username) {
+      requestedUsername = newUsername;
+    }
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      // Atomic update of profile fields
+      await tx.update(usersTable)
+        .set(updates as any)
+        .where(eq(usersTable.id, req.userId!));
+
+      // Username change: enforce one-time limit with a conditional UPDATE
+      if (requestedUsername !== null) {
+        const result = await tx.execute(
+          sql`UPDATE users SET username = ${requestedUsername}, username_changes_count = username_changes_count + 1
+              WHERE id = ${req.userId!} AND username_changes_count < 1`
+        );
+        if ((result.rowCount ?? 0) === 0) {
+          throw Object.assign(new Error("You can only change your username once"), { code: "LIMIT_REACHED" });
+        }
+      }
+    });
+  } catch (err: any) {
+    if (err.code === "23505") {
+      res.status(409).json({ error: "Username already taken" });
+      return;
+    }
+    if (err.code === "LIMIT_REACHED") {
+      res.status(403).json({ error: "You can only change your username once" });
+      return;
+    }
+    throw err;
+  }
+
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
   res.json(userPayload(user));
 });

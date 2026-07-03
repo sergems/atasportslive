@@ -635,7 +635,7 @@ export default function Wallet() {
                     </div>
                     {/* Quick amounts */}
                     <div className="flex gap-2">
-                      {[{ amount: '1.50', label: 'Daily' }, { amount: '9.00', label: 'Weekly' }].map(({ amount, label }) => (
+                      {[{ amount: '1.70', label: 'Daily' }, { amount: '7.00', label: 'Weekly' }, { amount: '20.00', label: 'Monthly' }, { amount: '99.00', label: 'Yearly' }].map(({ amount, label }) => (
                         <button key={amount} onClick={() => setDepositAmount(amount)}
                           className={`flex-1 rounded-md border px-3 py-1.5 text-left transition-all ${depositAmount === amount ? 'bg-green-500/20 border-green-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}>
                           <span className="font-bold text-sm font-mono">${amount}</span>
@@ -699,8 +699,10 @@ export default function Wallet() {
                 {/* Quick-select amounts */}
                 <div className="flex gap-2">
                   {[
-                    { amount: '1.50', label: 'Daily', desc: '1 day' },
-                    { amount: '9.00', label: 'Weekly', desc: '7 days' },
+                    { amount: '1.70', label: 'Daily', desc: '1 day' },
+                    { amount: '7.00', label: 'Weekly', desc: '7 days' },
+                    { amount: '20.00', label: 'Monthly', desc: '30 days' },
+                    { amount: '99.00', label: 'Yearly', desc: '365 days' },
                   ].map(({ amount, label, desc }) => (
                     <button
                       key={amount}

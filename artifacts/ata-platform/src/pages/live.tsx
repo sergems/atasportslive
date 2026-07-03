@@ -375,12 +375,21 @@ function SneakPeekPlayer({
 
 // ─── Stream preview card (shown when live but no access) ──────────────────────
 
+const SUB_OPTIONS = [
+  { key: 'daily'   as const, label: 'Daily',   duration: '24 hours',  },
+  { key: 'weekly'  as const, label: 'Weekly',  duration: '7 days',    },
+  { key: 'monthly' as const, label: 'Monthly', duration: '30 days',   },
+  { key: 'yearly'  as const, label: 'Yearly',  duration: '365 days',  },
+];
+
 function StreamGate({
   title,
   description,
   sport,
   thumbnailUrl,
-  price,
+  prices,
+  selectedSubType,
+  onSelectSubType,
   isFree,
   isAuthenticated,
   paywallStreamId,
@@ -394,7 +403,9 @@ function StreamGate({
   description?: string | null;
   sport?: string;
   thumbnailUrl?: string | null;
-  price: number;
+  prices: { daily: number; weekly: number; monthly: number; yearly: number };
+  selectedSubType: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  onSelectSubType: (t: 'daily' | 'weekly' | 'monthly' | 'yearly') => void;
   isFree: boolean;
   isAuthenticated: boolean;
   paywallStreamId: number | undefined;
@@ -404,9 +415,11 @@ function StreamGate({
   previewUsed: boolean;
   onStartPreview: () => void;
 }) {
+  const selectedPrice = prices[selectedSubType];
+  const selectedOption = SUB_OPTIONS.find(o => o.key === selectedSubType)!;
+
   return (
     <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-900 w-full">
-      {/* Blurred thumbnail background */}
       {thumbnailUrl && (
         <div className="absolute inset-0 -z-10">
           <img src={thumbnailUrl} alt="" className="w-full h-full object-cover blur-md opacity-20 scale-105" />
@@ -422,22 +435,17 @@ function StreamGate({
           {sport && <span className="text-slate-500 text-xs">· {sport.toUpperCase()}</span>}
         </div>
 
-        {/* Event title */}
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 max-w-xl">{title}</h2>
-        {description && (
-          <p className="text-slate-400 text-sm mb-6 max-w-md">{description}</p>
-        )}
+        {description && <p className="text-slate-400 text-sm mb-6 max-w-md">{description}</p>}
 
-        {/* Gate content */}
         {!isAuthenticated ? (
-          /* ── Not logged in ─────────────────────────────────── */
           <div className="space-y-4 max-w-sm w-full">
             <div className="rounded-xl bg-slate-800 border border-slate-700 px-5 py-4">
               <p className="text-slate-400 text-sm mb-1">To watch this broadcast you need to</p>
               <p className="text-white font-semibold text-base">Sign in to your ATA account</p>
               {!isFree && (
                 <p className="text-slate-500 text-xs mt-1">
-                  Then purchase <span className="text-amber-400 font-mono font-bold">${price.toFixed(2)}</span> access for 24 hours
+                  Then choose a subscription — from <span className="text-amber-400 font-mono font-bold">${prices.daily.toFixed(2)}</span>/day
                 </p>
               )}
             </div>
@@ -452,17 +460,36 @@ function StreamGate({
               <Link href="/register" className="text-teal-400 hover:text-teal-300">Create one free</Link>
             </p>
           </div>
-        ) : isFree ? (
-          /* ── Logged in, free stream — shouldn't normally reach here ── */
-          null
-        ) : (
-          /* ── Logged in, paid stream ────────────────────────────── */
+        ) : isFree ? null : (
           <div className="space-y-4 max-w-sm w-full">
+            {/* Subscription type selector */}
+            <div className="grid grid-cols-4 gap-1.5 rounded-xl bg-slate-800/60 border border-slate-700 p-1">
+              {SUB_OPTIONS.map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => onSelectSubType(opt.key)}
+                  className={`rounded-lg py-2 px-1 text-center transition-all duration-200 ${
+                    selectedSubType === opt.key
+                      ? 'bg-amber-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <p className="text-xs font-bold leading-tight">{opt.label}</p>
+                  <p className={`text-[10px] mt-0.5 font-mono font-semibold ${selectedSubType === opt.key ? 'text-slate-900' : 'text-slate-500'}`}>
+                    ${prices[opt.key].toFixed(2)}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            {/* Price display */}
             <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 px-5 py-4">
-              <p className="text-slate-400 text-xs mb-1">24-hour access fee</p>
-              <p className="text-amber-400 font-bold text-3xl font-mono">${price.toFixed(2)}</p>
+              <p className="text-slate-400 text-xs mb-1">{selectedOption.label} access · {selectedOption.duration}</p>
+              <p className="text-amber-400 font-bold text-3xl font-mono">${selectedPrice.toFixed(2)}</p>
               <p className="text-slate-500 text-xs mt-1">Deducted from your ATA wallet balance</p>
             </div>
+
             <Button
               onClick={onPurchase}
               disabled={isPurchasing || !paywallStreamId}
@@ -474,20 +501,16 @@ function StreamGate({
                   Processing…
                 </span>
               ) : (
-                <>
-                  <Wallet className="h-5 w-5" />
-                  Pay ${price.toFixed(2)} & Watch Live
-                </>
+                <><Wallet className="h-5 w-5" />Pay ${selectedPrice.toFixed(2)} · {selectedOption.duration}</>
               )}
             </Button>
             <p className="text-slate-500 text-xs flex items-center justify-center gap-1.5">
               <Lock className="h-3 w-3" />
-              Funds deducted from your wallet · 24-hour access
+              Funds deducted from your wallet · {selectedOption.duration} access
             </p>
           </div>
         )}
 
-        {/* Sneak peek button — shown once, below the gate actions */}
         {canPreview && !previewUsed && (
           <div className="mt-6 pt-5 border-t border-slate-800 w-full max-w-sm">
             <button
@@ -1006,7 +1029,13 @@ export default function Live() {
     staleTime: 25_000,
   });
   const muxIsFree     = settings?.mux_is_free === 'true';
-  const muxPrice      = parseFloat(settings?.mux_price ?? '1.50');
+  const muxPrice      = parseFloat(settings?.mux_price ?? '1.70');
+  const subPrices = {
+    daily:   parseFloat(settings?.price_daily   ?? '1.70'),
+    weekly:  parseFloat(settings?.price_weekly  ?? '7.00'),
+    monthly: parseFloat(settings?.price_monthly ?? '20.00'),
+    yearly:  parseFloat(settings?.price_yearly  ?? '99.00'),
+  };
   const muxTitle      = settings?.mux_title || 'ATA Live Stream';
   const muxStreamDbId = settings?.mux_stream_db_id ? Number(settings.mux_stream_db_id) : undefined;
 
@@ -1041,13 +1070,16 @@ export default function Live() {
   const peekKey = `sneak_used_${paywallStreamId ?? 'mux'}`;
   const sneakPeek = useSneakPeek(peekKey);
 
+  // ── Selected subscription type ───────────────────────────────────────────
+  const [selectedSubType, setSelectedSubType] = useState<'daily'|'weekly'|'monthly'|'yearly'>('daily');
+
   // ── Purchase handler ─────────────────────────────────────────────────────
   const purchaseMutation = useMutation({
-    mutationFn: async (streamId: number) => {
+    mutationFn: async ({ streamId, subscriptionType }: { streamId: number; subscriptionType: string }) => {
       const r = await fetch(`/api/streams/${streamId}/access`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ streamId }),
+        body: JSON.stringify({ streamId, subscriptionType }),
       });
       if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Purchase failed'); }
       return r.json();
@@ -1203,12 +1235,14 @@ export default function Live() {
             description={stream?.description}
             sport={stream?.sport}
             thumbnailUrl={stream?.thumbnailUrl}
-            price={paywallPrice}
+            prices={subPrices}
+            selectedSubType={selectedSubType}
+            onSelectSubType={setSelectedSubType}
             isFree={isFreeStream}
             isAuthenticated={isAuthenticated}
             paywallStreamId={paywallStreamId}
             isPurchasing={purchaseMutation.isPending}
-            onPurchase={() => paywallStreamId && purchaseMutation.mutate(paywallStreamId)}
+            onPurchase={() => paywallStreamId && purchaseMutation.mutate({ streamId: paywallStreamId, subscriptionType: selectedSubType })}
             canPreview={isAnythingLive}
             previewUsed={sneakPeek.used}
             onStartPreview={sneakPeek.start}

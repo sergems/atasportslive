@@ -192,7 +192,36 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
     return;
   }
 
-  const price = parseFloat(stream.accessPrice as string);
+  // Read subscription type from request body (default daily)
+  const subType: "daily" | "weekly" | "monthly" | "yearly" = ["daily","weekly","monthly","yearly"].includes(req.body?.subscriptionType)
+    ? req.body.subscriptionType
+    : "daily";
+
+  // Load subscription prices from settings (fall back to hardcoded defaults)
+  const priceRows = await db.execute(sql`SELECT key, value FROM settings WHERE key IN ('price_daily','price_weekly','price_monthly','price_yearly')`);
+  const priceMap: Record<string, string> = {};
+  for (const r of priceRows.rows as { key: string; value: string }[]) priceMap[r.key] = r.value;
+  const parsePriceSafe = (raw: string | undefined, fallback: number): number => {
+    const n = parseFloat(raw ?? "");
+    return Number.isFinite(n) && n >= 0 ? n : fallback;
+  };
+  const PRICES: Record<string, number> = {
+    daily:   parsePriceSafe(priceMap["price_daily"],   parseFloat(stream.accessPrice as string ?? "1.70") || 1.70),
+    weekly:  parsePriceSafe(priceMap["price_weekly"],  7.00),
+    monthly: parsePriceSafe(priceMap["price_monthly"], 20.00),
+    yearly:  parsePriceSafe(priceMap["price_yearly"],  99.00),
+  };
+  const DURATIONS_MS: Record<string, number> = {
+    daily:   1  * 24 * 60 * 60 * 1000,
+    weekly:  7  * 24 * 60 * 60 * 1000,
+    monthly: 30 * 24 * 60 * 60 * 1000,
+    yearly:  365 * 24 * 60 * 60 * 1000,
+  };
+  const DURATION_LABELS: Record<string, string> = {
+    daily: "24-hour", weekly: "7-day", monthly: "30-day", yearly: "365-day",
+  };
+
+  const price = PRICES[subType];
   const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
 
   const cashAvailable = parseFloat(wallet?.availableBalance as string || "0");
@@ -218,10 +247,11 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
   // Use bonus first, then cash for remainder
   const bonusUsed = Math.min(bonusAvailable, price);
   const cashUsed = Math.round((price - bonusUsed) * 100) / 100;
+  const durationLabel = DURATION_LABELS[subType];
   const desc_txt = bonusUsed > 0
-    ? `24h access to: ${stream.title} (bonus ${bonusUsed.toFixed(2)} + cash ${cashUsed.toFixed(2)})`
-    : `24h access to: ${stream.title}`;
-  const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    ? `${durationLabel} access to: ${stream.title} (bonus ${bonusUsed.toFixed(2)} + cash ${cashUsed.toFixed(2)})`
+    : `${durationLabel} access to: ${stream.title}`;
+  const expiresAt = new Date(now.getTime() + DURATIONS_MS[subType]);
 
   // Wrap all financial writes in a single atomic transaction so a mid-flight
   // failure cannot leave the wallet debited but no access granted (or vice versa).
@@ -259,7 +289,7 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
       description: desc_txt,
     });
 
-    await tx.insert(streamAccessTable).values({ userId, streamId, grantedAt: now, expiresAt });
+    await tx.insert(streamAccessTable).values({ userId, streamId, grantedAt: now, expiresAt, subscriptionType: subType });
   });
 
   // ── Referral bonus: configurable % of stream price to referrer on first paid purchase ──
@@ -331,7 +361,7 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
     await notify(userId, "low_balance", "Low Balance Alert", "Your wallet balance is below $3. Top up to continue watching.");
   }
 
-  res.json({ hasAccess: true, expiresAt, secondsRemaining: 24 * 60 * 60 });
+  res.json({ hasAccess: true, expiresAt, secondsRemaining: Math.floor(DURATIONS_MS[subType] / 1000), subscriptionType: subType });
 });
 
 router.get("/:id/access/check", authMiddleware, async (req: AuthRequest, res): Promise<void> => {

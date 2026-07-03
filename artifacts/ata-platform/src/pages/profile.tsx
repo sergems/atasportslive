@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { CheckCircle, Mail, Phone, User, Link2, Unlink, KeyRound, Gift, Copy, Check } from 'lucide-react';
+import { CheckCircle, Mail, Phone, User, Link2, Unlink, KeyRound, Gift, Copy, Check, AtSign, Lock } from 'lucide-react';
 
 export default function Profile() {
   useSEO({ title: 'Profile Settings', path: '/profile', noindex: true });
@@ -19,6 +19,10 @@ export default function Profile() {
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [saving, setSaving] = useState(false);
+
+  const [usernameMode, setUsernameMode] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [savingUsername, setSavingUsername] = useState(false);
 
   const [pwMode, setPwMode] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -53,6 +57,31 @@ export default function Profile() {
       toast.error(e.message || 'Failed to update profile');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveUsername = async () => {
+    const u = newUsername.trim().toLowerCase();
+    if (!u || u.length < 3) { toast.error('Username must be at least 3 characters'); return; }
+    if (!/^[a-z0-9_]+$/.test(u)) { toast.error('Letters, numbers and underscores only'); return; }
+    setSavingUsername(true);
+    try {
+      const token = getToken();
+      const res = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ fullName: user!.fullName, phone: user!.phone, username: u }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+      login(token, data);
+      setUsernameMode(false);
+      setNewUsername('');
+      toast.success('Username updated! This was your one-time change.');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to update username');
+    } finally {
+      setSavingUsername(false);
     }
   };
 
@@ -205,6 +234,87 @@ export default function Profile() {
                   </div>
                 )}
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Username */}
+        <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-white text-lg flex items-center gap-2">
+              <AtSign className="h-4 w-4 text-teal-400" /> Username
+            </CardTitle>
+            <CardDescription>
+              Your public handle on ATA.{' '}
+              {(user as any).usernameChangesCount >= 1
+                ? 'Username can only be changed once — yours is now locked.'
+                : 'You can change it once.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Current username */}
+            <div className="flex items-center gap-3 rounded-lg bg-slate-900 border border-slate-700 px-3 py-2.5">
+              <AtSign className="h-4 w-4 text-slate-500 shrink-0" />
+              <span className="font-mono text-white">{(user as any).username ?? '—'}</span>
+              {(user as any).usernameChangesCount >= 1 && (
+                <Lock className="h-3.5 w-3.5 text-slate-600 ml-auto" />
+              )}
+            </div>
+
+            {/* Change form — only if change not yet used */}
+            {(user as any).usernameChangesCount < 1 ? (
+              <>
+                {!usernameMode ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-primary/30 text-white hover:bg-primary/10"
+                    onClick={() => { setUsernameMode(true); setNewUsername((user as any).username ?? ''); }}
+                  >
+                    Change Username
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="text-sm text-slate-400">New username</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">@</span>
+                        <input
+                          type="text"
+                          value={newUsername}
+                          onChange={e => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20))}
+                          placeholder="your_username"
+                          className="w-full pl-7 pr-3 py-2 rounded-md bg-slate-900 border border-slate-700 text-white text-sm font-mono focus:outline-none focus:border-teal-500"
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500">3–20 characters, letters, numbers, underscores only. This change is permanent.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleSaveUsername}
+                        disabled={savingUsername || newUsername.length < 3}
+                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
+                      >
+                        {savingUsername ? 'Saving…' : 'Save Username'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setUsernameMode(false); setNewUsername(''); }}
+                        className="border-slate-700 text-slate-300"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                <Lock className="h-3 w-3" />
+                Username is locked — it was already changed once.
+              </p>
             )}
           </CardContent>
         </Card>

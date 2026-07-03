@@ -29,6 +29,12 @@ export default function AdminSettings() {
   const qc = useQueryClient();
   const { data: settings, isLoading } = useSettings();
 
+  // Subscription prices
+  const [priceDaily,   setPriceDaily]   = useState('1.70');
+  const [priceWeekly,  setPriceWeekly]  = useState('7.00');
+  const [priceMonthly, setPriceMonthly] = useState('20.00');
+  const [priceYearly,  setPriceYearly]  = useState('99.00');
+
   const [referralBonusPct, setReferralBonusPct] = useState('10');
 
   const [liveStreamUrl, setLiveStreamUrl] = useState('');
@@ -100,6 +106,10 @@ export default function AdminSettings() {
 
   useEffect(() => {
     if (settings) {
+      setPriceDaily(settings.price_daily     ?? '1.70');
+      setPriceWeekly(settings.price_weekly   ?? '7.00');
+      setPriceMonthly(settings.price_monthly ?? '20.00');
+      setPriceYearly(settings.price_yearly   ?? '99.00');
       setReferralBonusPct(settings.referral_bonus_pct ?? '10');
       setLiveStreamUrl(settings.liveStreamUrl ?? '');
       setMuxPlaybackId(settings.mux_playback_id ?? '');
@@ -151,6 +161,22 @@ export default function AdminSettings() {
   const urlOk = isValidUrl(liveStreamUrl);
   const isPesapalConfigured = !!(settings?.pesapal_consumer_key && settings?.pesapal_consumer_secret);
   const pesapalIpnId = settings?.pesapal_ipn_id;
+
+  const saveSubscriptionPrices = () => {
+    const prices = [
+      { key: 'price_daily',   val: priceDaily,   label: 'Daily' },
+      { key: 'price_weekly',  val: priceWeekly,  label: 'Weekly' },
+      { key: 'price_monthly', val: priceMonthly, label: 'Monthly' },
+      { key: 'price_yearly',  val: priceYearly,  label: 'Yearly' },
+    ];
+    for (const { val, label } of prices) {
+      const n = parseFloat(val);
+      if (isNaN(n) || n < 0) { toast.error(`${label} price must be a valid positive number`); return; }
+    }
+    const updates: Record<string, string> = {};
+    for (const { key, val } of prices) updates[key] = parseFloat(val).toFixed(2);
+    saveMutation.mutate(updates);
+  };
 
   const saveStreamSettings = () => saveMutation.mutate({ liveStreamUrl });
 
@@ -258,6 +284,52 @@ export default function AdminSettings() {
           <p className="text-slate-400 text-sm mt-0.5">Global platform configuration</p>
         </div>
       </div>
+
+      {/* ── Subscription Pricing ── */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-amber-400" /> Subscription Pricing
+          </CardTitle>
+          <CardDescription className="text-slate-400">
+            Set global access prices for all subscription tiers. Changes apply immediately to all new purchases.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { label: 'Daily',   desc: '24-hour access', val: priceDaily,   set: setPriceDaily   },
+              { label: 'Weekly',  desc: '7-day access',   val: priceWeekly,  set: setPriceWeekly  },
+              { label: 'Monthly', desc: '30-day access',  val: priceMonthly, set: setPriceMonthly },
+              { label: 'Yearly',  desc: '365-day access', val: priceYearly,  set: setPriceYearly  },
+            ].map(({ label, desc, val, set }) => (
+              <div key={label} className="space-y-1.5">
+                <Label className="text-slate-300 text-sm">{label} <span className="text-slate-500 font-normal text-xs">({desc})</span></Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={val}
+                    onChange={e => set(e.target.value)}
+                    className="bg-slate-800 border-slate-700 text-white font-mono text-sm pl-7"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button
+            onClick={saveSubscriptionPrices}
+            disabled={saveMutation.isPending || isLoading}
+            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold gap-2"
+          >
+            <Save className="h-4 w-4" />
+            {saveMutation.isPending ? 'Saving…' : 'Save Prices'}
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* ── Referral Program ── */}
       <Card className="bg-slate-900 border-slate-700">
