@@ -8,41 +8,83 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { CheckCircle, Mail, Phone, User, Link2, Unlink, KeyRound, Gift, Copy, Check, AtSign, Lock } from 'lucide-react';
+import {
+  CheckCircle, Mail, Phone, User, Link2, Unlink, KeyRound, Gift, Copy, Check,
+  AtSign, Lock, ShieldCheck, ShieldAlert, Calendar, CreditCard, Globe, Camera, Loader2,
+} from 'lucide-react';
+
+const ID_TYPES = [
+  { value: 'national_id',       label: 'National ID' },
+  { value: 'passport',          label: 'Passport' },
+  { value: 'drivers_license',   label: 'Driver\'s License' },
+  { value: 'refugee_id',        label: 'Refugee ID' },
+  { value: 'military_id',       label: 'Military ID' },
+];
+
+const COUNTRIES = [
+  'Uganda', 'Kenya', 'Tanzania', 'Rwanda', 'Burundi', 'South Sudan', 'DR Congo',
+  'Ethiopia', 'Nigeria', 'Ghana', 'South Africa', 'Zambia', 'Zimbabwe', 'Malawi',
+  'Mozambique', 'Angola', 'Cameroon', 'Côte d\'Ivoire', 'Senegal', 'Mali',
+  'United Kingdom', 'United States', 'Canada', 'Australia', 'Other',
+];
+
+function getToken() {
+  try { return JSON.parse(localStorage.getItem('ata-auth') || '{}').state?.token; }
+  catch { return null; }
+}
 
 export default function Profile() {
   useSEO({ title: 'Profile Settings', path: '/profile', noindex: true });
   const { user, login } = useAuth();
   const { clientId } = useGoogleAuth();
 
+  // ── Personal Info ──────────────────────────────────────
   const [editMode, setEditMode] = useState(false);
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [saving, setSaving] = useState(false);
 
+  // ── FICA / Identity ────────────────────────────────────
+  const [ficaMode, setFicaMode] = useState(false);
+  const [ficaFirstName, setFicaFirstName] = useState((user as any)?.fullName || '');
+  const [ficaSurname, setFicaSurname] = useState((user as any)?.surname || '');
+  const [ficaPhone, setFicaPhone] = useState((user as any)?.phone || '');
+  const [ficaDob, setFicaDob] = useState((user as any)?.dateOfBirth || '');
+  const [ficaIdType, setFicaIdType] = useState((user as any)?.idType || '');
+  const [ficaIdNumber, setFicaIdNumber] = useState((user as any)?.idNumber || '');
+  const [ficaCountry, setFicaCountry] = useState((user as any)?.country || '');
+  const [savingFica, setSavingFica] = useState(false);
+
+  // ── Avatar upload ──────────────────────────────────────
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // ── Username ───────────────────────────────────────────
   const [usernameMode, setUsernameMode] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [savingUsername, setSavingUsername] = useState(false);
 
+  // ── Password ───────────────────────────────────────────
   const [pwMode, setPwMode] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [savingPw, setSavingPw] = useState(false);
 
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const SITE_ORIGIN = 'https://atasportslive.com';
 
   const refreshUser = async (token: string) => {
     const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) {
-      const u = await res.json();
-      login(token, u);
-    }
+    if (res.ok) { const u = await res.json(); login(token, u); }
   };
+
+  // ── Handlers ───────────────────────────────────────────
 
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      const token = localStorage.getItem('ata-auth') ? JSON.parse(localStorage.getItem('ata-auth')!).state?.token : null;
+      const token = getToken();
       const res = await fetch('/api/auth/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -53,11 +95,56 @@ export default function Profile() {
       login(token, data);
       setEditMode(false);
       toast.success('Profile updated');
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to update profile');
-    } finally {
-      setSaving(false);
-    }
+    } catch (e: any) { toast.error(e.message || 'Failed to update profile'); }
+    finally { setSaving(false); }
+  };
+
+  const handleSaveFica = async () => {
+    setSavingFica(true);
+    try {
+      const token = getToken();
+      const res = await fetch('/api/auth/fica', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          fullName: ficaFirstName,
+          surname: ficaSurname,
+          phone: ficaPhone,
+          dateOfBirth: ficaDob,
+          idType: ficaIdType,
+          idNumber: ficaIdNumber,
+          country: ficaCountry,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+      login(token, data);
+      setFicaMode(false);
+      toast.success('Identity verified!', { description: 'Your profile is now complete and withdrawals are unlocked.' });
+    } catch (e: any) { toast.error(e.message || 'Failed to save verification'); }
+    finally { setSavingFica(false); }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return; }
+    setUploadingAvatar(true);
+    try {
+      const token = getToken();
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/uploads/avatar', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      await refreshUser(token);
+      toast.success('Profile photo updated');
+    } catch (e: any) { toast.error(e.message || 'Upload failed'); }
+    finally { setUploadingAvatar(false); e.target.value = ''; }
   };
 
   const handleSaveUsername = async () => {
@@ -78,21 +165,15 @@ export default function Profile() {
       setUsernameMode(false);
       setNewUsername('');
       toast.success('Username updated! This was your one-time change.');
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to update username');
-    } finally {
-      setSavingUsername(false);
-    }
+    } catch (e: any) { toast.error(e.message || 'Failed to update username'); }
+    finally { setSavingUsername(false); }
   };
 
   const handleChangePassword = async () => {
-    if (!newPw || newPw.length < 6) {
-      toast.error('New password must be at least 6 characters');
-      return;
-    }
+    if (!newPw || newPw.length < 6) { toast.error('New password must be at least 6 characters'); return; }
     setSavingPw(true);
     try {
-      const token = JSON.parse(localStorage.getItem('ata-auth') || '{}').state?.token;
+      const token = getToken();
       const res = await fetch('/api/auth/password', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -100,21 +181,16 @@ export default function Profile() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
-      setPwMode(false);
-      setCurrentPw('');
-      setNewPw('');
+      setPwMode(false); setCurrentPw(''); setNewPw('');
       toast.success('Password updated');
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to change password');
-    } finally {
-      setSavingPw(false);
-    }
+    } catch (e: any) { toast.error(e.message || 'Failed to change password'); }
+    finally { setSavingPw(false); }
   };
 
   const handleLinkGoogle = async (credentialResponse: any) => {
     setGoogleLoading(true);
     try {
-      const token = JSON.parse(localStorage.getItem('ata-auth') || '{}').state?.token;
+      const token = getToken();
       const res = await fetch('/api/auth/google/link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -124,11 +200,8 @@ export default function Profile() {
       if (!res.ok) throw new Error(data.error || 'Failed to link Google account');
       await refreshUser(token);
       toast.success('Google account linked successfully');
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to link Google account');
-    } finally {
-      setGoogleLoading(false);
-    }
+    } catch (e: any) { toast.error(e.message || 'Failed to link Google account'); }
+    finally { setGoogleLoading(false); }
   };
 
   const handleUnlinkGoogle = async () => {
@@ -138,7 +211,7 @@ export default function Profile() {
     }
     setGoogleLoading(true);
     try {
-      const token = JSON.parse(localStorage.getItem('ata-auth') || '{}').state?.token;
+      const token = getToken();
       const res = await fetch('/api/auth/google/link', {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
@@ -147,16 +220,9 @@ export default function Profile() {
       if (!res.ok) throw new Error(data.error || 'Failed to unlink');
       await refreshUser(token);
       toast.success('Google account unlinked');
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to unlink Google account');
-    } finally {
-      setGoogleLoading(false);
-    }
+    } catch (e: any) { toast.error(e.message || 'Failed to unlink Google account'); }
+    finally { setGoogleLoading(false); }
   };
-
-  const [copied, setCopied] = useState(false);
-
-  const SITE_ORIGIN = 'https://atasportslive.com';
 
   const handleCopyReferral = () => {
     const link = `${SITE_ORIGIN}/register?ref=${user?.referralCode}`;
@@ -169,10 +235,8 @@ export default function Profile() {
 
   if (!user) return null;
 
-  const getToken = () => {
-    try { return JSON.parse(localStorage.getItem('ata-auth') || '{}').state?.token; }
-    catch { return null; }
-  };
+  const ficaCompleted = !!(user as any)?.ficaCompleted;
+  const u = user as any;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -182,7 +246,174 @@ export default function Profile() {
           <p className="text-muted-foreground text-sm mt-1">Manage your account details and sign-in methods</p>
         </div>
 
-        {/* Profile info */}
+        {/* ── Identity Verification (FICA) ──────────────────────── */}
+        <Card className={`backdrop-blur-sm ${ficaCompleted ? 'bg-teal-950/20 border-teal-500/30' : 'bg-amber-950/20 border-amber-500/30'}`}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-white text-lg flex items-center gap-2">
+                  {ficaCompleted
+                    ? <ShieldCheck className="h-4 w-4 text-teal-400" />
+                    : <ShieldAlert className="h-4 w-4 text-amber-400" />
+                  }
+                  Identity Verification
+                </CardTitle>
+                <CardDescription className="mt-0.5">
+                  {ficaCompleted
+                    ? 'Your identity is verified — withdrawals are unlocked.'
+                    : 'Required before your first withdrawal. Registration stays unchanged.'}
+                </CardDescription>
+              </div>
+              <Badge className={ficaCompleted
+                ? 'bg-teal-500/15 text-teal-400 border-teal-500/30'
+                : 'bg-amber-500/15 text-amber-400 border-amber-500/30'}>
+                {ficaCompleted ? '✓ Verified' : 'Incomplete'}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+
+            {/* Avatar — always visible, optional */}
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                {u.avatarUrl ? (
+                  <img src={u.avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover border-2 border-slate-700" />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center">
+                    <span className="text-xl font-bold text-slate-400">
+                      {(u.fullName?.[0] ?? '?').toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <label className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center cursor-pointer hover:bg-slate-600 transition-colors">
+                  {uploadingAvatar ? <Loader2 className="h-3 w-3 animate-spin text-slate-300" /> : <Camera className="h-3 w-3 text-slate-300" />}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={uploadingAvatar} />
+                </label>
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium">{u.fullName} {u.surname ?? ''}</p>
+                <p className="text-slate-500 text-xs">{u.email}</p>
+                <p className="text-slate-600 text-[10px] mt-1">Profile photo is optional</p>
+              </div>
+            </div>
+
+            {/* View mode — when not editing */}
+            {!ficaMode && ficaCompleted && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { icon: User,       label: 'First Name',  value: u.fullName },
+                  { icon: User,       label: 'Surname',     value: u.surname },
+                  { icon: Phone,      label: 'Phone',       value: u.phone },
+                  { icon: Mail,       label: 'Email',       value: u.email },
+                  { icon: Calendar,   label: 'Date of Birth', value: u.dateOfBirth },
+                  { icon: CreditCard, label: 'ID Type',     value: ID_TYPES.find(t => t.value === u.idType)?.label ?? u.idType },
+                  { icon: CreditCard, label: 'ID Number',   value: u.idNumber },
+                  { icon: Globe,      label: 'Country',     value: u.country },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-start gap-2.5 rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2.5">
+                    <Icon className="h-3.5 w-3.5 text-slate-500 mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[9px] text-slate-500 uppercase tracking-wider">{label}</p>
+                      <p className="text-white text-sm font-medium truncate">{value || '—'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Incomplete prompt */}
+            {!ficaMode && !ficaCompleted && (
+              <div className="rounded-lg bg-amber-950/30 border border-amber-500/20 px-4 py-3 text-sm text-amber-300/80">
+                Complete the fields below to unlock withdrawals. This information is kept secure and used only for verification.
+              </div>
+            )}
+
+            {/* Edit/fill form */}
+            {ficaMode || !ficaCompleted ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium flex items-center gap-1"><User className="h-3 w-3" /> First Name *</label>
+                    <Input value={ficaFirstName} onChange={e => setFicaFirstName(e.target.value)} placeholder="First name" className="bg-slate-900 border-slate-700 text-white h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium flex items-center gap-1"><User className="h-3 w-3" /> Surname *</label>
+                    <Input value={ficaSurname} onChange={e => setFicaSurname(e.target.value)} placeholder="Last name" className="bg-slate-900 border-slate-700 text-white h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium flex items-center gap-1"><Phone className="h-3 w-3" /> Phone Number *</label>
+                    <Input value={ficaPhone} onChange={e => setFicaPhone(e.target.value)} placeholder="+256..." className="bg-slate-900 border-slate-700 text-white h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium flex items-center gap-1"><Mail className="h-3 w-3" /> Email</label>
+                    <Input value={u.email} readOnly className="bg-slate-800/50 border-slate-700 text-slate-400 h-9 text-sm cursor-not-allowed" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium flex items-center gap-1"><Calendar className="h-3 w-3" /> Date of Birth *</label>
+                    <Input type="date" value={ficaDob} onChange={e => setFicaDob(e.target.value)} className="bg-slate-900 border-slate-700 text-white h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium flex items-center gap-1"><Globe className="h-3 w-3" /> Country *</label>
+                    <select
+                      value={ficaCountry}
+                      onChange={e => setFicaCountry(e.target.value)}
+                      className="w-full rounded-md bg-slate-900 border border-slate-700 text-white text-sm h-9 px-3 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    >
+                      <option value="">Select country…</option>
+                      {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium flex items-center gap-1"><CreditCard className="h-3 w-3" /> ID Type *</label>
+                    <select
+                      value={ficaIdType}
+                      onChange={e => setFicaIdType(e.target.value)}
+                      className="w-full rounded-md bg-slate-900 border border-slate-700 text-white text-sm h-9 px-3 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    >
+                      <option value="">Select ID type…</option>
+                      {ID_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-300 font-medium flex items-center gap-1"><CreditCard className="h-3 w-3" /> ID Number *</label>
+                    <Input value={ficaIdNumber} onChange={e => setFicaIdNumber(e.target.value)} placeholder="e.g. CM123456789" className="bg-slate-900 border-slate-700 text-white h-9 text-sm font-mono" />
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-600">* Required fields. Your information is encrypted and never shared with third parties.</p>
+
+                <div className="flex gap-2 justify-end pt-1">
+                  {ficaCompleted && (
+                    <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setFicaMode(false)}>Cancel</Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={handleSaveFica}
+                    disabled={savingFica}
+                    className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
+                  >
+                    {savingFica ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Saving…</> : ficaCompleted ? 'Update Info' : 'Complete Verification'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800" onClick={() => {
+                setFicaFirstName(u.fullName || '');
+                setFicaSurname(u.surname || '');
+                setFicaPhone(u.phone || '');
+                setFicaDob(u.dateOfBirth || '');
+                setFicaIdType(u.idType || '');
+                setFicaIdNumber(u.idNumber || '');
+                setFicaCountry(u.country || '');
+                setFicaMode(true);
+              }}>
+                Edit Verification Info
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ── Personal Info ──────────────────────────────────────── */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -190,10 +421,11 @@ export default function Profile() {
                 <CardTitle className="text-white text-lg flex items-center gap-2">
                   <User className="h-4 w-4 text-teal-400" /> Personal Info
                 </CardTitle>
-                <CardDescription>Your name and contact details</CardDescription>
+                <CardDescription>Your display name and contact</CardDescription>
               </div>
               {!editMode && (
-                <Button variant="outline" size="sm" className="border-primary/30 text-white hover:bg-primary/10" onClick={() => { setEditMode(true); setFullName(user.fullName || ''); setPhone(user.phone || ''); }}>
+                <Button variant="outline" size="sm" className="border-primary/30 text-white hover:bg-primary/10"
+                  onClick={() => { setEditMode(true); setFullName(user.fullName || ''); setPhone(user.phone || ''); }}>
                   Edit
                 </Button>
               )}
@@ -203,7 +435,7 @@ export default function Profile() {
             {editMode ? (
               <>
                 <div className="space-y-2">
-                  <label className="text-sm text-white font-medium">Full Name</label>
+                  <label className="text-sm text-white font-medium">Display Name</label>
                   <Input value={fullName} onChange={e => setFullName(e.target.value)} className="bg-background/50 border-input text-white" />
                 </div>
                 <div className="space-y-2">
@@ -238,7 +470,7 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Username */}
+        {/* ── Username ───────────────────────────────────────────── */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardHeader>
             <CardTitle className="text-white text-lg flex items-center gap-2">
@@ -252,25 +484,16 @@ export default function Profile() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Current username */}
             <div className="flex items-center gap-3 rounded-lg bg-slate-900 border border-slate-700 px-3 py-2.5">
               <AtSign className="h-4 w-4 text-slate-500 shrink-0" />
               <span className="font-mono text-white">{(user as any).username ?? '—'}</span>
-              {(user as any).usernameChangesCount >= 1 && (
-                <Lock className="h-3.5 w-3.5 text-slate-600 ml-auto" />
-              )}
+              {(user as any).usernameChangesCount >= 1 && <Lock className="h-3.5 w-3.5 text-slate-600 ml-auto" />}
             </div>
-
-            {/* Change form — only if change not yet used */}
             {(user as any).usernameChangesCount < 1 ? (
               <>
                 {!usernameMode ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-primary/30 text-white hover:bg-primary/10"
-                    onClick={() => { setUsernameMode(true); setNewUsername((user as any).username ?? ''); }}
-                  >
+                  <Button variant="outline" size="sm" className="border-primary/30 text-white hover:bg-primary/10"
+                    onClick={() => { setUsernameMode(true); setNewUsername((user as any).username ?? ''); }}>
                     Change Username
                   </Button>
                 ) : (
@@ -290,20 +513,12 @@ export default function Profile() {
                       <p className="text-xs text-slate-500">3–20 characters, letters, numbers, underscores only. This change is permanent.</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={handleSaveUsername}
-                        disabled={savingUsername || newUsername.length < 3}
-                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
-                      >
+                      <Button size="sm" onClick={handleSaveUsername} disabled={savingUsername || newUsername.length < 3}
+                        className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold">
                         {savingUsername ? 'Saving…' : 'Save Username'}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => { setUsernameMode(false); setNewUsername(''); }}
-                        className="border-slate-700 text-slate-300"
-                      >
+                      <Button size="sm" variant="outline" onClick={() => { setUsernameMode(false); setNewUsername(''); }}
+                        className="border-slate-700 text-slate-300">
                         Cancel
                       </Button>
                     </div>
@@ -312,14 +527,13 @@ export default function Profile() {
               </>
             ) : (
               <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                <Lock className="h-3 w-3" />
-                Username is locked — it was already changed once.
+                <Lock className="h-3 w-3" /> Username is locked — it was already changed once.
               </p>
             )}
           </CardContent>
         </Card>
 
-        {/* Refer & Earn */}
+        {/* ── Refer & Earn ───────────────────────────────────────── */}
         {user.referralCode && (
           <Card className="bg-card/50 backdrop-blur-sm border-teal-500/20">
             <CardHeader>
@@ -331,37 +545,26 @@ export default function Profile() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Referral code */}
               <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900 border border-slate-700 px-3 py-2">
                 <div>
                   <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Your code</p>
                   <p className="font-mono text-lg font-bold text-teal-400 tracking-widest">{user.referralCode}</p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10 h-8 gap-1.5 shrink-0"
-                  onClick={handleCopyReferral}
-                >
+                <Button size="sm" variant="outline" className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10 h-8 gap-1.5 shrink-0" onClick={handleCopyReferral}>
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   {copied ? 'Copied!' : 'Copy Link'}
                 </Button>
               </div>
-              {/* Referral link preview */}
               <div className="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Your referral link</p>
-                <p className="text-xs text-slate-400 font-mono break-all">
-                  {SITE_ORIGIN}/register?ref={user.referralCode}
-                </p>
+                <p className="text-xs text-slate-400 font-mono break-all">{SITE_ORIGIN}/register?ref={user.referralCode}</p>
               </div>
-              <p className="text-xs text-slate-500">
-                Bonus is credited once the referred user makes their first paid stream purchase. Bonus expires after 90 days.
-              </p>
+              <p className="text-xs text-slate-500">Bonus is credited once the referred user makes their first paid stream purchase. Bonus expires after 90 days.</p>
             </CardContent>
           </Card>
         )}
 
-        {/* Sign-in methods */}
+        {/* ── Sign-In Methods ────────────────────────────────────── */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardHeader>
             <CardTitle className="text-white text-lg flex items-center gap-2">
@@ -370,7 +573,6 @@ export default function Profile() {
             <CardDescription>Manage how you log into your account</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Email/Password */}
             <div className="flex items-center justify-between py-3 border-b border-primary/10">
               <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 text-muted-foreground" />
@@ -387,13 +589,11 @@ export default function Profile() {
                 ) : (
                   <Badge variant="outline" className="text-amber-400 border-amber-500/30 bg-amber-500/10 text-xs">Not set</Badge>
                 )}
-                <Button variant="outline" size="sm" className="border-primary/30 text-white hover:bg-primary/10 text-xs h-7"
-                  onClick={() => setPwMode(v => !v)}>
+                <Button variant="outline" size="sm" className="border-primary/30 text-white hover:bg-primary/10 text-xs h-7" onClick={() => setPwMode(v => !v)}>
                   {user.hasPassword ? 'Change' : 'Set Password'}
                 </Button>
               </div>
             </div>
-
             {pwMode && (
               <div className="space-y-3 pb-2">
                 {user.hasPassword && (
@@ -414,8 +614,6 @@ export default function Profile() {
                 </div>
               </div>
             )}
-
-            {/* Google */}
             <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-3">
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -437,23 +635,15 @@ export default function Profile() {
                     <Badge variant="outline" className="text-teal-400 border-teal-500/30 bg-teal-500/10 text-xs">
                       <CheckCircle className="h-3 w-3 mr-1" /> Linked
                     </Badge>
-                    <Button variant="outline" size="sm"
-                      className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs h-7"
+                    <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs h-7"
                       onClick={handleUnlinkGoogle} disabled={googleLoading}>
                       <Unlink className="h-3 w-3 mr-1" /> Unlink
                     </Button>
                   </>
                 ) : (
                   clientId ? (
-                    <GoogleLogin
-                      onSuccess={handleLinkGoogle}
-                      onError={() => toast.error('Google sign-in failed')}
-                      theme="filled_black"
-                      size="small"
-                      shape="rectangular"
-                      text="signin_with"
-                      width="160"
-                    />
+                    <GoogleLogin onSuccess={handleLinkGoogle} onError={() => toast.error('Google sign-in failed')}
+                      theme="filled_black" size="small" shape="rectangular" text="signin_with" width="160" />
                   ) : (
                     <Badge variant="outline" className="text-muted-foreground border-primary/20 text-xs">Unavailable</Badge>
                   )

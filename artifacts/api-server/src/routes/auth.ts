@@ -46,6 +46,7 @@ function userPayload(user: typeof usersTable.$inferSelect) {
     username: user.username ?? null,
     usernameChangesCount: user.usernameChangesCount ?? 0,
     fullName: user.fullName,
+    surname: user.surname ?? null,
     phone: user.phone,
     role: user.role,
     status: user.status,
@@ -54,6 +55,11 @@ function userPayload(user: typeof usersTable.$inferSelect) {
     hasPassword: !!user.passwordHash,
     referralCode: user.referralCode ?? null,
     createdAt: user.createdAt,
+    dateOfBirth: user.dateOfBirth ?? null,
+    idType: user.idType ?? null,
+    idNumber: user.idNumber ?? null,
+    country: user.country ?? null,
+    ficaCompleted: user.ficaCompleted ?? false,
   };
 }
 
@@ -419,6 +425,38 @@ router.patch("/profile", authMiddleware, async (req: AuthRequest, res): Promise<
   }
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
+  res.json(userPayload(user));
+});
+
+router.patch("/fica", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { fullName, surname, phone, dateOfBirth, idType, idNumber, country } = req.body as {
+    fullName?: string; surname?: string; phone?: string;
+    dateOfBirth?: string; idType?: string; idNumber?: string; country?: string;
+  };
+
+  if (!fullName?.trim()) { res.status(400).json({ error: "First name is required" }); return; }
+  if (!surname?.trim())  { res.status(400).json({ error: "Surname is required" }); return; }
+  if (!phone?.trim())    { res.status(400).json({ error: "Phone number is required" }); return; }
+  if (!dateOfBirth?.trim()) { res.status(400).json({ error: "Date of birth is required" }); return; }
+  if (!idType?.trim())   { res.status(400).json({ error: "ID type is required" }); return; }
+  if (!idNumber?.trim()) { res.status(400).json({ error: "ID number is required" }); return; }
+  if (!country?.trim())  { res.status(400).json({ error: "Country is required" }); return; }
+
+  await db.update(usersTable)
+    .set({
+      fullName: fullName.trim(),
+      surname: surname.trim(),
+      phone: phone.trim(),
+      dateOfBirth: dateOfBirth.trim(),
+      idType: idType.trim(),
+      idNumber: idNumber.trim(),
+      country: country.trim(),
+      ficaCompleted: true,
+    })
+    .where(eq(usersTable.id, req.userId!));
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
+  req.log.info({ userId: req.userId }, "FICA profile completed");
   res.json(userPayload(user));
 });
 

@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 import { getGetWalletQueryKey } from '@workspace/api-client-react';
 import { useAuthStore } from '@/lib/auth-store';
+import { useAuth } from '@/lib/auth';
 import { Link, useSearch } from 'wouter';
 
 function authHeaders(): Record<string, string> {
@@ -173,6 +174,7 @@ const METHOD_LABELS: Record<string, string> = {
 export default function Wallet() {
   useEffect(() => { document.title = 'Wallet - ATA Platform'; }, []);
 
+  const { user } = useAuth();
   const search = useSearch();
   const params = new URLSearchParams(search);
   const paymentStatus = params.get('payment');
@@ -791,6 +793,30 @@ export default function Wallet() {
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
 
+            {/* ── FICA gate ── */}
+            {!(user as any)?.ficaCompleted && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 px-4 py-5 text-center space-y-3">
+                <div className="flex items-center justify-center h-11 w-11 rounded-full bg-amber-500/15 border border-amber-500/30 mx-auto">
+                  <ShieldCheck className="h-5 w-5 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">Identity verification required</p>
+                  <p className="text-slate-400 text-xs mt-1">
+                    To comply with financial regulations, please complete your identity verification before withdrawing funds.
+                    This is a one-time step.
+                  </p>
+                </div>
+                <Link href="/profile">
+                  <button className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-semibold text-xs px-4 py-2 transition-all">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Complete Verification
+                  </button>
+                </Link>
+              </div>
+            )}
+
+            {/* Only show withdrawal form when FICA is complete */}
+            {(user as any)?.ficaCompleted && <>
+
             {/* Withdrawal method tabs — only shown when PawaPay is configured AND enabled */}
             {pawapayConfigured && pawapayEnabled && (
               <div className="flex gap-1 bg-slate-800 rounded-lg p-1">
@@ -1027,6 +1053,7 @@ export default function Wallet() {
               )}
               </>
             )}
+            </>}
           </CardContent>
         </Card>
       </div>
