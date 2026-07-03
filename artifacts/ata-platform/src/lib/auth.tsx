@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { token, user, setAuth, clearAuth, setUser } = useAuthStore();
   const [, setLocation] = useLocation();
 
-  const { data: me, isError } = useGetMe({
+  const { data: me, isError, error } = useGetMe({
     query: {
       enabled: !!token,
       queryKey: ['/api/auth/me'],
@@ -53,11 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (me) {
       setUser(me);
     }
-    if (isError) {
-      clearAuth();
-      setLocation('/login');
+    if (isError && error) {
+      // Only log out on definitive auth failures (401/403), not transient network or server errors
+      const status = (error as any)?.status;
+      if (status === 401 || status === 403) {
+        clearAuth();
+        setLocation('/login');
+      }
     }
-  }, [me, isError, setUser, clearAuth, setLocation]);
+  }, [me, isError, error, setUser, clearAuth, setLocation]);
 
   const login = (newToken: string, newUser: any) => {
     setAuth(newToken, newUser);
