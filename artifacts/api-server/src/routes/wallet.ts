@@ -182,11 +182,17 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
     return;
   }
 
-  // Must have a verified payout method
+  // Must have completed FICA verification first
   const userRows = await db.execute(
-    sql`SELECT payout_method, payout_account, payout_method_set_at FROM users WHERE id = ${req.userId}`
+    sql`SELECT payout_method, payout_account, payout_method_set_at, fica_completed FROM users WHERE id = ${req.userId}`
   );
   const userRow = (userRows.rows?.[0] as any) ?? null;
+  if (!userRow?.fica_completed) {
+    res.status(403).json({ error: "Identity verification (FICA) must be completed before withdrawing." });
+    return;
+  }
+
+  // Must have a verified payout method
   if (!userRow?.payout_method || !userRow?.payout_account) {
     res.status(400).json({ error: "You must set a payout method before withdrawing." });
     return;
