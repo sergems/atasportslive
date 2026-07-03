@@ -508,6 +508,60 @@ router.post("/users/:id/reset-password", authMiddleware, requireRole("admin"), a
   res.json({ ok: true });
 });
 
+// ── Per-user wallet & transaction history (admin/manager) ────────────────────
+
+router.get("/users/:userId/wallet", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = Number(req.params.userId);
+  if (!Number.isInteger(userId) || userId <= 0) { res.status(400).json({ error: "Invalid userId" }); return; }
+  const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
+  if (!wallet) { res.status(404).json({ error: "Wallet not found" }); return; }
+  res.json({
+    balance: parseFloat(wallet.balance as string) || 0,
+    availableBalance: parseFloat(wallet.availableBalance as string) || 0,
+    withdrawableBalance: parseFloat(wallet.withdrawableBalance as string) || 0,
+    bonusBalance: parseFloat((wallet.bonusBalance as string) || "0") || 0,
+  });
+});
+
+router.get("/users/:userId/transactions", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = Number(req.params.userId);
+  if (!Number.isInteger(userId) || userId <= 0) { res.status(400).json({ error: "Invalid userId" }); return; }
+  const rawPage = Number(req.query.page);
+  const page = Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
+  const limit = 20;
+  const offset = (page - 1) * limit;
+
+  const [txs, [{ total }]] = await Promise.all([
+    db
+      .select()
+      .from(transactionsTable)
+      .where(eq(transactionsTable.userId, userId))
+      .orderBy(desc(transactionsTable.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ total: sql<number>`count(*)` })
+      .from(transactionsTable)
+      .where(eq(transactionsTable.userId, userId)),
+  ]);
+
+  res.json({
+    transactions: txs.map(tx => ({
+      id: tx.id,
+      transactionId: tx.transactionId,
+      type: tx.type,
+      amount: parseFloat(tx.amount as string),
+      status: tx.status,
+      description: tx.description,
+      paymentMethod: tx.paymentMethod,
+      reference: tx.reference,
+      createdAt: tx.createdAt,
+    })),
+    total: Number(total),
+    page,
+  });
+});
+
 router.get("/db-export", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {

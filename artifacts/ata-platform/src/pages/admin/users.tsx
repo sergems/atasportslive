@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
-  CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet, KeyRound
+  CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet, KeyRound,
+  History, TrendingUp, TrendingDown, ArrowLeftRight, AlertCircle, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -382,6 +383,193 @@ function WalletAdjustPanel({ userId, onClose }: { userId: number; onClose: () =>
   );
 }
 
+// ── UserWalletBadge — always-visible balance strip ──────────────────────────
+
+function UserWalletBadge({ userId }: { userId: number }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-wallet', userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/wallet`, { headers: authHeaders() });
+      if (!res.ok) return null;
+      return res.json() as Promise<{ balance: number; availableBalance: number; bonusBalance: number }>;
+    },
+    staleTime: 30_000,
+  });
+
+  if (isLoading) return <Skeleton className="h-3.5 w-28 bg-slate-800 inline-block align-middle rounded" />;
+  if (!data) return null;
+
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[10px]">
+      <Wallet className="h-2.5 w-2.5 text-teal-400 shrink-0" />
+      <span className="font-mono font-bold text-teal-300">${data.balance.toFixed(2)}</span>
+      {data.bonusBalance > 0 && (
+        <span className="font-mono text-amber-400">+${data.bonusBalance.toFixed(2)} bonus</span>
+      )}
+    </span>
+  );
+}
+
+// ── UserTransactionsPanel — expandable history ───────────────────────────────
+
+const TX_TYPE_LABELS: Record<string, string> = {
+  deposit: 'Deposit',
+  withdrawal: 'Withdrawal',
+  stream_access: 'Stream Access',
+  brokerage_fee: 'Brokerage Fee',
+  admin_credit: 'Admin Credit',
+  admin_debit: 'Admin Debit',
+  bonus_credit: 'Bonus Credit',
+  bonus_used: 'Bonus Used',
+  bet_placed: 'Bet Placed',
+  bet_won: 'Bet Won',
+  bet_refund: 'Bet Refund',
+  voucher_redeem: 'Voucher',
+};
+
+function txIcon(type: string) {
+  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem')
+    return <TrendingUp className="h-3 w-3 text-teal-400" />;
+  if (type === 'withdrawal' || type === 'admin_debit' || type === 'bonus_used' || type === 'bet_placed' || type === 'stream_access' || type === 'brokerage_fee')
+    return <TrendingDown className="h-3 w-3 text-red-400" />;
+  return <ArrowLeftRight className="h-3 w-3 text-slate-400" />;
+}
+
+function txAmountColor(type: string) {
+  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem')
+    return 'text-teal-400';
+  return 'text-red-400';
+}
+
+function txAmountPrefix(type: string) {
+  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem')
+    return '+';
+  return '-';
+}
+
+const STATUS_STYLE: Record<string, string> = {
+  completed: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
+  pending:   'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  failed:    'bg-red-500/15 text-red-400 border-red-500/30',
+  approved:  'bg-blue-500/15 text-blue-400 border-blue-500/30',
+};
+
+function UserTransactionsPanel({ userId, userName, onClose }: { userId: number; userName: string; onClose: () => void }) {
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-user-txs', userId, page],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/transactions?page=${page}`, { headers: authHeaders() });
+      if (!res.ok) throw new Error('Failed to load transactions');
+      return res.json() as Promise<{
+        transactions: Array<{
+          id: number; transactionId: string; type: string; amount: number;
+          status: string; description: string | null; paymentMethod: string | null;
+          reference: string | null; createdAt: string;
+        }>;
+        total: number;
+        page: number;
+      }>;
+    },
+    staleTime: 15_000,
+  });
+
+  const totalPages = data ? Math.ceil(data.total / 20) : 1;
+
+  return (
+    <div className="bg-slate-950 border border-slate-700 rounded mt-2 shadow-lg overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-slate-900">
+        <div className="flex items-center gap-2">
+          <History className="h-3.5 w-3.5 text-blue-400" />
+          <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+            Transaction History
+          </span>
+          <span className="text-[10px] text-slate-500">— {userName}</span>
+          {data && (
+            <span className="text-[10px] text-slate-600">({data.total} total)</span>
+          )}
+        </div>
+        <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Transactions */}
+      {isLoading ? (
+        <div className="p-3 space-y-1.5">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 bg-slate-800 rounded" />)}
+        </div>
+      ) : !data?.transactions.length ? (
+        <div className="flex flex-col items-center gap-1.5 py-8 text-slate-500">
+          <AlertCircle className="h-5 w-5" />
+          <span className="text-[10px]">No transactions found</span>
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-800/60">
+          {data.transactions.map(tx => (
+            <div key={tx.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-900/60 transition-colors">
+              {/* Icon */}
+              <div className="shrink-0">{txIcon(tx.type)}</div>
+
+              {/* Type + description */}
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-semibold text-slate-200 truncate">
+                  {TX_TYPE_LABELS[tx.type] ?? tx.type}
+                  {tx.paymentMethod && tx.paymentMethod !== 'internal' && (
+                    <span className="text-slate-500 font-normal ml-1">via {tx.paymentMethod}</span>
+                  )}
+                </div>
+                {tx.description && (
+                  <div className="text-[9px] text-slate-500 truncate">{tx.description}</div>
+                )}
+                {tx.transactionId && (
+                  <div className="text-[9px] text-slate-600 font-mono">{tx.transactionId}</div>
+                )}
+              </div>
+
+              {/* Status */}
+              <span className={`shrink-0 text-[9px] font-bold uppercase tracking-wider border rounded px-1 py-0 ${STATUS_STYLE[tx.status] ?? 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                {tx.status}
+              </span>
+
+              {/* Amount */}
+              <span className={`shrink-0 font-mono font-bold text-[11px] ${txAmountColor(tx.type)}`}>
+                {txAmountPrefix(tx.type)}${tx.amount.toFixed(2)}
+              </span>
+
+              {/* Date */}
+              <span className="shrink-0 text-[9px] text-slate-500 tabular-nums w-20 text-right">
+                {new Date(tx.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}
+                <br />
+                <span className="text-slate-600">{new Date(tx.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {data && data.total > 20 && (
+        <div className="flex items-center justify-between px-3 py-2 border-t border-slate-800 bg-slate-900/50">
+          <span className="text-[9px] text-slate-500">Page {page} of {totalPages}</span>
+          <div className="flex gap-1">
+            <Button size="sm" variant="ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+              className="h-5 w-5 p-0 text-slate-400 hover:text-white hover:bg-slate-800">
+              <ChevronLeft className="h-3 w-3" />
+            </Button>
+            <Button size="sm" variant="ghost" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
+              className="h-5 w-5 p-0 text-slate-400 hover:text-white hover:bg-slate-800">
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminUsers() {
   useEffect(() => { document.title = 'Manage Users - Admin'; }, []);
 
@@ -392,6 +580,7 @@ export default function AdminUsers() {
   const [editingPayoutFor, setEditingPayoutFor] = useState<number | null>(null);
   const [walletAdjustFor, setWalletAdjustFor] = useState<number | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<number | null>(null);
+  const [txHistoryFor, setTxHistoryFor] = useState<number | null>(null);
 
   const { data, isLoading } = useListUsers({ page, limit: 20, search: search || undefined });
   const updateRole = useUpdateUserRole();
@@ -455,12 +644,18 @@ export default function AdminUsers() {
                         </span>
                         <span className="text-slate-500 text-[10px] truncate max-w-[150px]">{user.email}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px]">
+                      <div className="flex items-center gap-2 text-[10px] flex-wrap">
                         <span className="text-slate-500">ID: {user.id}</span>
                         <span className="text-slate-600">·</span>
                         <span className="text-slate-500">Joined {new Date(user.createdAt).toLocaleDateString()}</span>
                         <span className="text-slate-600">·</span>
                         <UserPayoutBadge userId={user.id} />
+                        {canManageUsers && (
+                          <>
+                            <span className="text-slate-600">·</span>
+                            <UserWalletBadge userId={user.id} />
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -481,7 +676,15 @@ export default function AdminUsers() {
                       <div className="flex items-center gap-1 bg-slate-950 rounded border border-slate-800 p-0.5">
                         <Button
                           size="sm" variant="ghost"
-                          onClick={() => { setWalletAdjustFor(walletAdjustFor === user.id ? null : user.id); setEditingPayoutFor(null); setResetPasswordFor(null); }}
+                          onClick={() => { setTxHistoryFor(txHistoryFor === user.id ? null : user.id); setWalletAdjustFor(null); setEditingPayoutFor(null); setResetPasswordFor(null); }}
+                          className={`h-5 w-6 p-0 rounded-sm ${txHistoryFor === user.id ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-blue-400 hover:bg-slate-800'}`}
+                          title="View Transaction History"
+                        >
+                          <History className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm" variant="ghost"
+                          onClick={() => { setWalletAdjustFor(walletAdjustFor === user.id ? null : user.id); setEditingPayoutFor(null); setResetPasswordFor(null); setTxHistoryFor(null); }}
                           className={`h-5 w-6 p-0 rounded-sm ${walletAdjustFor === user.id ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
                           title="Adjust Wallet"
                         >
@@ -489,7 +692,7 @@ export default function AdminUsers() {
                         </Button>
                         <Button
                           size="sm" variant="ghost"
-                          onClick={() => { setEditingPayoutFor(editingPayoutFor === user.id ? null : user.id); setWalletAdjustFor(null); setResetPasswordFor(null); }}
+                          onClick={() => { setEditingPayoutFor(editingPayoutFor === user.id ? null : user.id); setWalletAdjustFor(null); setResetPasswordFor(null); setTxHistoryFor(null); }}
                           className={`h-5 w-6 p-0 rounded-sm ${editingPayoutFor === user.id ? 'bg-teal-500/20 text-teal-400' : 'text-slate-400 hover:text-teal-400 hover:bg-slate-800'}`}
                           title="Edit Payout Method"
                         >
@@ -498,7 +701,7 @@ export default function AdminUsers() {
                         {isAdmin && (
                         <Button
                           size="sm" variant="ghost"
-                          onClick={() => { setResetPasswordFor(resetPasswordFor === user.id ? null : user.id); setWalletAdjustFor(null); setEditingPayoutFor(null); }}
+                          onClick={() => { setResetPasswordFor(resetPasswordFor === user.id ? null : user.id); setWalletAdjustFor(null); setEditingPayoutFor(null); setTxHistoryFor(null); }}
                           className={`h-5 w-6 p-0 rounded-sm ${resetPasswordFor === user.id ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-blue-400 hover:bg-slate-800'}`}
                           title="Reset Password"
                         >
@@ -520,6 +723,13 @@ export default function AdminUsers() {
                   </div>
 
                   {/* Inline Panels */}
+                  {txHistoryFor === user.id && (
+                    <UserTransactionsPanel
+                      userId={user.id}
+                      userName={user.fullName || `User #${user.id}`}
+                      onClose={() => setTxHistoryFor(null)}
+                    />
+                  )}
                   {walletAdjustFor === user.id && (
                     <WalletAdjustPanel userId={user.id} onClose={() => setWalletAdjustFor(null)} />
                   )}
