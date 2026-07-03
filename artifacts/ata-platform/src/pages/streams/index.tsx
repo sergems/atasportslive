@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { useListStreams, useCheckStreamAccess } from '@workspace/api-client-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Lock, LockOpen, Eye, Play, Radio, Film, Trophy, Users, TrendingUp, Flame,
-  LayoutGrid, Target, Swords, Crosshair, Star, Circle, Crown, Gamepad2,
+  Lock, LockOpen, Eye, Play, Film, Trophy, Users, TrendingUp, Flame,
+  Target, Swords, Crosshair, Star, Circle, Crown,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
@@ -314,8 +313,21 @@ function StreamCardSkeleton() {
   );
 }
 
+const STATUS_ORDER: Record<string, number> = { live: 0, upcoming: 1, ended: 2 };
+
+function sortStreams(streams: Stream[]): Stream[] {
+  return [...streams].sort((a, b) => {
+    const statusDiff = (STATUS_ORDER[a.status] ?? 1) - (STATUS_ORDER[b.status] ?? 1);
+    if (statusDiff !== 0) return statusDiff;
+    // Within same status: upcoming → soonest first; live/ended → most recent first
+    if (a.status === 'upcoming') {
+      return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+    }
+    return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+  });
+}
+
 export default function Streams() {
-  const [status, setStatus] = useState<string>('all');
   const [sport, setSport] = useState<string>('all');
   const { isAuthenticated, user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
@@ -331,7 +343,7 @@ export default function Streams() {
   });
 
   const { data: streamsData, isLoading } = useListStreams(
-    { status: status !== 'all' ? status : undefined, limit: 100 },
+    { limit: 100 },
     { query: { refetchInterval: 30_000 } as any },
   );
 
@@ -355,63 +367,39 @@ export default function Streams() {
     activeStyle: SPORT_PILL_ACTIVE[value] ?? 'bg-slate-500 text-white border-slate-400',
   }));
 
-  // Client-side sport filter
-  const streams = sport === 'all' ? allStreams : allStreams.filter(s => s.sport === sport);
+  // Client-side sport filter + sort (live → upcoming soonest → ended)
+  const filtered = sport === 'all' ? allStreams : allStreams.filter(s => s.sport === sport);
+  const streams = sortStreams(filtered);
 
   return (
     <div className="space-y-6">
       {/* Live leaderboard — only shown when there are live streams */}
       {!isLoading && <LiveLeaderboard streams={allStreams} isAdmin={isAdmin} />}
 
-      {/* ── Filters ── */}
-      <div className="flex flex-wrap items-center gap-3">
-        {/* Status dropdown */}
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[150px] bg-slate-900 border-slate-800 text-white text-sm h-8">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-900 border-slate-800 text-white">
-            <SelectItem value="all">All Streams</SelectItem>
-            <SelectItem value="live">Live Now</SelectItem>
-            <SelectItem value="upcoming">Upcoming</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Sport category pills — dynamically built from actual data */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none flex-1">
-          <button
-            onClick={() => setSport('all')}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-              sport === 'all'
-                ? 'bg-slate-200 text-slate-950 border-slate-300'
-                : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white hover:border-slate-600'
-            }`}
-          >
-            <LayoutGrid className="h-3 w-3" />
-            All
-          </button>
-
-          {allCategories.map(({ value, label, count, icon: Icon, activeStyle }) => {
-            const active = sport === value;
-            return (
-              <button
-                key={value}
-                onClick={() => setSport(active ? 'all' : value)}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-                  active
-                    ? `${activeStyle} shadow-sm`
-                    : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white hover:border-slate-600'
-                }`}
-              >
-                <Icon className="h-3 w-3" />
-                {label}
+      {/* ── Sport category pills ── */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+        {allCategories.map(({ value, label, count, icon: Icon, activeStyle }) => {
+          const active = sport === value;
+          return (
+            <button
+              key={value}
+              onClick={() => setSport(active ? 'all' : value)}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                active
+                  ? `${activeStyle} shadow-sm`
+                  : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white hover:border-slate-600'
+              }`}
+            >
+              <Icon className="h-3 w-3" />
+              {label}
+              {count > 0 && (
                 <span className={`ml-0.5 rounded-full px-1.5 text-[9px] font-bold tabular-nums ${active ? 'bg-black/20' : 'bg-slate-800 text-slate-500'}`}>
                   {count}
                 </span>
-              </button>
-            );
-          })}
-        </div>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Grid */}
