@@ -186,11 +186,11 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-teal-500 shrink-0" />
-                  <a href="tel:+256772364513" className="hover:text-teal-400 transition-colors">+256 772 364 513</a>
+                  <a href="tel:+256788663317" className="hover:text-teal-400 transition-colors">+256 788 663 317</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-teal-500 shrink-0" />
-                  <a href="tel:+256756517675" className="hover:text-teal-400 transition-colors">+256 756 517 675</a>
+                  <a href="tel:+256705663317" className="hover:text-teal-400 transition-colors">+256 705 663 317</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-teal-500 shrink-0" />
@@ -199,81 +199,117 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
               </ul>
             </div>
 
-            {/* Account Opening */}
+            {/* Account Opening + Players & Athletes */}
             <div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Account Opening</h3>
               <ul className="space-y-3 text-sm text-slate-400">
                 <li className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-amber-500 shrink-0" />
-                  <a href="tel:+256788663317" className="hover:text-amber-400 transition-colors">+256 788 663 317</a>
+                  <a href="tel:+256759275456" className="hover:text-amber-400 transition-colors">+256 759 275 456</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-amber-500 shrink-0" />
-                  <a href="mailto:paul@atasportslive.com" className="hover:text-amber-400 transition-colors">paul@atasportslive.com</a>
+                  <a href="mailto:joel@atasportslive.com" className="hover:text-amber-400 transition-colors">joel@atasportslive.com</a>
                 </li>
               </ul>
-              <div className="mt-6 pt-4 border-t border-slate-800">
-                <div className="flex gap-4 text-xs text-slate-500">
-                  <a href="https://atasportslive.com/" className="hover:text-slate-300 transition-colors">atasportslive.com</a>
-                </div>
+              <div className="mt-5 pt-4 border-t border-slate-800">
+                <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Players &amp; Athletes</h4>
+                <ul className="space-y-3 text-sm text-slate-400">
+                  <li className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-teal-500 shrink-0" />
+                    <a href="mailto:paul@atasportslive.com" className="hover:text-teal-400 transition-colors">paul@atasportslive.com</a>
+                  </li>
+                </ul>
               </div>
             </div>
 
-            {/* Join the Community */}
+            {/* Join the Community — ATA Sports Live */}
             <div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Join the Community</h3>
-
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Uganda Boxing Champions League</p>
-              <div className="flex items-center gap-2 mb-4">
+              <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">ATA Sports Live</p>
+              <div className="flex items-center gap-2 flex-wrap">
                 <a
-                  href="https://www.instagram.com/ugandaboxingchampionsleague/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="UBCL on Instagram"
+                  href="https://www.facebook.com/profile.php?id=61567116955397"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="ATA Sports Live on Facebook"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-blue-600 hover:text-white transition-all duration-200"
+                >
+                  <FaFacebook className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://www.youtube.com/channel/UCCMb9rG7jg6g8ClKR-yBYWQ"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="ATA Sports Live on YouTube"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white transition-all duration-200"
+                >
+                  <FaYoutube className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://www.instagram.com/atasportslive/"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="ATA Sports Live on Instagram"
                   className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-pink-600 hover:text-white transition-all duration-200"
                 >
                   <FaInstagram className="h-4 w-4" />
                 </a>
                 <a
-                  href="https://x.com/UBCL_Boxing"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="UBCL on X"
-                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-black hover:text-white transition-all duration-200"
-                >
-                  <FaXTwitter className="h-4 w-4" />
-                </a>
-              </div>
-
-              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Uganda Boxing Federation</p>
-              <div className="flex items-center gap-2">
-                <a
-                  href="https://x.com/BoxingUganda"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Uganda Boxing Federation on X"
+                  href="https://x.com/atasportslive"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="ATA Sports Live on X"
                   className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-black hover:text-white transition-all duration-200"
                 >
                   <FaXTwitter className="h-4 w-4" />
                 </a>
                 <a
-                  href="https://www.instagram.com/ugandaboxingfederation/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Uganda Boxing Federation on Instagram"
-                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-pink-600 hover:text-white transition-all duration-200"
-                >
-                  <FaInstagram className="h-4 w-4" />
-                </a>
-                <a
-                  href="https://www.tiktok.com/@boxinguganda"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Uganda Boxing Federation on TikTok"
+                  href="https://www.tiktok.com/@atasportslive"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="ATA Sports Live on TikTok"
                   className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-slate-600 hover:text-white transition-all duration-200"
                 >
                   <FaTiktok className="h-4 w-4" />
                 </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Floating Partners Band */}
+          <div className="mt-10 rounded-xl border border-slate-700/60 bg-slate-800/50 backdrop-blur-sm px-6 py-5">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 text-center">Our Partners</p>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-start sm:items-center">
+              {/* Uganda Boxing Federation */}
+              <div className="flex flex-col items-center gap-2 min-w-[160px]">
+                <p className="text-xs font-medium text-slate-300">Uganda Boxing Federation</p>
+                <div className="flex items-center gap-2">
+                  <a href="https://x.com/BoxingUganda" target="_blank" rel="noopener noreferrer" aria-label="UBF on X"
+                    className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-700 text-slate-400 hover:bg-black hover:text-white transition-all duration-200">
+                    <FaXTwitter className="h-4 w-4" />
+                  </a>
+                  <a href="https://www.instagram.com/ugandaboxingfederation/" target="_blank" rel="noopener noreferrer" aria-label="UBF on Instagram"
+                    className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-700 text-slate-400 hover:bg-pink-600 hover:text-white transition-all duration-200">
+                    <FaInstagram className="h-4 w-4" />
+                  </a>
+                  <a href="https://www.tiktok.com/@boxinguganda" target="_blank" rel="noopener noreferrer" aria-label="UBF on TikTok"
+                    className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-700 text-slate-400 hover:bg-slate-500 hover:text-white transition-all duration-200">
+                    <FaTiktok className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="hidden sm:block h-10 w-px bg-slate-700" />
+
+              {/* Uganda Boxing Champions League */}
+              <div className="flex flex-col items-center gap-2 min-w-[200px]">
+                <p className="text-xs font-medium text-slate-300">Uganda Boxing Champions League</p>
+                <div className="flex items-center gap-2">
+                  <a href="https://www.instagram.com/ugandaboxingchampionsleague/" target="_blank" rel="noopener noreferrer" aria-label="UBCL on Instagram"
+                    className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-700 text-slate-400 hover:bg-pink-600 hover:text-white transition-all duration-200">
+                    <FaInstagram className="h-4 w-4" />
+                  </a>
+                  <a href="https://x.com/UBCL_Boxing" target="_blank" rel="noopener noreferrer" aria-label="UBCL on X"
+                    className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-700 text-slate-400 hover:bg-black hover:text-white transition-all duration-200">
+                    <FaXTwitter className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             </div>
           </div>

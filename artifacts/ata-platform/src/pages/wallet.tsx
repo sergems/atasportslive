@@ -450,6 +450,24 @@ export default function Wallet() {
         </div>
       </div>
 
+      {/* Subscription Pricing Banner */}
+      <div className="rounded-xl border border-teal-500/25 bg-teal-500/5 px-4 py-3">
+        <p className="text-[10px] sm:text-xs font-semibold text-teal-400 uppercase tracking-wider mb-2">Subscription Plans</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+          {[
+            { label: 'Daily',    price: '$1.7' },
+            { label: 'Weekly',   price: '$7' },
+            { label: 'Monthly',  price: '$20' },
+            { label: 'Annually', price: '$99' },
+          ].map(({ label, price }) => (
+            <div key={label} className="flex items-baseline gap-1">
+              <span className="text-base sm:text-lg font-bold text-white font-mono">{price}</span>
+              <span className="text-[10px] sm:text-xs text-slate-400">/ {label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Pending payment banner */}
       {paymentStatus === 'pending' && (
         <div className="flex items-center gap-3 rounded-lg bg-amber-500/10 border border-amber-500/30 px-4 py-3">
