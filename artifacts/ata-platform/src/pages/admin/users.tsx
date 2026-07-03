@@ -747,6 +747,16 @@ export default function AdminUsers() {
                         <span className="text-slate-600">·</span>
                         <span className="text-slate-500">Joined {new Date(user.createdAt).toLocaleDateString()}</span>
                         <span className="text-slate-600">·</span>
+                        {user.ficaCompleted ? (
+                          <span className="inline-flex items-center gap-1 text-teal-400">
+                            <ShieldCheck className="h-2.5 w-2.5" /> FICA Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-amber-500/80">
+                            <ShieldCheck className="h-2.5 w-2.5" /> FICA Pending
+                          </span>
+                        )}
+                        <span className="text-slate-600">·</span>
                         <UserPayoutBadge userId={user.id} />
                         {canManageUsers && (
                           <>

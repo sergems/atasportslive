@@ -34,6 +34,7 @@ const toPublicUser = (user: typeof usersTable.$inferSelect) => ({
   status: user.status,
   avatarUrl: user.avatarUrl,
   createdAt: user.createdAt,
+  ficaCompleted: user.ficaCompleted ?? false,
 });
 
 // ── List users ───────────────────────────────────────────────────────────────
