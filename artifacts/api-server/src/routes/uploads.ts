@@ -3,6 +3,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
+import { db, usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -42,6 +44,30 @@ router.post(
     }
     const url = `/uploads/${req.file.filename}`;
     res.status(201).json({ url });
+  },
+);
+
+// POST /api/uploads/avatar — any authenticated user can update their own profile photo
+router.post(
+  "/avatar",
+  authMiddleware,
+  upload.single("file"),
+  async (req: AuthRequest, res): Promise<void> => {
+    if (!req.file) {
+      res.status(400).json({ error: "No file uploaded" });
+      return;
+    }
+    const url = `/uploads/${req.file.filename}`;
+    const [updated] = await db
+      .update(usersTable)
+      .set({ avatarUrl: url })
+      .where(eq(usersTable.id, req.userId!))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ url, avatarUrl: url });
   },
 );
 
