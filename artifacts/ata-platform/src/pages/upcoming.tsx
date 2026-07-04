@@ -3,7 +3,7 @@ import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarClock, MapPin, ChevronRight, Tv, Swords, Filter } from 'lucide-react';
+import { CalendarClock, MapPin, ChevronRight, Tv, Swords } from 'lucide-react';
 import { useAdSlots, AdCard, HorizontalAdBanner } from '@/components/ads';
 
 interface UpcomingStream {
@@ -188,15 +188,9 @@ export default function Upcoming() {
 
   const [sportFilter, setSportFilter] = useState('all');
 
-  const FIXED_SPORTS = ['all', 'pool', 'boxing', 'darts', 'fifa', 'chess', 'futsal'];
+  const FIXED_SPORTS = ['pool', 'boxing', 'darts', 'fifa', 'chess', 'futsal'];
 
-  const availableSports = useMemo(() => {
-    const extra = new Set<string>();
-    events.forEach((e) => {
-      if (!FIXED_SPORTS.includes(e.sport)) extra.add(e.sport);
-    });
-    return [...FIXED_SPORTS, ...Array.from(extra)];
-  }, [events]);
+  const availableSports = FIXED_SPORTS;
 
   const filteredEvents = useMemo(() => {
     if (sportFilter === 'all') return events;
@@ -224,24 +218,19 @@ export default function Upcoming() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Filter className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto">
           {availableSports.map((s) => {
-            const sc = s === 'all' ? null : (sportColor[s] ?? { pill: 'text-slate-400 bg-slate-500/10 border-slate-500/30', dot: 'bg-slate-400' });
+            const sc = sportColor[s] ?? { pill: 'text-slate-400 bg-slate-500/10 border-slate-500/30', dot: 'bg-slate-400' };
             const active = sportFilter === s;
             return (
               <button
                 key={s}
-                onClick={() => setSportFilter(s)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-all border ${
-                  active
-                    ? s === 'all'
-                      ? 'bg-teal-500 text-slate-950 border-teal-500'
-                      : `${sc!.pill} border-current`
-                    : 'text-slate-500 border-slate-800 hover:border-slate-700 hover:text-slate-300'
+                onClick={() => setSportFilter(sportFilter === s ? 'all' : s)}
+                className={`whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all border shrink-0 ${
+                  active ? `${sc.pill} border-current` : 'text-slate-500 border-slate-800 hover:border-slate-700 hover:text-slate-300'
                 }`}
               >
-                {s === 'all' ? 'All' : s.toUpperCase()}
+                {s.toUpperCase()}
               </button>
             );
           })}
