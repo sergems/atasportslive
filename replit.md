@@ -26,7 +26,9 @@ Both workflows start automatically:
 
 ## Database
 
-Schema is defined in `lib/db/src/schema/` (Drizzle). The initial schema was applied from `dt.sql`. To push schema changes: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow).
+Schema is defined in `lib/db/src/schema/` (Drizzle). The initial schema and seed data were applied from `backup.sql` via psql (the `\restrict`/`\unrestrict` lines at top/bottom are skipped: `sed '5d' backup.sql | psql "$DATABASE_URL"`). To push schema changes: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow).
+
+> ⚠️ **`backup.sql` contains real user PII and API tokens** from the original deployment. Do not commit it to a public repository or share it. Rotate any API tokens it references.
 
 ## API Code Generation
 
