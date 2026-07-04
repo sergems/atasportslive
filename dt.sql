@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 362jgNuWY8AwEZh4nDjqz5i3DYWRCDF7QeBRpC0etaKPklneUGLYofPd7l8t5oA
+\restrict Qxia6C8LHGLs0fDqWmKU8MmznedLt3ugMrZqww9ayftc40wWHx8lOQFHVuFPhHP
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -18,24 +18,142 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+ALTER TABLE IF EXISTS ONLY public.wallets DROP CONSTRAINT IF EXISTS wallets_user_id_users_id_fk;
+ALTER TABLE IF EXISTS ONLY public.vouchers DROP CONSTRAINT IF EXISTS vouchers_redeemed_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.vouchers DROP CONSTRAINT IF EXISTS vouchers_created_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_referred_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.transactions DROP CONSTRAINT IF EXISTS transactions_user_id_users_id_fk;
+ALTER TABLE IF EXISTS ONLY public.stream_comments DROP CONSTRAINT IF EXISTS stream_comments_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.stream_access DROP CONSTRAINT IF EXISTS stream_access_user_id_users_id_fk;
+ALTER TABLE IF EXISTS ONLY public.stream_access DROP CONSTRAINT IF EXISTS stream_access_stream_id_streams_id_fk;
+ALTER TABLE IF EXISTS ONLY public.promotions DROP CONSTRAINT IF EXISTS promotions_created_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.promotion_terms_acceptance DROP CONSTRAINT IF EXISTS promotion_terms_acceptance_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.promotion_terms_acceptance DROP CONSTRAINT IF EXISTS promotion_terms_acceptance_promotion_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.platform_subscriptions DROP CONSTRAINT IF EXISTS platform_subscriptions_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.notifications DROP CONSTRAINT IF EXISTS notifications_user_id_users_id_fk;
+ALTER TABLE IF EXISTS ONLY public.bonus_transactions DROP CONSTRAINT IF EXISTS bonus_transactions_user_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.bonus_transactions DROP CONSTRAINT IF EXISTS bonus_transactions_revoked_by_fkey;
+ALTER TABLE IF EXISTS ONLY public.bonus_transactions DROP CONSTRAINT IF EXISTS bonus_transactions_promotion_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.bets DROP CONSTRAINT IF EXISTS bets_user_id_users_id_fk;
+ALTER TABLE IF EXISTS ONLY public.bets DROP CONSTRAINT IF EXISTS bets_game_id_games_id_fk;
+DROP INDEX IF EXISTS public.idx_stream_comments_stream;
+DROP INDEX IF EXISTS public.idx_platform_subs_user_expires;
+ALTER TABLE IF EXISTS ONLY public.wallets DROP CONSTRAINT IF EXISTS wallets_user_id_unique;
+ALTER TABLE IF EXISTS ONLY public.wallets DROP CONSTRAINT IF EXISTS wallets_pkey;
+ALTER TABLE IF EXISTS ONLY public.vouchers DROP CONSTRAINT IF EXISTS vouchers_pkey;
+ALTER TABLE IF EXISTS ONLY public.vouchers DROP CONSTRAINT IF EXISTS vouchers_code_unique;
+ALTER TABLE IF EXISTS ONLY public.vouchers DROP CONSTRAINT IF EXISTS vouchers_code_key;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_username_key;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_referral_code_unique;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_google_id_unique;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_google_id_key;
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_email_unique;
+ALTER TABLE IF EXISTS ONLY public.transactions DROP CONSTRAINT IF EXISTS transactions_transaction_id_unique;
+ALTER TABLE IF EXISTS ONLY public.transactions DROP CONSTRAINT IF EXISTS transactions_pkey;
+ALTER TABLE IF EXISTS ONLY public.streams DROP CONSTRAINT IF EXISTS streams_pkey;
+ALTER TABLE IF EXISTS ONLY public.stream_comments DROP CONSTRAINT IF EXISTS stream_comments_pkey;
+ALTER TABLE IF EXISTS ONLY public.stream_access DROP CONSTRAINT IF EXISTS stream_access_pkey;
+ALTER TABLE IF EXISTS ONLY public.settings DROP CONSTRAINT IF EXISTS settings_pkey;
+ALTER TABLE IF EXISTS ONLY public.promotions DROP CONSTRAINT IF EXISTS promotions_pkey;
+ALTER TABLE IF EXISTS ONLY public.promotions DROP CONSTRAINT IF EXISTS promotions_code_key;
+ALTER TABLE IF EXISTS ONLY public.promotion_terms_acceptance DROP CONSTRAINT IF EXISTS promotion_terms_acceptance_user_id_promotion_id_key;
+ALTER TABLE IF EXISTS ONLY public.promotion_terms_acceptance DROP CONSTRAINT IF EXISTS promotion_terms_acceptance_pkey;
+ALTER TABLE IF EXISTS ONLY public.platform_subscriptions DROP CONSTRAINT IF EXISTS platform_subscriptions_pkey;
+ALTER TABLE IF EXISTS ONLY public.notifications DROP CONSTRAINT IF EXISTS notifications_pkey;
+ALTER TABLE IF EXISTS ONLY public.highlights DROP CONSTRAINT IF EXISTS highlights_pkey;
+ALTER TABLE IF EXISTS ONLY public.hero_slides DROP CONSTRAINT IF EXISTS hero_slides_pkey;
+ALTER TABLE IF EXISTS ONLY public.games DROP CONSTRAINT IF EXISTS games_pkey;
+ALTER TABLE IF EXISTS ONLY public.bonus_transactions DROP CONSTRAINT IF EXISTS bonus_transactions_pkey;
+ALTER TABLE IF EXISTS ONLY public.bets DROP CONSTRAINT IF EXISTS bets_ticket_id_unique;
+ALTER TABLE IF EXISTS ONLY public.bets DROP CONSTRAINT IF EXISTS bets_pkey;
+ALTER TABLE IF EXISTS ONLY public.audit_logs DROP CONSTRAINT IF EXISTS audit_logs_pkey;
+ALTER TABLE IF EXISTS ONLY public.announcements DROP CONSTRAINT IF EXISTS announcements_pkey;
+ALTER TABLE IF EXISTS public.wallets ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.vouchers ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.users ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.transactions ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.streams ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.stream_comments ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.stream_access ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.promotions ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.promotion_terms_acceptance ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.platform_subscriptions ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.notifications ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.highlights ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.hero_slides ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.games ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.bonus_transactions ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.bets ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.audit_logs ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.announcements ALTER COLUMN id DROP DEFAULT;
+DROP SEQUENCE IF EXISTS public.wallets_id_seq;
+DROP TABLE IF EXISTS public.wallets;
+DROP SEQUENCE IF EXISTS public.vouchers_id_seq;
+DROP TABLE IF EXISTS public.vouchers;
+DROP SEQUENCE IF EXISTS public.users_id_seq;
+DROP TABLE IF EXISTS public.users;
+DROP SEQUENCE IF EXISTS public.transactions_id_seq;
+DROP TABLE IF EXISTS public.transactions;
+DROP SEQUENCE IF EXISTS public.streams_id_seq;
+DROP TABLE IF EXISTS public.streams;
+DROP SEQUENCE IF EXISTS public.stream_comments_id_seq;
+DROP TABLE IF EXISTS public.stream_comments;
+DROP SEQUENCE IF EXISTS public.stream_access_id_seq;
+DROP TABLE IF EXISTS public.stream_access;
+DROP TABLE IF EXISTS public.settings;
+DROP SEQUENCE IF EXISTS public.promotions_id_seq;
+DROP TABLE IF EXISTS public.promotions;
+DROP SEQUENCE IF EXISTS public.promotion_terms_acceptance_id_seq;
+DROP TABLE IF EXISTS public.promotion_terms_acceptance;
+DROP SEQUENCE IF EXISTS public.platform_subscriptions_id_seq;
+DROP TABLE IF EXISTS public.platform_subscriptions;
+DROP SEQUENCE IF EXISTS public.notifications_id_seq;
+DROP TABLE IF EXISTS public.notifications;
+DROP SEQUENCE IF EXISTS public.highlights_id_seq;
+DROP TABLE IF EXISTS public.highlights;
+DROP SEQUENCE IF EXISTS public.hero_slides_id_seq;
+DROP TABLE IF EXISTS public.hero_slides;
+DROP SEQUENCE IF EXISTS public.games_id_seq;
+DROP TABLE IF EXISTS public.games;
+DROP SEQUENCE IF EXISTS public.bonus_transactions_id_seq;
+DROP TABLE IF EXISTS public.bonus_transactions;
+DROP SEQUENCE IF EXISTS public.bets_id_seq;
+DROP TABLE IF EXISTS public.bets;
+DROP SEQUENCE IF EXISTS public.audit_logs_id_seq;
+DROP TABLE IF EXISTS public.audit_logs;
+DROP SEQUENCE IF EXISTS public.announcements_id_seq;
+DROP TABLE IF EXISTS public.announcements;
+DROP TYPE IF EXISTS public.user_status;
+DROP TYPE IF EXISTS public.user_role;
+DROP TYPE IF EXISTS public.transaction_type;
+DROP TYPE IF EXISTS public.transaction_status;
+DROP TYPE IF EXISTS public.stream_status;
+DROP TYPE IF EXISTS public.sport_type;
+DROP TYPE IF EXISTS public.payment_method;
+DROP TYPE IF EXISTS public.notification_type;
+DROP TYPE IF EXISTS public.game_status;
+DROP TYPE IF EXISTS public.game_sport;
+DROP TYPE IF EXISTS public.game_result;
+DROP TYPE IF EXISTS public.bet_status;
+DROP TYPE IF EXISTS public.bet_outcome;
+-- *not* dropping schema, since initdb creates it
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
 -- *not* creating schema, since initdb creates it
 
 
-ALTER SCHEMA public OWNER TO postgres;
-
 --
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: postgres
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
 --
 
 COMMENT ON SCHEMA public IS '';
 
 
 --
--- Name: bet_outcome; Type: TYPE; Schema: public; Owner: postgres
+-- Name: bet_outcome; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.bet_outcome AS ENUM (
@@ -44,10 +162,8 @@ CREATE TYPE public.bet_outcome AS ENUM (
 );
 
 
-ALTER TYPE public.bet_outcome OWNER TO postgres;
-
 --
--- Name: bet_status; Type: TYPE; Schema: public; Owner: postgres
+-- Name: bet_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.bet_status AS ENUM (
@@ -61,10 +177,8 @@ CREATE TYPE public.bet_status AS ENUM (
 );
 
 
-ALTER TYPE public.bet_status OWNER TO postgres;
-
 --
--- Name: game_result; Type: TYPE; Schema: public; Owner: postgres
+-- Name: game_result; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.game_result AS ENUM (
@@ -74,10 +188,8 @@ CREATE TYPE public.game_result AS ENUM (
 );
 
 
-ALTER TYPE public.game_result OWNER TO postgres;
-
 --
--- Name: game_sport; Type: TYPE; Schema: public; Owner: postgres
+-- Name: game_sport; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.game_sport AS ENUM (
@@ -90,10 +202,8 @@ CREATE TYPE public.game_sport AS ENUM (
 );
 
 
-ALTER TYPE public.game_sport OWNER TO postgres;
-
 --
--- Name: game_status; Type: TYPE; Schema: public; Owner: postgres
+-- Name: game_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.game_status AS ENUM (
@@ -104,10 +214,8 @@ CREATE TYPE public.game_status AS ENUM (
 );
 
 
-ALTER TYPE public.game_status OWNER TO postgres;
-
 --
--- Name: notification_type; Type: TYPE; Schema: public; Owner: postgres
+-- Name: notification_type; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.notification_type AS ENUM (
@@ -127,10 +235,8 @@ CREATE TYPE public.notification_type AS ENUM (
 );
 
 
-ALTER TYPE public.notification_type OWNER TO postgres;
-
 --
--- Name: payment_method; Type: TYPE; Schema: public; Owner: postgres
+-- Name: payment_method; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.payment_method AS ENUM (
@@ -143,10 +249,8 @@ CREATE TYPE public.payment_method AS ENUM (
 );
 
 
-ALTER TYPE public.payment_method OWNER TO postgres;
-
 --
--- Name: sport_type; Type: TYPE; Schema: public; Owner: postgres
+-- Name: sport_type; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.sport_type AS ENUM (
@@ -161,10 +265,8 @@ CREATE TYPE public.sport_type AS ENUM (
 );
 
 
-ALTER TYPE public.sport_type OWNER TO postgres;
-
 --
--- Name: stream_status; Type: TYPE; Schema: public; Owner: postgres
+-- Name: stream_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.stream_status AS ENUM (
@@ -175,10 +277,8 @@ CREATE TYPE public.stream_status AS ENUM (
 );
 
 
-ALTER TYPE public.stream_status OWNER TO postgres;
-
 --
--- Name: transaction_status; Type: TYPE; Schema: public; Owner: postgres
+-- Name: transaction_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.transaction_status AS ENUM (
@@ -190,10 +290,8 @@ CREATE TYPE public.transaction_status AS ENUM (
 );
 
 
-ALTER TYPE public.transaction_status OWNER TO postgres;
-
 --
--- Name: transaction_type; Type: TYPE; Schema: public; Owner: postgres
+-- Name: transaction_type; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.transaction_type AS ENUM (
@@ -211,10 +309,8 @@ CREATE TYPE public.transaction_type AS ENUM (
 );
 
 
-ALTER TYPE public.transaction_type OWNER TO postgres;
-
 --
--- Name: user_role; Type: TYPE; Schema: public; Owner: postgres
+-- Name: user_role; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.user_role AS ENUM (
@@ -228,10 +324,8 @@ CREATE TYPE public.user_role AS ENUM (
 );
 
 
-ALTER TYPE public.user_role OWNER TO postgres;
-
 --
--- Name: user_status; Type: TYPE; Schema: public; Owner: postgres
+-- Name: user_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.user_status AS ENUM (
@@ -240,14 +334,12 @@ CREATE TYPE public.user_status AS ENUM (
 );
 
 
-ALTER TYPE public.user_status OWNER TO postgres;
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: announcements; Type: TABLE; Schema: public; Owner: postgres
+-- Name: announcements; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.announcements (
@@ -261,10 +353,8 @@ CREATE TABLE public.announcements (
 );
 
 
-ALTER TABLE public.announcements OWNER TO postgres;
-
 --
--- Name: announcements_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: announcements_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.announcements_id_seq
@@ -276,17 +366,15 @@ CREATE SEQUENCE public.announcements_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.announcements_id_seq OWNER TO postgres;
-
 --
--- Name: announcements_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: announcements_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.announcements_id_seq OWNED BY public.announcements.id;
 
 
 --
--- Name: audit_logs; Type: TABLE; Schema: public; Owner: postgres
+-- Name: audit_logs; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.audit_logs (
@@ -302,10 +390,8 @@ CREATE TABLE public.audit_logs (
 );
 
 
-ALTER TABLE public.audit_logs OWNER TO postgres;
-
 --
--- Name: audit_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: audit_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.audit_logs_id_seq
@@ -317,17 +403,15 @@ CREATE SEQUENCE public.audit_logs_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.audit_logs_id_seq OWNER TO postgres;
-
 --
--- Name: audit_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: audit_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.audit_logs_id_seq OWNED BY public.audit_logs.id;
 
 
 --
--- Name: bets; Type: TABLE; Schema: public; Owner: postgres
+-- Name: bets; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.bets (
@@ -346,10 +430,8 @@ CREATE TABLE public.bets (
 );
 
 
-ALTER TABLE public.bets OWNER TO postgres;
-
 --
--- Name: bets_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: bets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.bets_id_seq
@@ -361,17 +443,15 @@ CREATE SEQUENCE public.bets_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.bets_id_seq OWNER TO postgres;
-
 --
--- Name: bets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: bets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.bets_id_seq OWNED BY public.bets.id;
 
 
 --
--- Name: bonus_transactions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: bonus_transactions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.bonus_transactions (
@@ -391,10 +471,8 @@ CREATE TABLE public.bonus_transactions (
 );
 
 
-ALTER TABLE public.bonus_transactions OWNER TO postgres;
-
 --
--- Name: bonus_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: bonus_transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.bonus_transactions_id_seq
@@ -406,17 +484,15 @@ CREATE SEQUENCE public.bonus_transactions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.bonus_transactions_id_seq OWNER TO postgres;
-
 --
--- Name: bonus_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: bonus_transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.bonus_transactions_id_seq OWNED BY public.bonus_transactions.id;
 
 
 --
--- Name: games; Type: TABLE; Schema: public; Owner: postgres
+-- Name: games; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.games (
@@ -444,10 +520,8 @@ CREATE TABLE public.games (
 );
 
 
-ALTER TABLE public.games OWNER TO postgres;
-
 --
--- Name: games_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: games_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.games_id_seq
@@ -459,17 +533,15 @@ CREATE SEQUENCE public.games_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.games_id_seq OWNER TO postgres;
-
 --
--- Name: games_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: games_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.games_id_seq OWNED BY public.games.id;
 
 
 --
--- Name: hero_slides; Type: TABLE; Schema: public; Owner: postgres
+-- Name: hero_slides; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.hero_slides (
@@ -486,10 +558,8 @@ CREATE TABLE public.hero_slides (
 );
 
 
-ALTER TABLE public.hero_slides OWNER TO postgres;
-
 --
--- Name: hero_slides_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: hero_slides_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.hero_slides_id_seq
@@ -501,17 +571,15 @@ CREATE SEQUENCE public.hero_slides_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.hero_slides_id_seq OWNER TO postgres;
-
 --
--- Name: hero_slides_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: hero_slides_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.hero_slides_id_seq OWNED BY public.hero_slides.id;
 
 
 --
--- Name: highlights; Type: TABLE; Schema: public; Owner: postgres
+-- Name: highlights; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.highlights (
@@ -525,10 +593,8 @@ CREATE TABLE public.highlights (
 );
 
 
-ALTER TABLE public.highlights OWNER TO postgres;
-
 --
--- Name: highlights_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: highlights_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.highlights_id_seq
@@ -540,17 +606,15 @@ CREATE SEQUENCE public.highlights_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.highlights_id_seq OWNER TO postgres;
-
 --
--- Name: highlights_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: highlights_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.highlights_id_seq OWNED BY public.highlights.id;
 
 
 --
--- Name: notifications; Type: TABLE; Schema: public; Owner: postgres
+-- Name: notifications; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.notifications (
@@ -564,10 +628,8 @@ CREATE TABLE public.notifications (
 );
 
 
-ALTER TABLE public.notifications OWNER TO postgres;
-
 --
--- Name: notifications_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: notifications_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.notifications_id_seq
@@ -579,17 +641,15 @@ CREATE SEQUENCE public.notifications_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.notifications_id_seq OWNER TO postgres;
-
 --
--- Name: notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.notifications_id_seq OWNED BY public.notifications.id;
 
 
 --
--- Name: platform_subscriptions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: platform_subscriptions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.platform_subscriptions (
@@ -604,10 +664,8 @@ CREATE TABLE public.platform_subscriptions (
 );
 
 
-ALTER TABLE public.platform_subscriptions OWNER TO postgres;
-
 --
--- Name: platform_subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: platform_subscriptions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.platform_subscriptions_id_seq
@@ -619,17 +677,15 @@ CREATE SEQUENCE public.platform_subscriptions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.platform_subscriptions_id_seq OWNER TO postgres;
-
 --
--- Name: platform_subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: platform_subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.platform_subscriptions_id_seq OWNED BY public.platform_subscriptions.id;
 
 
 --
--- Name: promotion_terms_acceptance; Type: TABLE; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.promotion_terms_acceptance (
@@ -642,10 +698,8 @@ CREATE TABLE public.promotion_terms_acceptance (
 );
 
 
-ALTER TABLE public.promotion_terms_acceptance OWNER TO postgres;
-
 --
--- Name: promotion_terms_acceptance_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.promotion_terms_acceptance_id_seq
@@ -657,17 +711,15 @@ CREATE SEQUENCE public.promotion_terms_acceptance_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.promotion_terms_acceptance_id_seq OWNER TO postgres;
-
 --
--- Name: promotion_terms_acceptance_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.promotion_terms_acceptance_id_seq OWNED BY public.promotion_terms_acceptance.id;
 
 
 --
--- Name: promotions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: promotions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.promotions (
@@ -695,10 +747,8 @@ CREATE TABLE public.promotions (
 );
 
 
-ALTER TABLE public.promotions OWNER TO postgres;
-
 --
--- Name: promotions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: promotions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.promotions_id_seq
@@ -710,17 +760,15 @@ CREATE SEQUENCE public.promotions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.promotions_id_seq OWNER TO postgres;
-
 --
--- Name: promotions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: promotions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.promotions_id_seq OWNED BY public.promotions.id;
 
 
 --
--- Name: settings; Type: TABLE; Schema: public; Owner: postgres
+-- Name: settings; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.settings (
@@ -730,10 +778,8 @@ CREATE TABLE public.settings (
 );
 
 
-ALTER TABLE public.settings OWNER TO postgres;
-
 --
--- Name: stream_access; Type: TABLE; Schema: public; Owner: postgres
+-- Name: stream_access; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.stream_access (
@@ -747,10 +793,8 @@ CREATE TABLE public.stream_access (
 );
 
 
-ALTER TABLE public.stream_access OWNER TO postgres;
-
 --
--- Name: stream_access_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: stream_access_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.stream_access_id_seq
@@ -762,17 +806,15 @@ CREATE SEQUENCE public.stream_access_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.stream_access_id_seq OWNER TO postgres;
-
 --
--- Name: stream_access_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: stream_access_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.stream_access_id_seq OWNED BY public.stream_access.id;
 
 
 --
--- Name: stream_comments; Type: TABLE; Schema: public; Owner: postgres
+-- Name: stream_comments; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.stream_comments (
@@ -785,10 +827,8 @@ CREATE TABLE public.stream_comments (
 );
 
 
-ALTER TABLE public.stream_comments OWNER TO postgres;
-
 --
--- Name: stream_comments_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: stream_comments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.stream_comments_id_seq
@@ -800,17 +840,15 @@ CREATE SEQUENCE public.stream_comments_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.stream_comments_id_seq OWNER TO postgres;
-
 --
--- Name: stream_comments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: stream_comments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.stream_comments_id_seq OWNED BY public.stream_comments.id;
 
 
 --
--- Name: streams; Type: TABLE; Schema: public; Owner: postgres
+-- Name: streams; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.streams (
@@ -833,10 +871,8 @@ CREATE TABLE public.streams (
 );
 
 
-ALTER TABLE public.streams OWNER TO postgres;
-
 --
--- Name: streams_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: streams_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.streams_id_seq
@@ -848,17 +884,15 @@ CREATE SEQUENCE public.streams_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.streams_id_seq OWNER TO postgres;
-
 --
--- Name: streams_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: streams_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.streams_id_seq OWNED BY public.streams.id;
 
 
 --
--- Name: transactions; Type: TABLE; Schema: public; Owner: postgres
+-- Name: transactions; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.transactions (
@@ -877,10 +911,8 @@ CREATE TABLE public.transactions (
 );
 
 
-ALTER TABLE public.transactions OWNER TO postgres;
-
 --
--- Name: transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.transactions_id_seq
@@ -892,17 +924,15 @@ CREATE SEQUENCE public.transactions_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.transactions_id_seq OWNER TO postgres;
-
 --
--- Name: transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.transactions_id_seq OWNED BY public.transactions.id;
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
@@ -936,10 +966,8 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
-
 --
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.users_id_seq
@@ -951,17 +979,15 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
-
 --
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- Name: vouchers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: vouchers; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.vouchers (
@@ -976,10 +1002,8 @@ CREATE TABLE public.vouchers (
 );
 
 
-ALTER TABLE public.vouchers OWNER TO postgres;
-
 --
--- Name: vouchers_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: vouchers_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.vouchers_id_seq
@@ -991,17 +1015,15 @@ CREATE SEQUENCE public.vouchers_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.vouchers_id_seq OWNER TO postgres;
-
 --
--- Name: vouchers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: vouchers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.vouchers_id_seq OWNED BY public.vouchers.id;
 
 
 --
--- Name: wallets; Type: TABLE; Schema: public; Owner: postgres
+-- Name: wallets; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.wallets (
@@ -1018,10 +1040,8 @@ CREATE TABLE public.wallets (
 );
 
 
-ALTER TABLE public.wallets OWNER TO postgres;
-
 --
--- Name: wallets_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: wallets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.wallets_id_seq
@@ -1033,143 +1053,141 @@ CREATE SEQUENCE public.wallets_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.wallets_id_seq OWNER TO postgres;
-
 --
--- Name: wallets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: wallets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE public.wallets_id_seq OWNED BY public.wallets.id;
 
 
 --
--- Name: announcements id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: announcements id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.announcements ALTER COLUMN id SET DEFAULT nextval('public.announcements_id_seq'::regclass);
 
 
 --
--- Name: audit_logs id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: audit_logs id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audit_logs ALTER COLUMN id SET DEFAULT nextval('public.audit_logs_id_seq'::regclass);
 
 
 --
--- Name: bets id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: bets id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bets ALTER COLUMN id SET DEFAULT nextval('public.bets_id_seq'::regclass);
 
 
 --
--- Name: bonus_transactions id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: bonus_transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bonus_transactions ALTER COLUMN id SET DEFAULT nextval('public.bonus_transactions_id_seq'::regclass);
 
 
 --
--- Name: games id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: games id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.games ALTER COLUMN id SET DEFAULT nextval('public.games_id_seq'::regclass);
 
 
 --
--- Name: hero_slides id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: hero_slides id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hero_slides ALTER COLUMN id SET DEFAULT nextval('public.hero_slides_id_seq'::regclass);
 
 
 --
--- Name: highlights id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: highlights id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.highlights ALTER COLUMN id SET DEFAULT nextval('public.highlights_id_seq'::regclass);
 
 
 --
--- Name: notifications id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: notifications id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications ALTER COLUMN id SET DEFAULT nextval('public.notifications_id_seq'::regclass);
 
 
 --
--- Name: platform_subscriptions id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: platform_subscriptions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.platform_subscriptions ALTER COLUMN id SET DEFAULT nextval('public.platform_subscriptions_id_seq'::regclass);
 
 
 --
--- Name: promotion_terms_acceptance id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotion_terms_acceptance ALTER COLUMN id SET DEFAULT nextval('public.promotion_terms_acceptance_id_seq'::regclass);
 
 
 --
--- Name: promotions id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: promotions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotions ALTER COLUMN id SET DEFAULT nextval('public.promotions_id_seq'::regclass);
 
 
 --
--- Name: stream_access id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: stream_access id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stream_access ALTER COLUMN id SET DEFAULT nextval('public.stream_access_id_seq'::regclass);
 
 
 --
--- Name: stream_comments id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: stream_comments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stream_comments ALTER COLUMN id SET DEFAULT nextval('public.stream_comments_id_seq'::regclass);
 
 
 --
--- Name: streams id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: streams id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.streams ALTER COLUMN id SET DEFAULT nextval('public.streams_id_seq'::regclass);
 
 
 --
--- Name: transactions id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: transactions id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.transactions ALTER COLUMN id SET DEFAULT nextval('public.transactions_id_seq'::regclass);
 
 
 --
--- Name: users id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
--- Name: vouchers id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: vouchers id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.vouchers ALTER COLUMN id SET DEFAULT nextval('public.vouchers_id_seq'::regclass);
 
 
 --
--- Name: wallets id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: wallets id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.wallets ALTER COLUMN id SET DEFAULT nextval('public.wallets_id_seq'::regclass);
 
 
 --
--- Data for Name: announcements; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: announcements; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.announcements (id, title, content, is_active, priority, created_at, updated_at) FROM stdin;
@@ -1178,7 +1196,7 @@ COPY public.announcements (id, title, content, is_active, priority, created_at, 
 
 
 --
--- Data for Name: audit_logs; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: audit_logs; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.audit_logs (id, user_id, action, entity_type, entity_id, details, ip_address, user_agent, created_at) FROM stdin;
@@ -1186,7 +1204,7 @@ COPY public.audit_logs (id, user_id, action, entity_type, entity_id, details, ip
 
 
 --
--- Data for Name: bets; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: bets; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_return, status, matched_bet_id, settled_at, created_at, updated_at) FROM stdin;
@@ -1194,7 +1212,7 @@ COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_ret
 
 
 --
--- Data for Name: bonus_transactions; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: bonus_transactions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.bonus_transactions (id, user_id, promotion_id, type, amount, balance_before, balance_after, reference, expires_at, description, revoked_by, revoked_reason, created_at) FROM stdin;
@@ -1202,7 +1220,7 @@ COPY public.bonus_transactions (id, user_id, promotion_id, type, amount, balance
 
 
 --
--- Data for Name: games; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: games; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.games (id, sport, player_a, player_b, event_date, event_time, status, result, total_bet_pool, open_bets_count, matched_bets_count, created_at, updated_at, event_end_date, event_end_time, city, country, type, parent_id, player_a_country, player_b_country) FROM stdin;
@@ -1210,7 +1228,7 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 
 
 --
--- Data for Name: hero_slides; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: hero_slides; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.hero_slides (id, title, subtitle, button_text, button_url, image_url, sort_order, is_active, created_at, updated_at) FROM stdin;
@@ -1220,7 +1238,7 @@ COPY public.hero_slides (id, title, subtitle, button_text, button_url, image_url
 
 
 --
--- Data for Name: highlights; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: highlights; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.highlights (id, title, description, youtube_url, is_published, created_at, updated_at) FROM stdin;
@@ -1233,7 +1251,7 @@ COPY public.highlights (id, title, description, youtube_url, is_published, creat
 
 
 --
--- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.notifications (id, user_id, type, title, message, read, created_at) FROM stdin;
@@ -1241,7 +1259,7 @@ COPY public.notifications (id, user_id, type, title, message, read, created_at) 
 
 
 --
--- Data for Name: platform_subscriptions; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: platform_subscriptions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.platform_subscriptions (id, user_id, subscription_type, granted_at, expires_at, amount, transaction_id, created_at) FROM stdin;
@@ -1249,7 +1267,7 @@ COPY public.platform_subscriptions (id, user_id, subscription_type, granted_at, 
 
 
 --
--- Data for Name: promotion_terms_acceptance; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: promotion_terms_acceptance; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.promotion_terms_acceptance (id, user_id, promotion_id, accepted_at, ip_address, version) FROM stdin;
@@ -1257,7 +1275,7 @@ COPY public.promotion_terms_acceptance (id, user_id, promotion_id, accepted_at, 
 
 
 --
--- Data for Name: promotions; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: promotions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.promotions (id, name, code, type, bonus_type, percentage, fixed_amount, min_deposit, max_bonus, max_uses, used_count, start_date, end_date, status, description, banner_image_url, terms_conditions, bonus_expiry_days, created_by, created_at, updated_at) FROM stdin;
@@ -1265,7 +1283,7 @@ COPY public.promotions (id, name, code, type, bonus_type, percentage, fixed_amou
 
 
 --
--- Data for Name: settings; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: settings; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.settings (key, value, updated_at) FROM stdin;
@@ -1313,7 +1331,7 @@ pawapay_exchange_rate	3700	2026-07-03 19:32:56.886232+00
 
 
 --
--- Data for Name: stream_access; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: stream_access; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, created_at, subscription_type) FROM stdin;
@@ -1321,7 +1339,7 @@ COPY public.stream_access (id, user_id, stream_id, granted_at, expires_at, creat
 
 
 --
--- Data for Name: stream_comments; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: stream_comments; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.stream_comments (id, stream_id, user_id, username, content, created_at) FROM stdin;
@@ -1329,7 +1347,7 @@ COPY public.stream_comments (id, stream_id, user_id, username, content, created_
 
 
 --
--- Data for Name: streams; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: streams; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stream_key, status, start_time, end_time, viewer_count, access_price, created_at, updated_at, city, country) FROM stdin;
@@ -1353,7 +1371,7 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 
 
 --
--- Data for Name: transactions; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: transactions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.transactions (id, transaction_id, user_id, type, amount, status, payment_method, reference, description, metadata, created_at, updated_at) FROM stdin;
@@ -1362,7 +1380,7 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 
 
 --
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.users (id, email, password_hash, full_name, phone, role, status, avatar_url, refresh_token, created_at, updated_at, payout_method, payout_account, payout_method_set_at, must_set_password, session_token, google_id, referral_code, referred_by, username, username_changes_count, surname, date_of_birth, id_type, id_number, country, fica_completed) FROM stdin;
@@ -6403,13 +6421,13 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5039	ben.s5804@gmail.com		BENON SSESANGA	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocIWcr74ZTLq6Nhf3zsY8qA2GHMHsxyMGdDt2975im-o-fg-cNcKxw=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzksInJvbGUiOiJ1c2VyIiwic3YiOiJjOTcyZjBiNi05MmQ2LTRjMTItOWI2NC1lNjA3NjMzOTIzNDQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MjMzOCwiZXhwIjoxNzg1Njg0MzM4fQ.iuz8b2qXzhaKbcEogG7gn5ZV0MWT9RrF70feggN_ZEs	2026-07-03 15:25:38.993379+00	2026-07-03 15:25:38.997+00	\N	\N	\N	f	c972f0b6-92d6-4c12-9b64-e60763392344	100433739963395625257	DK3XTWQ3	\N	benon_ssesanga_5039	0	\N	\N	\N	\N	\N	f
 5038	advancedtalentagencyata@gmail.com		ADVANCED TALENT AGENCY ATA	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocJl_vwpannjA_niKt7IuoEFiQB4-0_C7aI2SbMlT6Q3ZLc2qlI=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzgsInJvbGUiOiJ1c2VyIiwic3YiOiI3ZTBjZjFmMy1iMDMyLTQwYWYtYTdhNC1kYTYyOTUyZDdiMzQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MTg2NiwiZXhwIjoxNzg1NjgzODY2fQ.NZkcKsZ-CeWSVVEKo-Htl_RDTAK7BIDQ3Y2CkZMYOVk	2026-07-03 15:17:46.061302+00	2026-07-03 15:17:46.071+00	\N	\N	\N	f	7e0cf1f3-b032-40af-a7a4-da62952d7b34	111789802886065658753	5SCCQBTR	\N	advanced_talent_agency_ata_5038	0	\N	\N	\N	\N	\N	f
 5032	zetoophiri@gmail.com		Zethu Phiri	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocIoZ492DLotfLTGCUbYw16uY4ECV3rNwcmQg6GnIJnW1PxmFw=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzIsInJvbGUiOiJ1c2VyIiwic3YiOiI3YTc5YmI4YS02NGE3LTQ3MzMtYjhmNC1mOGE1ZDY3YmYyMTMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MjQxMywiZXhwIjoxNzg1Njg0NDEzfQ.oseCeNqEKCVsEKJTCTuDA94C5Bp3PMf5I8TzJGzUmhY	2026-07-02 20:18:19.941937+00	2026-07-03 15:26:53.411+00	\N	\N	\N	f	7a79bb8a-64a7-4733-b8f4-f8a5d67bf213	108479386760493320264	FE64N4D6	\N	zethu_phiri_5032	0	\N	\N	\N	\N	\N	f
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiN2FjOGViNjYtZDYwYi00MTE4LWFmNzQtNmZiMWViNWRiOTAxIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMxMTM4ODcsImV4cCI6MTc4NTcwNTg4N30.MoLVL_mbNE9vEhfB49AeVgIPFSGikiJhnXhj7YGYp94	2026-06-15 16:31:06.226579+00	2026-07-03 21:24:47.076+00	\N	\N	\N	f	7ac8eb66-d60b-4118-af74-6fb1eb5db901	\N	00016EFF	\N	serge_1	0	\N	\N	\N	\N	\N	f
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiJhN2ExOWEyOS02MTEwLTRkMjItODcwZC00YWEzYzA1YmRiMmQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzExNzk0MiwiZXhwIjoxNzg1NzA5OTQyfQ.Zp1AaGTQBGD9P-AeUvr9fvGwS8WRe5D52PgF16S5OcA	2026-06-15 16:31:06.605107+00	2026-07-03 22:32:22.492+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	a7a19a29-6110-4d22-870d-4aa3c05bdb2d	\N	0002CF32	\N	demo_user_2	0	\N	\N	\N	\N	\N	f
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiY2QyYWFjZDUtZmFiMi00NTQ4LWJjMGUtN2VkZTQ1OGU0M2Q4IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMxMjQwMzIsImV4cCI6MTc4NTcxNjAzMn0.pDayOEtSHZ6kMGURfooHl0HKD4CmXy8Uemvxb8KAbfY	2026-06-15 16:31:06.226579+00	2026-07-04 00:20:43.771+00	\N	\N	\N	f	cd2aacd5-fab2-4548-bc0e-7ede458e43d8	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t
 \.
 
 
 --
--- Data for Name: vouchers; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: vouchers; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, created_by, created_at) FROM stdin;
@@ -6426,7 +6444,7 @@ COPY public.vouchers (id, code, amount, is_redeemed, redeemed_by, redeemed_at, c
 
 
 --
--- Data for Name: wallets; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: wallets; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.wallets (id, user_id, balance, available_balance, pending_balance, withdrawable_balance, currency, created_at, updated_at, bonus_balance) FROM stdin;
@@ -11472,133 +11490,133 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 
 
 --
--- Name: announcements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: announcements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.announcements_id_seq', 1, true);
 
 
 --
--- Name: audit_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: audit_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.audit_logs_id_seq', 1, false);
 
 
 --
--- Name: bets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: bets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.bets_id_seq', 6, true);
 
 
 --
--- Name: bonus_transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: bonus_transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.bonus_transactions_id_seq', 1, false);
 
 
 --
--- Name: games_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: games_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.games_id_seq', 16, true);
 
 
 --
--- Name: hero_slides_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: hero_slides_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.hero_slides_id_seq', 2, true);
 
 
 --
--- Name: highlights_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: highlights_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.highlights_id_seq', 5, true);
 
 
 --
--- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.notifications_id_seq', 16, true);
 
 
 --
--- Name: platform_subscriptions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: platform_subscriptions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.platform_subscriptions_id_seq', 1, false);
 
 
 --
--- Name: promotion_terms_acceptance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.promotion_terms_acceptance_id_seq', 1, false);
 
 
 --
--- Name: promotions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: promotions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.promotions_id_seq', 1, false);
 
 
 --
--- Name: stream_access_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: stream_access_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.stream_access_id_seq', 5, true);
 
 
 --
--- Name: stream_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: stream_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.stream_comments_id_seq', 3, true);
 
 
 --
--- Name: streams_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: streams_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.streams_id_seq', 16, true);
 
 
 --
--- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.transactions_id_seq', 43, true);
 
 
 --
--- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.users_id_seq', 5039, true);
 
 
 --
--- Name: vouchers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: vouchers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.vouchers_id_seq', 9, true);
 
 
 --
--- Name: wallets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: wallets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('public.wallets_id_seq', 5041, true);
 
 
 --
--- Name: announcements announcements_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: announcements announcements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.announcements
@@ -11606,7 +11624,7 @@ ALTER TABLE ONLY public.announcements
 
 
 --
--- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: audit_logs audit_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.audit_logs
@@ -11614,7 +11632,7 @@ ALTER TABLE ONLY public.audit_logs
 
 
 --
--- Name: bets bets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bets bets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bets
@@ -11622,7 +11640,7 @@ ALTER TABLE ONLY public.bets
 
 
 --
--- Name: bets bets_ticket_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bets bets_ticket_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bets
@@ -11630,7 +11648,7 @@ ALTER TABLE ONLY public.bets
 
 
 --
--- Name: bonus_transactions bonus_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bonus_transactions bonus_transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bonus_transactions
@@ -11638,7 +11656,7 @@ ALTER TABLE ONLY public.bonus_transactions
 
 
 --
--- Name: games games_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: games games_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.games
@@ -11646,7 +11664,7 @@ ALTER TABLE ONLY public.games
 
 
 --
--- Name: hero_slides hero_slides_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: hero_slides hero_slides_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.hero_slides
@@ -11654,7 +11672,7 @@ ALTER TABLE ONLY public.hero_slides
 
 
 --
--- Name: highlights highlights_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: highlights highlights_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.highlights
@@ -11662,7 +11680,7 @@ ALTER TABLE ONLY public.highlights
 
 
 --
--- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
@@ -11670,7 +11688,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
--- Name: platform_subscriptions platform_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: platform_subscriptions platform_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.platform_subscriptions
@@ -11678,7 +11696,7 @@ ALTER TABLE ONLY public.platform_subscriptions
 
 
 --
--- Name: promotion_terms_acceptance promotion_terms_acceptance_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance promotion_terms_acceptance_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotion_terms_acceptance
@@ -11686,7 +11704,7 @@ ALTER TABLE ONLY public.promotion_terms_acceptance
 
 
 --
--- Name: promotion_terms_acceptance promotion_terms_acceptance_user_id_promotion_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance promotion_terms_acceptance_user_id_promotion_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotion_terms_acceptance
@@ -11694,7 +11712,7 @@ ALTER TABLE ONLY public.promotion_terms_acceptance
 
 
 --
--- Name: promotions promotions_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: promotions promotions_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotions
@@ -11702,7 +11720,7 @@ ALTER TABLE ONLY public.promotions
 
 
 --
--- Name: promotions promotions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: promotions promotions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotions
@@ -11710,7 +11728,7 @@ ALTER TABLE ONLY public.promotions
 
 
 --
--- Name: settings settings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: settings settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.settings
@@ -11718,7 +11736,7 @@ ALTER TABLE ONLY public.settings
 
 
 --
--- Name: stream_access stream_access_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stream_access stream_access_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stream_access
@@ -11726,7 +11744,7 @@ ALTER TABLE ONLY public.stream_access
 
 
 --
--- Name: stream_comments stream_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stream_comments stream_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stream_comments
@@ -11734,7 +11752,7 @@ ALTER TABLE ONLY public.stream_comments
 
 
 --
--- Name: streams streams_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: streams streams_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.streams
@@ -11742,7 +11760,7 @@ ALTER TABLE ONLY public.streams
 
 
 --
--- Name: transactions transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: transactions transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.transactions
@@ -11750,7 +11768,7 @@ ALTER TABLE ONLY public.transactions
 
 
 --
--- Name: transactions transactions_transaction_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: transactions transactions_transaction_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.transactions
@@ -11758,7 +11776,7 @@ ALTER TABLE ONLY public.transactions
 
 
 --
--- Name: users users_email_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_email_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -11766,7 +11784,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_google_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_google_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -11774,7 +11792,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_google_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_google_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -11782,7 +11800,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -11790,7 +11808,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_referral_code_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_referral_code_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -11798,7 +11816,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -11806,7 +11824,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: vouchers vouchers_code_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: vouchers vouchers_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.vouchers
@@ -11814,7 +11832,7 @@ ALTER TABLE ONLY public.vouchers
 
 
 --
--- Name: vouchers vouchers_code_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: vouchers vouchers_code_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.vouchers
@@ -11822,7 +11840,7 @@ ALTER TABLE ONLY public.vouchers
 
 
 --
--- Name: vouchers vouchers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: vouchers vouchers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.vouchers
@@ -11830,7 +11848,7 @@ ALTER TABLE ONLY public.vouchers
 
 
 --
--- Name: wallets wallets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: wallets wallets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.wallets
@@ -11838,7 +11856,7 @@ ALTER TABLE ONLY public.wallets
 
 
 --
--- Name: wallets wallets_user_id_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: wallets wallets_user_id_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.wallets
@@ -11846,21 +11864,21 @@ ALTER TABLE ONLY public.wallets
 
 
 --
--- Name: idx_platform_subs_user_expires; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_platform_subs_user_expires; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_platform_subs_user_expires ON public.platform_subscriptions USING btree (user_id, expires_at);
 
 
 --
--- Name: idx_stream_comments_stream; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_stream_comments_stream; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_stream_comments_stream ON public.stream_comments USING btree (stream_id, created_at DESC);
 
 
 --
--- Name: bets bets_game_id_games_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bets bets_game_id_games_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bets
@@ -11868,7 +11886,7 @@ ALTER TABLE ONLY public.bets
 
 
 --
--- Name: bets bets_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bets bets_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bets
@@ -11876,7 +11894,7 @@ ALTER TABLE ONLY public.bets
 
 
 --
--- Name: bonus_transactions bonus_transactions_promotion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bonus_transactions bonus_transactions_promotion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bonus_transactions
@@ -11884,7 +11902,7 @@ ALTER TABLE ONLY public.bonus_transactions
 
 
 --
--- Name: bonus_transactions bonus_transactions_revoked_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bonus_transactions bonus_transactions_revoked_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bonus_transactions
@@ -11892,7 +11910,7 @@ ALTER TABLE ONLY public.bonus_transactions
 
 
 --
--- Name: bonus_transactions bonus_transactions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: bonus_transactions bonus_transactions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.bonus_transactions
@@ -11900,7 +11918,7 @@ ALTER TABLE ONLY public.bonus_transactions
 
 
 --
--- Name: notifications notifications_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: notifications notifications_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notifications
@@ -11908,7 +11926,7 @@ ALTER TABLE ONLY public.notifications
 
 
 --
--- Name: platform_subscriptions platform_subscriptions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: platform_subscriptions platform_subscriptions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.platform_subscriptions
@@ -11916,7 +11934,7 @@ ALTER TABLE ONLY public.platform_subscriptions
 
 
 --
--- Name: promotion_terms_acceptance promotion_terms_acceptance_promotion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance promotion_terms_acceptance_promotion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotion_terms_acceptance
@@ -11924,7 +11942,7 @@ ALTER TABLE ONLY public.promotion_terms_acceptance
 
 
 --
--- Name: promotion_terms_acceptance promotion_terms_acceptance_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: promotion_terms_acceptance promotion_terms_acceptance_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotion_terms_acceptance
@@ -11932,7 +11950,7 @@ ALTER TABLE ONLY public.promotion_terms_acceptance
 
 
 --
--- Name: promotions promotions_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: promotions promotions_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.promotions
@@ -11940,7 +11958,7 @@ ALTER TABLE ONLY public.promotions
 
 
 --
--- Name: stream_access stream_access_stream_id_streams_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stream_access stream_access_stream_id_streams_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stream_access
@@ -11948,7 +11966,7 @@ ALTER TABLE ONLY public.stream_access
 
 
 --
--- Name: stream_access stream_access_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stream_access stream_access_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stream_access
@@ -11956,7 +11974,7 @@ ALTER TABLE ONLY public.stream_access
 
 
 --
--- Name: stream_comments stream_comments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stream_comments stream_comments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stream_comments
@@ -11964,7 +11982,7 @@ ALTER TABLE ONLY public.stream_comments
 
 
 --
--- Name: transactions transactions_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: transactions transactions_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.transactions
@@ -11972,7 +11990,7 @@ ALTER TABLE ONLY public.transactions
 
 
 --
--- Name: users users_referred_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_referred_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
@@ -11980,7 +11998,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: vouchers vouchers_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: vouchers vouchers_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.vouchers
@@ -11988,7 +12006,7 @@ ALTER TABLE ONLY public.vouchers
 
 
 --
--- Name: vouchers vouchers_redeemed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: vouchers vouchers_redeemed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.vouchers
@@ -11996,7 +12014,7 @@ ALTER TABLE ONLY public.vouchers
 
 
 --
--- Name: wallets wallets_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: wallets wallets_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.wallets
@@ -12004,16 +12022,8 @@ ALTER TABLE ONLY public.wallets
 
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE USAGE ON SCHEMA public FROM PUBLIC;
-GRANT CREATE ON SCHEMA public TO PUBLIC;
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 362jgNuWY8AwEZh4nDjqz5i3DYWRCDF7QeBRpC0etaKPklneUGLYofPd7l8t5oA
+\unrestrict Qxia6C8LHGLs0fDqWmKU8MmznedLt3ugMrZqww9ayftc40wWHx8lOQFHVuFPhHP
 
