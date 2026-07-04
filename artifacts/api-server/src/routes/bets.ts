@@ -164,7 +164,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
 
     // Side-effects outside the transaction (non-critical — failures don't corrupt data)
     await notify(userId, "bet_matched", "Bet Matched!", `Your bet of ${stake} has been matched!`);
-    await notify(opponentId, "bet_matched", "Bet Matched!", `Your bet of ${stake} has been matched!`);
+    await notify(opponentId!, "bet_matched", "Bet Matched!", `Your bet of ${stake} has been matched!`);
 
     const [betUser, oppUser] = await Promise.all([
       db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1).then((r) => r[0]),

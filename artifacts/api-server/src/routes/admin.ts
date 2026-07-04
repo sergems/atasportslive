@@ -691,7 +691,7 @@ router.get("/sessions", authMiddleware, requireRole("admin"), async (req: AuthRe
 });
 
 router.delete("/sessions/:userId", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
-  const userId = parseInt(req.params.userId);
+  const userId = parseInt(req.params.userId as string);
   if (isNaN(userId)) { res.status(400).json({ error: "Invalid userId" }); return; }
 
   const ws = wsClients.get(userId);
@@ -707,7 +707,7 @@ router.delete("/sessions/:userId", authMiddleware, requireRole("admin"), async (
     .set({ sessionToken: null, refreshToken: null })
     .where(eq(usersTable.id, userId));
 
-  req.log.info({ adminId: req.user?.id, targetUserId: userId }, "Admin force-logged-out user");
+  req.log.info({ adminId: req.userId, targetUserId: userId }, "Admin force-logged-out user");
   res.json({ ok: true });
 });
 
