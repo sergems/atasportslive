@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
 import { useGoogleAuth } from '@/lib/google-auth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useLogin } from '@workspace/api-client-react';
 import { loginSchema } from '@/lib/schemas';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ export default function Login() {
   const { clientId } = useGoogleAuth();
   const [, setLocation] = useLocation();
   const loginMutation = useLogin();
+  const isMobile = useIsMobile();
   const [loginError, setLoginError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<LoginTab>('email');
@@ -40,7 +42,7 @@ export default function Login() {
   const roleRedirect = (role?: string) => {
     if (role === 'admin' || role === 'manager' || role === 'content_editor') return '/admin';
     if (role === 'finance') return '/finance/dashboard';
-    return '/dashboard';
+    return isMobile ? '/' : '/dashboard';
   };
 
   useEffect(() => {
