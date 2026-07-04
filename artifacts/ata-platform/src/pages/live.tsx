@@ -103,6 +103,33 @@ function MuxPlayer({ playbackId, title }: { playbackId: string; title: string })
   );
 }
 
+function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
+  // Strip all YouTube branding/comments/suggestions from the embed
+  const params = [
+    'autoplay=1',
+    'modestbranding=1',
+    'rel=0',
+    'showinfo=0',
+    'iv_load_policy=3',
+    'color=white',
+    'playsinline=1',
+    'controls=1',
+    'fs=1',
+    `origin=${encodeURIComponent(window.location.origin)}`,
+  ].join('&');
+  return (
+    <div className="relative w-full h-full">
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}?${params}`}
+        title={title}
+        className="absolute inset-0 w-full h-full border-0"
+        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
 function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -1010,10 +1037,15 @@ export default function Live() {
   const muxPlaybackId = settings?.mux_playback_id || FALLBACK_MUX_PLAYBACK_ID;
   const muxIsLive     = settings?.mux_is_live === 'true';
 
+  // ── Derive YouTube settings ──────────────────────────────────────────────
+  const ytVideoId  = settings?.yt_video_id ?? '';
+  const ytIsLive   = settings?.yt_is_live === 'true';
+  const ytIsFree   = settings?.yt_is_free === 'true';
+  const ytPrice    = parseFloat(settings?.yt_price ?? '1.50');
+  const ytTitle    = settings?.yt_title || 'ATA Live Stream';
+  const ytStreamDbId = settings?.yt_stream_db_id ? Number(settings.yt_stream_db_id) : undefined;
+
   // ── Auto-detect Mux stream end ───────────────────────────────────────────
-  // While Mux is marked live, probe the HLS manifest every 30s server-side.
-  // If the stream has ended the server flips mux_is_live=false and we
-  // invalidate settings so the paywall disappears within one poll cycle.
   useQuery({
     queryKey: ['mux-probe'],
     queryFn: async () => {
@@ -1040,19 +1072,24 @@ export default function Live() {
   const muxTitle      = settings?.mux_title || 'ATA Live Stream';
   const muxStreamDbId = settings?.mux_stream_db_id ? Number(settings.mux_stream_db_id) : undefined;
 
-  // ── Is anything live? ────────────────────────────────────────────────────
-  // DB stream takes priority over Mux toggle
-  const isAnythingLive = !!stream || muxIsLive;
+  // ── Is anything live? ─────────────────────────────────────────────────────
+  // DB stream > Mux toggle > YouTube toggle
+  const isAnythingLive = !!stream || muxIsLive || ytIsLive;
 
-  // ── Paywall stream (which stream ID to check access against) ─────────────
-  // DB stream always wins. Fall back to Mux stream DB record when Mux is live + paid.
-  const paywallStreamId: number | undefined = stream
-    ? stream.id
-    : (muxIsLive && !muxIsFree ? muxStreamDbId : undefined);
+  // ── Active feed type (Mux or YT; DB stream always wins) ──────────────────
+  // Only one of muxIsLive / ytIsLive should be true at a time (backend enforces this).
+  const activeFeed: 'db' | 'mux' | 'yt' | null = stream ? 'db' : muxIsLive ? 'mux' : ytIsLive ? 'yt' : null;
 
-  const paywallPrice = stream ? stream.accessPrice : muxPrice;
-  const paywallTitle = stream ? stream.title : muxTitle;
-  const isFreeStream = stream ? false : muxIsFree;
+  // ── Paywall stream ID ─────────────────────────────────────────────────────
+  const paywallStreamId: number | undefined =
+    activeFeed === 'db'  ? stream!.id :
+    activeFeed === 'mux' && !muxIsFree ? muxStreamDbId :
+    activeFeed === 'yt'  && !ytIsFree  ? ytStreamDbId  :
+    undefined;
+
+  const paywallPrice = activeFeed === 'db' ? stream!.accessPrice : activeFeed === 'yt' ? ytPrice : muxPrice;
+  const paywallTitle = activeFeed === 'db' ? stream!.title : activeFeed === 'yt' ? ytTitle : muxTitle;
+  const isFreeStream = activeFeed === 'db' ? false : activeFeed === 'yt' ? ytIsFree : muxIsFree;
 
   // ── Access check (only when logged in and something is live) ─────────────
   const { data: access, isLoading: loadingAccess } = useStreamAccess(
@@ -1097,9 +1134,10 @@ export default function Live() {
 
   // ─────────────────────────────────────────────────────────────────────────
 
-  const playerEl = liveStreamUrl
-    ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} />
-    : <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />;
+  const playerEl =
+    liveStreamUrl   ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} /> :
+    activeFeed === 'yt' && ytVideoId ? <YouTubePlayer videoId={ytVideoId} title={paywallTitle} /> :
+    <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />;
 
   const sidebar = (
     <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 min-h-0">

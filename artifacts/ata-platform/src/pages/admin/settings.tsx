@@ -50,6 +50,14 @@ export default function AdminSettings() {
   const [muxTitle, setMuxTitle] = useState('');
   const [syncingMux, setSyncingMux] = useState(false);
 
+  // YouTube live stream settings
+  const [ytVideoId, setYtVideoId] = useState('');
+  const [ytIsLive, setYtIsLive] = useState(false);
+  const [ytIsFree, setYtIsFree] = useState(false);
+  const [ytPrice, setYtPrice] = useState('1.50');
+  const [ytTitle, setYtTitle] = useState('');
+  const [syncingYt, setSyncingYt] = useState(false);
+
   const [pesapalKey, setPesapalKey] = useState('');
   const [pesapalSecret, setPesapalSecret] = useState('');
   const [pesapalEnv, setPesapalEnv] = useState<'sandbox' | 'live'>('live');
@@ -149,6 +157,11 @@ export default function AdminSettings() {
       setMuxIsFree(settings.mux_is_free === 'true');
       setMuxPrice(settings.mux_price ?? '1.50');
       setMuxTitle(settings.mux_title ?? '');
+      setYtVideoId(settings.yt_video_id ?? '');
+      setYtIsLive(settings.yt_is_live === 'true');
+      setYtIsFree(settings.yt_is_free === 'true');
+      setYtPrice(settings.yt_price ?? '1.50');
+      setYtTitle(settings.yt_title ?? '');
       setPesapalKey(settings.pesapal_consumer_key ?? '');
       setPesapalSecret(settings.pesapal_consumer_secret ?? '');
       setPesapalEnv((settings.pesapal_environment as 'sandbox' | 'live') ?? 'live');
@@ -184,6 +197,21 @@ export default function AdminSettings() {
     },
     onError: (e: any) => toast.error(e.message || 'Failed to save settings'),
   });
+
+  const extractYouTubeId = (input: string): string => {
+    const patterns = [
+      /[?&]v=([a-zA-Z0-9_-]{11})/,
+      /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/live\/([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const p of patterns) {
+      const m = input.match(p);
+      if (m) return m[1];
+    }
+    if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+    return input;
+  };
 
   const isValidUrl = (v: string) => {
     if (!v) return true;
@@ -230,12 +258,44 @@ export default function AdminSettings() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Sync failed'); }
+      // Mutual exclusion: if Mux went live, reflect YT going offline locally
+      if (muxIsLive) setYtIsLive(false);
       qc.invalidateQueries({ queryKey: ['settings'] });
       toast.success('Mux stream settings saved and synced.');
     } catch (e: any) {
       toast.error(e.message || 'Failed to sync Mux stream');
     } finally {
       setSyncingMux(false);
+    }
+  };
+
+  const saveYtSettings = async () => {
+    const videoId = extractYouTubeId(ytVideoId.trim());
+    if (!videoId) { toast.error('YouTube Video ID or URL is required'); return; }
+    const priceNum = parseFloat(ytPrice);
+    if (isNaN(priceNum) || priceNum < 0) { toast.error('Enter a valid price (0 for free)'); return; }
+    await saveMutation.mutateAsync({
+      yt_video_id: videoId,
+      yt_is_live: ytIsLive ? 'true' : 'false',
+      yt_is_free: ytIsFree ? 'true' : 'false',
+      yt_price: priceNum.toFixed(2),
+      yt_title: ytTitle.trim() || 'ATA Live Stream',
+    });
+    setSyncingYt(true);
+    try {
+      const r = await fetch('/api/settings/sync-yt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Sync failed'); }
+      // Mutual exclusion: if YT went live, reflect Mux going offline locally
+      if (ytIsLive) setMuxIsLive(false);
+      qc.invalidateQueries({ queryKey: ['settings'] });
+      toast.success('YouTube stream settings saved and synced.');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to sync YouTube stream');
+    } finally {
+      setSyncingYt(false);
     }
   };
 
@@ -969,12 +1029,12 @@ export default function AdminSettings() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setMuxIsLive(v => !v)}
+                onClick={() => { setMuxIsLive(v => { if (!v) setYtIsLive(false); return !v; }); }}
                 className={`relative w-10 h-5 rounded-full transition-colors ${muxIsLive ? 'bg-red-500' : 'bg-slate-700'}`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${muxIsLive ? 'translate-x-5' : ''}`} />
               </button>
-              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => setMuxIsLive(v => !v)}>
+              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => { setMuxIsLive(v => { if (!v) setYtIsLive(false); return !v; }); }}>
                 Stream is <strong className={muxIsLive ? 'text-red-400' : 'text-slate-400'}>{muxIsLive ? 'LIVE' : 'offline'}</strong>
                 {muxIsLive ? ' — paywall is active' : ' — no paywall'}
               </Label>
@@ -1011,6 +1071,136 @@ export default function AdminSettings() {
             >
               <Save className="h-4 w-4" />
               {saveMutation.isPending || syncingMux ? 'Saving…' : 'Save Mux Settings'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── YouTube Live Stream ── */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Radio className="h-4 w-4 text-red-500" />
+              YouTube Live Feed
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              {ytIsLive && (
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1 animate-pulse">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-400" /> LIVE
+                </Badge>
+              )}
+              {ytIsFree && (
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">FREE</Badge>
+              )}
+            </div>
+          </div>
+          <CardDescription className="text-slate-400">
+            Backup feed from a YouTube live stream (public or unlisted). Displayed in the same player slot as Mux —
+            only one can be active at a time. YouTube branding is suppressed in the embedded player.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Video ID / URL */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">YouTube Video ID or URL</Label>
+            <Input
+              value={ytVideoId}
+              onChange={e => setYtVideoId(e.target.value)}
+              placeholder="dQw4w9WgXcQ  or  https://youtu.be/dQw4w9WgXcQ"
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-sm"
+              disabled={isLoading}
+            />
+            <p className="text-xs text-slate-500">
+              Paste the full YouTube URL or just the 11-character video ID. Works with public and unlisted streams.
+            </p>
+          </div>
+
+          {/* Stream title */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">Stream Title</Label>
+            <Input
+              value={ytTitle}
+              onChange={e => setYtTitle(e.target.value)}
+              placeholder="ATA Live Stream"
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 text-sm"
+              disabled={isLoading}
+            />
+            <p className="text-xs text-slate-500">Shown in the paywall overlay and stream info bar.</p>
+          </div>
+
+          {/* Access price */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">Access Price (USD)</Label>
+            <div className="flex items-center gap-2 w-36">
+              <span className="text-slate-400 text-sm">$</span>
+              <Input
+                type="number"
+                min="0"
+                step="0.50"
+                value={ytPrice}
+                onChange={e => setYtPrice(e.target.value)}
+                className="bg-slate-800 border-slate-700 text-white font-mono text-sm"
+                disabled={isLoading || ytIsFree}
+              />
+            </div>
+            <p className="text-xs text-slate-500">Charged from the user's wallet for 24-hour access.</p>
+          </div>
+
+          {/* Toggles */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => { setYtIsLive(v => { if (!v) setMuxIsLive(false); return !v; }); }}
+                className={`relative w-10 h-5 rounded-full transition-colors ${ytIsLive ? 'bg-red-500' : 'bg-slate-700'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${ytIsLive ? 'translate-x-5' : ''}`} />
+              </button>
+              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => { setYtIsLive(v => { if (!v) setMuxIsLive(false); return !v; }); }}>
+                Stream is <strong className={ytIsLive ? 'text-red-400' : 'text-slate-400'}>{ytIsLive ? 'LIVE' : 'offline'}</strong>
+                {ytIsLive ? ' — paywall is active' : ' — no paywall'}
+              </Label>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setYtIsFree(v => !v)}
+                className={`relative w-10 h-5 rounded-full transition-colors ${ytIsFree ? 'bg-emerald-500' : 'bg-slate-700'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${ytIsFree ? 'translate-x-5' : ''}`} />
+              </button>
+              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => setYtIsFree(v => !v)}>
+                Free stream — <span className={ytIsFree ? 'text-emerald-400' : 'text-slate-400'}>
+                  {ytIsFree ? 'anyone can watch without paying' : 'paywall applies when live'}
+                </span>
+              </Label>
+            </div>
+          </div>
+
+          {ytIsLive && !ytIsFree && (
+            <div className="rounded-md bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 text-xs text-amber-400 flex items-start gap-2">
+              <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <span>Paywall is <strong>ON</strong>. Users must pay ${ytPrice || '1.50'} from their wallet for 24-hour access. Toggle "Free stream" to let everyone watch for free.</span>
+            </div>
+          )}
+
+          {muxIsLive && ytIsLive && (
+            <div className="rounded-md bg-red-500/10 border border-red-500/20 px-3 py-2.5 text-xs text-red-400 flex items-start gap-2">
+              <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <span><strong>Conflict:</strong> Both Mux and YouTube are marked live. Turn off one before saving — they cannot run simultaneously.</span>
+            </div>
+          )}
+
+          <div className="pt-1">
+            <Button
+              onClick={saveYtSettings}
+              disabled={saveMutation.isPending || syncingYt || isLoading || (muxIsLive && ytIsLive)}
+              className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {saveMutation.isPending || syncingYt ? 'Saving…' : 'Save YouTube Settings'}
             </Button>
           </div>
         </CardContent>
