@@ -269,9 +269,12 @@ export default function AdminSettings() {
     }
   };
 
+  const isValidYtId = (id: string) => /^[a-zA-Z0-9_-]{11}$/.test(id);
+
   const saveYtSettings = async () => {
     const videoId = extractYouTubeId(ytVideoId.trim());
     if (!videoId) { toast.error('YouTube Video ID or URL is required'); return; }
+    if (!isValidYtId(videoId)) { toast.error('Could not extract a valid YouTube video ID — paste the full URL or the 11-character ID'); return; }
     const priceNum = parseFloat(ytPrice);
     if (isNaN(priceNum) || priceNum < 0) { toast.error('Enter a valid price (0 for free)'); return; }
     await saveMutation.mutateAsync({

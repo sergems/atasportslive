@@ -104,29 +104,26 @@ function MuxPlayer({ playbackId, title }: { playbackId: string; title: string })
 }
 
 function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
-  // Strip all YouTube branding/comments/suggestions from the embed
-  const params = [
-    'autoplay=1',
-    'mute=1',          // required for autoplay in modern browsers; user can unmute via controls
-    'modestbranding=1',
-    'rel=0',
-    'showinfo=0',
-    'iv_load_policy=3',
-    'color=white',
-    'playsinline=1',
-    'controls=1',
-    'fs=1',
-    'enablejsapi=1',
-    `origin=${encodeURIComponent(window.location.origin)}`,
-  ].join('&');
+  // Build embed URL — no `origin` param (Replit's proxy domain causes YouTube validation errors)
+  const src = new URLSearchParams({
+    autoplay: '1',
+    mute: '1',          // mute=1 is required for autoplay in all modern browsers; user unmutes via controls
+    rel: '0',           // no related videos at end
+    modestbranding: '1',// minimise YouTube logo in control bar
+    iv_load_policy: '3',// no annotations
+    playsinline: '1',
+    controls: '1',
+    fs: '1',
+  });
   return (
     <div className="relative w-full h-full">
       <iframe
-        src={`https://www.youtube.com/embed/${videoId}?${params}`}
+        src={`https://www.youtube-nocookie.com/embed/${videoId}?${src.toString()}`}
         title={title}
         className="absolute inset-0 w-full h-full border-0"
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
+        referrerPolicy="no-referrer"
       />
     </div>
   );
@@ -1136,9 +1133,11 @@ export default function Live() {
 
   // ─────────────────────────────────────────────────────────────────────────
 
+  const ytIdValid = /^[a-zA-Z0-9_-]{11}$/.test(ytVideoId);
   const playerEl =
-    liveStreamUrl   ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} /> :
-    activeFeed === 'yt' && ytVideoId ? <YouTubePlayer videoId={ytVideoId} title={paywallTitle} /> :
+    liveStreamUrl                         ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} /> :
+    activeFeed === 'yt' && ytIdValid      ? <YouTubePlayer videoId={ytVideoId} title={paywallTitle} /> :
+    activeFeed === 'yt' && !ytIdValid     ? <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">Stream configuration invalid — please check admin settings.</div> :
     <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />;
 
   const sidebar = (

@@ -37,115 +37,133 @@ router.put("/", authMiddleware, requireRole("admin", "manager"), async (req: Aut
   res.json({ ok: true });
 });
 
+const YT_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
+
 // Sync the Mux default stream record in the streams table so existing
 // stream-access infrastructure handles the paywall automatically.
+// All writes are wrapped in a single transaction so mutual-exclusion is atomic.
 router.post("/sync-mux", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
-  const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'mux_%'`);
-  const s: Record<string, string> = {};
-  for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
+  try {
+    await db.transaction(async (tx) => {
+      const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'mux_%' OR key = 'yt_stream_db_id'`);
+      const s: Record<string, string> = {};
+      for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
 
-  const isLive = s.mux_is_live === "true";
-  const price = s.mux_price || "1.50";
-  const title = s.mux_title || "ATA Live Stream";
-  const status = isLive ? "live" : "upcoming";
+      const isLive = s.mux_is_live === "true";
+      const price  = s.mux_price || "1.50";
+      const title  = s.mux_title || "ATA Live Stream";
+      const status = isLive ? "live" : "upcoming";
 
-  // Mutual exclusion: if Mux is going live, turn off YouTube
-  if (isLive) {
-    await db.execute(
-      sql`INSERT INTO settings (key, value, updated_at) VALUES ('yt_is_live', 'false', NOW())
-          ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`
-    );
-    // Also mark the YT companion stream as upcoming
-    const ytDbRows = await db.execute(sql`SELECT key, value FROM settings WHERE key = 'yt_stream_db_id'`);
-    const ytDbId = (ytDbRows.rows as { key: string; value: string }[])[0]?.value;
-    if (ytDbId) {
-      await db.execute(
-        sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${Number(ytDbId)}`
+      // Mutual exclusion: going live → forcibly disable YouTube in the same tx
+      if (isLive) {
+        await tx.execute(
+          sql`INSERT INTO settings (key, value, updated_at) VALUES ('yt_is_live', 'false', NOW())
+              ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`
+        );
+        const ytDbId = s.yt_stream_db_id ? Number(s.yt_stream_db_id) : null;
+        if (ytDbId) {
+          await tx.execute(
+            sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${ytDbId}`
+          );
+        }
+      }
+
+      const existing = await tx.execute(
+        sql`SELECT id FROM streams WHERE stream_key = '__mux_default__' ORDER BY id LIMIT 1`
       );
-    }
+      const existingRow = (existing.rows as { id: number }[])[0];
+      let streamId: number;
+
+      if (existingRow) {
+        await tx.execute(
+          sql`UPDATE streams SET title = ${title}, status = ${status}::stream_status, access_price = ${price}, updated_at = NOW() WHERE id = ${existingRow.id}`
+        );
+        streamId = existingRow.id;
+      } else {
+        const inserted = await tx.execute(
+          sql`INSERT INTO streams (title, sport, status, start_time, access_price, stream_key, viewer_count, updated_at)
+              VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, '__mux_default__', 0, NOW())
+              RETURNING id`
+        );
+        streamId = (inserted.rows as { id: number }[])[0].id;
+      }
+
+      await tx.execute(
+        sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_stream_db_id', ${streamId.toString()}, NOW())
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
+      );
+
+      res.json({ ok: true, streamId });
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "sync-mux failed" });
   }
-
-  const existing = await db.execute(
-    sql`SELECT id FROM streams WHERE stream_key = '__mux_default__' ORDER BY id LIMIT 1`
-  );
-  const existingRow = (existing.rows as { id: number }[])[0];
-
-  let streamId: number;
-
-  if (existingRow) {
-    await db.execute(
-      sql`UPDATE streams SET title = ${title}, status = ${status}::stream_status, access_price = ${price}, updated_at = NOW() WHERE id = ${existingRow.id}`
-    );
-    streamId = existingRow.id;
-  } else {
-    const inserted = await db.execute(
-      sql`INSERT INTO streams (title, sport, status, start_time, access_price, stream_key, viewer_count, updated_at)
-          VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, '__mux_default__', 0, NOW())
-          RETURNING id`
-    );
-    streamId = (inserted.rows as { id: number }[])[0].id;
-  }
-
-  await db.execute(
-    sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_stream_db_id', ${streamId.toString()}, NOW())
-        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
-  );
-
-  res.json({ ok: true, streamId });
 });
 
 // Sync the YouTube default stream record — mirrors sync-mux logic.
 router.post("/sync-yt", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
-  const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'yt_%'`);
-  const s: Record<string, string> = {};
-  for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
+  try {
+    await db.transaction(async (tx) => {
+      const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'yt_%' OR key = 'mux_stream_db_id'`);
+      const s: Record<string, string> = {};
+      for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
 
-  const isLive = s.yt_is_live === "true";
-  const price = s.yt_price || "1.50";
-  const title = s.yt_title || "ATA Live Stream";
-  const status = isLive ? "live" : "upcoming";
+      const isLive   = s.yt_is_live === "true";
+      const videoId  = s.yt_video_id ?? "";
+      const price    = s.yt_price || "1.50";
+      const title    = s.yt_title || "ATA Live Stream";
+      const status   = isLive ? "live" : "upcoming";
 
-  // Mutual exclusion: if YT is going live, turn off Mux
-  if (isLive) {
-    await db.execute(
-      sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_is_live', 'false', NOW())
-          ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`
-    );
-    const muxDbRows = await db.execute(sql`SELECT key, value FROM settings WHERE key = 'mux_stream_db_id'`);
-    const muxDbId = (muxDbRows.rows as { key: string; value: string }[])[0]?.value;
-    if (muxDbId) {
-      await db.execute(
-        sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${Number(muxDbId)}`
+      // Reject going live without a valid video ID
+      if (isLive && !YT_ID_RE.test(videoId)) {
+        res.status(400).json({ error: "yt_video_id must be a valid 11-character YouTube video ID" });
+        return;
+      }
+
+      // Mutual exclusion: going live → forcibly disable Mux in the same tx
+      if (isLive) {
+        await tx.execute(
+          sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_is_live', 'false', NOW())
+              ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`
+        );
+        const muxDbId = s.mux_stream_db_id ? Number(s.mux_stream_db_id) : null;
+        if (muxDbId) {
+          await tx.execute(
+            sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${muxDbId}`
+          );
+        }
+      }
+
+      const existing = await tx.execute(
+        sql`SELECT id FROM streams WHERE stream_key = '__yt_default__' ORDER BY id LIMIT 1`
       );
-    }
+      const existingRow = (existing.rows as { id: number }[])[0];
+      let streamId: number;
+
+      if (existingRow) {
+        await tx.execute(
+          sql`UPDATE streams SET title = ${title}, status = ${status}::stream_status, access_price = ${price}, updated_at = NOW() WHERE id = ${existingRow.id}`
+        );
+        streamId = existingRow.id;
+      } else {
+        const inserted = await tx.execute(
+          sql`INSERT INTO streams (title, sport, status, start_time, access_price, stream_key, viewer_count, updated_at)
+              VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, '__yt_default__', 0, NOW())
+              RETURNING id`
+        );
+        streamId = (inserted.rows as { id: number }[])[0].id;
+      }
+
+      await tx.execute(
+        sql`INSERT INTO settings (key, value, updated_at) VALUES ('yt_stream_db_id', ${streamId.toString()}, NOW())
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
+      );
+
+      res.json({ ok: true, streamId });
+    });
+  } catch (err: any) {
+    if (!res.headersSent) res.status(500).json({ error: err.message || "sync-yt failed" });
   }
-
-  const existing = await db.execute(
-    sql`SELECT id FROM streams WHERE stream_key = '__yt_default__' ORDER BY id LIMIT 1`
-  );
-  const existingRow = (existing.rows as { id: number }[])[0];
-
-  let streamId: number;
-  if (existingRow) {
-    await db.execute(
-      sql`UPDATE streams SET title = ${title}, status = ${status}::stream_status, access_price = ${price}, updated_at = NOW() WHERE id = ${existingRow.id}`
-    );
-    streamId = existingRow.id;
-  } else {
-    const inserted = await db.execute(
-      sql`INSERT INTO streams (title, sport, status, start_time, access_price, stream_key, viewer_count, updated_at)
-          VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, '__yt_default__', 0, NOW())
-          RETURNING id`
-    );
-    streamId = (inserted.rows as { id: number }[])[0].id;
-  }
-
-  await db.execute(
-    sql`INSERT INTO settings (key, value, updated_at) VALUES ('yt_stream_db_id', ${streamId.toString()}, NOW())
-        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
-  );
-
-  res.json({ ok: true, streamId });
 });
 
 // Auto-probe the Mux HLS manifest to detect when a live stream ends.
