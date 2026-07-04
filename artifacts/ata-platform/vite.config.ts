@@ -50,15 +50,15 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://localhost:8099",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
       "/uploads": {
-        target: "http://localhost:8099",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
       "/ws": {
-        target: "http://localhost:8099",
+        target: "http://localhost:8080",
         changeOrigin: true,
         ws: true,
       },
