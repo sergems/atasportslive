@@ -25,6 +25,15 @@ const toStream = (s: typeof streamsTable.$inferSelect) => ({
   createdAt: s.createdAt,
 });
 
+// Virtual streams are internal paywall anchors — never expose them in public listings.
+const notVirtual = or(
+  isNull(streamsTable.streamKey),
+  and(
+    ne(streamsTable.streamKey, '__mux_default__'),
+    ne(streamsTable.streamKey, '__yt_default__'),
+  ),
+);
+
 router.get("/", async (req, res): Promise<void> => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
@@ -32,11 +41,21 @@ router.get("/", async (req, res): Promise<void> => {
   const includeAll = req.query.include_all === 'true';
   const offset = (page - 1) * limit;
 
-  const whereClause = status
+  // When include_all=true (admin view) skip the virtual-stream exclusion so
+  // admins can still see/manage them. Otherwise always exclude them.
+  const virtualClause = includeAll ? undefined : notVirtual;
+
+  const statusClause = status
     ? eq(streamsTable.status, status as any)
     : includeAll
     ? undefined
     : ne(streamsTable.status, 'ended' as any);
+
+  const whereClause =
+    statusClause && virtualClause ? and(statusClause, virtualClause) :
+    statusClause                   ? statusClause :
+    virtualClause                  ? virtualClause :
+    undefined;
 
   let q = db.select().from(streamsTable).$dynamic();
   if (whereClause) q = q.where(whereClause);
@@ -55,11 +74,14 @@ router.get("/upcoming", async (req, res): Promise<void> => {
     .select()
     .from(streamsTable)
     .where(
-      or(
-        eq(streamsTable.status, "live" as any),
-        and(
-          eq(streamsTable.status, "upcoming" as any),
-          gte(streamsTable.startTime, todayStart)
+      and(
+        notVirtual,
+        or(
+          eq(streamsTable.status, "live" as any),
+          and(
+            eq(streamsTable.status, "upcoming" as any),
+            gte(streamsTable.startTime, todayStart)
+          )
         )
       )
     )
