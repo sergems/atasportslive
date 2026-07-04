@@ -269,6 +269,20 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
                   <FaTiktok className="h-4 w-4" />
                 </a>
               </div>
+              {/* Download App */}
+              <div className="mt-4 flex justify-center md:justify-start">
+                <a
+                  href="/ata-live.apk"
+                  download="ata-live.apk"
+                  aria-label="Download ATA Live on Android"
+                >
+                  <img
+                    src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+                    alt="Get it on Google Play"
+                    className="h-12 w-auto"
+                  />
+                </a>
+              </div>
             </div>
           </div>
 
