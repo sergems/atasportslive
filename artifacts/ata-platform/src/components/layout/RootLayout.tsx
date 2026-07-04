@@ -270,8 +270,9 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
                 </a>
               </div>
               {/* Download App */}
-              <div className="mt-4 flex justify-center md:justify-start">
-                <a
+              <div className="mt-4 flex flex-col items-center md:items-start gap-1">
+                <p className="text-xs text-slate-400">Download the ATA Official App</p>
+                <
                   href="/ata-live.apk"
                   download="ata-live.apk"
                   aria-label="Download ATA Live on Android"
