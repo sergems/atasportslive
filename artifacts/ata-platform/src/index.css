@@ -2,6 +2,13 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
+/* Scale the entire UI ~35% larger. Tailwind v4 uses rem for all spacing/
+   typography, so bumping the root font-size from 16 px → 21.6 px scales
+   every rem-based utility (p-*, text-*, gap-*, w-*, h-*, etc.) uniformly. */
+html {
+  font-size: 21.6px;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

@@ -148,8 +148,8 @@ function HeroSlider({ slides }: { slides: Slide[] }) {
 
   return (
     <section
-      className="relative overflow-hidden"
-      style={{ height: 'clamp(320px, 56vw, 620px)' }}
+      className="relative overflow-hidden rounded-3xl border border-primary/20"
+      style={{ height: 'clamp(280px, 55vw, 520px)' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -329,10 +329,10 @@ export default function Home() {
   const totalOpenBets = upcomingGames.reduce((sum: number, g: any) => sum + (g.openBetsCount || 0), 0);
 
   return (
-    <div>
-      {/* Announcements Banner — inside container */}
+    <div className="space-y-10">
+      {/* Announcements Banner */}
       {visibleAnnouncements.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 space-y-2">
+        <section className="space-y-2">
           {visibleAnnouncements.map((a) => (
             <div key={a.id} className="relative flex items-start gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 pr-10">
               <Megaphone className="h-4 w-4 text-orange-400 mt-0.5 flex-shrink-0" />
@@ -348,21 +348,17 @@ export default function Home() {
               </button>
             </div>
           ))}
-        </div>
+        </section>
       )}
 
-      {/* Hero — full-bleed, edge-to-edge */}
+      {/* Hero — animated slider or default fallback */}
       {loadingSlides ? (
-        <Skeleton className="w-full bg-slate-800" style={{ minHeight: 480 }} />
+        <Skeleton className="w-full rounded-3xl bg-slate-800" style={{ minHeight: 420 }} />
       ) : activeSlides.length > 0 ? (
         <HeroSlider slides={activeSlides} />
       ) : (
         <DefaultHero />
       )}
-
-      {/* All sections below hero — inside container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-
 
       {/* Upcoming Streams */}
       <section>
@@ -539,7 +535,6 @@ export default function Home() {
           </div>
         </section>
       )}
-      </div>{/* end container */}
     </div>
   );
 }
