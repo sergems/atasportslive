@@ -33,20 +33,20 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=5000 BASE_PATH=/ pnpm --filter @workspace/ata-platform run dev"
+args = "pnpm --filter @workspace/ata-platform run dev"
 waitForPort = 5000
 
 [[workflows.workflow]]
 name = "API Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "PORT=8080 pnpm --filter @workspace/api-server run dev"
-waitForPort = 8080
-
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/api-server run dev"
+waitForPort = 8099
 
 [agent]
 stack = "BEST_EFFORT_FALLBACK"
@@ -61,8 +61,8 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 8080
-externalPort = 8080
+localPort = 8099
+externalPort = 8099
 
 [nix]
 channel = "stable-25_05"
@@ -73,3 +73,5 @@ channel = "stable-25_05"
 PORT = "8099"
 NODE_ENV = "development"
 GOOGLE_CLIENT_ID = "546025098386-4tua4bbcropobljhqtrvvn4jkfsbt02e.apps.googleusercontent.com"
+BASE_PATH = "/"
+VITE_PORT = "5000"
