@@ -989,6 +989,7 @@ export default function Live() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'admin';
+  const isManager = isAdmin || user?.role === 'manager';
   const qc = useQueryClient();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -1064,7 +1065,7 @@ export default function Live() {
   // ── Can the user see the player? ─────────────────────────────────────────
   //   YES → authenticated AND (free stream OR has purchased access)
   //   NO  → not logged in, or logged in but hasn't purchased
-  const canWatch = isAuthenticated && (isFreeStream || access?.hasAccess === true);
+  const canWatch = isAuthenticated && (isFreeStream || access?.hasAccess === true || isManager);
 
   // ── Sneak peek (1-min preview for locked-out users) ──────────────────────
   const peekKey = `sneak_used_${paywallStreamId ?? 'mux'}`;

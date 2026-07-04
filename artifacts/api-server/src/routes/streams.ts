@@ -369,6 +369,12 @@ router.get("/:id/access/check", authMiddleware, async (req: AuthRequest, res): P
   const userId = req.userId!;
   const now = new Date();
 
+  // Admin and manager get a free pass — no paywall
+  if (req.userRole === "admin" || req.userRole === "manager") {
+    res.json({ hasAccess: true, expiresAt: null, secondsRemaining: null, accessType: "role" });
+    return;
+  }
+
   // Check per-stream access first
   const [access] = await db
     .select()
