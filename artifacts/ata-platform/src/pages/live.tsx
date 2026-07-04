@@ -107,6 +107,7 @@ function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
   // Strip all YouTube branding/comments/suggestions from the embed
   const params = [
     'autoplay=1',
+    'mute=1',          // required for autoplay in modern browsers; user can unmute via controls
     'modestbranding=1',
     'rel=0',
     'showinfo=0',
@@ -115,6 +116,7 @@ function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
     'playsinline=1',
     'controls=1',
     'fs=1',
+    'enablejsapi=1',
     `origin=${encodeURIComponent(window.location.origin)}`,
   ].join('&');
   return (
