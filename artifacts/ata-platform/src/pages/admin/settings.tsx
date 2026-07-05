@@ -41,7 +41,6 @@ export default function AdminSettings() {
 
   const [referralBonusPct, setReferralBonusPct] = useState('10');
 
-  const [liveStreamUrl, setLiveStreamUrl] = useState('');
   // Mux default stream settings
   const [muxPlaybackId, setMuxPlaybackId] = useState('');
   const [muxIsLive, setMuxIsLive] = useState(false);
@@ -151,7 +150,6 @@ export default function AdminSettings() {
       setPriceMonthly(settings.price_monthly ?? '20.00');
       setPriceYearly(settings.price_yearly   ?? '99.00');
       setReferralBonusPct(settings.referral_bonus_pct ?? '10');
-      setLiveStreamUrl(settings.liveStreamUrl ?? '');
       setMuxPlaybackId(settings.mux_playback_id ?? '');
       setMuxIsLive(settings.mux_is_live === 'true');
       setMuxIsFree(settings.mux_is_free === 'true');
@@ -213,12 +211,6 @@ export default function AdminSettings() {
     return input;
   };
 
-  const isValidUrl = (v: string) => {
-    if (!v) return true;
-    try { new URL(v); return true; } catch { return false; }
-  };
-
-  const urlOk = isValidUrl(liveStreamUrl);
   const isPesapalConfigured = !!(settings?.pesapal_consumer_key && settings?.pesapal_consumer_secret);
   const pesapalIpnId = settings?.pesapal_ipn_id;
 
@@ -237,8 +229,6 @@ export default function AdminSettings() {
     for (const { key, val } of prices) updates[key] = parseFloat(val).toFixed(2);
     saveMutation.mutate(updates);
   };
-
-  const saveStreamSettings = () => saveMutation.mutate({ liveStreamUrl });
 
   const saveMuxSettings = async () => {
     if (!muxPlaybackId.trim()) { toast.error('Mux Playback ID is required'); return; }
@@ -1205,68 +1195,6 @@ export default function AdminSettings() {
               <Save className="h-4 w-4" />
               {saveMutation.isPending || syncingYt ? 'Saving…' : 'Save YouTube Settings'}
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Live Broadcast URL ── */}
-      <Card className="bg-slate-900 border-slate-700">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Radio className="h-4 w-4 text-red-400" />
-            Live Broadcast URL
-          </CardTitle>
-          <CardDescription className="text-slate-400">
-            The single embed URL shown to all viewers on the <strong className="text-slate-200">/live</strong> page.
-            Supports HLS (<code className="text-teal-400">.m3u8</code>), RTMP-over-HLS, or any direct video URL.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="liveStreamUrl" className="text-slate-300 text-sm">Stream URL</Label>
-            <div className="relative">
-              <Input
-                id="liveStreamUrl"
-                value={liveStreamUrl}
-                onChange={(e) => setLiveStreamUrl(e.target.value)}
-                placeholder="https://example.com/stream/playlist.m3u8"
-                className={`bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 pr-9
-                  ${!urlOk ? 'border-red-500/60 focus-visible:ring-red-500/40' : ''}`}
-                disabled={isLoading}
-              />
-              {liveStreamUrl && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {urlOk
-                    ? <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    : <AlertCircle className="h-4 w-4 text-red-400" />
-                  }
-                </span>
-              )}
-            </div>
-            {!urlOk && <p className="text-red-400 text-xs">Enter a valid URL (must start with http:// or https://)</p>}
-            {liveStreamUrl && urlOk && (
-              <a
-                href={liveStreamUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-teal-400 hover:text-teal-300 text-xs transition-colors"
-              >
-                <ExternalLink className="h-3 w-3" /> Open URL in new tab
-              </a>
-            )}
-          </div>
-          <div className="pt-2 flex items-center gap-3">
-            <Button
-              onClick={saveStreamSettings}
-              disabled={saveMutation.isPending || !urlOk || isLoading}
-              className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2"
-            >
-              <Save className="h-4 w-4" />
-              {saveMutation.isPending ? 'Saving…' : 'Save Settings'}
-            </Button>
-            {liveStreamUrl !== (settings?.liveStreamUrl ?? '') && (
-              <span className="text-amber-400 text-xs">Unsaved changes</span>
-            )}
           </div>
         </CardContent>
       </Card>
