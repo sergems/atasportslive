@@ -29,7 +29,9 @@ function defaultStartTime() {
 const EMPTY_FORM = {
   title: '', description: '', sport: 'pool',
   startTime: defaultStartTime(), endTime: '',
-  accessPrice: '1.50', playerA: '', playerB: '', city: '', country: '',
+  accessPrice: '1.50', playerA: '', playerB: '',
+  playerACountry: '', playerBCountry: '',
+  city: '', country: '',
 };
 
 function toLocalDatetime(iso: string | null | undefined) {
@@ -64,11 +66,19 @@ function StreamForm({
         {!isTournament && (<>
           <div className="space-y-1">
             <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A <span className="text-red-400">*</span></Label>
-            <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. John Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+            <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. Serge Mulumba" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A Country Code</Label>
+            <Input value={form.playerACountry} onChange={(e: any) => setForm({ ...form, playerACountry: e.target.value.toUpperCase().slice(0,2) })} placeholder="e.g. UG" maxLength={2} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50 uppercase" />
           </div>
           <div className="space-y-1">
             <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B <span className="text-red-400">*</span></Label>
-            <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Jane Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+            <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Erik Katamba" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B Country Code</Label>
+            <Input value={form.playerBCountry} onChange={(e: any) => setForm({ ...form, playerBCountry: e.target.value.toUpperCase().slice(0,2) })} placeholder="e.g. CD" maxLength={2} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50 uppercase" />
           </div>
         </>)}
 
@@ -337,6 +347,8 @@ export default function AdminStreams() {
           thumbnailUrl: thumbnailUrl ?? undefined,
           playerA: isTournament ? undefined : form.playerA,
           playerB: isTournament ? undefined : form.playerB,
+          playerACountry: form.playerACountry || undefined,
+          playerBCountry: form.playerBCountry || undefined,
           city: form.city || undefined,
           country: form.country || undefined,
         } as any,
@@ -362,8 +374,10 @@ export default function AdminStreams() {
       startTime: toLocalDatetime(stream.startTime),
       endTime: toLocalDatetime(stream.endTime),
       accessPrice: String(stream.accessPrice ?? '1.50'),
-      playerA: '',
-      playerB: '',
+      playerA: stream.playerA || '',
+      playerB: stream.playerB || '',
+      playerACountry: stream.playerACountry || '',
+      playerBCountry: stream.playerBCountry || '',
       city: stream.city || '',
       country: stream.country || '',
     });
@@ -389,6 +403,10 @@ export default function AdminStreams() {
           accessPrice: parseFloat(editForm.accessPrice),
           city: editForm.city || undefined,
           country: editForm.country || undefined,
+          playerA: editForm.playerA || undefined,
+          playerB: editForm.playerB || undefined,
+          playerACountry: editForm.playerACountry || undefined,
+          playerBCountry: editForm.playerBCountry || undefined,
           ...(newThumbnailUrl ? { thumbnailUrl: newThumbnailUrl } : {}),
         } as any,
       });

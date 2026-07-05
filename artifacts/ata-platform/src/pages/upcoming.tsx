@@ -17,6 +17,10 @@ interface UpcomingStream {
   accessPrice: number;
   city: string | null;
   country: string | null;
+  playerA: string | null;
+  playerB: string | null;
+  playerACountry: string | null;
+  playerBCountry: string | null;
 }
 
 interface UpcomingGame {
@@ -42,6 +46,10 @@ interface UnifiedEvent {
   href: string;
   accessPrice?: number;
   id: number;
+  playerA?: string | null;
+  playerB?: string | null;
+  playerACountry?: string | null;
+  playerBCountry?: string | null;
 }
 
 const sportColor: Record<string, { pill: string; dot: string }> = {
@@ -90,6 +98,10 @@ function useUpcomingEvents() {
       href: `/live`,
       accessPrice: s.accessPrice,
       id: s.id,
+      playerA: s.playerA,
+      playerB: s.playerB,
+      playerACountry: s.playerACountry,
+      playerBCountry: s.playerBCountry,
     });
   });
   (games.data || []).forEach((g) => {
@@ -98,11 +110,15 @@ function useUpcomingEvents() {
       type: 'game',
       date: new Date(`${g.eventDate}T${g.eventTime}`),
       sport: g.sport,
-      title: `${g.playerA} vs ${g.playerB}`,
+      title: g.playerA && g.playerB ? `${g.playerA} vs ${g.playerB}` : '',
       description: `${g.sport.charAt(0).toUpperCase() + g.sport.slice(1)} match`,
       location: [g.city, g.country].filter(Boolean).join(', ') || null,
       href: `/games/${g.id}`,
       id: g.id,
+      playerA: g.playerA,
+      playerB: g.playerB,
+      playerACountry: g.playerACountry ?? null,
+      playerBCountry: g.playerBCountry ?? null,
     });
   });
   events.sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -119,11 +135,26 @@ function groupByDate(events: UnifiedEvent[]): [string, UnifiedEvent[]][] {
   return Array.from(map.entries());
 }
 
+function FlagImg({ code }: { code?: string | null }) {
+  if (!code || code.trim().length < 2) return null;
+  const cc = code.trim().toLowerCase().slice(0, 2);
+  return (
+    <img
+      src={`https://flagcdn.com/20x15/${cc}.png`}
+      srcSet={`https://flagcdn.com/40x30/${cc}.png 2x`}
+      alt={cc.toUpperCase()}
+      className="inline-block rounded-[1px] shrink-0"
+      style={{ height: 12, width: 'auto' }}
+    />
+  );
+}
+
 function EventCard({ event, now }: { event: UnifiedEvent; now: Date }) {
   const sc = sportColor[event.sport] ?? { pill: 'text-slate-400 bg-slate-500/10 border-slate-500/30', dot: 'bg-slate-400' };
   const secsLeft = Math.max(0, Math.floor((event.date.getTime() - now.getTime()) / 1000));
   const timeStr = event.date.toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' });
   const isStream = event.type === 'stream';
+  const hasPlayers = !!(event.playerA && event.playerB);
 
   return (
     <Link href={event.href}>
@@ -134,12 +165,15 @@ function EventCard({ event, now }: { event: UnifiedEvent; now: Date }) {
             {formatCountdown(secsLeft)}
           </div>
         </div>
-        <div className="flex-1 min-w-0 px-3 sm:px-4 py-3.5 flex flex-col justify-center gap-1.5">
+        <div className="flex-1 min-w-0 px-3 sm:px-4 py-3.5 flex flex-col justify-center gap-1">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${sc.pill}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
               {event.sport}
             </span>
+            {isStream && event.title && (
+              <span className="text-slate-400 text-[10px] font-medium truncate">— {event.title}</span>
+            )}
             <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
               isStream
                 ? 'text-violet-400 bg-violet-500/10 border-violet-500/30'
@@ -154,9 +188,21 @@ function EventCard({ event, now }: { event: UnifiedEvent; now: Date }) {
               </span>
             )}
           </div>
-          <h3 className="text-white font-semibold text-sm leading-snug group-hover:text-teal-300 transition-colors line-clamp-1">
-            {event.title}
-          </h3>
+          {hasPlayers ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-white font-semibold text-sm group-hover:text-teal-300 transition-colors flex items-center gap-1.5">
+                <FlagImg code={event.playerACountry} />{event.playerA}
+              </span>
+              <span className="text-slate-500 font-bold text-[10px] tracking-widest shrink-0">VS</span>
+              <span className="text-white font-semibold text-sm group-hover:text-teal-300 transition-colors flex items-center gap-1.5">
+                {event.playerB}<FlagImg code={event.playerBCountry} />
+              </span>
+            </div>
+          ) : (
+            <h3 className="text-white font-semibold text-sm leading-snug group-hover:text-teal-300 transition-colors line-clamp-1">
+              {event.title}
+            </h3>
+          )}
           {event.location && (
             <p className="flex items-center gap-1 text-slate-500 text-[10px]">
               <MapPin className="h-2.5 w-2.5 shrink-0" /> {event.location}

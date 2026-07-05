@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
 
-export function Countdown({ seconds, className }: { seconds: number; className?: string }) {
-  const [timeLeft, setTimeLeft] = useState(seconds);
+function calcSecondsLeft(startTime: string): number {
+  return Math.max(0, Math.floor((new Date(startTime).getTime() - Date.now()) / 1000));
+}
+
+export function Countdown({ startTime, className }: { startTime: string; className?: string }) {
+  const [timeLeft, setTimeLeft] = useState(() => calcSecondsLeft(startTime));
 
   useEffect(() => {
-    setTimeLeft(seconds);
+    setTimeLeft(calcSecondsLeft(startTime));
     const interval = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      setTimeLeft(calcSecondsLeft(startTime));
     }, 1000);
     return () => clearInterval(interval);
-  }, [seconds]);
+  }, [startTime]);
 
   if (timeLeft <= 0) {
     return <span className={className}>LIVE</span>;

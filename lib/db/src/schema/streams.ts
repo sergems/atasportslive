@@ -20,6 +20,10 @@ export const streamsTable = pgTable("streams", {
   accessPrice: numeric("access_price", { precision: 6, scale: 2 }).notNull().default("1.50"),
   city: text("city"),
   country: text("country"),
+  playerA: text("player_a"),
+  playerB: text("player_b"),
+  playerACountry: text("player_a_country"),
+  playerBCountry: text("player_b_country"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

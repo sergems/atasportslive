@@ -22,6 +22,10 @@ const toStream = (s: typeof streamsTable.$inferSelect) => ({
   accessPrice: parseFloat(s.accessPrice as string),
   city: s.city,
   country: s.country,
+  playerA: s.playerA,
+  playerB: s.playerB,
+  playerACountry: s.playerACountry,
+  playerBCountry: s.playerBCountry,
   createdAt: s.createdAt,
 });
 
@@ -95,7 +99,7 @@ router.get("/upcoming", async (req, res): Promise<void> => {
 });
 
 router.post("/", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
-  const { title, description, sport, thumbnailUrl, startTime, endTime, accessPrice, playerA, playerB, city, country } = req.body;
+  const { title, description, sport, thumbnailUrl, startTime, endTime, accessPrice, playerA, playerB, playerACountry, playerBCountry, city, country } = req.body;
   if (!title || !sport || !startTime) {
     res.status(400).json({ error: "title, sport, startTime required" });
     return;
@@ -121,6 +125,10 @@ router.post("/", authMiddleware, requireRole("admin", "manager"), async (req: Au
       accessPrice: accessPrice?.toString() || "1.50",
       city: city || null,
       country: country || null,
+      playerA: createsGame ? playerA : null,
+      playerB: createsGame ? playerB : null,
+      playerACountry: playerACountry || null,
+      playerBCountry: playerBCountry || null,
     })
     .returning();
 
@@ -136,6 +144,8 @@ router.post("/", authMiddleware, requireRole("admin", "manager"), async (req: Au
       eventEndTime: endTimeStr,
       city: city || null,
       country: country || null,
+      playerACountry: playerACountry || null,
+      playerBCountry: playerBCountry || null,
     });
   }
 
@@ -153,7 +163,7 @@ router.get("/:id", async (req, res): Promise<void> => {
 
 router.patch("/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
-  const { title, description, sport, thumbnailUrl, startTime, endTime, status, hlsUrl, accessPrice, city, country } = req.body;
+  const { title, description, sport, thumbnailUrl, startTime, endTime, status, hlsUrl, accessPrice, city, country, playerA, playerB, playerACountry, playerBCountry } = req.body;
   const updates: Record<string, any> = {};
   if (title !== undefined) updates.title = title;
   if (description !== undefined) updates.description = description;
@@ -166,6 +176,10 @@ router.patch("/:id", authMiddleware, requireRole("admin", "manager"), async (req
   if (accessPrice !== undefined) updates.accessPrice = accessPrice.toString();
   if (city !== undefined) updates.city = city || null;
   if (country !== undefined) updates.country = country || null;
+  if (playerA !== undefined) updates.playerA = playerA || null;
+  if (playerB !== undefined) updates.playerB = playerB || null;
+  if (playerACountry !== undefined) updates.playerACountry = playerACountry || null;
+  if (playerBCountry !== undefined) updates.playerBCountry = playerBCountry || null;
 
   const [stream] = await db.update(streamsTable).set(updates).where(eq(streamsTable.id, id)).returning();
   res.json(toStream(stream));

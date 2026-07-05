@@ -401,22 +401,37 @@ export default function Home() {
                         <span className="inline-flex items-center rounded-md bg-teal-500/10 px-2.5 py-1 text-xs font-medium text-teal-400 ring-1 ring-inset ring-teal-500/20">UPCOMING</span>
                       )}
                     </div>
-                    {stream.status === 'upcoming' && stream.secondsUntilStart > 0 && (
+                    {stream.status === 'upcoming' && stream.startTime && (
                       <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur text-amber-500 font-mono text-sm px-2 py-1 rounded border border-amber-500/20">
-                        <Countdown seconds={stream.secondsUntilStart} />
+                        <Countdown startTime={String(stream.startTime)} />
                       </div>
                     )}
                   </div>
                   <CardContent className="p-5">
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 capitalize">{stream.sport}</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        {stream.sport.toUpperCase()}
+                        {stream.title && <span className="text-slate-500 font-normal normal-case tracking-normal"> — {stream.title}</span>}
+                      </span>
                       {stream.accessPrice ? (
-                        <span className="text-sm font-medium text-amber-400">${stream.accessPrice.toFixed(2)}</span>
+                        <span className="text-sm font-medium text-amber-400 shrink-0 ml-2">${stream.accessPrice.toFixed(2)}</span>
                       ) : (
-                        <span className="text-sm font-medium text-teal-400">FREE</span>
+                        <span className="text-sm font-medium text-teal-400 shrink-0 ml-2">FREE</span>
                       )}
                     </div>
-                    <h3 className="font-bold text-lg text-white group-hover:text-teal-300 transition-colors line-clamp-1">{stream.title}</h3>
+                    {stream.playerA && stream.playerB ? (
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="font-bold text-sm text-white group-hover:text-teal-300 transition-colors flex items-center gap-1.5">
+                          <FlagImg code={stream.playerACountry} /> {stream.playerA}
+                        </span>
+                        <span className="text-slate-500 font-bold text-[10px] shrink-0 tracking-widest">VS</span>
+                        <span className="font-bold text-sm text-white group-hover:text-teal-300 transition-colors flex items-center gap-1.5">
+                          {stream.playerB} <FlagImg code={stream.playerBCountry} />
+                        </span>
+                      </div>
+                    ) : (
+                      <h3 className="font-bold text-lg text-white group-hover:text-teal-300 transition-colors line-clamp-1">{stream.title}</h3>
+                    )}
                     {(stream.city || stream.country) && (
                       <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                         <MapPin className="h-3 w-3" />{[stream.city, stream.country].filter(Boolean).join(', ')}
