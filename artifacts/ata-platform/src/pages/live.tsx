@@ -714,7 +714,7 @@ function CommentSection({
   };
 
   return (
-    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden h-full min-h-0">
+    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden flex-1 min-h-0">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800 shrink-0">
         <MessageSquare className="h-4 w-4 text-teal-400" />
@@ -1181,7 +1181,7 @@ export default function Live() {
     <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 h-full min-h-0">
       {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? settings?.mux_sport} />}
       {/* max-h on mobile so chat doesn't grow to fill the page; h-full on desktop (constrained by player height) */}
-      <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-none lg:h-full overflow-hidden">
+      <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-none flex flex-col overflow-hidden">
         <CommentSection
           streamId={paywallStreamId}
           token={token}
@@ -1216,7 +1216,7 @@ export default function Live() {
             </div>
             {/* Right: sidebar — overflow-hidden so inner content cannot push it taller */}
             {sidebarOpen && (
-              <div className="lg:self-stretch lg:overflow-hidden lg:flex lg:flex-col">
+              <div className="lg:self-stretch lg:flex lg:flex-col lg:overflow-hidden">
                 {sidebar}
               </div>
             )}
