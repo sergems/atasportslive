@@ -815,6 +815,13 @@ export default function Wallet() {
                   {!pesapalMutation.isPending && <ExternalLink className="h-3.5 w-3.5 ml-auto opacity-60" />}
                 </Button>
                 <p className="text-[10px] text-slate-500 text-center">You'll be redirected to Pesapal's secure payment page.</p>
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-3 flex items-start gap-2.5">
+                  <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-xs text-amber-300 font-semibold">Complete payment on Pesapal before returning</p>
+                    <p className="text-[11px] text-amber-200/70 leading-relaxed">Follow all steps on the Pesapal page until you see a confirmation. Pesapal will automatically redirect you back to ATA when done — <strong className="text-amber-300">do not press Back or close the tab early.</strong> If you return before completing payment, your transaction will be stuck in <span className="font-mono">pending</span> and your wallet will not be credited.</p>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
