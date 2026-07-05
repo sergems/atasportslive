@@ -641,16 +641,6 @@ export default function Wallet() {
                       <Zap className="h-3.5 w-3.5 shrink-0" />
                       Pay instantly with mobile money across Africa — MTN, Airtel, M-Pesa &amp; more.
                     </div>
-                    {/* Quick amounts */}
-                    <div className="flex gap-2">
-                      {[{ amount: '1.70', label: 'Daily' }, { amount: '7.00', label: 'Weekly' }, { amount: '20.00', label: 'Monthly' }, { amount: '99.00', label: 'Yearly' }].map(({ amount, label }) => (
-                        <button key={amount} onClick={() => setDepositAmount(amount)}
-                          className={`flex-1 rounded-md border px-3 py-1.5 text-left transition-all ${depositAmount === amount ? 'bg-green-500/20 border-green-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}>
-                          <span className="font-bold text-sm font-mono">${amount}</span>
-                          <span className={`text-[10px] font-medium ml-1.5 ${depositAmount === amount ? 'text-green-400' : 'text-slate-500'}`}>{label}</span>
-                        </button>
-                      ))}
-                    </div>
                     {/* Promo Code */}
                     <div className="space-y-1.5">
                       <Label className="text-slate-300 text-xs sm:text-sm flex items-center gap-1.5">
@@ -737,29 +727,6 @@ export default function Wallet() {
                 <div className="rounded-lg bg-teal-500/10 border border-teal-500/20 px-3 py-2 text-xs text-teal-300">
                   Pay securely via <strong>MTN MoMo, Airtel Money, Visa/Mastercard</strong> and more — powered by Pesapal.
                 </div>
-                {/* Quick-select amounts */}
-                <div className="flex gap-2">
-                  {[
-                    { amount: '1.70', label: 'Daily', desc: '1 day' },
-                    { amount: '7.00', label: 'Weekly', desc: '7 days' },
-                    { amount: '20.00', label: 'Monthly', desc: '30 days' },
-                    { amount: '99.00', label: 'Yearly', desc: '365 days' },
-                  ].map(({ amount, label, desc }) => (
-                    <button
-                      key={amount}
-                      onClick={() => setDepositAmount(amount)}
-                      className={`flex-1 rounded-md border px-3 py-1.5 text-left transition-all ${
-                        depositAmount === amount
-                          ? 'bg-teal-500/20 border-teal-500 text-white'
-                          : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
-                      }`}
-                    >
-                      <span className="font-bold text-sm font-mono">${amount}</span>
-                      <span className={`text-[10px] font-medium ml-1.5 ${depositAmount === amount ? 'text-teal-400' : 'text-slate-500'}`}>{label}</span>
-                      <span className="text-[9px] text-slate-600 ml-1">· {desc}</span>
-                    </button>
-                  ))}
-                </div>
                 {/* Promo Code */}
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-xs sm:text-sm flex items-center gap-1.5">
@@ -819,7 +786,7 @@ export default function Wallet() {
                   <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <p className="text-xs text-amber-300 font-semibold">Complete payment on Pesapal before returning</p>
-                    <p className="text-[11px] text-amber-200/70 leading-relaxed">Follow all steps on the Pesapal page until you see a confirmation. Pesapal will automatically redirect you back to ATA when done — <strong className="text-amber-300">do not press Back or close the tab early.</strong> If you return before completing payment, your transaction will be stuck in <span className="font-mono">pending</span> and your wallet will not be credited.</p>
+                    <p className="text-[11px] text-amber-200/70 leading-relaxed">Follow all steps on the Pesapal page until you see a confirmation. Pesapal will automatically redirect you back to ATA when done — <strong className="text-amber-300">do not press Back or close the tab early.</strong> If you return before completing payment, your deposit will not be completed.</p>
                   </div>
                 </div>
               </div>
