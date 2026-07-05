@@ -243,6 +243,22 @@ export default function Wallet() {
     if (paymentStatus === 'success') {
       toast.success('Payment Successful!', { description: 'Your wallet has been credited.' });
       invalidate();
+      const pendingPromo = sessionStorage.getItem('ata_pending_promo');
+      if (pendingPromo) {
+        sessionStorage.removeItem('ata_pending_promo');
+        fetch('/api/promotions/apply-code', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ code: pendingPromo }),
+        })
+          .then(r => r.json())
+          .then(d => {
+            if (d.message) toast.success('Promo Applied!', { description: d.message });
+            queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
+            invalidate();
+          })
+          .catch(() => {});
+      }
     } else if (paymentStatus === 'error') {
       toast.error('Payment failed or was cancelled.');
     }
@@ -281,6 +297,9 @@ export default function Wallet() {
       setPawapayDepositId(null);
       setDepositAmount('');
       setPawapayPhone('');
+      if (promoValidation?.valid && promoCode.trim()) {
+        applyPromoMutation.mutate({});
+      }
     } else if (pawapayPollData?.status === 'failed') {
       toast.error('Payment failed or was declined.');
       setPawapayDepositId(null);
@@ -309,7 +328,12 @@ export default function Wallet() {
 
   const pesapalMutation = useMutation({
     mutationFn: () => initiatePesapal(parseFloat(depositAmount)),
-    onSuccess: (data) => { window.location.href = data.redirectUrl; },
+    onSuccess: (data) => {
+      if (promoCode.trim() && promoValidation?.valid) {
+        sessionStorage.setItem('ata_pending_promo', promoCode.trim().toUpperCase());
+      }
+      window.location.href = data.redirectUrl;
+    },
     onError: (err: any) => toast.error(err.message),
   });
 
@@ -449,24 +473,6 @@ export default function Wallet() {
         <div>
           <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight leading-tight">Wallet</h1>
           <p className="text-slate-400 text-xs sm:text-sm hidden sm:block">Manage your funds — deposit, withdraw, and track transactions.</p>
-        </div>
-      </div>
-
-      {/* Subscription Pricing Banner */}
-      <div className="rounded-xl border border-teal-500/25 bg-teal-500/5 px-4 py-3">
-        <p className="text-[10px] sm:text-xs font-semibold text-teal-400 uppercase tracking-wider mb-2">Subscription Plans</p>
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-          {[
-            { label: 'Daily',    price: '$1.7' },
-            { label: 'Weekly',   price: '$7' },
-            { label: 'Monthly',  price: '$20' },
-            { label: 'Annually', price: '$99' },
-          ].map(({ label, price }) => (
-            <div key={label} className="flex items-baseline gap-1">
-              <span className="text-base sm:text-lg font-bold text-white font-mono">{price}</span>
-              <span className="text-[10px] sm:text-xs text-slate-400">/ {label}</span>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -645,6 +651,39 @@ export default function Wallet() {
                         </button>
                       ))}
                     </div>
+                    {/* Promo Code */}
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-300 text-xs sm:text-sm flex items-center gap-1.5">
+                        <Tag className="h-3.5 w-3.5 text-purple-400" /> Promo Code <span className="text-slate-600 font-normal text-[10px]">(optional)</span>
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="e.g. WELCOME50" maxLength={20}
+                          value={promoCode}
+                          onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoValidation(null); }}
+                          className="bg-slate-800 border-slate-700 text-white font-mono uppercase h-9 text-sm tracking-wider flex-1"
+                        />
+                        <Button
+                          onClick={() => validatePromoMutation.mutate()}
+                          disabled={!promoCode.trim() || validatePromoMutation.isPending}
+                          className="bg-purple-700 hover:bg-purple-600 text-white h-9 px-3 text-xs shrink-0"
+                        >
+                          {validatePromoMutation.isPending ? '…' : 'Apply'}
+                        </Button>
+                      </div>
+                      {promoValidation && !promoValidation.valid && (
+                        <div className="flex items-center gap-1.5 rounded-md bg-red-500/10 border border-red-500/30 px-2.5 py-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                          <span className="text-xs text-red-300">{promoValidation.reason}</span>
+                        </div>
+                      )}
+                      {promoValidation?.valid && (
+                        <div className="flex items-center gap-1.5 rounded-md bg-purple-500/10 border border-purple-500/30 px-2.5 py-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                          <span className="text-xs text-purple-300 font-semibold">{promoValidation.name} — deposit will credit your bonus wallet</span>
+                        </div>
+                      )}
+                    </div>
                     {/* Amount */}
                     <div className="space-y-1.5">
                       <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
@@ -720,6 +759,39 @@ export default function Wallet() {
                       <span className="text-[9px] text-slate-600 ml-1">· {desc}</span>
                     </button>
                   ))}
+                </div>
+                {/* Promo Code */}
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 text-xs sm:text-sm flex items-center gap-1.5">
+                    <Tag className="h-3.5 w-3.5 text-purple-400" /> Promo Code <span className="text-slate-600 font-normal text-[10px]">(optional)</span>
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. WELCOME50" maxLength={20}
+                      value={promoCode}
+                      onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoValidation(null); }}
+                      className="bg-slate-800 border-slate-700 text-white font-mono uppercase h-9 text-sm tracking-wider flex-1"
+                    />
+                    <Button
+                      onClick={() => validatePromoMutation.mutate()}
+                      disabled={!promoCode.trim() || validatePromoMutation.isPending}
+                      className="bg-purple-700 hover:bg-purple-600 text-white h-9 px-3 text-xs shrink-0"
+                    >
+                      {validatePromoMutation.isPending ? '…' : 'Apply'}
+                    </Button>
+                  </div>
+                  {promoValidation && !promoValidation.valid && (
+                    <div className="flex items-center gap-1.5 rounded-md bg-red-500/10 border border-red-500/30 px-2.5 py-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                      <span className="text-xs text-red-300">{promoValidation.reason}</span>
+                    </div>
+                  )}
+                  {promoValidation?.valid && (
+                    <div className="flex items-center gap-1.5 rounded-md bg-purple-500/10 border border-purple-500/30 px-2.5 py-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                      <span className="text-xs text-purple-300 font-semibold">{promoValidation.name} — deposit will credit your bonus wallet</span>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-xs sm:text-sm">Amount (USD)</Label>
@@ -1058,64 +1130,9 @@ export default function Wallet() {
         </Card>
       </div>
 
-      {/* Promo Code + Bonus History */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
+      {/* Bonus History */}
+      <div className="grid grid-cols-1 gap-3 sm:gap-6">
 
-        {/* Promo Code Card */}
-        <Card className="bg-slate-900 border-primary/20">
-          <CardHeader className="pb-2 pt-4 px-4 sm:pt-5 sm:px-5">
-            <CardTitle className="flex items-center gap-2 text-purple-400 text-sm sm:text-base">
-              <Tag className="h-4 w-4" /> Promo Code
-            </CardTitle>
-            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">Enter a promo code to earn bonus streaming credit</p>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3">
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g. WELCOME50" maxLength={20}
-                value={promoCode}
-                onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoValidation(null); }}
-                className="bg-slate-800 border-slate-700 text-white font-mono uppercase h-9 text-sm tracking-wider flex-1"
-              />
-              <Button
-                onClick={() => validatePromoMutation.mutate()}
-                disabled={!promoCode.trim() || validatePromoMutation.isPending}
-                className="bg-slate-700 hover:bg-slate-600 text-white h-9 px-3 text-xs shrink-0"
-              >
-                {validatePromoMutation.isPending ? '…' : 'Check'}
-              </Button>
-            </div>
-
-            {promoValidation && !promoValidation.valid && (
-              <div className="flex items-center gap-2 rounded-md bg-red-500/10 border border-red-500/30 px-3 py-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
-                <span className="text-xs text-red-300">{promoValidation.reason}</span>
-              </div>
-            )}
-
-            {promoValidation?.valid && (
-              <div className="rounded-md bg-purple-500/10 border border-purple-500/30 px-3 py-2.5 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Gift className="h-4 w-4 text-purple-400 shrink-0" />
-                  <div>
-                    <p className="text-xs text-white font-semibold">{promoValidation.name}</p>
-                    <p className="text-xs text-purple-300">Estimated bonus: <span className="font-bold font-mono">${promoValidation.estimatedBonus?.toFixed(2)}</span></p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => { setShowTermsModal(true); }}
-                  className="w-full bg-purple-500 hover:bg-purple-400 text-white h-8 text-xs gap-1.5"
-                >
-                  <Sparkles className="h-3.5 w-3.5" /> Accept Terms & Claim Bonus
-                </Button>
-              </div>
-            )}
-
-            <p className="text-[10px] text-slate-600">Bonus credit can only be used for live stream access. Cannot be withdrawn.</p>
-          </CardContent>
-        </Card>
-
-        {/* Bonus History */}
         <Card className="bg-slate-900 border-primary/20">
           <CardHeader className="pb-2 pt-4 px-4 sm:pt-5 sm:px-5">
             <CardTitle className="flex items-center gap-2 text-purple-400 text-sm sm:text-base">
