@@ -170,10 +170,10 @@ function Router() {
 
         {/* ── Admin panel — manager + admin only ────────────────────────── */}
         <Route path="/admin/streams">
-          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminStreams /></AdminLayout>} />}
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminGames /></AdminLayout>} />}
         </Route>
         <Route path="/admin/games">
-          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminGames /></AdminLayout>} />}
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminStreams /></AdminLayout>} />}
         </Route>
         <Route path="/admin/bets">
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminBets /></AdminLayout>} />}

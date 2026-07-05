@@ -422,7 +422,7 @@ function PastGamesSection({ pastTopLevel, ctx }: { pastTopLevel: any[]; ctx: any
 }
 
 export default function AdminGames() {
-  useEffect(() => { document.title = 'Manage Bets - Admin'; }, []);
+  useEffect(() => { document.title = 'Manage Streams - Admin'; }, []);
 
   const qc = useQueryClient();
   const token = useAuthStore((s) => s.token);
@@ -625,7 +625,7 @@ export default function AdminGames() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-amber-400" /> Manage Bets
+          <Trophy className="h-6 w-6 text-amber-400" /> Manage Streams
         </h1>
         <Button
           onClick={() => { setShowForm(!showForm); setEditId(null); setAddMatchParentId(null); }}
@@ -640,7 +640,7 @@ export default function AdminGames() {
           form={form} setForm={setForm}
           onSave={handleCreate}
           onCancel={() => { setShowForm(false); setForm({ ...EMPTY_SINGLE }); setCreateStream(false); setStreamPrice('1.50'); }}
-          saving={createGame.isPending} title="Create Game / Competition" accentClass="border-amber-500/30"
+          saving={createGame.isPending} title="Create Stream / Competition" accentClass="border-amber-500/30"
           createStream={createStream} setCreateStream={setCreateStream}
           streamPrice={streamPrice} setStreamPrice={setStreamPrice}
         />
@@ -656,7 +656,7 @@ export default function AdminGames() {
             {activeTopLevel.map((game) => <GameCard key={game.id} game={game} ctx={ctx} />)}
             {activeTopLevel.length === 0 && (
               <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                No active games yet. Create a single match or a competition above.
+                No active streams yet. Create a single match or a competition above.
               </div>
             )}
           </div>

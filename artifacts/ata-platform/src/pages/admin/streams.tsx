@@ -244,7 +244,7 @@ function StreamRow({
 }
 
 export default function AdminStreams() {
-  useEffect(() => { document.title = 'Manage Streams - Admin'; }, []);
+  useEffect(() => { document.title = 'Livestream - Admin'; }, []);
 
   const queryClient = useQueryClient();
   const token = useAuthStore((s) => s.token);
@@ -463,13 +463,13 @@ export default function AdminStreams() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Radio className="h-6 w-6 text-teal-400" /> Manage Streams
+          <Radio className="h-6 w-6 text-teal-400" /> Livestream
         </h1>
         <Button
           onClick={() => { setShowForm(!showForm); setEditId(null); }}
           className="bg-teal-500 hover:bg-teal-400 text-slate-950"
         >
-          <Plus className="h-4 w-4 mr-1" /> New Stream
+          <Plus className="h-4 w-4 mr-1" /> New
         </Button>
       </div>
 
