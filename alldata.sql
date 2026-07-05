@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QQf1jFB6TU3aETt7uaX0qKYFJpKvWoHkxdhaLduIjQdE3jl7KquThrubu1UKVK9
+\restrict YXPt4i4x9JiPrBPwOC2o2ZJxKyYxhDQBnPm5B6S80HGA3zMevEJLfWOncQ5feso
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -833,7 +833,9 @@ CREATE TABLE public.streams (
     player_a text,
     player_b text,
     player_a_country text,
-    player_b_country text
+    player_b_country text,
+    type text DEFAULT 'single'::text NOT NULL,
+    parent_id integer
 );
 
 
@@ -1342,19 +1344,11 @@ COPY public.stream_comments (id, stream_id, user_id, username, content, created_
 -- Data for Name: streams; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stream_key, status, start_time, end_time, viewer_count, access_price, created_at, updated_at, city, country, player_a, player_b, player_a_country, player_b_country) FROM stdin;
-2	Lugogo Boxing Night - Main Event	Heavyweight showdown at Lugogo Arena. The main event you've been waiting for.	boxing	https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=800&q=80	\N	\N	upcoming	2026-06-29 12:13:24.231916+00	\N	0	1.70	2026-06-15 16:31:06.623709+00	2026-06-15 21:53:28.67+00	Lusaka	Zambia	\N	\N	\N	\N
-11	Matavu Ukasha VS Kasasa Isaac	\N	boxing	\N	\N	\N	upcoming	2026-07-23 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:14:13.462438+00	\N	\N	\N	\N	\N	\N
-12	Ali Hassan VS John Doe	\N	pool	\N	\N	\N	upcoming	2026-07-26 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:14:13.462438+00	\N	\N	\N	\N	\N	\N
-6	Musuna Jule VS Alex Ambo		tournament	/uploads/thumb-1781565397631-khwqz5.png	\N	\N	upcoming	2026-07-08 12:13:24.231916+00	\N	0	1.70	2026-06-15 19:06:11.15375+00	2026-06-15 23:16:38.779+00	\N	\N	\N	\N	\N	\N
-15	Joseph Kato VS Richard Wanyama		boxing	/uploads/thumb-1781565449802-31q8lm.jpg	\N	\N	upcoming	2026-08-04 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:30.071+00	\N	\N	\N	\N	\N	\N
-14	Caesar Chandinga VS Jabulani		pool	/uploads/thumb-1781565468263-x84aol.jpg	\N	\N	upcoming	2026-08-01 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:48.614+00	Lagos	Nigeria	\N	\N	\N	\N
-13	Jacob VS Caesar Chandinga		pool	/uploads/thumb-1781565483093-ej4d6o.jpeg	\N	\N	upcoming	2026-07-29 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:18:03.377+00	Lagos	Nigeria	\N	\N	\N	\N
-3	Kyebando Pool League - Finals	The best pool players in Kyebando compete for the league title.	pool	/uploads/thumb-1781565511893-cf2kgm.png	\N	\N	upcoming	2026-07-02 12:13:24.231916+00	\N	0	1.70	2026-06-15 16:31:06.623709+00	2026-06-15 23:18:32.232+00	Kampala	Uganda	\N	\N	\N	\N
-8	Moses Nkosi VS Emmanuel Atiku		boxing	/uploads/thumb-1781565578428-k8dj0x.jpg	\N	\N	upcoming	2026-07-14 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:19:39.043+00	\N	\N	\N	\N	\N	\N
-7	Brian Lubega VS Patrick Okello		pool	/uploads/thumb-1781565625295-0oehmv.jpg	\N	\N	upcoming	2026-07-11 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:25.592+00	\N	\N	\N	\N	\N	\N
-9	Caesar Chandinga VS Serge		pool	/uploads/thumb-1781565653292-8uuyff.jpeg	\N	\N	upcoming	2026-07-17 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:53.647+00	Lagos	Nigeria	\N	\N	\N	\N
-10	Siyabonga Shezi VS Caesar Chandinga		pool	/uploads/thumb-1781565717628-74qmou.jpg	\N	\N	upcoming	2026-07-20 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:21:57.935+00	Lagos	Nigeria	\N	\N	\N	\N
+COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stream_key, status, start_time, end_time, viewer_count, access_price, created_at, updated_at, city, country, player_a, player_b, player_a_country, player_b_country, type, parent_id) FROM stdin;
+15	Joseph Kato VS Richard Wanyama		boxing	/uploads/thumb-1781565449802-31q8lm.jpg	\N	\N	upcoming	2026-08-04 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:30.071+00	\N	\N	\N	\N	\N	\N	single	\N
+14	Caesar Chandinga VS Jabulani		pool	/uploads/thumb-1781565468263-x84aol.jpg	\N	\N	upcoming	2026-08-01 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:17:48.614+00	Lagos	Nigeria	\N	\N	\N	\N	single	\N
+13	Jacob VS Caesar Chandinga		pool	/uploads/thumb-1781565483093-ej4d6o.jpeg	\N	\N	upcoming	2026-07-29 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:18:03.377+00	Lagos	Nigeria	\N	\N	\N	\N	single	\N
+9	Caesar Chandinga VS Serge		pool	/uploads/thumb-1781565653292-8uuyff.jpeg	\N	\N	upcoming	2026-07-17 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:53.647+00	Lagos	Nigeria	\N	\N	\N	\N	single	\N
 \.
 
 
@@ -6410,7 +6404,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5038	advancedtalentagencyata@gmail.com		ADVANCED TALENT AGENCY ATA	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocJl_vwpannjA_niKt7IuoEFiQB4-0_C7aI2SbMlT6Q3ZLc2qlI=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzgsInJvbGUiOiJ1c2VyIiwic3YiOiI3ZTBjZjFmMy1iMDMyLTQwYWYtYTdhNC1kYTYyOTUyZDdiMzQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MTg2NiwiZXhwIjoxNzg1NjgzODY2fQ.NZkcKsZ-CeWSVVEKo-Htl_RDTAK7BIDQ3Y2CkZMYOVk	2026-07-03 15:17:46.061302+00	2026-07-03 15:17:46.071+00	\N	\N	\N	f	7e0cf1f3-b032-40af-a7a4-da62952d7b34	111789802886065658753	5SCCQBTR	\N	advanced_talent_agency_ata_5038	0	\N	\N	\N	\N	\N	f
 5032	zetoophiri@gmail.com		Zethu Phiri	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocIoZ492DLotfLTGCUbYw16uY4ECV3rNwcmQg6GnIJnW1PxmFw=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzIsInJvbGUiOiJ1c2VyIiwic3YiOiI3YTc5YmI4YS02NGE3LTQ3MzMtYjhmNC1mOGE1ZDY3YmYyMTMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MjQxMywiZXhwIjoxNzg1Njg0NDEzfQ.oseCeNqEKCVsEKJTCTuDA94C5Bp3PMf5I8TzJGzUmhY	2026-07-02 20:18:19.941937+00	2026-07-03 15:26:53.411+00	\N	\N	\N	f	7a79bb8a-64a7-4733-b8f4-f8a5d67bf213	108479386760493320264	FE64N4D6	\N	zethu_phiri_5032	0	\N	\N	\N	\N	\N	f
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiJhN2ExOWEyOS02MTEwLTRkMjItODcwZC00YWEzYzA1YmRiMmQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzExNzk0MiwiZXhwIjoxNzg1NzA5OTQyfQ.Zp1AaGTQBGD9P-AeUvr9fvGwS8WRe5D52PgF16S5OcA	2026-06-15 16:31:06.605107+00	2026-07-03 22:32:22.492+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	a7a19a29-6110-4d22-870d-4aa3c05bdb2d	\N	0002CF32	\N	demo_user_2	0	\N	\N	\N	\N	\N	f
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiYTU4OGMwZTMtMDcwNS00ODdiLWExYmQtNDBkMDU0ZmFkZTAxIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMyNDc4MTcsImV4cCI6MTc4NTgzOTgxN30.KYH2zu9D1WmIbzNRFqUej-JX6QZcf-iMMPNlh65X7FE	2026-06-15 16:31:06.226579+00	2026-07-05 10:36:57.077+00	\N	\N	\N	f	a588c0e3-0705-487b-a1bd-40d054fade01	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiOWNhNTM5NjUtNzAwZC00MmNlLTljMjEtMTk0NjI3ZjI0MmRmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMyNTIzMDksImV4cCI6MTc4NTg0NDMwOX0.m5WNmCmw_z82NMkrRp8vcfuXsvMNDG27WWcftSRk9E0	2026-06-15 16:31:06.226579+00	2026-07-05 11:51:49.597+00	\N	\N	\N	f	9ca53965-700d-42ce-9c21-194627f242df	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t
 \.
 
 
@@ -11970,6 +11964,14 @@ ALTER TABLE ONLY public.stream_comments
 
 
 --
+-- Name: streams streams_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.streams
+    ADD CONSTRAINT streams_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.streams(id) ON DELETE SET NULL;
+
+
+--
 -- Name: transactions transactions_user_id_users_id_fk; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -12021,5 +12023,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QQf1jFB6TU3aETt7uaX0qKYFJpKvWoHkxdhaLduIjQdE3jl7KquThrubu1UKVK9
+\unrestrict YXPt4i4x9JiPrBPwOC2o2ZJxKyYxhDQBnPm5B6S80HGA3zMevEJLfWOncQ5feso
 
