@@ -95,7 +95,6 @@ const navItems = [
   { href: '/admin/ads',              label: 'Ad Slots',      icon: ImagePlus,                             minLevel: 1 },
   { href: '/admin/users',            label: 'Manage Users',  icon: Users,                                 minLevel: 1 },
   { href: '/admin/streams',             label: 'Streams',             icon: Radio,                                 minLevel: 2 },
-  { href: '/admin/livestream-settings', label: 'Livestream Settings', icon: Tv2,                                   minLevel: 2 },
   { href: '/admin/games',               label: 'Bets',                icon: Trophy, settleBadge: true,             minLevel: 2 },
   { href: '/admin/bets',                label: 'Manage Bets',         icon: Swords,                                minLevel: 2 },
   { href: '/admin/wallets',          label: 'Wallets',       icon: Wallet,                                minLevel: 2 },
@@ -104,6 +103,7 @@ const navItems = [
   { href: '/admin/vouchers',         label: 'Vouchers',      icon: Ticket,                                minLevel: 2 },
   { href: '/admin/reports',          label: 'Reports',       icon: BarChart2,                             minLevel: 2 },
   { href: '/admin/sessions',         label: 'Sessions',      icon: MonitorSmartphone,                     minLevel: 3 },
+  { href: '/admin/livestream-settings', label: 'Livestream Settings', icon: Tv2,                                   minLevel: 2 },
   { href: '/admin/settings',         label: 'Settings',      icon: Settings,                              minLevel: 2 },
 ];
 
