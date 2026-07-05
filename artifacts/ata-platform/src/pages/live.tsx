@@ -123,6 +123,13 @@ function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
       />
+      {/* Transparent overlay covering the top ~80% of the player.
+          Blocks YouTube's hover info card (channel name, title) from appearing
+          while leaving the bottom control bar accessible. */}
+      <div
+        className="absolute inset-x-0 top-0 pointer-events-auto"
+        style={{ height: '82%' }}
+      />
     </div>
   );
 }
