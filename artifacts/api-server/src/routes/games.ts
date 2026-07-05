@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { db, gamesTable, betsTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
-import { eq, desc, asc, sql, and, gte } from "drizzle-orm";
+import { eq, asc, sql, and, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
 import { sendMail, templates } from "../lib/mailer";
@@ -265,7 +265,7 @@ router.post("/:id/cancel", authMiddleware, requireRole("admin"), async (req: Aut
       await db.update(walletsTable).set({
         balance: sql`balance + ${refund}`,
         availableBalance: sql`available_balance + ${refund}`,
-        pendingBalance: sql`pending_balance - ${refund}`,
+        pendingBalance: sql`GREATEST(0, pending_balance - ${refund})`,
       }).where(eq(walletsTable.userId, bet.userId));
       await db.insert(transactionsTable).values({
         transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
@@ -289,7 +289,7 @@ router.get("/:id/bets", authMiddleware, async (req: AuthRequest, res): Promise<v
   const games = await db.select().from(gamesTable).where(eq(gamesTable.id, gameId)).limit(1);
   const game = games[0];
   const requesterId = req.userId!;
-  res.json(bets.map((b) => ({
+  res.json(bets.map((b: any) => ({
     id: b.id,
     ticketId: b.ticketId,
     // Only expose userId to the owner of the bet; others see null

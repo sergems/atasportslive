@@ -3,11 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Bet, BetListResponse, Game, GameListResponse, User, UserListResponse } from '@workspace/api-client-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Swords, XCircle, Search, Clock, Trophy } from 'lucide-react';
+import { Swords, XCircle, Search, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/lib/auth-store';
 
@@ -116,10 +114,10 @@ export default function AdminBets() {
   const totalPages = data ? Math.ceil(data.total / 50) : 1;
 
   // Build a map of bet id → bet so we can look up the matched opponent
-  const betMap = new Map(bets.map((b) => [b.id, b]));
+  const betMap = new Map(bets.map((b: any) => [b.id, b]));
 
   const filtered = search.trim()
-    ? bets.filter((b) => {
+    ? bets.filter((b: any) => {
         const user = userMap.get(b.userId);
         const name = (user?.fullName || '').toLowerCase();
         const email = (user?.email || '').toLowerCase();
@@ -130,8 +128,8 @@ export default function AdminBets() {
     : bets;
 
   const stats = {
-    pending: bets.filter((b) => b.status === 'pending').length,
-    matched: bets.filter((b) => b.status === 'matched').length,
+    pending: bets.filter((b: any) => b.status === 'pending').length,
+    matched: bets.filter((b: any) => b.status === 'matched').length,
     total: data?.total || 0,
   };
 
@@ -196,7 +194,7 @@ export default function AdminBets() {
             </div>
           ) : (
             <div className="divide-y divide-slate-800">
-              {filtered.map((bet) => {
+              {filtered.map((bet: any) => {
                 const user = userMap.get(bet.userId);
                 const isPending = bet.status === 'pending';
                 const confirming = cancelConfirm === bet.id;
@@ -214,7 +212,7 @@ export default function AdminBets() {
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap text-xs">
                         {(() => {
-                          const opponent = bet.matchedBetId ? betMap.get(bet.matchedBetId) : undefined;
+                          const opponent: any = bet.matchedBetId ? betMap.get(bet.matchedBetId) : undefined;
                           const opponentUser = opponent ? userMap.get(opponent.userId) : undefined;
                           const thisWon = bet.status === 'won';
                           const opponentWon = bet.status === 'lost';
@@ -223,7 +221,7 @@ export default function AdminBets() {
                               <span className={`truncate max-w-[100px] sm:max-w-[150px] ${thisWon ? 'text-white font-bold' : 'text-slate-300'}`}>
                                 {displayName(user)}
                               </span>
-                              {opponent && (
+                              {opponent != null && (
                                 <>
                                   <span className="text-slate-600 text-[10px]">vs</span>
                                   <span className={`truncate max-w-[100px] sm:max-w-[150px] ${opponentWon ? 'text-white font-bold' : 'text-slate-300'}`}>

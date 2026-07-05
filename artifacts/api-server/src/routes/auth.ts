@@ -395,7 +395,7 @@ router.patch("/profile", authMiddleware, async (req: AuthRequest, res): Promise<
   }
 
   try {
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       // Atomic update of profile fields
       await tx.update(usersTable)
         .set(updates as any)

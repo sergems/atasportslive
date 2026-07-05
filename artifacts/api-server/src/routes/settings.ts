@@ -44,7 +44,7 @@ const YT_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
 // All writes are wrapped in a single transaction so mutual-exclusion is atomic.
 router.post("/sync-mux", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   try {
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'mux_%' OR key = 'yt_stream_db_id'`);
       const s: Record<string, string> = {};
       for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
@@ -103,7 +103,7 @@ router.post("/sync-mux", authMiddleware, requireRole("admin", "manager"), async 
 // Sync the YouTube default stream record — mirrors sync-mux logic.
 router.post("/sync-yt", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   try {
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'yt_%' OR key = 'mux_stream_db_id'`);
       const s: Record<string, string> = {};
       for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";

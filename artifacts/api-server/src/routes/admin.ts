@@ -106,7 +106,7 @@ router.get("/activity", authMiddleware, requireRole("admin", "manager", "content
     .orderBy(desc(transactionsTable.createdAt))
     .limit(limit);
 
-  res.json(txs.map(({ tx, user }) => ({
+  res.json(txs.map(({ tx, user }: any) => ({
     id: tx.id,
     type: tx.type,
     description: tx.description || `${tx.type} transaction`,
@@ -125,7 +125,7 @@ router.get("/pending-withdrawals", authMiddleware, requireRole("admin", "manager
     .where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "pending")))
     .orderBy(desc(transactionsTable.createdAt));
 
-  res.json(txs.map(({ tx, user }) => ({
+  res.json(txs.map(({ tx, user }: any) => ({
     id: tx.id, transactionId: tx.transactionId, userId: tx.userId,
     userFullName: user?.fullName || null, type: tx.type,
     amount: parseFloat(tx.amount as string), status: tx.status,
@@ -143,7 +143,7 @@ router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "manage
     .where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved")))
     .orderBy(desc(transactionsTable.createdAt));
 
-  res.json(txs.map(({ tx, user }) => ({
+  res.json(txs.map(({ tx, user }: any) => ({
     id: tx.id, transactionId: tx.transactionId, userId: tx.userId,
     userFullName: user?.fullName || null, userEmail: user?.email || null,
     type: tx.type, amount: parseFloat(tx.amount as string), status: tx.status,
@@ -178,7 +178,7 @@ router.get("/finance-stats", authMiddleware, requireRole("admin", "manager"), as
     paidToday: parseFloat(paidToday as any) || 0,
     paidTotal: parseFloat(paidTotal as any) || 0,
     paidCount: Number(paidCount),
-    recentPaid: recent.map(({ tx, user }) => ({
+    recentPaid: recent.map(({ tx, user }: any) => ({
       id: tx.id, transactionId: tx.transactionId,
       userFullName: user?.fullName || null, amount: parseFloat(tx.amount as string),
       paymentMethod: tx.paymentMethod, reference: tx.reference, createdAt: tx.createdAt,
@@ -234,7 +234,7 @@ router.get("/vouchers", authMiddleware, requireRole("admin", "manager"), async (
     .leftJoin(usersTable, eq(vouchersTable.redeemedBy, usersTable.id))
     .orderBy(desc(vouchersTable.createdAt))
     .limit(200);
-  res.json(vouchers.map(({ v, redeemedByUser }) => ({
+  res.json(vouchers.map(({ v, redeemedByUser }: any) => ({
     id: v.id,
     code: v.code,
     amount: parseFloat(v.amount as string),
@@ -405,7 +405,7 @@ router.get("/promotions/stats", authMiddleware, requireRole("admin", "manager"),
 
 router.get("/promotions", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const promos = await db.select().from(promotionsTable).orderBy(desc(promotionsTable.createdAt));
-  res.json(promos.map(p => ({
+  res.json(promos.map((p: any) => ({
     id: p.id, name: p.name, code: p.code, type: p.type, bonusType: p.bonusType,
     percentage: p.percentage ? parseFloat(p.percentage as string) : null,
     fixedAmount: p.fixedAmount ? parseFloat(p.fixedAmount as string) : null,
@@ -552,7 +552,7 @@ router.get("/users/:userId/transactions", authMiddleware, requireRole("admin", "
   ]);
 
   res.json({
-    transactions: txs.map(tx => ({
+    transactions: txs.map((tx: any) => ({
       id: tx.id,
       transactionId: tx.transactionId,
       type: tx.type,
@@ -682,7 +682,7 @@ router.get("/sessions", authMiddleware, requireRole("admin"), async (req: AuthRe
     .where(isNotNull(usersTable.sessionToken))
     .orderBy(desc(usersTable.updatedAt));
 
-  const result = users.map((u) => ({
+  const result = users.map((u: any) => ({
     ...u,
     onlineNow: wsClients.has(u.id) && wsClients.get(u.id)!.readyState === 1,
   }));

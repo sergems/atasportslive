@@ -38,7 +38,7 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
       .from(usersTable)
       .where(eq(usersTable.id, payload.userId))
       .limit(1)
-      .then(([user]) => {
+      .then(([user]: any[]) => {
         if (!user || user.sessionToken !== payload.sv) {
           res.status(401).json({ error: "Session expired — please log in again" });
           return;

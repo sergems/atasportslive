@@ -28,6 +28,8 @@ interface UpcomingGame {
   sport: string;
   playerA: string;
   playerB: string;
+  playerACountry: string | null;
+  playerBCountry: string | null;
   eventDate: string;
   eventTime: string;
   city: string | null;

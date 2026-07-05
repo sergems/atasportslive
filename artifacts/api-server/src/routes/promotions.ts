@@ -113,7 +113,7 @@ router.get("/active", async (_req, res): Promise<void> => {
     )
     .orderBy(desc(promotionsTable.createdAt));
 
-  res.json(promos.map(p => ({
+  res.json(promos.map((p: any) => ({
     id: p.id, name: p.name, code: p.code, type: p.type, bonusType: p.bonusType,
     percentage: p.percentage ? parseFloat(p.percentage as string) : null,
     fixedAmount: p.fixedAmount ? parseFloat(p.fixedAmount as string) : null,
@@ -249,7 +249,7 @@ router.get("/my-bonuses", authMiddleware, async (req: AuthRequest, res): Promise
 
   res.json({
     bonusBalance: parseFloat((wallet?.bonusBalance as string) || "0"),
-    transactions: txs.map(({ bt, promo }) => ({
+    transactions: txs.map(({ bt, promo }: any) => ({
       id: bt.id,
       type: bt.type,
       amount: parseFloat(bt.amount as string),

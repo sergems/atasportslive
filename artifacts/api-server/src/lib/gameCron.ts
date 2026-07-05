@@ -49,7 +49,7 @@ async function activateStartedGames(): Promise<void> {
       }
 
       // 3. Cancel all pending bets and refund stakes
-      const betIds = pendingBets.map((b) => b.id);
+      const betIds = pendingBets.map((b: any) => b.id);
       await db
         .update(betsTable)
         .set({ status: "cancelled" })

@@ -288,7 +288,7 @@ router.get("/transactions", authMiddleware, async (req: AuthRequest, res): Promi
     .limit(limit)
     .offset(offset);
 
-  res.json({ transactions: txs.map((t) => toTxResponse(t)), total: Number(count), page, limit });
+  res.json({ transactions: txs.map((t: any) => toTxResponse(t)), total: Number(count), page, limit });
 });
 
 router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
@@ -322,9 +322,9 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
   const approvedList = await db.select().from(transactionsTable).where(
     eq(transactionsTable.status, "approved")
   );
-  const approvedCount = approvedList.filter((t) => t.type === "withdrawal").length;
-  const approvedValue = approvedList.filter((t) => t.type === "withdrawal")
-    .reduce((s, t) => s + parseFloat(t.amount as string), 0);
+  const approvedCount = approvedList.filter((t: any) => t.type === "withdrawal").length;
+  const approvedValue = approvedList.filter((t: any) => t.type === "withdrawal")
+    .reduce((s: number, t: any) => s + parseFloat(t.amount as string), 0);
 
   for (const fu of financeUsers) {
     if (fu.email) {

@@ -94,7 +94,7 @@ router.get("/upcoming", async (req, res): Promise<void> => {
     .orderBy(streamsTable.startTime)
     .limit(20);
 
-  res.json(streams.map((s) => ({
+  res.json(streams.map((s: any) => ({
     ...toStream(s),
     secondsUntilStart: Math.max(0, Math.floor((new Date(s.startTime).getTime() - now.getTime()) / 1000)),
   })));
@@ -276,7 +276,7 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
 
   // Wrap all financial writes in a single atomic transaction so a mid-flight
   // failure cannot leave the wallet debited but no access granted (or vice versa).
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: any) => {
     if (bonusUsed > 0) {
       await tx.update(walletsTable).set({
         bonusBalance: sql`bonus_balance - ${bonusUsed}`,
@@ -418,7 +418,7 @@ router.get("/:id/access/check", authMiddleware, async (req: AuthRequest, res): P
     WHERE user_id = ${userId} AND expires_at > ${now}
     ORDER BY expires_at DESC
     LIMIT 1
-  `).then((r) => r.rows as { id: number; expires_at: Date }[]);
+  `).then((r: any) => r.rows as { id: number; expires_at: Date }[]);
 
   if (platformSub) {
     const expiresAt = new Date(platformSub.expires_at);

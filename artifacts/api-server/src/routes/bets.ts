@@ -86,9 +86,9 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
     : [];
 
   const nearMatches = nearMatchCandidates
-    .map((b) => ({ betId: b.id, stake: parseFloat(b.stake as string), difference: Math.abs(parseFloat(b.stake as string) - stake) }))
-    .filter((b) => b.difference / stake <= 0.2)
-    .sort((a, b) => a.difference - b.difference)
+    .map((b: any) => ({ betId: b.id, stake: parseFloat(b.stake as string), difference: Math.abs(parseFloat(b.stake as string) - stake) }))
+    .filter((b: any) => b.difference / stake <= 0.2)
+    .sort((a: any, b: any) => a.difference - b.difference)
     .slice(0, 3);
 
   // --- All financial writes wrapped in a single atomic transaction ---
@@ -102,7 +102,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
     const fee = pool * BROKERAGE_FEE;
     const winnerPayout = pool - fee;
 
-    newBet = await db.transaction(async (tx) => {
+    newBet = await db.transaction(async (tx: any) => {
       // 1. Lock stake from bettor's wallet
       await tx.update(walletsTable).set({
         balance: sql`balance - ${stake}`,
@@ -167,8 +167,8 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
     await notify(opponentId!, "bet_matched", "Bet Matched!", `Your bet of ${stake} has been matched!`);
 
     const [betUser, oppUser] = await Promise.all([
-      db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1).then((r) => r[0]),
-      db.select().from(usersTable).where(eq(usersTable.id, opponentId)).limit(1).then((r) => r[0]),
+      db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1).then((r: any[]) => r[0]),
+      db.select().from(usersTable).where(eq(usersTable.id, opponentId)).limit(1).then((r: any[]) => r[0]),
     ]);
     const gameName = `${game.playerA} vs ${game.playerB}`;
     for (const [u, betOutcome] of [[betUser, outcome], [oppUser, oppositeOutcome]] as [typeof betUser, string][]) {
@@ -186,7 +186,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
   }
 
   // No exact match — place pending bet atomically
-  newBet = await db.transaction(async (tx) => {
+  newBet = await db.transaction(async (tx: any) => {
     await tx.update(walletsTable).set({
       balance: sql`balance - ${stake}`,
       availableBalance: sql`available_balance - ${stake}`,
@@ -241,11 +241,11 @@ router.get("/my", authMiddleware, async (req: AuthRequest, res): Promise<void> =
   if (status) q = q.where(eq(betsTable.status, status as any));
 
   const bets = await q.orderBy(desc(betsTable.createdAt)).limit(limit).offset(offset);
-  const gameIds = [...new Set(bets.map((b) => b.gameId))];
+  const gameIds = [...new Set(bets.map((b: any) => b.gameId))];
   const games = gameIds.length > 0 ? await db.select().from(gamesTable).where(sql`id = ANY(ARRAY[${sql.join(gameIds.map((id) => sql`${id}`), sql`, `)}]::int[])`) : [];
-  const gameMap = new Map(games.map((g) => [g.id, g]));
+  const gameMap = new Map(games.map((g: any) => [g.id, g]));
 
-  res.json({ bets: bets.map((b) => toBet(b, gameMap.get(b.gameId) ? { id: gameMap.get(b.gameId)!.id, sport: gameMap.get(b.gameId)!.sport, playerA: gameMap.get(b.gameId)!.playerA, playerB: gameMap.get(b.gameId)!.playerB, status: gameMap.get(b.gameId)!.status } : null)), total: Number(count), page, limit });
+  res.json({ bets: bets.map((b: any) => { const g: any = gameMap.get(b.gameId); return toBet(b, g ? { id: g.id, sport: g.sport, playerA: g.playerA, playerB: g.playerB, status: g.status } : null); }), total: Number(count), page, limit });
 });
 
 router.get("/all", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
@@ -259,7 +259,7 @@ router.get("/all", authMiddleware, async (req: AuthRequest, res): Promise<void> 
   if (status) q = q.where(eq(betsTable.status, status as any));
 
   const bets = await q.orderBy(desc(betsTable.createdAt)).limit(limit).offset(offset);
-  res.json({ bets: bets.map((b) => toBet(b)), total: Number(count), page, limit });
+  res.json({ bets: bets.map((b: any) => toBet(b)), total: Number(count), page, limit });
 });
 
 router.get("/:id", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
@@ -280,9 +280,9 @@ router.get("/:id", authMiddleware, async (req: AuthRequest, res): Promise<void> 
     .limit(5);
 
   const nearMatches = nearMatchCandidates
-    .map((b) => ({ betId: b.id, stake: parseFloat(b.stake as string), difference: Math.abs(parseFloat(b.stake as string) - parseFloat(bet.stake as string)) }))
-    .filter((b) => b.difference / parseFloat(bet.stake as string) <= 0.2)
-    .sort((a, b) => a.difference - b.difference);
+    .map((b: any) => ({ betId: b.id, stake: parseFloat(b.stake as string), difference: Math.abs(parseFloat(b.stake as string) - parseFloat(bet.stake as string)) }))
+    .filter((b: any) => b.difference / parseFloat(bet.stake as string) <= 0.2)
+    .sort((a: any, b: any) => a.difference - b.difference);
 
   res.json({ bet: toBet(bet, game ? { id: game.id, sport: game.sport, playerA: game.playerA, playerB: game.playerB, status: game.status } : null), matchStatus: bet.status === "matched" ? "exact_match" : nearMatches.length > 0 ? "near_match" : "unmatched", nearMatches });
 });
@@ -353,7 +353,7 @@ router.post("/:id/accept-near-match", authMiddleware, async (req: AuthRequest, r
 
   // Wrap all financial writes in a single atomic transaction.
   // A failure at any point rolls back the entire operation — no half-settled bets.
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: any) => {
     if (myStake > matchStake) {
       // I staked more — refund the difference back to my wallet
       const refund = myStake - matchStake;

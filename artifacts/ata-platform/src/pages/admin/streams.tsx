@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Radio, Plus, Play, Square, Upload, X, ImageIcon, Pencil, Trash2,
-  Archive, ChevronDown, ChevronRight, Swords, Trophy,
+  ChevronDown, ChevronRight, Trophy, Swords, Archive,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
@@ -267,7 +267,7 @@ function StreamCard({
     childForm, setChildForm, childThumbnailFile, setChildThumbnailFile,
     childThumbnailPreview, setChildThumbnailPreview, childFileInputRef,
     handleAddStream, savingChild, childCreateGame, setChildCreateGame,
-    token,
+    token, isAdmin,
   } = ctx;
 
   const isCompetition = stream.type === 'competition';
@@ -487,7 +487,10 @@ export default function AdminStreams() {
     queryFn: () =>
       fetch('/api/streams?limit=200&include_all=true', {
         headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => r.json()) as Promise<{ streams: any[] }>,
+      }).then(async (r) => {
+        if (!r.ok) throw new Error('Failed to load streams');
+        return r.json() as Promise<{ streams: any[] }>;
+      }),
   });
 
   const createStream = useCreateStream();
@@ -769,7 +772,7 @@ export default function AdminStreams() {
     childForm, setChildForm, childThumbnailFile, setChildThumbnailFile,
     childThumbnailPreview, setChildThumbnailPreview, childFileInputRef,
     handleAddStream, savingChild, childCreateGame, setChildCreateGame,
-    token,
+    token, isAdmin,
   };
 
   return (

@@ -109,11 +109,11 @@ router.post("/purchase", authMiddleware, async (req: AuthRequest, res): Promise<
   // wallet row, preventing double-purchase and over-debit under concurrency.
   let result: { hasSubscription: boolean; subscriptionType: string; expiresAt: Date; secondsRemaining: number; amount: number } | null = null;
 
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: any) => {
     // Row-lock the wallet to serialise concurrent purchase attempts
     const [wallet] = await tx.execute(
       sql`SELECT * FROM wallets WHERE user_id = ${userId} FOR UPDATE`
-    ).then((r) => r.rows as any[]);
+    ).then((r: any) => r.rows as any[]);
 
     if (!wallet) {
       res.status(402).json({ error: "Wallet not found" });
@@ -132,7 +132,7 @@ router.post("/purchase", authMiddleware, async (req: AuthRequest, res): Promise<
     // Check for existing active subscription while holding the lock
     const [existing] = await tx.execute(
       sql`SELECT id, expires_at, subscription_type FROM platform_subscriptions WHERE user_id = ${userId} AND expires_at > ${now} ORDER BY expires_at DESC LIMIT 1`
-    ).then((r) => r.rows as any[]);
+    ).then((r: any) => r.rows as any[]);
 
     if (existing) {
       res.status(409).json({
@@ -168,7 +168,7 @@ router.post("/purchase", authMiddleware, async (req: AuthRequest, res): Promise<
     if (cashUsed > 0) {
       const updated = await tx.execute(
         sql`UPDATE wallets SET balance = balance - ${cashUsed}, available_balance = available_balance - ${cashUsed}, withdrawable_balance = withdrawable_balance - ${cashUsed} WHERE user_id = ${userId} AND available_balance >= ${cashUsed} RETURNING id`
-      ).then((r) => r.rows as any[]);
+      ).then((r: any) => r.rows as any[]);
 
       if (!updated.length) {
         res.status(402).json({ error: "Insufficient available balance" });
