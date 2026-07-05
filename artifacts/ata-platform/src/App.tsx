@@ -34,6 +34,7 @@ import AdminVouchers from "@/pages/admin/vouchers";
 import AdminAnnouncements from "@/pages/admin/announcements";
 import AdminHighlights from "@/pages/admin/highlights";
 import AdminSettings from "@/pages/admin/settings";
+import AdminLivestreamSettings from "@/pages/admin/livestream-settings";
 import AdminSlides from "@/pages/admin/slides";
 import AdminAds from "@/pages/admin/ads";
 import AdminWithdrawals from "@/pages/admin/withdrawals";
@@ -197,6 +198,9 @@ function Router() {
         </Route>
         <Route path="/admin/settings">
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminSettings /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/livestream-settings">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminLivestreamSettings /></AdminLayout>} />}
         </Route>
 
         {/* ── Finance routes (manager + admin) ─────────────────────────── */}
