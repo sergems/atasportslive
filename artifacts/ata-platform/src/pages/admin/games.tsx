@@ -46,14 +46,6 @@ const EMPTY_SINGLE: GameFormData = {
   city: '', country: '',
 };
 
-const EMPTY_COMPETITION: GameFormData = {
-  type: 'competition', sport: 'pool',
-  playerA: '', playerACountry: '',
-  playerB: '', playerBCountry: '',
-  eventDate: '', eventTime: '',
-  eventEndDate: '', eventEndTime: '',
-  city: '', country: '',
-};
 
 function GameForm({
   form, setForm, onSave, onCancel, saving, title, accentClass,
@@ -64,35 +56,12 @@ function GameForm({
   saving: boolean; title: string; accentClass: string;
   isChild?: boolean; parentGame?: any;
 }) {
-  const isCompetition = form.type === 'competition';
-
   return (
     <Card className={`bg-slate-900 border ${accentClass}`}>
       <CardHeader className="py-2 px-3 border-b border-slate-800">
         <CardTitle className="text-white text-xs uppercase tracking-wider">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-        {!isChild && (
-          <div className="md:col-span-2 space-y-1.5">
-            <Label className="text-xs text-slate-400">Type</Label>
-            <div className="flex gap-2">
-              {(['single', 'competition'] as GameType[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setForm({ ...form, type: t })}
-                  className={`flex-1 py-1.5 px-3 rounded border text-[10px] font-bold uppercase tracking-wider transition-colors
-                    ${form.type === t
-                      ? t === 'competition'
-                        ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
-                        : 'bg-teal-500/20 border-teal-500/50 text-teal-300'
-                      : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-600'}`}
-                >
-                  {t === 'single' ? 'Single Match' : 'Competition'}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="space-y-1">
           <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Sport <span className="text-red-400">*</span></Label>
@@ -105,52 +74,38 @@ function GameForm({
           </select>
         </div>
 
-        {isCompetition ? (
-          <div className="space-y-1">
-            <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Competition Name <span className="text-red-400">*</span></Label>
-            <Input
-              value={form.playerA}
-              onChange={(e: any) => setForm({ ...form, playerA: e.target.value })}
-              placeholder="e.g. Kampala Pool Open 2026"
-              className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50"
-            />
-          </div>
-        ) : (
-          <>
-            <div className="space-y-1">
-              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A <span className="text-red-400">*</span></Label>
-              <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. John Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A Country <span className="text-slate-500 font-normal lowercase">(2-letter ISO)</span></Label>
-              <Input value={form.playerACountry} onChange={(e: any) => setForm({ ...form, playerACountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="UG" maxLength={2} className="bg-slate-950 border-slate-800 text-white h-8 text-xs uppercase focus-visible:ring-1 focus-visible:ring-teal-500/50" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B <span className="text-red-400">*</span></Label>
-              <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Jane Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B Country <span className="text-slate-500 font-normal lowercase">(2-letter ISO)</span></Label>
-              <Input value={form.playerBCountry} onChange={(e: any) => setForm({ ...form, playerBCountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="KE" maxLength={2} className="bg-slate-950 border-slate-800 text-white h-8 text-xs uppercase focus-visible:ring-1 focus-visible:ring-teal-500/50" />
-            </div>
-          </>
-        )}
+        <div className="space-y-1">
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A <span className="text-red-400">*</span></Label>
+          <Input value={form.playerA} onChange={(e: any) => setForm({ ...form, playerA: e.target.value })} placeholder="e.g. John Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player A Country <span className="text-slate-500 font-normal lowercase">(2-letter ISO)</span></Label>
+          <Input value={form.playerACountry} onChange={(e: any) => setForm({ ...form, playerACountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="UG" maxLength={2} className="bg-slate-950 border-slate-800 text-white h-8 text-xs uppercase focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B <span className="text-red-400">*</span></Label>
+          <Input value={form.playerB} onChange={(e: any) => setForm({ ...form, playerB: e.target.value })} placeholder="e.g. Jane Doe" className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Player B Country <span className="text-slate-500 font-normal lowercase">(2-letter ISO)</span></Label>
+          <Input value={form.playerBCountry} onChange={(e: any) => setForm({ ...form, playerBCountry: e.target.value.toUpperCase().slice(0, 2) })} placeholder="KE" maxLength={2} className="bg-slate-950 border-slate-800 text-white h-8 text-xs uppercase focus-visible:ring-1 focus-visible:ring-teal-500/50" />
+        </div>
 
         <div className="space-y-1">
-          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isCompetition ? 'Start Date' : 'Date'} <span className="text-red-400">*</span></Label>
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Date <span className="text-red-400">*</span></Label>
           <Input type="date" value={form.eventDate} onChange={(e: any) => setForm({ ...form, eventDate: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
         <div className="space-y-1">
-          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isCompetition ? 'Start Time' : 'Time'} <span className="text-red-400">*</span></Label>
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Time <span className="text-red-400">*</span></Label>
           <Input type="time" value={form.eventTime} onChange={(e: any) => setForm({ ...form, eventTime: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
 
         <div className="space-y-1">
-          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isCompetition ? 'End Date' : 'End Date (opt)'}</Label>
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">End Date (opt)</Label>
           <Input type="date" value={form.eventEndDate} onChange={(e: any) => setForm({ ...form, eventEndDate: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
         <div className="space-y-1">
-          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">{isCompetition ? 'End Time' : 'End Time (opt)'}</Label>
+          <Label className="text-[10px] text-slate-400 uppercase tracking-wider">End Time (opt)</Label>
           <Input type="time" value={form.eventEndTime} onChange={(e: any) => setForm({ ...form, eventEndTime: e.target.value })} className="bg-slate-950 border-slate-800 text-white h-8 text-xs focus-visible:ring-1 focus-visible:ring-teal-500/50" />
         </div>
 
@@ -431,7 +386,7 @@ export default function AdminGames() {
   };
 
   const validateGame = (f: GameFormData, isChild = false) => {
-    if (!f.playerA.trim()) { toast.error(f.type === 'competition' ? 'Competition name required' : 'Player A required'); return false; }
+    if (!f.playerA.trim()) { toast.error('Player A required'); return false; }
     if (f.type === 'single' && !isChild && !f.playerB.trim()) { toast.error('Player B required'); return false; }
     if (isChild && !f.playerB.trim()) { toast.error('Player B required'); return false; }
     if (!f.eventDate) { toast.error('Date required'); return false; }
@@ -444,10 +399,10 @@ export default function AdminGames() {
     try {
       await createGame.mutateAsync({
         data: {
-          type: form.type,
+          type: 'single',
           sport: form.sport,
           playerA: form.playerA,
-          playerB: form.type === 'competition' ? '' : form.playerB,
+          playerB: form.playerB,
           playerACountry: form.playerACountry || undefined,
           playerBCountry: form.playerBCountry || undefined,
           eventDate: form.eventDate,
@@ -460,7 +415,7 @@ export default function AdminGames() {
       });
 
       invalidate();
-      toast.success(form.type === 'competition' ? 'Competition created — add individual matches below it' : 'Game created');
+      toast.success('Bet created');
       setShowForm(false);
       setForm({ ...EMPTY_SINGLE });
     } catch (e: any) { toast.error(e?.data?.error || 'Failed'); }
@@ -584,7 +539,7 @@ export default function AdminGames() {
           form={form} setForm={setForm}
           onSave={handleCreate}
           onCancel={() => { setShowForm(false); setForm({ ...EMPTY_SINGLE }); }}
-          saving={createGame.isPending} title="Create Bet / Competition" accentClass="border-amber-500/30"
+          saving={createGame.isPending} title="Create Bet" accentClass="border-amber-500/30"
  
         />
       )}
@@ -599,7 +554,7 @@ export default function AdminGames() {
             {activeTopLevel.map((game) => <GameCard key={game.id} game={game} ctx={ctx} />)}
             {activeTopLevel.length === 0 && (
               <div className="py-12 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                No active bets yet. Create a single match or a competition above.
+                No active bets yet. Create one above.
               </div>
             )}
           </div>
