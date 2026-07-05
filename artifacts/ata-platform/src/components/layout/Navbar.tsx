@@ -11,9 +11,17 @@ function useIsLive() {
   const { data } = useQuery<boolean>({
     queryKey: ['nav', 'is-live'],
     queryFn: async () => {
-      const r = await fetch('/api/streams?status=live&limit=1');
-      const d = await r.json();
-      return (d.streams?.length ?? 0) > 0;
+      // Check DB streams AND admin settings (mux/yt toggles)
+      const [streamsRes, settingsRes] = await Promise.all([
+        fetch('/api/streams?status=live&limit=1'),
+        fetch('/api/settings'),
+      ]);
+      const streamsData  = await streamsRes.json();
+      const settingsData = await settingsRes.json();
+      const dbLive      = (streamsData.streams?.length ?? 0) > 0;
+      const muxLive     = settingsData?.mux_is_live === 'true' || settingsData?.mux_is_live === true;
+      const ytLive      = settingsData?.yt_is_live  === 'true' || settingsData?.yt_is_live  === true;
+      return dbLive || muxLive || ytLive;
     },
     refetchInterval: 30_000,
     staleTime: 20_000,

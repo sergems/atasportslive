@@ -1134,10 +1134,16 @@ export default function Live() {
   // ─────────────────────────────────────────────────────────────────────────
 
   const ytIdValid = /^[a-zA-Z0-9_-]{11}$/.test(ytVideoId);
+  // liveStreamUrl is only used as an HLS fallback when there is no active yt/mux/db feed
+  // and the URL looks like an actual HLS manifest (not a YouTube URL).
+  const hlsUrlValid = !!liveStreamUrl &&
+    !liveStreamUrl.includes('youtube.com') &&
+    !liveStreamUrl.includes('youtu.be');
+
   const playerEl =
-    liveStreamUrl                         ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} /> :
     activeFeed === 'yt' && ytIdValid      ? <YouTubePlayer videoId={ytVideoId} title={paywallTitle} /> :
     activeFeed === 'yt' && !ytIdValid     ? <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">Stream configuration invalid — please check admin settings.</div> :
+    activeFeed === null && hlsUrlValid    ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} /> :
     <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />;
 
   const sidebar = (
