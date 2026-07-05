@@ -104,13 +104,12 @@ function MuxPlayer({ playbackId, title }: { playbackId: string; title: string })
 }
 
 function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
-  // Build embed URL — no `origin` param (Replit's proxy domain causes YouTube validation errors)
   const src = new URLSearchParams({
     autoplay: '1',
-    mute: '1',          // mute=1 is required for autoplay in all modern browsers; user unmutes via controls
-    rel: '0',           // no related videos at end
-    modestbranding: '1',// minimise YouTube logo in control bar
-    iv_load_policy: '3',// no annotations
+    mute: '1',
+    rel: '0',
+    modestbranding: '1',
+    iv_load_policy: '3',
     playsinline: '1',
     controls: '1',
     fs: '1',
@@ -118,12 +117,11 @@ function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
   return (
     <div className="relative w-full h-full">
       <iframe
-        src={`https://www.youtube-nocookie.com/embed/${videoId}?${src.toString()}`}
+        src={`https://www.youtube.com/embed/${videoId}?${src.toString()}`}
         title={title}
         className="absolute inset-0 w-full h-full border-0"
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
-        referrerPolicy="no-referrer"
       />
     </div>
   );
