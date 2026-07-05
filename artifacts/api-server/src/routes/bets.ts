@@ -237,8 +237,8 @@ router.get("/my", authMiddleware, async (req: AuthRequest, res): Promise<void> =
   const baseWhere = eq(betsTable.userId, req.userId!);
   const countWhere = status ? and(baseWhere, eq(betsTable.status, status as any)) : baseWhere;
   const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(betsTable).where(countWhere);
-  let q = db.select().from(betsTable).where(eq(betsTable.userId, req.userId!)).$dynamic();
-  if (status) q = q.where(eq(betsTable.status, status as any));
+  const dataWhere = status ? and(baseWhere, eq(betsTable.status, status as any)) : baseWhere;
+  let q = db.select().from(betsTable).where(dataWhere).$dynamic();
 
   const bets = await q.orderBy(desc(betsTable.createdAt)).limit(limit).offset(offset);
   const gameIds = [...new Set(bets.map((b: any) => b.gameId))];
