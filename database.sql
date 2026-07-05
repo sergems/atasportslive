@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict kF0kb9CMEPpjz2FPyeNc1m4v3DtRPdkh8HTtphSCQJHcvPz7mbgy0hJW7FuJM5U
+\restrict 1bvKXGv4kKCREHCOG5UnneCSozE1YGlL5hlmrbQtaOMalCklK40VYlltyS0Ukfk
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1307,14 +1307,14 @@ mux_is_free	false	2026-07-04 22:43:22.075249+00
 mux_price	1.70	2026-07-04 22:43:22.081682+00
 mux_title	ATA Live Streaming	2026-07-04 22:43:22.087485+00
 mux_stream_db_id	16	2026-07-04 22:43:22.421469+00
-liveStreamUrl	https://www.youtube.com/watch?v=BtPav155XDM	2026-07-04 22:43:40.325099+00
-yt_video_id	hU9n9dOCoYU	2026-07-04 23:24:10.859023+00
-yt_is_live	true	2026-07-04 23:24:10.867959+00
-yt_is_free	true	2026-07-04 23:24:10.874512+00
-yt_price	1.50	2026-07-04 23:24:10.880743+00
-yt_title	Test YT Feed	2026-07-04 23:24:10.88755+00
-mux_is_live	false	2026-07-04 23:24:11.146321+00
-yt_stream_db_id	17	2026-07-04 23:24:11.146321+00
+mux_is_live	false	2026-07-05 00:02:48.653219+00
+liveStreamUrl		2026-07-05 00:06:23.305169+00
+yt_video_id	hU9n9dOCoYU	2026-07-05 09:28:34.286813+00
+yt_is_live	false	2026-07-05 09:28:34.294933+00
+yt_is_free	false	2026-07-05 09:28:34.301625+00
+yt_price	1.50	2026-07-05 09:28:34.304704+00
+yt_title	Test YT Feed	2026-07-05 09:28:34.316329+00
+yt_stream_db_id	17	2026-07-05 09:28:34.577022+00
 \.
 
 
@@ -1354,8 +1354,8 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 7	Brian Lubega VS Patrick Okello		pool	/uploads/thumb-1781565625295-0oehmv.jpg	\N	\N	upcoming	2026-07-11 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:25.592+00	\N	\N
 9	Caesar Chandinga VS Serge		pool	/uploads/thumb-1781565653292-8uuyff.jpeg	\N	\N	upcoming	2026-07-17 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:20:53.647+00	Lagos	Nigeria
 10	Siyabonga Shezi VS Caesar Chandinga		pool	/uploads/thumb-1781565717628-74qmou.jpg	\N	\N	upcoming	2026-07-20 12:13:24.231916+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-06-15 23:21:57.935+00	Lagos	Nigeria
-16	ATA Live Streaming	\N	other	\N	\N	__mux_default__	upcoming	2026-06-30 13:43:42.578897+00	\N	0	1.70	2026-06-30 13:43:42.578897+00	2026-07-04 23:24:11.146321+00	\N	\N
-17	Test YT Feed	\N	other	\N	\N	__yt_default__	live	2026-07-04 22:56:13.46682+00	\N	0	1.50	2026-07-04 22:56:13.46682+00	2026-07-04 23:24:11.146321+00	\N	\N
+16	ATA Live Streaming	\N	other	\N	\N	__mux_default__	upcoming	2026-06-30 13:43:42.578897+00	\N	0	1.70	2026-06-30 13:43:42.578897+00	2026-07-05 00:02:48.653219+00	\N	\N
+17	Test YT Feed	\N	other	\N	\N	__yt_default__	upcoming	2026-07-04 22:56:13.46682+00	\N	0	1.50	2026-07-04 22:56:13.46682+00	2026-07-05 09:28:34.577022+00	\N	\N
 \.
 
 
@@ -6411,7 +6411,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5038	advancedtalentagencyata@gmail.com		ADVANCED TALENT AGENCY ATA	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocJl_vwpannjA_niKt7IuoEFiQB4-0_C7aI2SbMlT6Q3ZLc2qlI=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzgsInJvbGUiOiJ1c2VyIiwic3YiOiI3ZTBjZjFmMy1iMDMyLTQwYWYtYTdhNC1kYTYyOTUyZDdiMzQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MTg2NiwiZXhwIjoxNzg1NjgzODY2fQ.NZkcKsZ-CeWSVVEKo-Htl_RDTAK7BIDQ3Y2CkZMYOVk	2026-07-03 15:17:46.061302+00	2026-07-03 15:17:46.071+00	\N	\N	\N	f	7e0cf1f3-b032-40af-a7a4-da62952d7b34	111789802886065658753	5SCCQBTR	\N	advanced_talent_agency_ata_5038	0	\N	\N	\N	\N	\N	f
 5032	zetoophiri@gmail.com		Zethu Phiri	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocIoZ492DLotfLTGCUbYw16uY4ECV3rNwcmQg6GnIJnW1PxmFw=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzIsInJvbGUiOiJ1c2VyIiwic3YiOiI3YTc5YmI4YS02NGE3LTQ3MzMtYjhmNC1mOGE1ZDY3YmYyMTMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MjQxMywiZXhwIjoxNzg1Njg0NDEzfQ.oseCeNqEKCVsEKJTCTuDA94C5Bp3PMf5I8TzJGzUmhY	2026-07-02 20:18:19.941937+00	2026-07-03 15:26:53.411+00	\N	\N	\N	f	7a79bb8a-64a7-4733-b8f4-f8a5d67bf213	108479386760493320264	FE64N4D6	\N	zethu_phiri_5032	0	\N	\N	\N	\N	\N	f
 2	demo@ata.ug	$2b$10$N8ITyGNIa7Ox8DRHjodLdu8GDXNOTTs5YnY.KWdFV5qcNMIeAzGqe	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiJhN2ExOWEyOS02MTEwLTRkMjItODcwZC00YWEzYzA1YmRiMmQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzExNzk0MiwiZXhwIjoxNzg1NzA5OTQyfQ.Zp1AaGTQBGD9P-AeUvr9fvGwS8WRe5D52PgF16S5OcA	2026-06-15 16:31:06.605107+00	2026-07-03 22:32:22.492+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	a7a19a29-6110-4d22-870d-4aa3c05bdb2d	\N	0002CF32	\N	demo_user_2	0	\N	\N	\N	\N	\N	f
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiYWU2ZDE0NWItNjkwNy00M2MzLWE4NWUtNmM4ZDUxZWNmYjJmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMyMDQ1OTQsImV4cCI6MTc4NTc5NjU5NH0.Db8bWTwj0kzC8lDflj6S8BF46QqJRt4pVymU8iTR_3Y	2026-06-15 16:31:06.226579+00	2026-07-04 22:36:34.968+00	\N	\N	\N	f	ae6d145b-6907-43c3-a85e-6c8d51ecfb2f	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiNDI0NGViZDctYzcwMy00ZmYxLWFiNGMtMzhhMDdmZTE4YmM5IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMyMDk2ODIsImV4cCI6MTc4NTgwMTY4Mn0.ZhRdsgl6oy2EmAXkTaWt0764OcSrDCCadIA5q9dbHq4	2026-06-15 16:31:06.226579+00	2026-07-05 00:01:22.05+00	\N	\N	\N	f	4244ebd7-c703-4ff1-ab4c-38a07fe18bc9	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t
 \.
 
 
@@ -12022,5 +12022,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kF0kb9CMEPpjz2FPyeNc1m4v3DtRPdkh8HTtphSCQJHcvPz7mbgy0hJW7FuJM5U
+\unrestrict 1bvKXGv4kKCREHCOG5UnneCSozE1YGlL5hlmrbQtaOMalCklK40VYlltyS0Ukfk
 
