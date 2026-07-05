@@ -9,6 +9,8 @@ const router = Router();
 
 const toStream = (s: typeof streamsTable.$inferSelect) => ({
   id: s.id,
+  type: (s as any).type ?? 'single',
+  parentId: (s as any).parentId ?? null,
   title: s.title,
   description: s.description,
   sport: s.sport,
@@ -99,23 +101,23 @@ router.get("/upcoming", async (req, res): Promise<void> => {
 });
 
 router.post("/", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
-  const { title, description, sport, thumbnailUrl, startTime, endTime, accessPrice, playerA, playerB, playerACountry, playerBCountry, city, country } = req.body;
+  const { type = "single", parentId, title, description, sport, thumbnailUrl, startTime, endTime, accessPrice, playerA, playerB, playerACountry, playerBCountry, city, country } = req.body;
   if (!title || !sport || !startTime) {
     res.status(400).json({ error: "title, sport, startTime required" });
     return;
   }
 
-  const GAME_SPORTS = ["pool", "boxing", "darts", "fifa", "chess", "futsal"];
-  const createsGame = GAME_SPORTS.includes(sport);
-
-  if (createsGame && (!playerA || !playerB)) {
-    res.status(400).json({ error: "playerA and playerB are required for non-tournament streams" });
+  const isCompetition = type === "competition";
+  if (!isCompetition && (!playerA || !playerB)) {
+    res.status(400).json({ error: "playerA and playerB are required for single streams" });
     return;
   }
 
   const [stream] = await db
     .insert(streamsTable)
     .values({
+      type,
+      parentId: parentId ? Number(parentId) : null,
       title,
       description,
       sport,
@@ -125,29 +127,12 @@ router.post("/", authMiddleware, requireRole("admin", "manager"), async (req: Au
       accessPrice: accessPrice?.toString() || "1.50",
       city: city || null,
       country: country || null,
-      playerA: createsGame ? playerA : null,
-      playerB: createsGame ? playerB : null,
+      playerA: isCompetition ? null : (playerA || null),
+      playerB: isCompetition ? null : (playerB || null),
       playerACountry: playerACountry || null,
       playerBCountry: playerBCountry || null,
-    })
+    } as any)
     .returning();
-
-  if (createsGame) {
-    const start = new Date(startTime);
-    const eventDate = start.toISOString().split("T")[0];
-    const eventTime = start.toTimeString().slice(0, 5);
-    const endDateStr = endTime ? new Date(endTime).toISOString().split("T")[0] : null;
-    const endTimeStr = endTime ? new Date(endTime).toTimeString().slice(0, 5) : null;
-    await db.insert(gamesTable).values({
-      sport, playerA, playerB, eventDate, eventTime,
-      eventEndDate: endDateStr,
-      eventEndTime: endTimeStr,
-      city: city || null,
-      country: country || null,
-      playerACountry: playerACountry || null,
-      playerBCountry: playerBCountry || null,
-    });
-  }
 
   res.status(201).json(toStream(stream));
 });

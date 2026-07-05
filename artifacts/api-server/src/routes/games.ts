@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, gamesTable, streamsTable, betsTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
+import { db, gamesTable, betsTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
 import { eq, desc, asc, sql, and, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
@@ -86,27 +86,6 @@ router.post("/", authMiddleware, requireRole("admin"), async (req: AuthRequest, 
     city: city || null,
     country: country || null,
   }).returning();
-
-  // Auto-create a stream when a match is added to a competition
-  if (parentId) {
-    const [parent] = await db.select().from(gamesTable).where(eq(gamesTable.id, Number(parentId))).limit(1);
-    if (parent && parent.type === "competition") {
-      const streamTitle = `${parent.playerA} — ${playerA} vs ${playerB || "TBD"}`;
-      const startTime = new Date(`${eventDate}T${eventTime}:00`);
-      const endTime = (eventEndDate && eventEndTime)
-        ? new Date(`${eventEndDate}T${eventEndTime}:00`)
-        : eventEndDate ? new Date(`${eventEndDate}T23:59:00`) : null;
-      await db.insert(streamsTable).values({
-        title: streamTitle,
-        sport: sport || parent.sport,
-        startTime,
-        endTime,
-        city: city || parent.city || null,
-        country: country || parent.country || null,
-        accessPrice: "1.50",
-      });
-    }
-  }
 
   res.status(201).json(toGame(game));
 });

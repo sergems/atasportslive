@@ -7,6 +7,8 @@ export const streamStatusEnum = pgEnum("stream_status", ["upcoming", "live", "en
 
 export const streamsTable = pgTable("streams", {
   id: serial("id").primaryKey(),
+  type: text("type").notNull().default("single"),
+  parentId: integer("parent_id"),
   title: text("title").notNull(),
   description: text("description"),
   sport: sportEnum("sport").notNull().default("pool"),
