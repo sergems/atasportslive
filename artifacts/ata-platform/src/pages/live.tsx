@@ -1178,9 +1178,10 @@ export default function Live() {
     <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />;
 
   const sidebar = (
-    <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 min-h-0">
+    <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 h-full min-h-0">
       {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? settings?.mux_sport} />}
-      <div className="flex-1 min-h-0">
+      {/* max-h on mobile so chat doesn't grow to fill the page; h-full on desktop (constrained by player height) */}
+      <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-none lg:h-full overflow-hidden">
         <CommentSection
           streamId={paywallStreamId}
           token={token}
@@ -1206,15 +1207,19 @@ export default function Live() {
       ) : canWatch ? (
         /* ── Authenticated + access granted — 2-col layout ──── */
         <div className="space-y-3">
-          {/* Video row + sidebar — stretch so sidebar matches video height */}
+          {/* Video row + sidebar — sidebar is pinned to exactly the player height */}
           <div className="flex flex-col lg:flex-row gap-3 lg:items-stretch">
             {/* Player */}
             <div className="relative flex-1 min-w-0 aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
               {playerEl}
               <FloatingReactionsLayer reactions={floatingReactions} />
             </div>
-            {/* Right: sidebar — collapsible, same height as player */}
-            {sidebarOpen && sidebar}
+            {/* Right: sidebar — overflow-hidden so inner content cannot push it taller */}
+            {sidebarOpen && (
+              <div className="lg:self-stretch lg:overflow-hidden lg:flex lg:flex-col">
+                {sidebar}
+              </div>
+            )}
           </div>
 
           {/* Info bar — full width below video row */}
