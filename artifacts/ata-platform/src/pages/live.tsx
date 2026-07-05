@@ -104,32 +104,58 @@ function MuxPlayer({ playbackId, title }: { playbackId: string; title: string })
 }
 
 function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Once the player is ready, unmute and set volume to 75 via the IFrame API.
+  // We listen for the "onReady" state message YouTube posts to the parent window.
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        // YouTube posts {event:'onReady'} or {info:{playerState:...}} messages
+        if (data?.event === 'onReady' || data?.info?.playerState === 1) {
+          const iframe = iframeRef.current;
+          if (!iframe?.contentWindow) return;
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'unMute', args: [] }),
+            '*'
+          );
+          iframe.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'setVolume', args: [75] }),
+            '*'
+          );
+        }
+      } catch {}
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [videoId]);
+
   const src = new URLSearchParams({
     autoplay: '1',
-    mute: '1',
+    mute: '1',          // required by browsers for autoplay; we unmute via IFrame API once ready
     rel: '0',
     modestbranding: '1',
     iv_load_policy: '3',
     playsinline: '1',
-    controls: '1',
-    fs: '1',
+    controls: '0',      // hide YouTube controls (overlay covers everything)
+    fs: '0',
+    disablekb: '1',
+    enablejsapi: '1',   // required for postMessage IFrame API
   });
   return (
     <div className="relative w-full h-full">
       <iframe
+        ref={iframeRef}
         src={`https://www.youtube.com/embed/${videoId}?${src.toString()}`}
         title={title}
         className="absolute inset-0 w-full h-full border-0"
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
       />
-      {/* Transparent overlay covering the top ~80% of the player.
-          Blocks YouTube's hover info card (channel name, title) from appearing
-          while leaving the bottom control bar accessible. */}
-      <div
-        className="absolute inset-x-0 top-0 pointer-events-auto"
-        style={{ height: '82%' }}
-      />
+      {/* Full overlay — blocks all YouTube hover UI (channel name, title card, controls).
+          Volume is set to 75% via the IFrame API on player ready. */}
+      <div className="absolute inset-0 pointer-events-auto" />
     </div>
   );
 }
