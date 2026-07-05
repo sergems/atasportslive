@@ -1,2 +1,3 @@
 - [Promotions & Bonus System](promotions-system.md) — bonus_balance split from cash; streaming-only; terms-acceptance required; auto-applied on deposit
 - [DB Schema Gotchas](db-schema-gotchas.md) — drizzle-kit push needs TTY; always apply schema changes directly via psql
+- [Artifact Frontend Port](artifact-port.md) — Vite must listen on port 23218 (artifact waitForPort); API server on 8080; never hardcode 5000 for frontend
