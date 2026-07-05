@@ -70,9 +70,12 @@ function formatCountdown(seconds: number): string {
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  const s = seconds % 60;
+  const hh = h.toString().padStart(2, '0');
+  const mm = m.toString().padStart(2, '0');
+  const ss = s.toString().padStart(2, '0');
+  if (d > 0) return `${d}d ${hh}:${mm}:${ss}`;
+  return `${hh}:${mm}:${ss}`;
 }
 
 function useUpcomingEvents() {
@@ -232,7 +235,12 @@ export default function Upcoming() {
 
   const { events, isLoading } = useUpcomingEvents();
   const adSlots = useAdSlots();
-  const now = new Date();
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const [sportFilter, setSportFilter] = useState('all');
 
