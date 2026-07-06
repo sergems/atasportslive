@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YdkWCMMy4hxO9qeWyMMt3hWvYCXNhLBzKDCZ7Ho1tv6cmMZd19BBMyW2o4NJrFT
+\restrict x2VtVnTbLR9XuTWBzlNspolcidJPAudaiv0Eft4ot8Ozo14xyrYum9CkIJYnPdv
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1212,6 +1212,7 @@ COPY public.bonus_transactions (id, user_id, promotion_id, type, amount, balance
 --
 
 COPY public.games (id, sport, player_a, player_b, event_date, event_time, status, result, total_bet_pool, open_bets_count, matched_bets_count, created_at, updated_at, event_end_date, event_end_time, city, country, type, parent_id, player_a_country, player_b_country) FROM stdin;
+17	boxing	RASKARA PAUL	MUSULUBE STEPHAN	2026-07-18	00:00	upcoming	\N	0.00	0	0	2026-07-06 17:40:42.492468+00	2026-07-06 17:40:42.492468+00	2026-07-06	01:30	Lugogo Arena	Uganda	single	\N	UG	UG
 \.
 
 
@@ -1243,6 +1244,8 @@ COPY public.highlights (id, title, description, youtube_url, is_published, creat
 --
 
 COPY public.notifications (id, user_id, type, title, message, read, created_at) FROM stdin;
+17	30	deposit_received	Deposit Confirmed	2.70 has been added to your wallet via Pesapal.	t	2026-07-06 09:09:50.499616+00
+18	30	withdrawal_approved	Withdrawal Approved	Your withdrawal of $3.00 has been approved and is being processed by our finance team.	t	2026-07-06 09:13:47.133327+00
 \.
 
 
@@ -1308,19 +1311,47 @@ pawapay_api_token	eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI
 pawapay_environment	sandbox	2026-07-03 19:32:56.870497+00
 pawapay_currency	UGX	2026-07-03 19:32:56.87614+00
 pawapay_exchange_rate	3700	2026-07-03 19:32:56.886232+00
-mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-04 22:43:22.061421+00
-mux_is_free	false	2026-07-04 22:43:22.075249+00
-mux_price	1.70	2026-07-04 22:43:22.081682+00
-mux_title	ATA Live Streaming	2026-07-04 22:43:22.087485+00
-mux_stream_db_id	16	2026-07-04 22:43:22.421469+00
-mux_is_live	false	2026-07-05 00:02:48.653219+00
 liveStreamUrl		2026-07-05 00:06:23.305169+00
 yt_video_id	hU9n9dOCoYU	2026-07-05 09:28:34.286813+00
-yt_is_live	false	2026-07-05 09:28:34.294933+00
 yt_is_free	false	2026-07-05 09:28:34.301625+00
 yt_price	1.50	2026-07-05 09:28:34.304704+00
 yt_title	Test YT Feed	2026-07-05 09:28:34.316329+00
 yt_stream_db_id	17	2026-07-05 09:28:34.577022+00
+yt_is_live	false	2026-07-06 19:02:11.728288+00
+mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-06 19:04:13.826689+00
+mux_is_live	false	2026-07-06 19:04:13.901571+00
+mux_is_free	false	2026-07-06 19:04:13.905082+00
+mux_price	1.70	2026-07-06 19:04:13.912353+00
+mux_title	ATA Live Streaming	2026-07-06 19:04:13.916215+00
+mux_stream_db_id	30	2026-07-06 19:04:14.193117+00
+ch2_yt_video_id	BiXBMe5jzL4	2026-07-06 19:04:24.35203+00
+ch2_yt_is_free	false	2026-07-06 19:04:24.363095+00
+ch2_yt_price	1.50	2026-07-06 19:04:24.366229+00
+ch2_yt_title	Here we go	2026-07-06 19:04:24.369866+00
+ch2_yt_thumbnail_url	/uploads/thumb-1783364473470-kx1kwu.jpeg	2026-07-06 19:04:24.373064+00
+ch2_yt_player_a	Charles	2026-07-06 19:04:24.377403+00
+ch2_yt_player_b	Boboza	2026-07-06 19:04:24.3807+00
+ch2_yt_player_a_country	CD	2026-07-06 19:04:24.384615+00
+ch2_yt_player_b_country	TZ	2026-07-06 19:04:24.38844+00
+ch2_yt_stream_db_id	31	2026-07-06 19:04:24.66288+00
+ch2_mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-06 19:00:38.372547+00
+ch2_mux_is_free	false	2026-07-06 19:00:38.389197+00
+ch2_mux_price	1.50	2026-07-06 19:00:38.392254+00
+ch2_mux_title	ATA	2026-07-06 19:00:38.395718+00
+ch2_mux_thumbnail_url	/uploads/thumb-1783364347699-12geb6.jpeg	2026-07-06 19:00:38.398524+00
+ch2_mux_player_a	JUJU	2026-07-06 19:00:38.402698+00
+ch2_mux_player_b	GAPA	2026-07-06 19:00:38.40569+00
+ch2_mux_player_a_country	CD	2026-07-06 19:00:38.408802+00
+ch2_mux_player_b_country	RW	2026-07-06 19:00:38.414395+00
+ch2_mux_stream_db_id	29	2026-07-06 19:00:38.671997+00
+ch2_mux_is_live	false	2026-07-06 19:02:01.154688+00
+mux_thumbnail_url		2026-07-06 19:04:13.920237+00
+mux_player_a		2026-07-06 19:04:13.923975+00
+mux_player_b		2026-07-06 19:04:13.927293+00
+mux_player_a_country		2026-07-06 19:04:13.930578+00
+mux_player_b_country		2026-07-06 19:04:13.936297+00
+ch2_yt_is_live	false	2026-07-06 19:04:24.35818+00
+ch2_page_enabled	true	2026-07-06 19:04:24.40121+00
 \.
 
 
@@ -1348,6 +1379,13 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 14	Rance to 21		pool	/uploads/thumb-1781565468263-x84aol.jpg	\N	\N	upcoming	2026-08-01 14:13:00+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-07-05 16:17:08.061+00	Kampala	Nigeria	Caesar Chandinga	Jabulani Xolani	UG	ZA	single	\N
 15	 UBC Championship		boxing	/uploads/thumb-1781565449802-31q8lm.jpg	\N	\N	upcoming	2026-07-08 16:13:00+00	\N	0	1.70	2026-06-15 23:14:13.462438+00	2026-07-05 16:28:52.708+00	Kampala	Uganda	Joseph Kato	Richard Wanyama	UG	KE	single	\N
 18	Beach Soccer TMP	\N	futsal	/uploads/thumb-1783268449603-ar9eqb.jpg	\N	\N	upcoming	2026-07-07 00:00:00+00	\N	0	1.70	2026-07-05 16:20:52.262753+00	2026-07-05 16:29:50.174+00	Harare	Zimbabwe	Sarah Jane	Erika Jame	TZ	NZ	single	\N
+19	BLACK POWER 64 MEN GRAND OPEN CHAMPIONSHIP	Players inser own coins	pool	\N	\N	\N	upcoming	2026-07-17 10:00:00+00	2026-07-18 12:00:00+00	0	0.00	2026-07-06 08:44:13.207235+00	2026-07-06 08:44:13.207235+00	Black Power - Kasangati (Opposite Shell)	Uganda	\N	\N	\N	\N	competition	\N
+20	HEYBALL CHAMPION OF CHAMPIONS	Sanctioned WPA Sanctioned Category Men Women WPA Ranking Points WPA Heyball Ranking Description Arrival Day: 21 July 2026 Athletes’ Meeting & 22 July 2026, 16:30 (Mandatory)  Opening Ceremony: 22 July 2026, 19:00 (Mandatory) Tournament Start & Conclude: 23 July to 26 July 2026 Medal Ceremony: 26 July 2026, between 19:00 and 20:00 Departure Day: 27 July 2026	pool	\N	\N	\N	upcoming	2026-07-23 10:00:00+00	2026-07-26 12:00:00+00	0	0.00	2026-07-06 09:51:52.781332+00	2026-07-06 09:51:52.781332+00	Kuala Lumpur	Malaysia	\N	\N	\N	\N	competition	\N
+21	European Championships Heyball - Single	\N	pool	\N	\N	\N	upcoming	2026-08-03 10:00:00+00	2026-08-04 12:56:00+00	0	0.00	2026-07-06 09:58:59.703495+00	2026-07-06 09:58:59.703495+00	Kielce	Poland	\N	\N	\N	\N	competition	\N
+26	GENESIS JUNIORS POOL CHAMPIONSHIPS	\N	pool	\N	\N	\N	upcoming	2026-09-04 09:00:00+00	2026-09-05 00:00:00+00	0	0.00	2026-07-06 14:20:45.691523+00	2026-07-06 14:20:45.691523+00	The Olive School - Namugongo	Uganda	\N	\N	\N	\N	competition	\N
+23	FORMER CHAMPION RETURNS!! 🤩🤩 | Live Darts | Series 14 Week 11 | Group A Session 1	\N	darts	\N	https://youtu.be/QnNFhBPIsqE	\N	ended	2026-07-06 13:27:00+00	2026-07-06 10:28:52.003+00	0	1.50	2026-07-06 10:27:53.774768+00	2026-07-06 10:28:52.003+00	London	UK	PETERSON	PRIDE	BR	CO	single	\N
+27	UBCL SEASON 5 	\N	boxing	\N	\N	\N	upcoming	2026-07-18 15:00:00+00	2026-07-18 01:30:00+00	0	0.00	2026-07-06 17:38:03.006088+00	2026-07-06 17:38:03.006088+00	Lugogo Arena	Uganda	\N	\N	\N	\N	competition	\N
+28	UGANDA BOXING CHAMPIONSHP LEAGUE	\N	boxing	/uploads/thumb-1783359641816-h579a6.jpg	\N	\N	upcoming	2026-07-18 00:00:00+00	2026-07-06 01:30:00+00	0	1.50	2026-07-06 17:40:42.16567+00	2026-07-06 17:40:42.16567+00	Lugogo Arena	Uganda	RASKARA PAUL	MUSULUBE STEPHAN	UG	UG	single	27
 \.
 
 
@@ -6488,7 +6526,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5077	katoshamil@gmail.com	$2b$10$blUAqSRz5xm9h.rlD0UAru9bRPplfG5QXA7BTIIpLQHKZsErmFI5W	Kato shamil	0749788531	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzcsInJvbGUiOiJ1c2VyIiwic3YiOiJkYTljNGQzZC0xMWZiLTQxYmYtOTEyNi04ZTBkNGE3MTE4MTkiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE5Nzc4MywiZXhwIjoxNzg1Nzg5NzgzfQ.IVJ7SgeNRBGWWKTi5yNJhqEiDzB4XW2QmS-zHI2neJs	2026-07-04 20:43:03.099328+00	2026-07-04 20:43:03.103+00	\N	\N	\N	f	da9c4d3d-11fb-41bf-9126-8e0d4a711819	\N	62QSZ4BJ	30	katoshamil	0	\N	\N	\N	\N	\N	f
 5078	samsonongodia10@gmail.com	$2b$10$TlM94Vylza8FpyYiIdgRduNVpUPunEOthPMRyJ5XnMgOynJfL8SEK	Samson Ongodia 	0786739875	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzgsInJvbGUiOiJ1c2VyIiwic3YiOiJhNjY2NjkxMS04ZWY5LTRjNWYtYjQxYy00MTYzMWEzODdjZTUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzIwMDI2NSwiZXhwIjoxNzg1NzkyMjY1fQ.tlE2xJHb65XTd8aM9l8YLYV12RDWdl079l2-UJi6fbo	2026-07-04 21:24:25.279206+00	2026-07-04 21:24:25.283+00	\N	\N	\N	f	a6666911-8ef9-4c5f-b41c-41631a387ce5	\N	BGPULRYF	30	coachsam	0	\N	\N	\N	\N	\N	f
 5079	molamucalvin3@gmail.com	$2b$10$56YwaPT4fiRJGha3w62uXOmpbrJMc/lCrvuqGA/9ZS90w3UfucL8i	Calvin Molamu	+26774417490	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzksInJvbGUiOiJ1c2VyIiwic3YiOiIxN2UyM2JhOS1lOTNhLTRmYTgtYTNiMi0xMjkzNTk4YjU4NjAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzIyODY5MCwiZXhwIjoxNzg1ODIwNjkwfQ.xRALc4xugkk1g4BccpWhjG7mzwCSyEprsw-JayxPEWw	2026-07-05 05:18:10.769233+00	2026-07-05 05:18:10.773+00	\N	\N	\N	f	17e23ba9-e93a-4fa8-a3b2-1293598b5860	\N	SKF5L64F	\N	carlos	0	\N	\N	\N	\N	\N	f
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiMWY1NDY3ZmUtYzI0MC00YTUxLTkwNGUtMjA2YjQyNjBhNmQ2IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMyNjc5NDIsImV4cCI6MTc4NTg1OTk0Mn0.iEnR87Ay5go-PRONr5fJqcGyhP_JqCMNU8rUeCBdgrQ	2026-06-15 16:31:06.226579+00	2026-07-05 16:12:22.783+00	\N	\N	\N	f	1f5467fe-c240-4a51-904e-206b4260a6d6	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiNmU0ZDFhMWMtNDliMS00YjM5LWFjZWQtZjkyZjgwYTE5MzZkIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMzNjQxOTEsImV4cCI6MTc4NTk1NjE5MX0.WM7ekliGcqMvoiVL5fDFdSNf5rCL6DjtW93a-HQqXDk	2026-06-15 16:31:06.226579+00	2026-07-06 18:56:31.667+00	\N	\N	\N	f	6e4d1a1c-49b1-4b39-aced-f92f80a1936d	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t
 \.
 
 
@@ -11618,7 +11656,7 @@ SELECT pg_catalog.setval('public.bonus_transactions_id_seq', 1, true);
 -- Name: games_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.games_id_seq', 16, true);
+SELECT pg_catalog.setval('public.games_id_seq', 17, true);
 
 
 --
@@ -11639,7 +11677,7 @@ SELECT pg_catalog.setval('public.highlights_id_seq', 5, true);
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 16, true);
+SELECT pg_catalog.setval('public.notifications_id_seq', 18, true);
 
 
 --
@@ -11681,21 +11719,21 @@ SELECT pg_catalog.setval('public.stream_comments_id_seq', 3, true);
 -- Name: streams_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.streams_id_seq', 18, true);
+SELECT pg_catalog.setval('public.streams_id_seq', 31, true);
 
 
 --
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 88, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 90, true);
 
 
 --
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 5079, true);
+SELECT pg_catalog.setval('public.users_id_seq', 5081, true);
 
 
 --
@@ -11709,7 +11747,7 @@ SELECT pg_catalog.setval('public.vouchers_id_seq', 9, true);
 -- Name: wallets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.wallets_id_seq', 5089, true);
+SELECT pg_catalog.setval('public.wallets_id_seq', 5091, true);
 
 
 --
@@ -12138,5 +12176,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YdkWCMMy4hxO9qeWyMMt3hWvYCXNhLBzKDCZ7Ho1tv6cmMZd19BBMyW2o4NJrFT
+\unrestrict x2VtVnTbLR9XuTWBzlNspolcidJPAudaiv0Eft4ot8Ozo14xyrYum9CkIJYnPdv
 
