@@ -40,11 +40,11 @@ function useChannelStatus(): ChannelStatus {
   return data ?? { ch1Live: false, ch2Live: false, ch3Live: false, ch2Enabled: false, ch3Enabled: false };
 }
 
-function LiveBadge() {
+function LiveBadge({ channel }: { channel?: number }) {
   return (
     <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500/20 border border-red-500/40 px-1.5 py-px text-[9px] font-bold text-red-400 uppercase tracking-wider leading-none">
       <span className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
-      Live
+      {channel ? `Live ${channel}` : 'Live'}
     </span>
   );
 }
@@ -172,10 +172,7 @@ export function Navbar() {
                 {pulse && ch1 ? (
                   <LiveBadge />
                 ) : pulse ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    {label}
-                    <LiveBadge />
-                  </span>
+                  <LiveBadge channel={href === '/live-2' ? 2 : 3} />
                 ) : (
                   label
                 )}

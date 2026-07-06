@@ -105,7 +105,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
             JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
           );
           iframe.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'setVolume', args: [75] }), '*'
+            JSON.stringify({ event: 'command', func: 'setVolume', args: [70] }), '*'
           );
         }
       } catch {}
@@ -116,8 +116,8 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
 
   const src = new URLSearchParams({
     autoplay: '1', mute: '1', rel: '0', modestbranding: '1',
-    iv_load_policy: '3', playsinline: '1', controls: '0',
-    fs: '0', disablekb: '1', enablejsapi: '1',
+    iv_load_policy: '3', playsinline: '1', controls: '1',
+    fs: '1', disablekb: '0', enablejsapi: '1',
   });
   return (
     <div className="relative w-full h-full">
