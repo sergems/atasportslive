@@ -218,17 +218,13 @@ export default function Subscriptions() {
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="text-center space-y-3 pt-2">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-semibold uppercase tracking-widest">
-          <Sparkles className="h-3.5 w-3.5" />
+      <div className="flex items-center gap-2.5 pt-1">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-bold uppercase tracking-widest shrink-0">
+          <Sparkles className="h-3 w-3" />
           Platform Access
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-          Choose Your Plan
-        </h1>
-        <p className="text-slate-400 text-base max-w-lg mx-auto">
-          Get unlimited access to all live streams and events. Funds are deducted from your wallet instantly.
-        </p>
+        <h1 className="text-base font-bold text-white tracking-tight">Choose Your Plan</h1>
+        <span className="text-slate-500 text-xs hidden sm:inline">· Deducted from wallet instantly</span>
       </div>
 
       {/* ── Subscription status card ────────────────────────────────────── */}
@@ -288,14 +284,9 @@ export default function Subscriptions() {
           </div>
         );
       })() : (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 py-8 px-6 text-center">
-          <div className="w-11 h-11 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center mb-1">
-            <Ban className="h-5 w-5 text-slate-600" />
-          </div>
-          <p className="text-white font-semibold">No Active Subscription</p>
-          <p className="text-slate-500 text-sm max-w-xs">
-            You don't have an active plan. Pick one below to unlock all live streams instantly.
-          </p>
+        <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-2.5">
+          <Ban className="h-3.5 w-3.5 text-slate-600 shrink-0" />
+          <p className="text-sm text-slate-400">No active subscription — <span className="text-slate-300">pick a plan below to unlock all live streams.</span></p>
         </div>
       )}
 
