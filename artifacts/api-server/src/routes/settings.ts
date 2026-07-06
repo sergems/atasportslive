@@ -213,6 +213,118 @@ router.post("/mux-probe", async (_req, res): Promise<void> => {
   }
 });
 
+// ── Channel 2 & 3 helpers ─────────────────────────────────────────────────────
+
+async function syncChannelMux(channel: 2 | 3, res: any): Promise<void> {
+  const p        = `ch${channel}_mux`;
+  const ytLiveK  = `ch${channel}_yt_is_live`;
+  const ytDbIdK  = `ch${channel}_yt_stream_db_id`;
+  const streamKey = `__ch${channel}_mux_default__`;
+  const dbIdKey  = `ch${channel}_mux_stream_db_id`;
+  try {
+    await db.transaction(async (tx: any) => {
+      const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE ${`ch${channel}_%`}`);
+      const s: Record<string, string> = {};
+      for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
+      const isLive = s[`${p}_is_live`] === "true";
+      const price  = s[`${p}_price`] || "1.50";
+      const title  = s[`${p}_title`] || `ATA Live Stream ${channel}`;
+      const status = isLive ? "live" : "upcoming";
+      if (isLive) {
+        await tx.execute(sql`INSERT INTO settings (key, value, updated_at) VALUES (${ytLiveK}, 'false', NOW()) ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`);
+        const ytDbId = s[ytDbIdK] ? Number(s[ytDbIdK]) : null;
+        if (ytDbId) await tx.execute(sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${ytDbId}`);
+      }
+      const existing = await tx.execute(sql`SELECT id FROM streams WHERE stream_key = ${streamKey} ORDER BY id LIMIT 1`);
+      const existingRow = (existing.rows as { id: number }[])[0];
+      let streamId: number;
+      if (existingRow) {
+        await tx.execute(sql`UPDATE streams SET title = ${title}, status = ${status}::stream_status, access_price = ${price}, updated_at = NOW() WHERE id = ${existingRow.id}`);
+        streamId = existingRow.id;
+      } else {
+        const inserted = await tx.execute(sql`INSERT INTO streams (title, sport, status, start_time, access_price, stream_key, viewer_count, updated_at) VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, ${streamKey}, 0, NOW()) RETURNING id`);
+        streamId = (inserted.rows as { id: number }[])[0].id;
+      }
+      await tx.execute(sql`INSERT INTO settings (key, value, updated_at) VALUES (${dbIdKey}, ${streamId.toString()}, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`);
+      if (!res.headersSent) res.json({ ok: true, streamId });
+    });
+  } catch (err: any) {
+    if (!res.headersSent) res.status(500).json({ error: err.message || `sync-ch${channel}-mux failed` });
+  }
+}
+
+async function syncChannelYt(channel: 2 | 3, res: any): Promise<void> {
+  const p         = `ch${channel}_yt`;
+  const muxLiveK  = `ch${channel}_mux_is_live`;
+  const muxDbIdK  = `ch${channel}_mux_stream_db_id`;
+  const streamKey = `__ch${channel}_yt_default__`;
+  const dbIdKey   = `ch${channel}_yt_stream_db_id`;
+  try {
+    await db.transaction(async (tx: any) => {
+      const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE ${`ch${channel}_%`}`);
+      const s: Record<string, string> = {};
+      for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
+      const isLive  = s[`${p}_is_live`] === "true";
+      const videoId = s[`${p}_video_id`] ?? "";
+      const price   = s[`${p}_price`] || "1.50";
+      const title   = s[`${p}_title`] || `ATA Live Stream ${channel}`;
+      const status  = isLive ? "live" : "upcoming";
+      if (isLive && !YT_ID_RE.test(videoId)) {
+        res.status(400).json({ error: "YouTube video ID must be a valid 11-character ID" });
+        return;
+      }
+      if (isLive) {
+        await tx.execute(sql`INSERT INTO settings (key, value, updated_at) VALUES (${muxLiveK}, 'false', NOW()) ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`);
+        const muxDbId = s[muxDbIdK] ? Number(s[muxDbIdK]) : null;
+        if (muxDbId) await tx.execute(sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${muxDbId}`);
+      }
+      const existing = await tx.execute(sql`SELECT id FROM streams WHERE stream_key = ${streamKey} ORDER BY id LIMIT 1`);
+      const existingRow = (existing.rows as { id: number }[])[0];
+      let streamId: number;
+      if (existingRow) {
+        await tx.execute(sql`UPDATE streams SET title = ${title}, status = ${status}::stream_status, access_price = ${price}, updated_at = NOW() WHERE id = ${existingRow.id}`);
+        streamId = existingRow.id;
+      } else {
+        const inserted = await tx.execute(sql`INSERT INTO streams (title, sport, status, start_time, access_price, stream_key, viewer_count, updated_at) VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, ${streamKey}, 0, NOW()) RETURNING id`);
+        streamId = (inserted.rows as { id: number }[])[0].id;
+      }
+      await tx.execute(sql`INSERT INTO settings (key, value, updated_at) VALUES (${dbIdKey}, ${streamId.toString()}, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`);
+      if (!res.headersSent) res.json({ ok: true, streamId });
+    });
+  } catch (err: any) {
+    if (!res.headersSent) res.status(500).json({ error: err.message || `sync-ch${channel}-yt failed` });
+  }
+}
+
+async function probeChannelMux(channel: 2 | 3, res: any): Promise<void> {
+  try {
+    const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE ${`ch${channel}_mux_%`}`);
+    const s: Record<string, string> = {};
+    for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
+    const playbackId = s[`ch${channel}_mux_playback_id`];
+    const isLive     = s[`ch${channel}_mux_is_live`] === "true";
+    if (!isLive || !playbackId) { res.json({ live: false, changed: false }); return; }
+    let muxLive = true;
+    try { const probe = await fetch(`https://stream.mux.com/${playbackId}.m3u8`, { method: "HEAD" }); muxLive = probe.ok; } catch { muxLive = false; }
+    if (muxLive) { res.json({ live: true, changed: false }); return; }
+    const liveKey = `ch${channel}_mux_is_live`;
+    await db.execute(sql`INSERT INTO settings (key, value, updated_at) VALUES (${liveKey}, 'false', NOW()) ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`);
+    const dbIdKey = `ch${channel}_mux_stream_db_id`;
+    const dbId = s[dbIdKey] ? Number(s[dbIdKey]) : null;
+    if (dbId) await db.execute(sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${dbId}`);
+    res.json({ live: false, changed: true });
+  } catch (err) {
+    res.status(500).json({ error: "Probe failed" });
+  }
+}
+
+router.post("/sync-ch2-mux", authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelMux(2, res); });
+router.post("/sync-ch2-yt",  authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelYt(2, res);  });
+router.post("/ch2-mux-probe", async (_req, res): Promise<void> => { await probeChannelMux(2, res); });
+router.post("/sync-ch3-mux", authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelMux(3, res); });
+router.post("/sync-ch3-yt",  authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelYt(3, res);  });
+router.post("/ch3-mux-probe", async (_req, res): Promise<void> => { await probeChannelMux(3, res); });
+
 // Send a test email to the logged-in admin using saved SMTP settings
 router.post("/test-email", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'smtp_%'`);

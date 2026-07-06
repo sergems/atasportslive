@@ -7,26 +7,46 @@ import { useListNotifications, useGetWallet } from '@workspace/api-client-react'
 import { useQuery } from '@tanstack/react-query';
 import ataLogo from '@assets/cropped-ATA_logo-removebg-preview_1782471649356.png';
 
-function useIsLive() {
-  const { data } = useQuery<boolean>({
-    queryKey: ['nav', 'is-live'],
+interface ChannelStatus {
+  ch1Live: boolean;
+  ch2Live: boolean;
+  ch3Live: boolean;
+  ch2Enabled: boolean;
+  ch3Enabled: boolean;
+}
+
+function useChannelStatus(): ChannelStatus {
+  const { data } = useQuery<ChannelStatus>({
+    queryKey: ['nav', 'channel-status'],
     queryFn: async () => {
-      // Check DB streams AND admin settings (mux/yt toggles)
       const [streamsRes, settingsRes] = await Promise.all([
         fetch('/api/streams?status=live&limit=1'),
         fetch('/api/settings'),
       ]);
       const streamsData  = await streamsRes.json();
       const settingsData = await settingsRes.json();
-      const dbLive      = (streamsData.streams?.length ?? 0) > 0;
-      const muxLive     = settingsData?.mux_is_live === 'true' || settingsData?.mux_is_live === true;
-      const ytLive      = settingsData?.yt_is_live  === 'true' || settingsData?.yt_is_live  === true;
-      return dbLive || muxLive || ytLive;
+      const dbLive = (streamsData.streams?.length ?? 0) > 0;
+      return {
+        ch1Live: dbLive || settingsData?.mux_is_live === 'true' || settingsData?.yt_is_live === 'true',
+        ch2Live: settingsData?.ch2_mux_is_live === 'true' || settingsData?.ch2_yt_is_live === 'true',
+        ch3Live: settingsData?.ch3_mux_is_live === 'true' || settingsData?.ch3_yt_is_live === 'true',
+        ch2Enabled: settingsData?.ch2_page_enabled === 'true',
+        ch3Enabled: settingsData?.ch3_page_enabled === 'true',
+      };
     },
     refetchInterval: 30_000,
     staleTime: 20_000,
   });
-  return data ?? false;
+  return data ?? { ch1Live: false, ch2Live: false, ch3Live: false, ch2Enabled: false, ch3Enabled: false };
+}
+
+function LiveBadge() {
+  return (
+    <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500/20 border border-red-500/40 px-1.5 py-px text-[9px] font-bold text-red-400 uppercase tracking-wider leading-none">
+      <span className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
+      Live
+    </span>
+  );
 }
 
 function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
@@ -95,7 +115,7 @@ export function Navbar() {
   const { isAuthenticated, logout, isAdmin, user } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isLive = useIsLive();
+  const { ch1Live, ch2Live, ch3Live, ch2Enabled, ch3Enabled } = useChannelStatus();
 
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
 
@@ -118,13 +138,15 @@ export function Navbar() {
   const unreadCount = notificationsData?.unreadCount || 0;
 
   const navLinks = [
-    { href: '/', label: 'Home', exact: true },
-    { href: '/live', label: 'Livestream', pulse: isLive, mobileHide: true },
-    { href: '/streams', label: 'Events' },
-    { href: '/upcoming', label: 'Upcoming' },
-    { href: '/highlights', label: 'Highlights' },
-    { href: '/fixtures', label: 'Fixtures' },
-    ...(isAuthenticated ? [{ href: '/games', label: 'Bets' }] : []),
+    { href: '/', label: 'Home', exact: true, pulse: false, ch1: false },
+    { href: '/live', label: 'Livestream', pulse: ch1Live, mobileHide: true, ch1: true },
+    ...(ch2Enabled ? [{ href: '/live-2', label: 'Livestream 2', pulse: ch2Live, mobileHide: true, ch1: false }] : []),
+    ...(ch3Enabled ? [{ href: '/live-3', label: 'Livestream 3', pulse: ch3Live, mobileHide: true, ch1: false }] : []),
+    { href: '/streams', label: 'Events', pulse: false, ch1: false },
+    { href: '/upcoming', label: 'Upcoming', pulse: false, ch1: false },
+    { href: '/highlights', label: 'Highlights', pulse: false, ch1: false },
+    { href: '/fixtures', label: 'Fixtures', pulse: false, ch1: false },
+    ...(isAuthenticated ? [{ href: '/games', label: 'Bets', pulse: false, ch1: false }] : []),
   ];
 
   return (
@@ -139,19 +161,20 @@ export function Navbar() {
 
         {/* Nav links - centered absolutely (desktop only) */}
         <nav className="hidden md:flex items-center space-x-4 text-sm font-medium absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
-          {navLinks.map(({ href, label, pulse, exact }) => {
+          {navLinks.map(({ href, label, pulse, exact, ch1 }) => {
             const active = exact ? location === href : location.startsWith(href);
-            const isLiveLink = href === '/live';
             return (
               <Link
                 key={href}
                 href={href}
                 className={`relative inline-flex items-center gap-1.5 pb-1 transition-colors hover:text-white border-b-2 ${active ? 'text-white border-teal-400' : 'text-slate-400 border-transparent hover:border-slate-600'}`}
               >
-                {isLiveLink && pulse ? (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500/20 border border-red-500/40 px-1.5 py-px text-[9px] font-bold text-red-400 uppercase tracking-wider leading-none">
-                    <span className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
-                    Live
+                {pulse && ch1 ? (
+                  <LiveBadge />
+                ) : pulse ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    {label}
+                    <LiveBadge />
                   </span>
                 ) : (
                   label

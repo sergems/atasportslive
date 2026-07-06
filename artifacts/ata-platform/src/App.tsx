@@ -17,6 +17,8 @@ import StreamDetail from "@/pages/streams/[id]";
 import Games from "@/pages/games/index";
 import GameDetail from "@/pages/games/[id]";
 import Live from "@/pages/live";
+import Live2 from "@/pages/live-2";
+import Live3 from "@/pages/live-3";
 import Upcoming from "@/pages/upcoming";
 import Fixtures from "@/pages/fixtures";
 import Highlights from "@/pages/highlights";
@@ -112,6 +114,8 @@ function Router() {
         <Route path="/streams" component={Streams} />
         <Route path="/streams/:id" component={StreamDetail} />
         <Route path="/live" component={Live} />
+        <Route path="/live-2" component={Live2} />
+        <Route path="/live-3" component={Live3} />
         <Route path="/upcoming" component={Upcoming} />
         <Route path="/fixtures" component={Fixtures} />
         <Route path="/highlights" component={Highlights} />
