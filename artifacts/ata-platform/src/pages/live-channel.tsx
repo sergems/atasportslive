@@ -239,40 +239,52 @@ function NoLiveBroadcast({ channelLabel }: { channelLabel: string }) {
   const next = upcoming?.[0];
   const nextCountdown = useCountdown(next?.startTime);
   return (
-    <div className="flex flex-col gap-2 bg-slate-900 rounded-xl border border-slate-800 px-4 py-3 w-full">
-      {/* Status row */}
-      <div className="flex items-center gap-2">
-        <div className="shrink-0 w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-          <Radio className="h-3 w-3 text-slate-500" />
+    <div className="relative w-full aspect-video bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col items-center justify-center">
+      {/* Subtle radial glow */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(20,184,166,0.06)_0%,_transparent_70%)]" />
+
+      {/* Centre content */}
+      <div className="flex flex-col items-center gap-3 px-6 text-center z-10">
+        <div className="w-12 h-12 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center">
+          <Radio className="h-5 w-5 text-slate-500" />
         </div>
-        <span className="text-sm font-semibold text-white">No Live Broadcast</span>
-        <span className="text-slate-500 text-xs">{channelLabel} is not live right now.</span>
-        <Link href="/upcoming" className="ml-auto text-teal-400 hover:text-teal-300 text-xs transition-colors shrink-0">
-          Schedule →
-        </Link>
+        <div>
+          <p className="text-white font-semibold text-base">No Live Broadcast</p>
+          <p className="text-slate-500 text-xs mt-0.5">{channelLabel} is not live right now.</p>
+        </div>
+        {next && nextCountdown && (
+          <div className="mt-1">
+            <CountdownTimer targetIso={next.startTime} label="Starts in" />
+          </div>
+        )}
       </div>
 
-      {/* Next up row */}
+      {/* Next-up bar pinned to bottom */}
       {next && (
-        <div className="flex items-center gap-3 bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest shrink-0">Next up</span>
-              <span className="text-white text-sm font-semibold truncate">{next.title}</span>
-              {next.sport && <span className="text-[10px] text-slate-500 uppercase tracking-wide shrink-0">{next.sport}</span>}
-            </div>
-            <p className="text-amber-400 font-mono text-xs mt-0.5">
+        <div className="absolute bottom-0 inset-x-0 bg-slate-900/90 backdrop-blur-sm border-t border-slate-800 px-4 py-2.5 flex items-center justify-between gap-3 z-10">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest shrink-0">Next up</span>
+            <span className="text-white text-sm font-semibold truncate">{next.title}</span>
+            {next.sport && <span className="text-[10px] text-slate-500 uppercase shrink-0">{next.sport}</span>}
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-amber-400 font-mono text-xs">
               {new Date(next.startTime).toLocaleDateString('en-UG', { weekday: 'short', month: 'short', day: 'numeric' })}
               {' · '}
               {new Date(next.startTime).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
-            </p>
+            </span>
+            <Link href="/upcoming" className="text-teal-400 hover:text-teal-300 text-xs transition-colors">
+              Schedule →
+            </Link>
           </div>
-          {nextCountdown && (
-            <div className="shrink-0 border-l border-slate-700 pl-3">
-              <CountdownTimer targetIso={next.startTime} label="Starts in" />
-            </div>
-          )}
         </div>
+      )}
+
+      {/* Schedule link when no next event */}
+      {!next && (
+        <Link href="/upcoming" className="absolute bottom-4 text-teal-400 hover:text-teal-300 text-xs transition-colors z-10">
+          View full schedule →
+        </Link>
       )}
     </div>
   );
