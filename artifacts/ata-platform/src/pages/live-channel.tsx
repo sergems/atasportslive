@@ -203,8 +203,8 @@ function useCountdown(targetIso: string | undefined): Countdown | null {
 function CountdownBlock({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col items-center">
-      <span className="text-3xl sm:text-4xl font-bold font-mono text-white tabular-nums leading-none">{String(value).padStart(2, '0')}</span>
-      <span className="text-slate-500 text-[10px] uppercase tracking-widest mt-1">{label}</span>
+      <span className="text-lg font-bold font-mono text-white tabular-nums leading-none">{String(value).padStart(2, '0')}</span>
+      <span className="text-slate-500 text-[9px] uppercase tracking-widest mt-0.5">{label}</span>
     </div>
   );
 }
@@ -213,19 +213,19 @@ function CountdownTimer({ targetIso, label }: { targetIso: string; label?: strin
   const cd = useCountdown(targetIso);
   if (!cd) return null;
   return (
-    <div className="space-y-3">
+    <div className="flex items-center gap-2">
       {label && (
-        <p className="text-slate-400 text-xs uppercase tracking-widest flex items-center justify-center gap-1.5">
-          <Timer className="h-3.5 w-3.5 text-teal-400" />{label}
-        </p>
+        <span className="text-slate-400 text-[10px] uppercase tracking-widest flex items-center gap-1 shrink-0">
+          <Timer className="h-3 w-3 text-teal-400" />{label}
+        </span>
       )}
-      <div className="flex items-center justify-center gap-3 sm:gap-5">
+      <div className="flex items-center gap-2">
         {cd.days > 0 && <CountdownBlock label="days" value={cd.days} />}
-        {cd.days > 0 && <span className="text-slate-600 font-bold text-2xl mb-3">:</span>}
-        <CountdownBlock label="hours" value={cd.hours} />
-        <span className="text-slate-600 font-bold text-2xl mb-3">:</span>
+        {cd.days > 0 && <span className="text-slate-600 font-bold text-sm">:</span>}
+        <CountdownBlock label="hrs" value={cd.hours} />
+        <span className="text-slate-600 font-bold text-sm">:</span>
         <CountdownBlock label="min" value={cd.minutes} />
-        <span className="text-slate-600 font-bold text-2xl mb-3">:</span>
+        <span className="text-slate-600 font-bold text-sm">:</span>
         <CountdownBlock label="sec" value={cd.seconds} />
       </div>
     </div>
@@ -239,36 +239,41 @@ function NoLiveBroadcast({ channelLabel }: { channelLabel: string }) {
   const next = upcoming?.[0];
   const nextCountdown = useCountdown(next?.startTime);
   return (
-    <div className="flex flex-col items-center justify-center bg-slate-900 rounded-xl border border-slate-800 text-center px-6 py-14 w-full">
-      <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border border-slate-700 mb-4 sm:mb-6">
-        <Radio className="h-7 w-7 sm:h-9 sm:w-9 text-slate-600" />
+    <div className="flex flex-col gap-2 bg-slate-900 rounded-xl border border-slate-800 px-4 py-3 w-full">
+      {/* Status row */}
+      <div className="flex items-center gap-2">
+        <div className="shrink-0 w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+          <Radio className="h-3 w-3 text-slate-500" />
+        </div>
+        <span className="text-sm font-semibold text-white">No Live Broadcast</span>
+        <span className="text-slate-500 text-xs">{channelLabel} is not live right now.</span>
+        <Link href="/upcoming" className="ml-auto text-teal-400 hover:text-teal-300 text-xs transition-colors shrink-0">
+          Schedule →
+        </Link>
       </div>
-      <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">No Live Broadcast</h2>
-      <p className="text-slate-400 text-sm mb-6 max-w-md">
-        {channelLabel} is not live right now. Come back when the next event starts.
-      </p>
+
+      {/* Next up row */}
       {next && (
-        <div className="w-full max-w-sm space-y-4 mb-6">
-          <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-5 py-4">
-            <p className="text-slate-500 text-xs uppercase tracking-widest mb-2">Next up</p>
-            <p className="text-white font-bold text-base sm:text-lg mb-0.5">{next.title}</p>
-            <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{next.sport}</p>
-            <p className="text-amber-400 font-mono text-sm">
-              {new Date(next.startTime).toLocaleDateString('en-UG', { weekday: 'long', month: 'long', day: 'numeric' })}
+        <div className="flex items-center gap-3 bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] text-slate-500 uppercase tracking-widest shrink-0">Next up</span>
+              <span className="text-white text-sm font-semibold truncate">{next.title}</span>
+              {next.sport && <span className="text-[10px] text-slate-500 uppercase tracking-wide shrink-0">{next.sport}</span>}
+            </div>
+            <p className="text-amber-400 font-mono text-xs mt-0.5">
+              {new Date(next.startTime).toLocaleDateString('en-UG', { weekday: 'short', month: 'short', day: 'numeric' })}
               {' · '}
               {new Date(next.startTime).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
           {nextCountdown && (
-            <div className="bg-slate-800/50 border border-slate-700/60 rounded-xl px-5 py-5">
+            <div className="shrink-0 border-l border-slate-700 pl-3">
               <CountdownTimer targetIso={next.startTime} label="Starts in" />
             </div>
           )}
         </div>
       )}
-      <Link href="/upcoming" className="text-teal-400 hover:text-teal-300 text-sm transition-colors">
-        View full schedule →
-      </Link>
     </div>
   );
 }
