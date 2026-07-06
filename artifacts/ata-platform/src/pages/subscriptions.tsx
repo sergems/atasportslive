@@ -215,7 +215,7 @@ export default function Subscriptions() {
   const isLoading = pricesLoading || activeLoading;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+    <div className="max-w-5xl mx-auto space-y-4 pb-12">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2.5 pt-1">
@@ -229,7 +229,7 @@ export default function Subscriptions() {
 
       {/* ── Subscription status card ────────────────────────────────────── */}
       {activeLoading ? (
-        <div className="h-40 rounded-2xl bg-slate-800/50 animate-pulse" />
+        <div className="h-9 rounded-xl bg-slate-800/50 animate-pulse" />
       ) : active?.hasSubscription ? (() => {
         const planKey = active.subscriptionType as keyof typeof PLAN_META;
         const meta = PLAN_META[planKey];
