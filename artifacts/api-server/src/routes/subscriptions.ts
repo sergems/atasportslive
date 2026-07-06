@@ -7,8 +7,10 @@ import {
   walletsTable,
   transactionsTable,
   bonusTransactionsTable,
+  usersTable,
 } from "@workspace/db";
 import { authMiddleware, type AuthRequest } from "../middlewares/auth";
+import { notify } from "../lib/notify";
 
 const router = Router();
 
@@ -105,6 +107,35 @@ router.post("/purchase", authMiddleware, async (req: AuthRequest, res): Promise<
   const txId = `SUB-${uuidv4().split("-")[0].toUpperCase()}`;
   const durationLabel = DURATION_LABELS[subType];
 
+  // Resolve influencer commission before the transaction so we can include it atomically
+  let influencerReferrerId: number | null = null;
+  let commissionAmount = 0;
+  let commissionRatePct = 0;
+  try {
+    const [buyer] = await db
+      .select({ referredBy: usersTable.referredBy })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+    if (buyer?.referredBy) {
+      const [referrer] = await db
+        .select({ id: usersTable.id, isInfluencer: usersTable.isInfluencer })
+        .from(usersTable)
+        .where(eq(usersTable.id, buyer.referredBy))
+        .limit(1);
+      if (referrer?.isInfluencer) {
+        const rateRows = await db.execute(
+          sql`SELECT value FROM settings WHERE key = 'influencer_commission_rate'`
+        );
+        commissionRatePct = parseFloat((rateRows.rows[0] as any)?.value ?? "30");
+        commissionAmount = Math.round(price * (commissionRatePct / 100) * 100) / 100;
+        if (commissionAmount > 0) influencerReferrerId = referrer.id;
+      }
+    }
+  } catch {
+    // Non-blocking: if lookup fails, skip commission for this purchase
+  }
+
   // All checks AND writes inside one transaction with row-level lock on the
   // wallet row, preventing double-purchase and over-debit under concurrency.
   let result: { hasSubscription: boolean; subscriptionType: string; expiresAt: Date; secondsRemaining: number; amount: number } | null = null;
@@ -195,6 +226,23 @@ router.post("/purchase", authMiddleware, async (req: AuthRequest, res): Promise<
       transactionId: txId,
     });
 
+    // Credit influencer commission atomically within the same transaction
+    if (influencerReferrerId && commissionAmount > 0) {
+      await tx.execute(
+        sql`UPDATE wallets SET balance = balance + ${commissionAmount}, available_balance = available_balance + ${commissionAmount}, withdrawable_balance = withdrawable_balance + ${commissionAmount} WHERE user_id = ${influencerReferrerId}`
+      );
+      await tx.insert(transactionsTable).values({
+        transactionId: `INC-${txId.slice(4)}`,
+        userId: influencerReferrerId,
+        type: "influencer_commission",
+        amount: commissionAmount.toFixed(2),
+        status: "completed",
+        paymentMethod: "internal",
+        description: `Influencer commission (${Math.round(commissionRatePct)}%) on ${subType} subscription`,
+        reference: txId,
+      });
+    }
+
     result = {
       hasSubscription: true,
       subscriptionType: subType,
@@ -204,7 +252,18 @@ router.post("/purchase", authMiddleware, async (req: AuthRequest, res): Promise<
     };
   });
 
-  if (result) res.json(result);
+  if (result) {
+    // Fire-and-forget notification after commit (commission itself was handled atomically inside the tx)
+    if (influencerReferrerId && commissionAmount > 0) {
+      notify(
+        influencerReferrerId,
+        "deposit_received",
+        "Commission Earned 🎯",
+        `+${commissionAmount.toFixed(2)} influencer commission from a referral's ${subType} subscription`
+      ).catch(() => {});
+    }
+    res.json(result);
+  }
 });
 
 export default router;

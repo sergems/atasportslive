@@ -690,6 +690,160 @@ router.get("/sessions", authMiddleware, requireRole("admin"), async (req: AuthRe
   res.json(result);
 });
 
+// ── Influencer Management ─────────────────────────────────────────────────────
+
+/** Generate a unique influencer referral code with INF prefix */
+async function createInfluencerCode(): Promise<string> {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  for (let attempt = 0; attempt < 15; attempt++) {
+    let suffix = "";
+    for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+    const code = `INF${suffix}`;
+    const [existing] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.referralCode, code))
+      .limit(1);
+    if (!existing) return code;
+  }
+  return `INF${Date.now().toString(36).toUpperCase().slice(-6)}`;
+}
+
+// Set or unset influencer status for a user
+router.patch("/users/:id/set-influencer", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    res.status(400).json({ error: "Invalid userId" });
+    return;
+  }
+
+  const { isInfluencer } = req.body as { isInfluencer: boolean };
+  if (typeof isInfluencer !== "boolean") {
+    res.status(400).json({ error: "isInfluencer (boolean) required" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+  let newReferralCode = user.referralCode;
+
+  if (isInfluencer && !user.isInfluencer) {
+    // Promote: generate a new INF-prefixed referral code
+    newReferralCode = await createInfluencerCode();
+  } else if (!isInfluencer && user.isInfluencer) {
+    // Demote: generate a regular referral code
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    newReferralCode = code;
+  }
+
+  await db.update(usersTable)
+    .set({ isInfluencer, referralCode: newReferralCode })
+    .where(eq(usersTable.id, userId));
+
+  res.json({ ok: true, isInfluencer, referralCode: newReferralCode });
+});
+
+// List all influencers with referral counts and total commissions paid out
+router.get("/influencers", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const influencers = await db
+    .select({
+      id: usersTable.id,
+      fullName: usersTable.fullName,
+      username: usersTable.username,
+      email: usersTable.email,
+      referralCode: usersTable.referralCode,
+      createdAt: usersTable.createdAt,
+      status: usersTable.status,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.isInfluencer, true))
+    .orderBy(desc(usersTable.createdAt));
+
+  // Enrich with referral counts and total commissions
+  const enriched = await Promise.all(
+    influencers.map(async (inf: typeof influencers[number]) => {
+      const [refCount] = await db
+        .select({ referralCount: sql<number>`count(*)` })
+        .from(usersTable)
+        .where(eq(usersTable.referredBy, inf.id));
+
+      const [commRow] = await db
+        .select({ totalCommission: sql<number>`coalesce(sum(amount::numeric), 0)` })
+        .from(transactionsTable)
+        .where(
+          and(
+            eq(transactionsTable.userId, inf.id),
+            eq(transactionsTable.type, "influencer_commission")
+          )
+        );
+
+      return {
+        ...inf,
+        referralCount: Number(refCount?.referralCount ?? 0),
+        totalCommissionEarned: parseFloat(String(commRow?.totalCommission ?? 0)) || 0,
+      };
+    })
+  );
+
+  res.json(enriched);
+});
+
+// Get referrals for a specific influencer
+router.get("/influencers/:id/referrals", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const influencerId = Number(req.params.id);
+  if (!Number.isInteger(influencerId) || influencerId <= 0) {
+    res.status(400).json({ error: "Invalid influencer id" });
+    return;
+  }
+
+  const [influencer] = await db
+    .select({ id: usersTable.id, isInfluencer: usersTable.isInfluencer, fullName: usersTable.fullName })
+    .from(usersTable)
+    .where(eq(usersTable.id, influencerId))
+    .limit(1);
+
+  if (!influencer) { res.status(404).json({ error: "User not found" }); return; }
+  if (!influencer.isInfluencer) { res.status(400).json({ error: "User is not an influencer" }); return; }
+
+  const referrals = await db
+    .select({
+      id: usersTable.id,
+      fullName: usersTable.fullName,
+      username: usersTable.username,
+      email: usersTable.email,
+      status: usersTable.status,
+      createdAt: usersTable.createdAt,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.referredBy, influencerId))
+    .orderBy(desc(usersTable.createdAt));
+
+  // Per-referral subscription spend
+  const enriched = await Promise.all(
+    referrals.map(async (ref: typeof referrals[number]) => {
+      const [spendRow] = await db
+        .select({ totalSpend: sql<number>`coalesce(sum(amount::numeric), 0)` })
+        .from(transactionsTable)
+        .where(
+          and(
+            eq(transactionsTable.userId, ref.id),
+            eq(transactionsTable.type, "stream_access")
+          )
+        );
+      return { ...ref, totalSubscriptionSpend: parseFloat(String(spendRow?.totalSpend ?? 0)) || 0 };
+    })
+  );
+
+  res.json({
+    influencer: { id: influencer.id, fullName: influencer.fullName },
+    referrals: enriched,
+    total: enriched.length,
+  });
+});
+
 router.delete("/sessions/:userId", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const userId = parseInt(req.params.userId as string);
   if (isNaN(userId)) { res.status(400).json({ error: "Invalid userId" }); return; }

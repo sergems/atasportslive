@@ -11,7 +11,7 @@ import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
   CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet, KeyRound,
   History, TrendingUp, TrendingDown, ArrowLeftRight, AlertCircle, ChevronLeft, ChevronRight,
-  Check, XCircle, RefreshCw, Loader2
+  Check, XCircle, RefreshCw, Loader2, Star
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -680,6 +680,9 @@ export default function AdminUsers() {
   const [walletAdjustFor, setWalletAdjustFor] = useState<number | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<number | null>(null);
   const [txHistoryFor, setTxHistoryFor] = useState<number | null>(null);
+  const [influencerPending, setInfluencerPending] = useState<number | null>(null);
+  // Local override map for influencer status (userId → isInfluencer) after toggle
+  const [influencerOverrides, setInfluencerOverrides] = useState<Record<number, boolean>>({});
 
   // Standard list (all users or search)
   const { data: allData, isLoading: allLoading } = useListUsers(
@@ -734,6 +737,27 @@ export default function AdminUsers() {
       invalidate();
       toast.success(suspended ? 'User suspended' : 'User reactivated');
     } catch (err: any) { toast.error(err?.data?.error || 'Failed'); }
+  };
+
+  const handleInfluencerToggle = async (id: number, currentIsInfluencer: boolean) => {
+    const next = !currentIsInfluencer;
+    setInfluencerPending(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/set-influencer`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ isInfluencer: next }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed');
+      setInfluencerOverrides(prev => ({ ...prev, [id]: next }));
+      toast.success(next ? 'User is now an influencer' : 'Influencer status removed');
+      invalidate();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update influencer status');
+    } finally {
+      setInfluencerPending(null);
+    }
   };
 
   const pendingCount = ficaCount?.total ?? 0;
@@ -874,6 +898,24 @@ export default function AdminUsers() {
                           <KeyRound className="h-3 w-3" />
                         </Button>
                         )}
+                        {(() => {
+                          const isInf = influencerOverrides[user.id] !== undefined
+                            ? influencerOverrides[user.id]
+                            : (user as any).isInfluencer ?? false;
+                          return (
+                            <Button
+                              size="sm" variant="ghost"
+                              onClick={() => handleInfluencerToggle(user.id, isInf)}
+                              disabled={influencerPending === user.id}
+                              className={`h-5 w-6 p-0 rounded-sm ${isInf ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
+                              title={isInf ? 'Remove Influencer Status' : 'Make Influencer'}
+                            >
+                              {influencerPending === user.id
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <Star className="h-3 w-3" />}
+                            </Button>
+                          );
+                        })()}
                         <Button
                           size="sm" variant="ghost"
                           onClick={() => handleSuspend(user.id, user.status === 'active')}

@@ -25,6 +25,7 @@ import {
   ChevronRight,
   MonitorSmartphone,
   Tv2,
+  Star,
 } from 'lucide-react';
 
 function usePendingWithdrawalCount() {
@@ -99,6 +100,7 @@ const navItems = [
   { href: '/admin/bets',                label: 'Manage Bets',         icon: Swords,                                minLevel: 2 },
   { href: '/admin/wallets',          label: 'Wallets',       icon: Wallet,                                minLevel: 2 },
   { href: '/admin/withdrawals',      label: 'Withdrawals',   icon: ArrowUpRight, badge: true,             minLevel: 2 },
+  { href: '/admin/influencers',      label: 'Influencers',   icon: Star,                                  minLevel: 2 },
   { href: '/admin/promotions',       label: 'Promotions',    icon: Gift,                                  minLevel: 2 },
   { href: '/admin/vouchers',         label: 'Vouchers',      icon: Ticket,                                minLevel: 2 },
   { href: '/admin/reports',          label: 'Reports',       icon: BarChart2,                             minLevel: 2 },

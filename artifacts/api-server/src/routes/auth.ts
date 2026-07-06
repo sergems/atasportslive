@@ -60,6 +60,7 @@ function userPayload(user: typeof usersTable.$inferSelect) {
     idNumber: user.idNumber ?? null,
     country: user.country ?? null,
     ficaCompleted: user.ficaCompleted ?? false,
+    isInfluencer: user.isInfluencer ?? false,
   };
 }
 

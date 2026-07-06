@@ -43,6 +43,7 @@ import AdminWithdrawals from "@/pages/admin/withdrawals";
 import AdminPromotions from "@/pages/admin/promotions";
 import AdminBets from "@/pages/admin/bets";
 import AdminSessions from "@/pages/admin/sessions";
+import AdminInfluencers from "@/pages/admin/influencers";
 import FinanceDashboard from "@/pages/finance/dashboard";
 import FinanceWithdrawals from "@/pages/finance/withdrawals";
 import { FinanceLayout } from "@/components/layout/FinanceLayout";
@@ -188,6 +189,9 @@ function Router() {
         </Route>
         <Route path="/admin/withdrawals">
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminWithdrawals /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/influencers">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminInfluencers /></AdminLayout>} />}
         </Route>
         <Route path="/admin/promotions">
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminPromotions /></AdminLayout>} />}

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Settings, Save, ExternalLink, CheckCircle2, AlertCircle,
   CreditCard, Eye, EyeOff, Shield, Globe, Mail, Lock, Server, Send, Zap, Power,
-  Database, Download, Upload, AlertTriangle, Users,
+  Database, Download, Upload, AlertTriangle, Users, Star,
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -40,6 +40,7 @@ export default function AdminSettings() {
   const [priceYearly,  setPriceYearly]  = useState('99.00');
 
   const [referralBonusPct, setReferralBonusPct] = useState('10');
+  const [influencerCommissionRate, setInfluencerCommissionRate] = useState('30');
 
   const [pesapalKey, setPesapalKey] = useState('');
   const [pesapalSecret, setPesapalSecret] = useState('');
@@ -134,6 +135,7 @@ export default function AdminSettings() {
       setPriceMonthly(settings.price_monthly ?? '20.00');
       setPriceYearly(settings.price_yearly   ?? '99.00');
       setReferralBonusPct(settings.referral_bonus_pct ?? '10');
+      setInfluencerCommissionRate(settings.influencer_commission_rate ?? '30');
       setPesapalKey(settings.pesapal_consumer_key ?? '');
       setPesapalSecret(settings.pesapal_consumer_secret ?? '');
       setPesapalEnv((settings.pesapal_environment as 'sandbox' | 'live') ?? 'live');
@@ -310,6 +312,54 @@ export default function AdminSettings() {
             <Save className="h-4 w-4" />
             {saveMutation.isPending ? 'Saving…' : 'Save Prices'}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* ── Influencer Commission ── */}
+      <Card className="bg-slate-900 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Star className="h-4 w-4 text-amber-400" /> Influencer Commission
+          </CardTitle>
+          <CardDescription className="text-slate-400">
+            When a referred user purchases any subscription, the influencer who referred them receives this percentage of the subscription price directly into their main (withdrawable) wallet.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-end gap-3">
+            <div className="space-y-1.5 w-40">
+              <Label className="text-slate-300 text-sm">Commission Percentage</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={influencerCommissionRate}
+                  onChange={e => setInfluencerCommissionRate(e.target.value)}
+                  className="bg-slate-800 border-slate-700 text-white font-mono text-sm pr-8"
+                  disabled={isLoading}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">%</span>
+              </div>
+            </div>
+            <Button
+              onClick={() => {
+                const v = parseFloat(influencerCommissionRate);
+                if (isNaN(v) || v < 0 || v > 100) { toast.error('Enter a value between 0 and 100'); return; }
+                saveMutation.mutate({ influencer_commission_rate: v.toString() });
+              }}
+              disabled={saveMutation.isPending || isLoading}
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold gap-2"
+            >
+              <Save className="h-4 w-4" />
+              {saveMutation.isPending ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+          <p className="text-xs text-slate-500">
+            Current rate: <span className="text-amber-400 font-mono font-semibold">{settings?.influencer_commission_rate ?? '30'}%</span> of the subscription price, credited as real cash (not bonus).
+            Set to <span className="font-mono">0</span> to pause influencer payouts. Manage influencers under the <span className="text-amber-400">Influencers</span> menu.
+          </p>
         </CardContent>
       </Card>
 

@@ -10,8 +10,122 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   CheckCircle, Mail, Phone, User, Link2, Unlink, KeyRound, Gift, Copy, Check,
-  AtSign, Lock, ShieldCheck, ShieldAlert, Calendar, CreditCard, Globe, Camera, Loader2,
+  AtSign, Lock, ShieldCheck, ShieldAlert, Calendar, CreditCard, Globe, Camera, Loader2, Star, DollarSign, Users,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuthStore } from '@/lib/auth-store';
+
+function InfluencerDashboard({ referralCode }: { referralCode: string | null }) {
+  const token = useAuthStore((s) => s.token);
+  const [copied, setCopied] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['influencer-my-referrals'],
+    queryFn: async () => {
+      const res = await fetch('/api/influencers/my-referrals', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to load referral data');
+      return res.json() as Promise<{
+        referrals: Array<{ id: number; fullName: string; username: string | null; joinedAt: string }>;
+        totalReferrals: number;
+        totalCommissionEarned: number;
+      }>;
+    },
+    enabled: !!token,
+  });
+
+  const SITE_ORIGIN = 'https://atasportslive.com';
+  const referralLink = referralCode ? `${SITE_ORIGIN}/register?ref=${referralCode}` : null;
+
+  const handleCopy = () => {
+    if (referralLink) {
+      navigator.clipboard.writeText(referralLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <Card className="bg-card/50 backdrop-blur-sm border-amber-500/20">
+      <CardHeader>
+        <CardTitle className="text-white text-lg flex items-center gap-2">
+          <Star className="h-4 w-4 text-amber-400" /> Influencer Dashboard
+        </CardTitle>
+        <CardDescription>
+          You're an influencer! Share your link — earn a commission directly to your main wallet every time someone you referred buys a subscription.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg bg-slate-900 border border-slate-700 px-3 py-2.5 flex items-center gap-2">
+            <Users className="h-4 w-4 text-teal-400 shrink-0" />
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Referrals</p>
+              <p className="text-lg font-bold text-white font-mono">
+                {isLoading ? '…' : (data?.totalReferrals ?? 0)}
+              </p>
+            </div>
+          </div>
+          <div className="rounded-lg bg-slate-900 border border-slate-700 px-3 py-2.5 flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-emerald-400 shrink-0" />
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Earned</p>
+              <p className="text-lg font-bold text-emerald-400 font-mono">
+                {isLoading ? '…' : `${(data?.totalCommissionEarned ?? 0).toFixed(2)}`}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Influencer code */}
+        {referralCode && (
+          <>
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900 border border-amber-500/20 px-3 py-2">
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Your influencer code</p>
+                <p className="font-mono text-lg font-bold text-amber-400 tracking-widest">{referralCode}</p>
+              </div>
+              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px] shrink-0">
+                <Star className="h-2.5 w-2.5 mr-1" /> Influencer
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
+              <p className="text-xs text-slate-400 font-mono break-all flex-1">{referralLink}</p>
+              <Button size="sm" variant="outline" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 h-7 gap-1.5 shrink-0" onClick={handleCopy}>
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? 'Copied!' : 'Copy'}
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Referral list */}
+        {!isLoading && data && data.referrals.length > 0 && (
+          <div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">People you referred</p>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {data.referrals.map((ref) => (
+                <div key={ref.id} className="flex items-center justify-between rounded bg-slate-900 border border-slate-800 px-2.5 py-1.5">
+                  <div>
+                    <p className="text-xs font-medium text-white">{ref.fullName}</p>
+                    {ref.username && <p className="text-[10px] text-slate-500">@{ref.username}</p>}
+                  </div>
+                  <p className="text-[10px] text-slate-600">{new Date(ref.joinedAt).toLocaleDateString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isLoading && data && data.referrals.length === 0 && (
+          <p className="text-xs text-slate-500 text-center py-2">No referrals yet. Share your link to start earning!</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const ID_TYPES = [
   { value: 'national_id',       label: 'National ID' },
@@ -533,8 +647,13 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* ── Refer & Earn ───────────────────────────────────────── */}
-        {user.referralCode && (
+        {/* ── Influencer Dashboard ───────────────────────────────── */}
+        {(user as any).isInfluencer && (
+          <InfluencerDashboard referralCode={user.referralCode} />
+        )}
+
+        {/* ── Refer & Earn (regular users only) ─────────────────── */}
+        {user.referralCode && !(user as any).isInfluencer && (
           <Card className="bg-card/50 backdrop-blur-sm border-teal-500/20">
             <CardHeader>
               <CardTitle className="text-white text-lg flex items-center gap-2">

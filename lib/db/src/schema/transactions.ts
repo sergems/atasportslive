@@ -15,6 +15,7 @@ export const transactionTypeEnum = pgEnum("transaction_type", [
   "admin_credit",
   "admin_debit",
   "referral_bonus",
+  "influencer_commission",
 ]);
 
 export const transactionStatusEnum = pgEnum("transaction_status", [
