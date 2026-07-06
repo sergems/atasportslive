@@ -239,7 +239,7 @@ function NoLiveBroadcast({ channelLabel }: { channelLabel: string }) {
   const next = upcoming?.[0];
   const nextCountdown = useCountdown(next?.startTime);
   return (
-    <div className="relative w-full aspect-video bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col items-center justify-center">
+    <div className="relative w-full max-w-[50%] mx-auto aspect-video bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col items-center justify-center">
       {/* Subtle radial glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(20,184,166,0.06)_0%,_transparent_70%)]" />
 
