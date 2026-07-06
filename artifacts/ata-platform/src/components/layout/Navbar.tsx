@@ -140,8 +140,8 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: 'Home', exact: true, pulse: false, ch1: false },
     { href: '/live', label: 'Livestream', pulse: ch1Live, mobileHide: true, ch1: true },
-    ...(ch2Enabled ? [{ href: '/live-2', label: 'Livestream 2', pulse: ch2Live, mobileHide: true, ch1: false }] : []),
-    ...(ch3Enabled ? [{ href: '/live-3', label: 'Livestream 3', pulse: ch3Live, mobileHide: true, ch1: false }] : []),
+    ...(ch2Live ? [{ href: '/live-2', label: 'Livestream 2', pulse: true, mobileHide: true, ch1: false }] : []),
+    ...(ch3Live ? [{ href: '/live-3', label: 'Livestream 3', pulse: true, mobileHide: true, ch1: false }] : []),
     { href: '/streams', label: 'Events', pulse: false, ch1: false },
     { href: '/upcoming', label: 'Upcoming', pulse: false, ch1: false },
     { href: '/highlights', label: 'Highlights', pulse: false, ch1: false },
