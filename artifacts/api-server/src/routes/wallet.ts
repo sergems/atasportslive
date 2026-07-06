@@ -317,8 +317,10 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
     }).catch(() => {});
   }
 
-  // Email all manager-level users (finance notifications)
-  const financeUsers = await db.select().from(usersTable).where(eq(usersTable.role as any, "manager" as any));
+  // Email all manager and finance-role users
+  const financeUsers = await db.select().from(usersTable).where(
+    sql`role IN ('manager', 'finance')`
+  );
   const approvedList = await db.select().from(transactionsTable).where(
     eq(transactionsTable.status, "approved")
   );
@@ -348,7 +350,7 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
 });
 
 // Finance: mark approved withdrawal as paid (actual payment confirmed)
-router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("admin", "manager", "finance"), async (req: AuthRequest, res): Promise<void> => {
   const id = Number(req.params.id);
   const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   if (!tx || tx.type !== "withdrawal" || tx.status !== "approved") {

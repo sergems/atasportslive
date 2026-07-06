@@ -55,6 +55,7 @@ import Terms from "@/pages/terms";
 // Role sets used by route guards
 const CE_ROLES  = ['admin', 'manager', 'content_editor']; // content editor and above
 const MGR_ROLES = ['admin', 'manager'];                   // manager and above
+const FIN_ROLES = ['admin', 'manager', 'finance'];        // finance and above
 const ADM_ROLES = ['admin'];                              // admin only
 
 const queryClient = new QueryClient({
@@ -203,12 +204,12 @@ function Router() {
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminLivestreamSettings /></AdminLayout>} />}
         </Route>
 
-        {/* ── Finance routes (manager + admin) ─────────────────────────── */}
+        {/* ── Finance routes (finance + manager + admin) ─────────────── */}
         <Route path="/finance/dashboard">
-          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
+          {() => <ProtectedRoute allowedRoles={FIN_ROLES} component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
         </Route>
         <Route path="/finance/withdrawals">
-          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <FinanceLayout><FinanceWithdrawals /></FinanceLayout>} />}
+          {() => <ProtectedRoute allowedRoles={FIN_ROLES} component={() => <FinanceLayout><FinanceWithdrawals /></FinanceLayout>} />}
         </Route>
 
         <Route component={NotFound} />
