@@ -771,7 +771,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'admin';
-  const isManager = isAdmin || user?.role === 'manager';
+  const isManager = isAdmin || (user?.role as string) === 'manager';
   const qc = useQueryClient();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);

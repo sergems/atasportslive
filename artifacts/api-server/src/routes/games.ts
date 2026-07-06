@@ -129,126 +129,152 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "manager"), asyn
     return;
   }
 
-  const [game] = await db.update(gamesTable).set({ status: "completed", result }).where(eq(gamesTable.id, id)).returning();
+  // Collect side-effects (notifications, emails) to run AFTER the transaction commits
+  type SideEffect = () => Promise<void>;
+  const sideEffects: SideEffect[] = [];
 
-  const gameName = `${game.playerA} vs ${game.playerB}`;
+  // Wrap every DB write in a single atomic transaction — if any step fails the
+  // game stays in its previous state and no balances are changed.
+  let game: typeof gamesTable.$inferSelect;
+  try {
+    game = await db.transaction(async (tx: any) => {
+      const [settled] = await tx
+        .update(gamesTable)
+        .set({ status: "completed", result })
+        .where(eq(gamesTable.id, id))
+        .returning();
+      if (!settled) throw new Error("Game not found");
 
-  // 1. Settle all matched bets
-  const matchedBets = await db.select().from(betsTable).where(and(eq(betsTable.gameId, id), eq(betsTable.status, "matched")));
+      const gameName = `${settled.playerA} vs ${settled.playerB}`;
 
-  for (const bet of matchedBets) {
-    const isWinner = bet.outcome === result;
-    const newStatus = result === "draw" ? "refunded" : isWinner ? "won" : "lost";
+      // 1. Settle matched bets
+      const matchedBets = await tx
+        .select()
+        .from(betsTable)
+        .where(and(eq(betsTable.gameId, id), eq(betsTable.status, "matched")));
 
-    await db.update(betsTable).set({ status: newStatus, settledAt: new Date() }).where(eq(betsTable.id, bet.id));
+      for (const bet of matchedBets) {
+        const isWinner = bet.outcome === result;
+        const newStatus = result === "draw" ? "refunded" : isWinner ? "won" : "lost";
 
-    if (newStatus === "won") {
-      const payout = parseFloat(bet.potentialReturn as string);
-      const betStake = parseFloat(bet.stake as string);
-      // Credit winnings and move stake out of pending
-      await db.update(walletsTable).set({
-        balance: sql`balance + ${payout}`,
-        availableBalance: sql`available_balance + ${payout}`,
-        withdrawableBalance: sql`withdrawable_balance + ${payout}`,
-        pendingBalance: sql`GREATEST(0, pending_balance - ${betStake})`,
-      }).where(eq(walletsTable.userId, bet.userId));
-      await db.insert(transactionsTable).values({
-        transactionId: `WIN-${uuidv4().split("-")[0].toUpperCase()}`,
-        userId: bet.userId,
-        type: "bet_win",
-        amount: payout.toString(),
-        status: "completed",
-        paymentMethod: "internal",
-        description: `Bet win — ${gameName} · ticket ${bet.ticketId}`,
-      });
-      await notify(bet.userId, "bet_won", "You Won!", `Congratulations! You won $${payout.toFixed(2)} on your bet.`);
-      const [winUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
-      if (winUser?.email) {
-        sendMail({
-          to: winUser.email,
-          subject: `You Won $${payout.toFixed(2)}! – ATA Sports Live`,
-          html: templates.betWon({
-            name: winUser.fullName ?? winUser.email,
-            stake: parseFloat(bet.stake as string),
-            payout,
-            gameName,
-          }),
-        }).catch(() => {});
+        await tx
+          .update(betsTable)
+          .set({ status: newStatus, settledAt: new Date() })
+          .where(eq(betsTable.id, bet.id));
+
+        if (newStatus === "won") {
+          const payout = parseFloat(bet.potentialReturn as string);
+          const betStake = parseFloat(bet.stake as string);
+          await tx.update(walletsTable).set({
+            balance: sql`balance + ${payout}`,
+            availableBalance: sql`available_balance + ${payout}`,
+            withdrawableBalance: sql`withdrawable_balance + ${payout}`,
+            pendingBalance: sql`GREATEST(0, pending_balance - ${betStake})`,
+          }).where(eq(walletsTable.userId, bet.userId));
+          await tx.insert(transactionsTable).values({
+            transactionId: `WIN-${uuidv4().split("-")[0].toUpperCase()}`,
+            userId: bet.userId,
+            type: "bet_win",
+            amount: payout.toString(),
+            status: "completed",
+            paymentMethod: "internal",
+            description: `Bet win — ${gameName} · ticket ${bet.ticketId}`,
+          });
+          sideEffects.push(async () => {
+            await notify(bet.userId, "bet_won", "You Won!", `Congratulations! You won ${payout.toFixed(2)} on your bet.`);
+            const [winUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
+            if (winUser?.email) {
+              sendMail({
+                to: winUser.email,
+                subject: `You Won ${payout.toFixed(2)}! – ATA Sports Live`,
+                html: templates.betWon({ name: winUser.fullName ?? winUser.email, stake: parseFloat(bet.stake as string), payout, gameName }),
+              }).catch(() => {});
+            }
+          });
+        } else if (newStatus === "refunded") {
+          const refund = parseFloat(bet.stake as string);
+          await tx.update(walletsTable).set({
+            balance: sql`balance + ${refund}`,
+            availableBalance: sql`available_balance + ${refund}`,
+            pendingBalance: sql`GREATEST(0, pending_balance - ${refund})`,
+          }).where(eq(walletsTable.userId, bet.userId));
+          await tx.insert(transactionsTable).values({
+            transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
+            userId: bet.userId,
+            type: "bet_refund",
+            amount: refund.toString(),
+            status: "completed",
+            paymentMethod: "internal",
+            description: `Bet refund (draw) — ${gameName} · ticket ${bet.ticketId}`,
+          });
+          sideEffects.push(() => notify(bet.userId, "bet_refunded", "Bet Refunded", `Your bet was refunded due to a draw.`));
+        } else {
+          // Lost — move stake out of pending (money already deducted at bet time)
+          const lostStake = parseFloat(bet.stake as string);
+          await tx.update(walletsTable).set({
+            pendingBalance: sql`GREATEST(0, pending_balance - ${lostStake})`,
+          }).where(eq(walletsTable.userId, bet.userId));
+          await tx.insert(transactionsTable).values({
+            transactionId: `LST-${uuidv4().split("-")[0].toUpperCase()}`,
+            userId: bet.userId,
+            type: "bet_stake",
+            amount: lostStake.toString(),
+            status: "completed",
+            paymentMethod: "internal",
+            description: `Bet lost — ${gameName} · ticket ${bet.ticketId}`,
+          });
+          sideEffects.push(async () => {
+            await notify(bet.userId, "bet_lost", "Bet Lost", `Your bet on ${gameName} did not win. Better luck next time!`);
+            const [lostUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
+            if (lostUser?.email) {
+              sendMail({
+                to: lostUser.email,
+                subject: `Bet Result – ATA Sports Live`,
+                html: templates.betLost({ name: lostUser.fullName ?? lostUser.email, stake: parseFloat(bet.stake as string), gameName }),
+              }).catch(() => {});
+            }
+          });
+        }
+        sideEffects.push(() => notify(bet.userId, "match_result", "Match Result", `${gameName} result: ${result.replace(/_/g, " ")}`));
       }
-    } else if (newStatus === "refunded") {
-      const refund = parseFloat(bet.stake as string);
-      await db.update(walletsTable).set({
-        balance: sql`balance + ${refund}`,
-        availableBalance: sql`available_balance + ${refund}`,
-        pendingBalance: sql`GREATEST(0, pending_balance - ${refund})`,
-      }).where(eq(walletsTable.userId, bet.userId));
-      await db.insert(transactionsTable).values({
-        transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
-        userId: bet.userId,
-        type: "bet_refund",
-        amount: refund.toString(),
-        status: "completed",
-        paymentMethod: "internal",
-        description: `Bet refund (draw) — ${gameName} · ticket ${bet.ticketId}`,
-      });
-      await notify(bet.userId, "bet_refunded", "Bet Refunded", `Your bet was refunded due to a draw.`);
-    } else {
-      // Lost — move stake out of pending (money already deducted at bet time)
-      const lostStake = parseFloat(bet.stake as string);
-      await db.update(walletsTable).set({
-        pendingBalance: sql`GREATEST(0, pending_balance - ${lostStake})`,
-      }).where(eq(walletsTable.userId, bet.userId));
-      // Create a record so the transaction history is complete
-      await db.insert(transactionsTable).values({
-        transactionId: `LST-${uuidv4().split("-")[0].toUpperCase()}`,
-        userId: bet.userId,
-        type: "bet_stake",
-        amount: lostStake.toString(),
-        status: "completed",
-        paymentMethod: "internal",
-        description: `Bet lost — ${gameName} · ticket ${bet.ticketId}`,
-      });
-      await notify(bet.userId, "bet_lost", "Bet Lost", `Your bet on ${gameName} did not win. Better luck next time!`);
-      const [lostUser] = await db.select().from(usersTable).where(eq(usersTable.id, bet.userId)).limit(1);
-      if (lostUser?.email) {
-        sendMail({
-          to: lostUser.email,
-          subject: `Bet Result – ATA Sports Live`,
-          html: templates.betLost({
-            name: lostUser.fullName ?? lostUser.email,
-            stake: parseFloat(bet.stake as string),
-            gameName,
-          }),
-        }).catch(() => {});
+
+      // 2. Refund all still-pending (unmatched) bets — event is over
+      const pendingBets = await tx
+        .select()
+        .from(betsTable)
+        .where(and(eq(betsTable.gameId, id), eq(betsTable.status, "pending")));
+
+      for (const bet of pendingBets) {
+        const refund = parseFloat(bet.stake as string);
+        await tx.update(betsTable).set({ status: "refunded", settledAt: new Date() }).where(eq(betsTable.id, bet.id));
+        await tx.update(walletsTable).set({
+          balance: sql`balance + ${refund}`,
+          availableBalance: sql`available_balance + ${refund}`,
+          pendingBalance: sql`GREATEST(0, pending_balance - ${refund})`,
+        }).where(eq(walletsTable.userId, bet.userId));
+        await tx.insert(transactionsTable).values({
+          transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
+          userId: bet.userId,
+          type: "bet_refund",
+          amount: refund.toString(),
+          status: "completed",
+          paymentMethod: "internal",
+          description: `Unmatched bet refund — ${gameName} · ticket ${bet.ticketId}`,
+        });
+        sideEffects.push(() => notify(bet.userId, "bet_refunded", "Unmatched Bet Refunded", `Your unmatched bet of ${refund.toFixed(2)} on ${gameName} has been refunded.`));
       }
-    }
-    await notify(bet.userId, "match_result", "Match Result", `${gameName} result: ${result.replace(/_/g, " ")}`);
-  }
 
-  // 2. Refund all still-pending (unmatched) bets — the event is over, they can no longer be matched
-  const pendingBets = await db.select().from(betsTable).where(and(eq(betsTable.gameId, id), eq(betsTable.status, "pending")));
+      await tx.update(gamesTable).set({ openBetsCount: 0 }).where(eq(gamesTable.id, id));
 
-  for (const bet of pendingBets) {
-    const refund = parseFloat(bet.stake as string);
-    await db.update(betsTable).set({ status: "refunded", settledAt: new Date() }).where(eq(betsTable.id, bet.id));
-    await db.update(walletsTable).set({
-      balance: sql`balance + ${refund}`,
-      availableBalance: sql`available_balance + ${refund}`,
-      pendingBalance: sql`GREATEST(0, pending_balance - ${refund})`,
-    }).where(eq(walletsTable.userId, bet.userId));
-    await db.insert(transactionsTable).values({
-      transactionId: `REF-${uuidv4().split("-")[0].toUpperCase()}`,
-      userId: bet.userId,
-      type: "bet_refund",
-      amount: refund.toString(),
-      status: "completed",
-      paymentMethod: "internal",
-      description: `Unmatched bet refund — ${gameName} · ticket ${bet.ticketId}`,
+      return settled;
     });
-    await notify(bet.userId, "bet_refunded", "Unmatched Bet Refunded", `Your unmatched bet of $${refund.toFixed(2)} on ${gameName} has been refunded.`);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Settlement failed" });
+    return;
   }
 
-  await db.update(gamesTable).set({ openBetsCount: 0 }).where(eq(gamesTable.id, id));
+  // Run notifications and emails after the transaction has committed
+  await Promise.allSettled(sideEffects.map((fn) => fn()));
 
   res.json(toGame(game));
 });

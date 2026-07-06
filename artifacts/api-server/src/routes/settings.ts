@@ -6,7 +6,28 @@ import { sendMail } from "../lib/mailer";
 
 const router = Router();
 
-router.get("/", async (_req, res): Promise<void> => {
+// Keys safe to expose publicly (no credentials)
+const PUBLIC_SETTING_KEYS = new Set([
+  "mux_is_live", "mux_playback_id", "mux_stream_db_id", "mux_title", "mux_price",
+  "yt_is_live", "yt_video_id", "yt_stream_db_id", "yt_title", "yt_price",
+  "ch2_mux_is_live", "ch2_mux_playback_id", "ch2_mux_stream_db_id", "ch2_mux_title", "ch2_mux_price",
+  "ch2_yt_is_live", "ch2_yt_video_id", "ch2_yt_stream_db_id", "ch2_yt_title", "ch2_yt_price",
+  "ch3_mux_is_live", "ch3_mux_playback_id", "ch3_mux_stream_db_id", "ch3_mux_title", "ch3_mux_price",
+  "ch3_yt_is_live", "ch3_yt_video_id", "ch3_yt_stream_db_id", "ch3_yt_title", "ch3_yt_price",
+]);
+
+// Public settings — only non-sensitive keys, no auth required
+router.get("/public", async (_req, res): Promise<void> => {
+  const rows = await db.execute(sql`SELECT key, value FROM settings`);
+  const obj: Record<string, string> = {};
+  for (const row of rows.rows as { key: string; value: string }[]) {
+    if (PUBLIC_SETTING_KEYS.has(row.key)) obj[row.key] = row.value ?? "";
+  }
+  res.json(obj);
+});
+
+// Full settings — admin/manager only (contains SMTP, payment credentials)
+router.get("/", authMiddleware, requireRole("admin", "manager"), async (_req: AuthRequest, res): Promise<void> => {
   const rows = await db.execute(sql`SELECT key, value FROM settings`);
   const obj: Record<string, string> = {};
   for (const row of rows.rows as { key: string; value: string }[]) {

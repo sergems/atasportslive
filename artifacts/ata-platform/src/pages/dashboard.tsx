@@ -68,7 +68,8 @@ export default function Dashboard() {
   const { data: recentTx, isLoading: loadingTx } = useListTransactions({ limit: 5 });
   const { data: liveStream } = useLive();
   const { data: upcomingGames } = useUpcomingGames();
-  const { data: notifData } = useListNotifications({ unreadOnly: true }, { query: { refetchInterval: 30000 } });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: notifData } = useListNotifications({ unreadOnly: true }, { query: { refetchInterval: 30000 } as any });
   const unreadCount = notifData?.unreadCount ?? 0;
 
   const firstName = user?.fullName?.split(' ')[0] ?? 'there';

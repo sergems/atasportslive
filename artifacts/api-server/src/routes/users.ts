@@ -143,7 +143,7 @@ router.patch("/:id/role", authMiddleware, requireRole("admin", "manager"), async
   const id = Number(req.params.id);
   const { role } = req.body;
 
-  const validRoles = ["user", "content_editor", "manager", "admin"];
+  const validRoles = ["guest", "user", "moderator", "content_editor", "manager", "finance", "admin"];
   if (!validRoles.includes(role)) {
     res.status(400).json({ error: `Invalid role. Must be one of: ${validRoles.join(", ")}` });
     return;

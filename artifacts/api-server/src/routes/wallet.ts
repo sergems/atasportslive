@@ -31,6 +31,23 @@ async function getSetting(key: string): Promise<string | null> {
 }
 
 /**
+ * Verify a PawaPay callback request using a shared secret stored in settings.
+ * If `pawapay_callback_token` is not configured the callback is allowed through
+ * (backwards-compatible), but a warning is logged.
+ * PawaPay sends the token as: Authorization: Bearer <token>
+ */
+async function verifyPawapayCallback(req: any): Promise<boolean> {
+  const token = await getSetting("pawapay_callback_token");
+  if (!token) {
+    logger.warn({ path: req.path }, "PawaPay callback: no token configured — accepting without verification");
+    return true;
+  }
+  const authHeader = req.headers?.authorization as string | undefined;
+  const provided = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  return provided === token;
+}
+
+/**
  * Returns true if the gateway is enabled (default: true if key not set).
  * Set `pesapal_enabled` or `pawapay_enabled` to 'false' to disable.
  */
@@ -210,26 +227,26 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
   const pawapayConfig = (isMobileMoney && pawapayGatewayEnabled) ? await getPawapayConfig() : null;
   const useInstantPayout = !!(pawapayConfig && isMobileMoney);
 
-  // Lock funds
-  await db.update(walletsTable).set({
-    withdrawableBalance: sql`withdrawable_balance - ${Number(amount)}`,
-    availableBalance: sql`available_balance - ${Number(amount)}`,
-    pendingBalance: sql`pending_balance + ${Number(amount)}`,
-  }).where(eq(walletsTable.userId, req.userId!));
-
   if (useInstantPayout && pawapayConfig) {
-    // PawaPay instant payout — UUID is the payoutId used with PawaPay
+    // PawaPay instant payout — atomic: lock funds + create tx in one transaction
     const payoutId = uuidv4();
-    const [tx] = await db.insert(transactionsTable).values({
-      transactionId: payoutId,
-      userId: req.userId!,
-      type: "withdrawal",
-      amount: Number(amount).toFixed(2),
-      status: "approved",
-      paymentMethod: "pawapay",
-      reference: userRow.payout_account,
-      description: `Instant withdrawal via PawaPay to ${userRow.payout_method.replace(/_/g, " ")} ${userRow.payout_account}`,
-    }).returning();
+    const [tx] = await db.transaction(async (dbTx: any) => {
+      await dbTx.update(walletsTable).set({
+        withdrawableBalance: sql`withdrawable_balance - ${Number(amount)}`,
+        availableBalance: sql`available_balance - ${Number(amount)}`,
+        pendingBalance: sql`pending_balance + ${Number(amount)}`,
+      }).where(eq(walletsTable.userId, req.userId!));
+      return dbTx.insert(transactionsTable).values({
+        transactionId: payoutId,
+        userId: req.userId!,
+        type: "withdrawal",
+        amount: Number(amount).toFixed(2),
+        status: "approved",
+        paymentMethod: "pawapay",
+        reference: userRow.payout_account,
+        description: `Instant withdrawal via PawaPay to ${userRow.payout_method.replace(/_/g, " ")} ${userRow.payout_account}`,
+      }).returning();
+    });
 
     try {
       await pawapayInitiatePayout(pawapayConfig, {
@@ -240,23 +257,29 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
       });
       res.status(201).json({ ...toTxResponse(tx), instant: true });
     } catch (err: any) {
-      // Rollback funds if PawaPay call fails
-      await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
-      await db.update(walletsTable).set({
-        withdrawableBalance: sql`withdrawable_balance + ${Number(amount)}`,
-        availableBalance: sql`available_balance + ${Number(amount)}`,
-        pendingBalance: sql`pending_balance - ${Number(amount)}`,
-      }).where(eq(walletsTable.userId, req.userId!));
+      // Rollback funds atomically if PawaPay call fails
+      await db.transaction(async (dbTx: any) => {
+        await dbTx.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+        await dbTx.update(walletsTable).set({
+          withdrawableBalance: sql`withdrawable_balance + ${Number(amount)}`,
+          availableBalance: sql`available_balance + ${Number(amount)}`,
+          pendingBalance: sql`pending_balance - ${Number(amount)}`,
+        }).where(eq(walletsTable.userId, req.userId!));
+      });
       req.log.error({ err }, "PawaPay payout initiation error");
       res.status(502).json({ error: err.message || "Payout gateway error. Please try again." });
     }
     return;
   }
 
-  // Standard flow: pending for admin approval (Pesapal users, BTC, or when PawaPay not configured)
-  const [tx] = await db
-    .insert(transactionsTable)
-    .values({
+  // Standard flow: pending for admin approval — lock funds + create tx atomically
+  const [tx] = await db.transaction(async (dbTx: any) => {
+    await dbTx.update(walletsTable).set({
+      withdrawableBalance: sql`withdrawable_balance - ${Number(amount)}`,
+      availableBalance: sql`available_balance - ${Number(amount)}`,
+      pendingBalance: sql`pending_balance + ${Number(amount)}`,
+    }).where(eq(walletsTable.userId, req.userId!));
+    return dbTx.insert(transactionsTable).values({
       transactionId: `WIT-${uuidv4().split("-")[0].toUpperCase()}`,
       userId: req.userId!,
       type: "withdrawal",
@@ -265,8 +288,8 @@ router.post("/withdraw", authMiddleware, async (req: AuthRequest, res): Promise<
       paymentMethod: userRow.payout_method as any,
       reference: userRow.payout_account,
       description: `Withdrawal via ${userRow.payout_method} to ${userRow.payout_account}`,
-    })
-    .returning();
+    }).returning();
+  });
   res.status(201).json(toTxResponse(tx));
 });
 
@@ -274,16 +297,24 @@ router.get("/transactions", authMiddleware, async (req: AuthRequest, res): Promi
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
   const offset = (page - 1) * limit;
+  const typeFilter = req.query.type as string | undefined;
+  const statusFilter = req.query.status as string | undefined;
+
+  const baseWhere = eq(transactionsTable.userId, req.userId!);
+  const filters = [baseWhere];
+  if (typeFilter) filters.push(eq(transactionsTable.type, typeFilter as any));
+  if (statusFilter) filters.push(eq(transactionsTable.status, statusFilter as any));
+  const where = filters.length > 1 ? and(...filters) : baseWhere;
 
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(transactionsTable)
-    .where(eq(transactionsTable.userId, req.userId!));
+    .where(where);
 
   const txs = await db
     .select()
     .from(transactionsTable)
-    .where(eq(transactionsTable.userId, req.userId!))
+    .where(where)
     .orderBy(desc(transactionsTable.createdAt))
     .limit(limit)
     .offset(offset);
@@ -357,12 +388,14 @@ router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("admin", "man
     res.status(400).json({ error: "Invalid or not yet approved withdrawal" });
     return;
   }
-  await db.update(transactionsTable).set({ status: "completed" }).where(eq(transactionsTable.id, id));
-  // Now actually deduct from balance
-  await db.update(walletsTable).set({
-    balance: sql`balance - ${parseFloat(tx.amount as string)}`,
-    pendingBalance: sql`pending_balance - ${parseFloat(tx.amount as string)}`,
-  }).where(eq(walletsTable.userId, tx.userId));
+  // Atomic: status update + balance deduction together to prevent partial state
+  await db.transaction(async (dbTx: any) => {
+    await dbTx.update(transactionsTable).set({ status: "completed" }).where(eq(transactionsTable.id, id));
+    await dbTx.update(walletsTable).set({
+      balance: sql`balance - ${parseFloat(tx.amount as string)}`,
+      pendingBalance: sql`pending_balance - ${parseFloat(tx.amount as string)}`,
+    }).where(eq(walletsTable.userId, tx.userId));
+  });
   const [paidUser] = await db.select().from(usersTable).where(eq(usersTable.id, tx.userId)).limit(1);
   await notify(tx.userId, "withdrawal_approved", "Payment Sent", `Your withdrawal of $${tx.amount} has been paid. Please check your ${tx.paymentMethod?.replace("_", " ")} account.`);
 
@@ -392,13 +425,15 @@ router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"
     res.status(400).json({ error: "Invalid withdrawal" });
     return;
   }
-  await db.update(transactionsTable).set({ status: "rejected" }).where(eq(transactionsTable.id, id));
-  // Return funds
-  await db.update(walletsTable).set({
-    withdrawableBalance: sql`withdrawable_balance + ${parseFloat(tx.amount as string)}`,
-    availableBalance: sql`available_balance + ${parseFloat(tx.amount as string)}`,
-    pendingBalance: sql`pending_balance - ${parseFloat(tx.amount as string)}`,
-  }).where(eq(walletsTable.userId, tx.userId));
+  // Atomic: status update + fund return together to prevent partial state
+  await db.transaction(async (dbTx: any) => {
+    await dbTx.update(transactionsTable).set({ status: "rejected" }).where(eq(transactionsTable.id, id));
+    await dbTx.update(walletsTable).set({
+      withdrawableBalance: sql`withdrawable_balance + ${parseFloat(tx.amount as string)}`,
+      availableBalance: sql`available_balance + ${parseFloat(tx.amount as string)}`,
+      pendingBalance: sql`pending_balance - ${parseFloat(tx.amount as string)}`,
+    }).where(eq(walletsTable.userId, tx.userId));
+  });
 
   const reason = note?.trim() ? ` Reason: ${note.trim()}` : "";
   await notify(tx.userId, "withdrawal_rejected", "Withdrawal Rejected", `Your withdrawal of $${tx.amount} has been rejected.${reason}`);
@@ -497,14 +532,24 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
     return;
   }
   const normalized = code.replace(/[-\s]/g, "").toUpperCase().trim();
+
+  // Look up the voucher first (to get its amount and give a meaningful 404)
   const [voucher] = await db.select().from(vouchersTable).where(eq(vouchersTable.code, normalized)).limit(1);
   if (!voucher) { res.status(404).json({ error: "Invalid voucher code" }); return; }
-  if (voucher.isRedeemed) { res.status(400).json({ error: "This voucher has already been redeemed" }); return; }
 
   const amount = parseFloat(voucher.amount as string);
-  const now = new Date();
 
-  await db.update(vouchersTable).set({ isRedeemed: true, redeemedBy: req.userId!, redeemedAt: now }).where(eq(vouchersTable.id, voucher.id));
+  // Atomic claim: UPDATE ... WHERE is_redeemed = false prevents double-redeem under concurrency
+  const [claimed] = await db
+    .update(vouchersTable)
+    .set({ isRedeemed: true, redeemedBy: req.userId!, redeemedAt: new Date() })
+    .where(and(eq(vouchersTable.id, voucher.id), eq(vouchersTable.isRedeemed, false)))
+    .returning();
+  if (!claimed) {
+    res.status(400).json({ error: "This voucher has already been redeemed" });
+    return;
+  }
+
   await db.update(walletsTable).set({
     balance: sql`balance + ${amount}`,
     availableBalance: sql`available_balance + ${amount}`,
@@ -521,7 +566,7 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
     description: `Voucher ${voucher.code} redeemed`,
   }).returning();
 
-  await notify(req.userId!, "deposit_received", "Voucher Redeemed", `$${amount.toFixed(2)} has been added to your wallet.`);
+  await notify(req.userId!, "deposit_received", "Voucher Redeemed", `${amount.toFixed(2)} has been added to your wallet.`);
   res.json({ success: true, amount, transaction: toTxResponse(tx) });
 });
 
@@ -599,6 +644,10 @@ router.get("/pawapay/deposit/status", authMiddleware, async (req: AuthRequest, r
 
 router.post("/pawapay/callback/deposit", async (req, res): Promise<void> => {
   res.status(200).json({ ok: true }); // Acknowledge immediately
+  if (!(await verifyPawapayCallback(req))) {
+    logger.warn({ ip: req.ip }, "PawaPay deposit callback rejected: invalid token");
+    return;
+  }
   const { depositId, status } = req.body as { depositId?: string; status?: string };
   if (!depositId || !status) return;
 
@@ -634,6 +683,10 @@ router.post("/pawapay/callback/deposit", async (req, res): Promise<void> => {
 
 router.post("/pawapay/callback/payout", async (req, res): Promise<void> => {
   res.status(200).json({ ok: true }); // Acknowledge immediately
+  if (!(await verifyPawapayCallback(req))) {
+    logger.warn({ ip: req.ip }, "PawaPay payout callback rejected: invalid token");
+    return;
+  }
   const { payoutId, status } = req.body as { payoutId?: string; status?: string };
   if (!payoutId || !status) return;
 
@@ -664,6 +717,10 @@ router.post("/pawapay/callback/payout", async (req, res): Promise<void> => {
 
 router.post("/pawapay/callback/refund", async (req, res): Promise<void> => {
   res.status(200).json({ ok: true }); // Acknowledge immediately
+  if (!(await verifyPawapayCallback(req))) {
+    logger.warn({ ip: req.ip }, "PawaPay refund callback rejected: invalid token");
+    return;
+  }
   const { refundId, depositId, status, amount } = req.body as {
     refundId?: string;
     depositId?: string;
@@ -712,23 +769,25 @@ router.post("/pawapay/withdraw", authMiddleware, async (req: AuthRequest, res): 
     return;
   }
 
-  await db.update(walletsTable).set({
-    withdrawableBalance: sql`withdrawable_balance - ${Number(amount)}`,
-    availableBalance: sql`available_balance - ${Number(amount)}`,
-    pendingBalance: sql`pending_balance + ${Number(amount)}`,
-  }).where(eq(walletsTable.userId, req.userId!));
-
+  // Atomic: lock funds + create tx record in one transaction
   const payoutId = uuidv4();
-  const [tx] = await db.insert(transactionsTable).values({
-    transactionId: payoutId,
-    userId: req.userId!,
-    type: "withdrawal",
-    amount: Number(amount).toFixed(2),
-    status: "approved",
-    paymentMethod: "pawapay",
-    reference: phoneNumber,
-    description: `Instant withdrawal via PawaPay (${provider}) to ${phoneNumber}`,
-  }).returning();
+  const [tx] = await db.transaction(async (dbTx: any) => {
+    await dbTx.update(walletsTable).set({
+      withdrawableBalance: sql`withdrawable_balance - ${Number(amount)}`,
+      availableBalance: sql`available_balance - ${Number(amount)}`,
+      pendingBalance: sql`pending_balance + ${Number(amount)}`,
+    }).where(eq(walletsTable.userId, req.userId!));
+    return dbTx.insert(transactionsTable).values({
+      transactionId: payoutId,
+      userId: req.userId!,
+      type: "withdrawal",
+      amount: Number(amount).toFixed(2),
+      status: "approved",
+      paymentMethod: "pawapay",
+      reference: phoneNumber,
+      description: `Instant withdrawal via PawaPay (${provider}) to ${phoneNumber}`,
+    }).returning();
+  });
 
   try {
     await pawapayInitiatePayout(config, {
@@ -739,12 +798,15 @@ router.post("/pawapay/withdraw", authMiddleware, async (req: AuthRequest, res): 
     });
     res.status(201).json({ ...toTxResponse(tx), instant: true });
   } catch (err: any) {
-    await db.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
-    await db.update(walletsTable).set({
-      withdrawableBalance: sql`withdrawable_balance + ${Number(amount)}`,
-      availableBalance: sql`available_balance + ${Number(amount)}`,
-      pendingBalance: sql`pending_balance - ${Number(amount)}`,
-    }).where(eq(walletsTable.userId, req.userId!));
+    // Rollback atomically
+    await db.transaction(async (dbTx: any) => {
+      await dbTx.update(transactionsTable).set({ status: "failed" }).where(eq(transactionsTable.id, tx.id));
+      await dbTx.update(walletsTable).set({
+        withdrawableBalance: sql`withdrawable_balance + ${Number(amount)}`,
+        availableBalance: sql`available_balance + ${Number(amount)}`,
+        pendingBalance: sql`pending_balance - ${Number(amount)}`,
+      }).where(eq(walletsTable.userId, req.userId!));
+    });
     req.log.error({ err }, "PawaPay instant withdraw error");
     res.status(502).json({ error: err.message || "Payout gateway error. Please try again." });
   }

@@ -685,9 +685,10 @@ export default function AdminUsers() {
   const [influencerOverrides, setInfluencerOverrides] = useState<Record<number, boolean>>({});
 
   // Standard list (all users or search)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: allData, isLoading: allLoading } = useListUsers(
     { page, limit: 20, search: search || undefined },
-    { query: { enabled: !ficaPendingOnly } }
+    { query: { enabled: !ficaPendingOnly } as any }
   );
 
   // FICA-pending filtered list — direct fetch, server-side filter

@@ -132,12 +132,13 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
         matchedBetId: opponent.id,
       }).returning();
 
-      // 3. Update opponent bet
-      await tx.update(betsTable).set({
+      // 3. Update opponent bet — guard on status='pending' to prevent double-match under concurrency
+      const [updatedOpponent] = await tx.update(betsTable).set({
         status: "matched",
         matchedBetId: inserted.id,
         potentialReturn: winnerPayout.toString(),
-      }).where(eq(betsTable.id, opponent.id));
+      }).where(and(eq(betsTable.id, opponent.id), eq(betsTable.status, "pending"))).returning();
+      if (!updatedOpponent) throw new Error("Opponent bet already matched — please try again");
 
       // 4. Update game pool
       await tx.update(gamesTable).set({
