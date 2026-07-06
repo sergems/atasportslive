@@ -11,7 +11,7 @@ import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
   CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet, KeyRound,
   History, TrendingUp, TrendingDown, ArrowLeftRight, AlertCircle, ChevronLeft, ChevronRight,
-  Check, XCircle, RefreshCw, Loader2, Star
+  Check, XCircle, RefreshCw, Loader2, Star, ShieldOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -916,14 +916,25 @@ export default function AdminUsers() {
                             </Button>
                           );
                         })()}
-                        <Button
-                          size="sm" variant="ghost"
-                          onClick={() => handleSuspend(user.id, user.status === 'active')}
-                          className={`h-5 w-6 p-0 rounded-sm ${user.status === 'active' ? 'text-slate-400 hover:text-red-400 hover:bg-slate-800' : 'bg-red-500/20 text-red-400'}`}
-                          title={user.status === 'active' ? 'Suspend User' : 'Reactivate User'}
-                        >
-                          <Ban className="h-3 w-3" />
-                        </Button>
+                        {user.status === 'active' ? (
+                          <Button
+                            size="sm" variant="ghost"
+                            onClick={() => handleSuspend(user.id, true)}
+                            className="h-5 w-6 p-0 rounded-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+                            title="Suspend User"
+                          >
+                            <Ban className="h-3 w-3" />
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm" variant="ghost"
+                            onClick={() => handleSuspend(user.id, false)}
+                            className="h-5 w-6 p-0 rounded-sm bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                            title="Reactivate User"
+                          >
+                            <ShieldOff className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                     )}

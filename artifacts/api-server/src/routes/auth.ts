@@ -158,11 +158,13 @@ router.post("/login", async (req, res): Promise<void> => {
     return;
   }
 
-  // If another session exists, kick it via WebSocket before invalidating it
-  const hadExistingSession = !!user.sessionToken;
-  if (hadExistingSession) {
+  // Kick an existing live WebSocket session, if one is connected right now
+  let displacedExistingSession = false;
+  if (user.sessionToken) {
     const existingWs = wsClients.get(user.id);
     if (existingWs && existingWs.readyState === 1) {
+      // A real active connection exists on another device — displace it
+      displacedExistingSession = true;
       existingWs.send(JSON.stringify({
         type: "session_displaced",
         title: "Signed in on another device",
@@ -175,7 +177,7 @@ router.post("/login", async (req, res): Promise<void> => {
   const sv = generateSessionToken();
   const tokens = generateTokens(user.id, user.role, sv);
   await db.update(usersTable).set({ refreshToken: tokens.refreshToken, sessionToken: sv }).where(eq(usersTable.id, user.id));
-  res.json({ ...tokens, user: userPayload(user), displacedExistingSession: hadExistingSession });
+  res.json({ ...tokens, user: userPayload(user), displacedExistingSession });
 });
 
 // Activated by imported users on their first login
