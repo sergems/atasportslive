@@ -239,12 +239,13 @@ function NoLiveBroadcast({ channelLabel }: { channelLabel: string }) {
   const next = upcoming?.[0];
   const nextCountdown = useCountdown(next?.startTime);
   return (
-    <div className="relative w-full sm:max-w-[85%] lg:max-w-[60%] mx-auto aspect-video bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col items-center justify-center">
+    /* Card — taller on mobile (4:3) so content isn't squeezed, 16:9 on sm+ */
+    <div className="relative w-full sm:max-w-[85%] lg:max-w-[60%] mx-auto aspect-[4/3] sm:aspect-video bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col items-center justify-center">
       {/* Subtle radial glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(20,184,166,0.06)_0%,_transparent_70%)]" />
 
-      {/* Centre content */}
-      <div className="flex flex-col items-center gap-3 px-4 sm:px-6 text-center z-10">
+      {/* Centre content — push up so it clears the bottom bar */}
+      <div className="flex flex-col items-center gap-3 px-4 sm:px-6 text-center z-10 pb-16 sm:pb-10">
         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center">
           <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" />
         </div>
@@ -261,20 +262,20 @@ function NoLiveBroadcast({ channelLabel }: { channelLabel: string }) {
 
       {/* Next-up bar pinned to bottom */}
       {next && (
-        <div className="absolute bottom-0 inset-x-0 bg-slate-900/90 backdrop-blur-sm border-t border-slate-800 px-3 sm:px-4 py-2 sm:py-2.5 z-10">
+        <div className="absolute bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-sm border-t border-slate-800 px-3 sm:px-4 py-2 sm:py-2.5 z-10">
           {/* Mobile: two stacked rows */}
-          <div className="flex flex-col gap-0.5 sm:hidden">
+          <div className="flex flex-col gap-1 sm:hidden">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[9px] text-slate-500 uppercase tracking-widest shrink-0">Next</span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-widest shrink-0">Next up</span>
               <span className="text-white text-xs font-semibold truncate">{next.title}</span>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-amber-400 font-mono text-[10px]">
+              <span className="text-amber-400 font-mono text-[11px]">
                 {new Date(next.startTime).toLocaleDateString('en-UG', { weekday: 'short', day: 'numeric', month: 'short' })}
                 {' · '}
                 {new Date(next.startTime).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
               </span>
-              <Link href="/upcoming" className="text-teal-400 hover:text-teal-300 text-[10px] shrink-0 transition-colors">
+              <Link href="/upcoming" className="text-teal-400 hover:text-teal-300 text-[11px] shrink-0 transition-colors">
                 Schedule →
               </Link>
             </div>
