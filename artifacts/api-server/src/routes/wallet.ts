@@ -345,7 +345,7 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
         method: tx.paymentMethod?.replace(/_/g, " ") ?? "",
         account: tx.reference ?? "",
       }),
-    }).catch(() => {});
+    }).catch((err) => logger.warn({ err }, "email send failed"));
   }
 
   // Email all manager and finance-role users
@@ -372,7 +372,7 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
           method: tx.paymentMethod?.replace(/_/g, " ") ?? "",
           account: tx.reference ?? "",
         }),
-      }).catch(() => {});
+      }).catch((err) => logger.warn({ err }, "email send failed"));
     }
   }
 
@@ -410,7 +410,7 @@ router.patch("/finance/mark-paid/:id", authMiddleware, requireRole("admin", "man
         method: tx.paymentMethod?.replace(/_/g, " ") ?? "",
         account: tx.reference ?? "",
       }),
-    }).catch(() => {});
+    }).catch((err) => logger.warn({ err }, "email send failed"));
   }
 
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
@@ -447,7 +447,7 @@ router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"
         amount: parseFloat(tx.amount as string),
         note: note?.trim(),
       }),
-    }).catch(() => {});
+    }).catch((err) => logger.warn({ err }, "email send failed"));
   }
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
@@ -457,14 +457,32 @@ router.patch("/admin/deposit/:id/confirm", authMiddleware, requireRole("admin", 
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid id" }); return; }
 
-  // Atomic claim: only the first caller (admin confirm OR IPN/callback) that flips
-  // status from 'pending' → 'completed' will get a row back. The other gets nothing
-  // and exits cleanly, preventing any double-credit.
-  const [claimed] = await db
-    .update(transactionsTable)
-    .set({ status: "completed" })
-    .where(and(eq(transactionsTable.id, id), eq(transactionsTable.status, "pending"), eq(transactionsTable.type, "deposit")))
-    .returning();
+  // Atomic: claim the transaction AND credit the wallet in one shot so a failure
+  // between the two cannot leave a "completed" tx with no wallet credit.
+  let claimed: typeof transactionsTable.$inferSelect | undefined;
+  try {
+    await db.transaction(async (dbTx) => {
+      const [result] = await dbTx
+        .update(transactionsTable)
+        .set({ status: "completed" })
+        .where(and(eq(transactionsTable.id, id), eq(transactionsTable.status, "pending"), eq(transactionsTable.type, "deposit")))
+        .returning();
+      if (!result) return; // not found / wrong state — handled below
+
+      const amt = parseFloat(result.amount as string);
+      await dbTx.update(walletsTable).set({
+        balance: sql`balance + ${amt}`,
+        availableBalance: sql`available_balance + ${amt}`,
+        withdrawableBalance: sql`withdrawable_balance + ${amt}`,
+      }).where(eq(walletsTable.userId, result.userId));
+
+      claimed = result;
+    });
+  } catch (err) {
+    logger.error({ err, id }, "deposit confirm transaction failed");
+    res.status(500).json({ error: "Failed to confirm deposit" });
+    return;
+  }
 
   if (!claimed) {
     // Either not found, wrong type, or already processed by another path
@@ -475,12 +493,6 @@ router.patch("/admin/deposit/:id/confirm", authMiddleware, requireRole("admin", 
   }
 
   const amt = parseFloat(claimed.amount as string);
-  await db.update(walletsTable).set({
-    balance: sql`balance + ${amt}`,
-    availableBalance: sql`available_balance + ${amt}`,
-    withdrawableBalance: sql`withdrawable_balance + ${amt}`,
-  }).where(eq(walletsTable.userId, claimed.userId));
-
   await notify(claimed.userId, "deposit_received", "Deposit Confirmed", `${amt.toFixed(2)} has been added to your wallet.`);
 
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
@@ -550,21 +562,27 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
     return;
   }
 
-  await db.update(walletsTable).set({
-    balance: sql`balance + ${amount}`,
-    availableBalance: sql`available_balance + ${amount}`,
-    withdrawableBalance: sql`withdrawable_balance + ${amount}`,
-  }).where(eq(walletsTable.userId, req.userId!));
+  // Atomic: wallet credit + transaction record must succeed or fail together.
+  // If the insert fails after the update, the wallet would be credited with no audit trail.
+  const tx = await db.transaction(async (dbTx) => {
+    await dbTx.update(walletsTable).set({
+      balance: sql`balance + ${amount}`,
+      availableBalance: sql`available_balance + ${amount}`,
+      withdrawableBalance: sql`withdrawable_balance + ${amount}`,
+    }).where(eq(walletsTable.userId, req.userId!));
 
-  const [tx] = await db.insert(transactionsTable).values({
-    transactionId: `VCH-${voucher.code}`,
-    userId: req.userId!,
-    type: "voucher_redeem",
-    amount: String(amount),
-    status: "completed",
-    paymentMethod: "internal",
-    description: `Voucher ${voucher.code} redeemed`,
-  }).returning();
+    const [inserted] = await dbTx.insert(transactionsTable).values({
+      transactionId: `VCH-${voucher.code}`,
+      userId: req.userId!,
+      type: "voucher_redeem",
+      amount: String(amount),
+      status: "completed",
+      paymentMethod: "internal",
+      description: `Voucher ${voucher.code} redeemed`,
+    }).returning();
+
+    return inserted;
+  });
 
   await notify(req.userId!, "deposit_received", "Voucher Redeemed", `${amount.toFixed(2)} has been added to your wallet.`);
   res.json({ success: true, amount, transaction: toTxResponse(tx) });

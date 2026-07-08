@@ -11,6 +11,7 @@ import {
 } from "@workspace/db";
 import { authMiddleware, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -260,7 +261,7 @@ router.post("/purchase", authMiddleware, async (req: AuthRequest, res): Promise<
         "deposit_received",
         "Commission Earned 🎯",
         `+${commissionAmount.toFixed(2)} influencer commission from a referral's ${subType} subscription`
-      ).catch(() => {});
+      ).catch((err) => logger.warn({ err }, "notify send failed"));
     }
     res.json(result);
   }

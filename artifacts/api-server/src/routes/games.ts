@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { db, gamesTable, betsTable, walletsTable, transactionsTable, usersTable } from "@workspace/db";
 import { eq, asc, sql, and, gte } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
+import { logger } from "../lib/logger";
 import { notify } from "../lib/notify";
 import { sendMail, templates } from "../lib/mailer";
 
@@ -188,7 +189,7 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "manager"), asyn
                 to: winUser.email,
                 subject: `You Won ${payout.toFixed(2)}! – ATA Sports Live`,
                 html: templates.betWon({ name: winUser.fullName ?? winUser.email, stake: parseFloat(bet.stake as string), payout, gameName }),
-              }).catch(() => {});
+              }).catch((err) => logger.warn({ err }, "email send failed"));
             }
           });
         } else if (newStatus === "refunded") {
@@ -231,7 +232,7 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "manager"), asyn
                 to: lostUser.email,
                 subject: `Bet Result – ATA Sports Live`,
                 html: templates.betLost({ name: lostUser.fullName ?? lostUser.email, stake: parseFloat(bet.stake as string), gameName }),
-              }).catch(() => {});
+              }).catch((err) => logger.warn({ err }, "email send failed"));
             }
           });
         }
@@ -269,7 +270,8 @@ router.post("/:id/settle", authMiddleware, requireRole("admin", "manager"), asyn
       return settled;
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || "Settlement failed" });
+    logger.error({ err, gameId: id }, "game settlement failed");
+    res.status(500).json({ error: "Settlement failed" });
     return;
   }
 

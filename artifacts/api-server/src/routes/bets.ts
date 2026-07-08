@@ -5,6 +5,7 @@ import { eq, desc, sql, and, ne } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify } from "../lib/notify";
 import { sendMail, templates } from "../lib/mailer";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -178,7 +179,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
           to: u.email,
           subject: "Bet Matched – ATA Sports Live",
           html: templates.betMatched({ name: u.fullName ?? u.email, stake, outcome: betOutcome, potentialReturn: (stake * 2) * (1 - BROKERAGE_FEE), gameName }),
-        }).catch(() => {});
+        }).catch((err) => logger.warn({ err }, "email send failed"));
       }
     }
 
