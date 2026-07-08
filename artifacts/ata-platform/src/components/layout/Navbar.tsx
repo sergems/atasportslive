@@ -19,9 +19,11 @@ function useChannelStatus(): ChannelStatus {
   const { data } = useQuery<ChannelStatus>({
     queryKey: ['nav', 'channel-status'],
     queryFn: async () => {
+      // Use the public settings endpoint — no auth required so all visitors
+      // (including unauthenticated users) see the correct nav items.
       const [streamsRes, settingsRes] = await Promise.all([
         fetch('/api/streams?status=live&limit=1'),
-        fetch('/api/settings'),
+        fetch('/api/settings/public'),
       ]);
       const streamsData  = await streamsRes.json();
       const settingsData = await settingsRes.json();
