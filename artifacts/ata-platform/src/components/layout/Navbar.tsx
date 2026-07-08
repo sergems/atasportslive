@@ -4,43 +4,8 @@ import { useAuth } from '@/lib/auth';
 import { Bell, User as UserIcon, Wallet, LayoutDashboard, Trophy, History, LogOut, ChevronDown, Menu, X, Settings, Gift, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useListNotifications, useGetWallet } from '@workspace/api-client-react';
-import { useQuery } from '@tanstack/react-query';
+import { useChannelStatus } from '@/hooks/use-channel-status';
 import ataLogo from '@assets/cropped-ATA_logo-removebg-preview_1782471649356.png';
-
-interface ChannelStatus {
-  ch1Live: boolean;
-  ch2Live: boolean;
-  ch3Live: boolean;
-  ch2Enabled: boolean;
-  ch3Enabled: boolean;
-}
-
-function useChannelStatus(): ChannelStatus {
-  const { data } = useQuery<ChannelStatus>({
-    queryKey: ['nav', 'channel-status'],
-    queryFn: async () => {
-      // Use the public settings endpoint — no auth required so all visitors
-      // (including unauthenticated users) see the correct nav items.
-      const [streamsRes, settingsRes] = await Promise.all([
-        fetch('/api/streams?status=live&limit=1'),
-        fetch('/api/settings/public'),
-      ]);
-      const streamsData  = await streamsRes.json();
-      const settingsData = await settingsRes.json();
-      const dbLive = (streamsData.streams?.length ?? 0) > 0;
-      return {
-        ch1Live: dbLive || settingsData?.mux_is_live === 'true' || settingsData?.yt_is_live === 'true',
-        ch2Live: settingsData?.ch2_mux_is_live === 'true' || settingsData?.ch2_yt_is_live === 'true',
-        ch3Live: settingsData?.ch3_mux_is_live === 'true' || settingsData?.ch3_yt_is_live === 'true',
-        ch2Enabled: settingsData?.ch2_page_enabled === 'true',
-        ch3Enabled: settingsData?.ch3_page_enabled === 'true',
-      };
-    },
-    refetchInterval: 30_000,
-    staleTime: 20_000,
-  });
-  return data ?? { ch1Live: false, ch2Live: false, ch3Live: false, ch2Enabled: false, ch3Enabled: false };
-}
 
 function LiveBadge({ channel }: { channel?: number }) {
   return (
@@ -117,7 +82,7 @@ export function Navbar() {
   const { isAuthenticated, logout, isAdmin, user } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { ch1Live, ch2Live, ch3Live, ch2Enabled, ch3Enabled } = useChannelStatus();
+  const { ch1Live, ch2Live, ch3Live } = useChannelStatus();
 
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
 
@@ -141,9 +106,9 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Home', exact: true, pulse: false, ch1: false },
-    { href: '/live', label: 'Livestream', pulse: ch1Live, mobileHide: true, ch1: true },
-    ...(ch2Live ? [{ href: '/live-2', label: 'Livestream 2', pulse: true, mobileHide: true, ch1: false }] : []),
-    ...(ch3Live ? [{ href: '/live-3', label: 'Livestream 3', pulse: true, mobileHide: true, ch1: false }] : []),
+    { href: '/live', label: 'Livestream', exact: true, pulse: ch1Live, ch1: true },
+    ...(ch2Live ? [{ href: '/live-2', label: 'Livestream 2', exact: true, pulse: true, ch1: false }] : []),
+    ...(ch3Live ? [{ href: '/live-3', label: 'Livestream 3', exact: true, pulse: true, ch1: false }] : []),
     { href: '/streams', label: 'Events', pulse: false, ch1: false },
     { href: '/upcoming', label: 'Upcoming', pulse: false, ch1: false },
     { href: '/highlights', label: 'Highlights', pulse: false, ch1: false },
@@ -262,7 +227,7 @@ export function Navbar() {
       {/* Mobile guest dropdown menu */}
       {!isAuthenticated && mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur px-4 py-3 space-y-1">
-          {navLinks.filter(l => !l.mobileHide).map(({ href, label, pulse, exact }) => {
+          {navLinks.map(({ href, label, pulse, exact }) => {
             const active = exact ? location === href : location.startsWith(href);
             return (
               <Link key={href} href={href} onClick={() => setMobileMenuOpen(false)}>

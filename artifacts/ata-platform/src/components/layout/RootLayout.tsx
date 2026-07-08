@@ -8,26 +8,16 @@ import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
 import { useAuth } from '@/lib/auth';
 import { useListNotifications } from '@workspace/api-client-react';
-import { useQuery } from '@tanstack/react-query';
+import { useChannelStatus } from '@/hooks/use-channel-status';
 
-function useIsLive() {
-  const { data } = useQuery<boolean>({
-    queryKey: ['nav', 'is-live'],
-    queryFn: async () => {
-      const r = await fetch('/api/streams?status=live&limit=1');
-      const d = await r.json();
-      return (d.streams?.length ?? 0) > 0;
-    },
-    refetchInterval: 30_000,
-    staleTime: 20_000,
-  });
-  return data ?? false;
-}
+// Flat top-level routes with no sub-paths — must match exactly so e.g. /live-2
+// doesn't also mark /live as active via startsWith().
+const EXACT_MATCH_ROUTES = new Set(['/dashboard', '/live', '/live-2', '/live-3']);
 
 function MobileBottomNav() {
   const [location] = useLocation();
   const { isAuthenticated, logout, isAdmin } = useAuth();
-  const isLive = useIsLive();
+  const { ch1Live: isLive, ch2Live, ch3Live } = useChannelStatus();
   const { data: notifData } = useListNotifications({ unreadOnly: true }, {
     query: { enabled: isAuthenticated, queryKey: ['notif-mobile'], refetchInterval: 30000 }
   });
@@ -38,6 +28,8 @@ function MobileBottomNav() {
     const tabs = [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: unreadCount },
       { href: '/live',      label: 'Live',    icon: Radio,  pulse: isLive },
+      ...(ch2Live ? [{ href: '/live-2', label: 'Live 2', icon: Radio, pulse: true }] : []),
+      ...(ch3Live ? [{ href: '/live-3', label: 'Live 3', icon: Radio, pulse: true }] : []),
       { href: '/streams',   label: 'Streams', icon: Film },
       { href: '/games',     label: 'Games',   icon: Swords },
       { href: '/wallet',    label: 'Wallet',  icon: Wallet },
@@ -46,12 +38,12 @@ function MobileBottomNav() {
 
     return (
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
-        <div className="flex items-stretch justify-around h-16">
+        <div className="flex items-stretch justify-around h-16 overflow-x-auto no-scrollbar">
           {tabs.map(({ href, label, icon: Icon, pulse, badge }) => {
-            const active = href === '/dashboard' ? location === '/dashboard' : location.startsWith(href);
+            const active = EXACT_MATCH_ROUTES.has(href) ? location === href : location.startsWith(href);
             return (
               <Link key={href} href={href} onClick={scrollTop}>
-                <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] transition-all duration-150 active:scale-90 ${active ? 'text-teal-400' : 'text-slate-500'}`}>
+                <div className={`flex shrink-0 flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] transition-all duration-150 active:scale-90 ${active ? 'text-teal-400' : 'text-slate-500'}`}>
                   <div className="relative">
                     <Icon className="h-5 w-5" />
                     {pulse && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
@@ -69,7 +61,7 @@ function MobileBottomNav() {
           })}
           <button
             onClick={() => { scrollTop(); logout(); }}
-            className="flex flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] text-slate-500 active:text-red-400 active:scale-90 transition-all duration-150"
+            className="flex shrink-0 flex-col items-center justify-center gap-0.5 h-full px-1 min-w-[44px] text-slate-500 active:text-red-400 active:scale-90 transition-all duration-150"
           >
             <LogOut className="h-5 w-5" />
             <span className="text-[9px] font-semibold tracking-wide leading-none">Logout</span>
@@ -82,17 +74,19 @@ function MobileBottomNav() {
   const guestTabs = [
     { href: '/',        label: 'Home',    icon: Home },
     { href: '/live',    label: 'Live',    icon: Radio,  pulse: isLive },
+    ...(ch2Live ? [{ href: '/live-2', label: 'Live 2', icon: Radio, pulse: true }] : []),
+    ...(ch3Live ? [{ href: '/live-3', label: 'Live 3', icon: Radio, pulse: true }] : []),
     { href: '/streams', label: 'Streams', icon: Film },
   ];
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-slate-950/95 backdrop-blur border-t border-slate-800 safe-area-bottom">
-      <div className="flex items-stretch justify-around h-16">
+      <div className="flex items-stretch justify-around h-16 overflow-x-auto no-scrollbar">
         {guestTabs.map(({ href, label, icon: Icon, pulse }) => {
-          const active = href === '/' ? location === '/' : location.startsWith(href);
+          const active = (href === '/' || EXACT_MATCH_ROUTES.has(href)) ? location === href : location.startsWith(href);
           return (
             <Link key={href} href={href} onClick={scrollTop}>
-              <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-all duration-150 active:scale-90 ${active ? 'text-teal-400' : 'text-slate-500'}`}>
+              <div className={`flex shrink-0 flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-all duration-150 active:scale-90 ${active ? 'text-teal-400' : 'text-slate-500'}`}>
                 <div className="relative">
                   <Icon className="h-5 w-5" />
                   {pulse && <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
@@ -104,7 +98,7 @@ function MobileBottomNav() {
           );
         })}
         <Link href="/login" onClick={scrollTop}>
-          <div className={`flex flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-all duration-150 active:scale-90 ${location === '/login' ? 'text-teal-400' : 'text-slate-500'}`}>
+          <div className={`flex shrink-0 flex-col items-center justify-center gap-0.5 h-full px-2 min-w-[48px] transition-all duration-150 active:scale-90 ${location === '/login' ? 'text-teal-400' : 'text-slate-500'}`}>
             <LogIn className="h-5 w-5" />
             <span className="text-[9px] font-semibold tracking-wide leading-none">Login</span>
             <span className={`mt-0.5 h-0.5 w-4 rounded-full transition-all duration-200 ${location === '/login' ? 'bg-teal-400 opacity-100' : 'opacity-0'}`} />

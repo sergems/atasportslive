@@ -4,6 +4,15 @@
 
 html { font-size: 16.32px; }
 
+/* Hide scrollbar for horizontally-scrollable mobile nav bars while keeping scroll functional */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
