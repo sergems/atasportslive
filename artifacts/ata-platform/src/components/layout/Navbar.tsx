@@ -129,7 +129,9 @@ export function Navbar() {
         {/* Nav links - centered absolutely (desktop only) */}
         <nav className="hidden md:flex items-center space-x-4 text-sm font-medium absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
           {navLinks.map(({ href, label, pulse, exact, ch1 }) => {
-            const active = exact ? location === href : location.startsWith(href);
+            const active = exact
+              ? location === href
+              : location === href || location.startsWith(href + '/');
             return (
               <Link
                 key={href}
@@ -228,7 +230,9 @@ export function Navbar() {
       {!isAuthenticated && mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur px-4 py-3 space-y-1">
           {navLinks.map(({ href, label, pulse, exact }) => {
-            const active = exact ? location === href : location.startsWith(href);
+            const active = exact
+              ? location === href
+              : location === href || location.startsWith(href + '/');
             return (
               <Link key={href} href={href} onClick={() => setMobileMenuOpen(false)}>
                 <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer
