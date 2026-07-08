@@ -29,6 +29,7 @@ export const usersTable = pgTable("users", {
   country: text("country"),
   ficaCompleted: boolean("fica_completed").notNull().default(false),
   isInfluencer: boolean("is_influencer").notNull().default(false),
+  referralCodeCustomized: boolean("referral_code_customized").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

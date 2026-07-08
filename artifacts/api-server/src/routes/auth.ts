@@ -61,6 +61,7 @@ function userPayload(user: typeof usersTable.$inferSelect) {
     country: user.country ?? null,
     ficaCompleted: user.ficaCompleted ?? false,
     isInfluencer: user.isInfluencer ?? false,
+    referralCodeCustomized: user.referralCodeCustomized ?? false,
   };
 }
 

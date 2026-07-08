@@ -26,6 +26,11 @@ description: Architecture and key decisions for the influencer commission featur
 - `GET /api/admin/influencers` — all influencers with stats
 - `GET /api/admin/influencers/:id/referrals` — referrals for one influencer
 
+## One-Time Code Customization
+- Influencers can set a custom referral code/link exactly once via `PATCH /api/influencers/my-referral-code`
+- One-time enforcement pattern: atomic conditional `UPDATE ... WHERE id = ? AND referral_code_customized = false` (same pattern as the one-time username change) — never check-then-write across two queries
+- `referral_code_customized` boolean column added to `users` (default false); schema changes in this project go through psql directly since drizzle-kit push needs a TTY
+
 ## Frontend
 - `admin/influencers.tsx` — expandable influencer list page (route: `/admin/influencers`)
 - Star (⭐) icon button in admin users table toggles influencer status with local override map

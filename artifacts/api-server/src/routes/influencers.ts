@@ -56,6 +56,54 @@ router.get("/my-referrals", authMiddleware, async (req: AuthRequest, res): Promi
   });
 });
 
+// ── PATCH /api/influencers/my-referral-code ──────────────────────────────────
+// Let an influencer pick their own referral code/link once, to make it easier
+// for them to share with their followers. One-time only — locked after first use.
+router.patch("/my-referral-code", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const userId = req.userId!;
+
+  const [me] = await db
+    .select({ isInfluencer: usersTable.isInfluencer, referralCodeCustomized: usersTable.referralCodeCustomized })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  if (!me?.isInfluencer) {
+    res.status(403).json({ error: "Not an influencer account" });
+    return;
+  }
+  if (me.referralCodeCustomized) {
+    res.status(403).json({ error: "You've already customized your referral code. This can only be done once." });
+    return;
+  }
+
+  const { code } = req.body as { code?: string };
+  const trimmed = (code ?? "").trim().toUpperCase();
+  if (!/^[A-Z0-9_-]{4,20}$/.test(trimmed)) {
+    res.status(400).json({ error: "Code must be 4-20 characters: letters, numbers, underscores, or hyphens only" });
+    return;
+  }
+
+  try {
+    const result = await db.execute(
+      sql`UPDATE users SET referral_code = ${trimmed}, referral_code_customized = true
+          WHERE id = ${userId} AND referral_code_customized = false`
+    );
+    if ((result.rowCount ?? 0) === 0) {
+      res.status(403).json({ error: "You've already customized your referral code. This can only be done once." });
+      return;
+    }
+  } catch (err: any) {
+    if (err.code === "23505") {
+      res.status(409).json({ error: "That code is already taken. Please choose another." });
+      return;
+    }
+    throw err;
+  }
+
+  res.json({ ok: true, referralCode: trimmed, referralCodeCustomized: true });
+});
+
 // ── GET /api/influencers/my-commission-history ───────────────────────────────
 router.get("/my-commission-history", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
   const userId = req.userId!;

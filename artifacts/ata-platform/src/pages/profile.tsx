@@ -15,9 +15,16 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 
-function InfluencerDashboard({ referralCode }: { referralCode: string | null }) {
+function InfluencerDashboard({ referralCode, referralCodeCustomized, onCodeUpdated }: {
+  referralCode: string | null;
+  referralCodeCustomized: boolean;
+  onCodeUpdated: (code: string) => void;
+}) {
   const token = useAuthStore((s) => s.token);
   const [copied, setCopied] = useState(false);
+  const [customizeMode, setCustomizeMode] = useState(false);
+  const [customCode, setCustomCode] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['influencer-my-referrals'],
@@ -43,6 +50,27 @@ function InfluencerDashboard({ referralCode }: { referralCode: string | null }) 
       navigator.clipboard.writeText(referralLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleSaveCustomCode = async () => {
+    if (customCode.length < 4) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/influencers/my-referral-code', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code: customCode }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Failed to update code');
+      onCodeUpdated(body.referralCode);
+      setCustomizeMode(false);
+      toast.success('Your referral code is set! This cannot be changed again.');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update code');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -98,6 +126,45 @@ function InfluencerDashboard({ referralCode }: { referralCode: string | null }) 
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
+
+            {/* Customize code/link — allowed once */}
+            {!referralCodeCustomized ? (
+              !customizeMode ? (
+                <Button variant="outline" size="sm" className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10 w-full"
+                  onClick={() => { setCustomizeMode(true); setCustomCode(referralCode ?? ''); }}>
+                  Customize your code &amp; link
+                </Button>
+              ) : (
+                <div className="space-y-2 rounded-lg bg-slate-900 border border-amber-500/20 px-3 py-3">
+                  <label className="text-xs text-slate-400">Pick a custom code (e.g. your name)</label>
+                  <input
+                    type="text"
+                    value={customCode}
+                    onChange={(e) => setCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 20))}
+                    placeholder="YOURNAME"
+                    className="w-full px-3 py-2 rounded-md bg-slate-950 border border-slate-700 text-white text-sm font-mono tracking-widest focus:outline-none focus:border-amber-500"
+                  />
+                  <p className="text-xs text-slate-500">4–20 characters: letters, numbers, underscores, hyphens. This can only be set once and cannot be changed later.</p>
+                  <p className="text-xs text-slate-400 font-mono break-all">
+                    {SITE_ORIGIN}/register?ref={customCode || '...'}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveCustomCode} disabled={saving || customCode.length < 4}
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold">
+                      {saving ? 'Saving…' : 'Save (permanent)'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setCustomizeMode(false); setCustomCode(''); }}
+                      className="border-slate-700 text-slate-300">
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )
+            ) : (
+              <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                <Lock className="h-3 w-3" /> Your code has been customized and is now locked.
+              </p>
+            )}
           </>
         )}
 
@@ -150,6 +217,7 @@ function getToken() {
 export default function Profile() {
   useSEO({ title: 'Profile Settings', path: '/profile', noindex: true });
   const { user, login } = useAuth();
+  const setUser = useAuthStore((s) => s.setUser);
   const { clientId } = useGoogleAuth();
 
   // ── Personal Info ──────────────────────────────────────
@@ -649,7 +717,11 @@ export default function Profile() {
 
         {/* ── Influencer Dashboard ───────────────────────────────── */}
         {(user as any).isInfluencer && (
-          <InfluencerDashboard referralCode={user.referralCode} />
+          <InfluencerDashboard
+            referralCode={user.referralCode}
+            referralCodeCustomized={(user as any).referralCodeCustomized ?? false}
+            onCodeUpdated={(code) => setUser({ ...user, referralCode: code, referralCodeCustomized: true } as any)}
+          />
         )}
 
         {/* ── Refer & Earn (regular users only) ─────────────────── */}
