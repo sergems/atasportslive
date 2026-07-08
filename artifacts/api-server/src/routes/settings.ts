@@ -6,14 +6,36 @@ import { sendMail } from "../lib/mailer";
 
 const router = Router();
 
-// Keys safe to expose publicly (no credentials)
+// Keys safe to expose publicly (no credentials).
+// Must include every key read by live-channel.tsx so unauthenticated viewers
+// can see live-stream state, pricing, thumbnails, and player details.
 const PUBLIC_SETTING_KEYS = new Set([
+  // ── Channel 1 ───────────────────────────────────────────────────────────
   "mux_is_live", "mux_playback_id", "mux_stream_db_id", "mux_title", "mux_price",
+  "mux_is_free", "mux_thumbnail_url", "mux_sport",
+  "mux_player_a", "mux_player_b", "mux_player_a_country", "mux_player_b_country",
   "yt_is_live", "yt_video_id", "yt_stream_db_id", "yt_title", "yt_price",
+  "yt_is_free", "yt_thumbnail_url", "yt_sport",
+  "yt_player_a", "yt_player_b", "yt_player_a_country", "yt_player_b_country",
+  "liveStreamUrl",
+  // ── Channel 2 ───────────────────────────────────────────────────────────
+  "ch2_page_enabled",
   "ch2_mux_is_live", "ch2_mux_playback_id", "ch2_mux_stream_db_id", "ch2_mux_title", "ch2_mux_price",
+  "ch2_mux_is_free", "ch2_mux_thumbnail_url", "ch2_mux_sport",
+  "ch2_mux_player_a", "ch2_mux_player_b", "ch2_mux_player_a_country", "ch2_mux_player_b_country",
   "ch2_yt_is_live", "ch2_yt_video_id", "ch2_yt_stream_db_id", "ch2_yt_title", "ch2_yt_price",
+  "ch2_yt_is_free", "ch2_yt_thumbnail_url", "ch2_yt_sport",
+  "ch2_yt_player_a", "ch2_yt_player_b", "ch2_yt_player_a_country", "ch2_yt_player_b_country",
+  // ── Channel 3 ───────────────────────────────────────────────────────────
+  "ch3_page_enabled",
   "ch3_mux_is_live", "ch3_mux_playback_id", "ch3_mux_stream_db_id", "ch3_mux_title", "ch3_mux_price",
+  "ch3_mux_is_free", "ch3_mux_thumbnail_url", "ch3_mux_sport",
+  "ch3_mux_player_a", "ch3_mux_player_b", "ch3_mux_player_a_country", "ch3_mux_player_b_country",
   "ch3_yt_is_live", "ch3_yt_video_id", "ch3_yt_stream_db_id", "ch3_yt_title", "ch3_yt_price",
+  "ch3_yt_is_free", "ch3_yt_thumbnail_url", "ch3_yt_sport",
+  "ch3_yt_player_a", "ch3_yt_player_b", "ch3_yt_player_a_country", "ch3_yt_player_b_country",
+  // ── Subscription pricing ─────────────────────────────────────────────────
+  "price_daily", "price_weekly", "price_monthly", "price_yearly",
 ]);
 
 // Public settings — only non-sensitive keys, no auth required

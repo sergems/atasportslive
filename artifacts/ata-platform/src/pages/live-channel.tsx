@@ -44,10 +44,12 @@ interface UpcomingStream {
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
 function useGlobalSettings() {
+  // Use the public endpoint — no auth required, safe for all viewers.
+  // Separate query key from the admin 'settings' cache to avoid collisions.
   return useQuery<Record<string, string>>({
-    queryKey: ['settings'],
-    queryFn: () => fetch('/api/settings').then((r) => r.json()),
-    refetchInterval: 60000,
+    queryKey: ['settings', 'public'],
+    queryFn: () => fetch('/api/settings/public').then((r) => r.json()),
+    refetchInterval: 30000,
   });
 }
 

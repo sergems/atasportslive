@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/lib/auth-store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,10 +9,17 @@ import { Badge } from '@/components/ui/badge';
 import { Radio, Save, AlertCircle, Tv2, Upload, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
-function useSettings() {
+function useSettings(token: string | null) {
   return useQuery<Record<string, string>>({
     queryKey: ['settings'],
-    queryFn: () => fetch('/api/settings').then((r) => r.json()),
+    queryFn: () =>
+      fetch('/api/settings', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).then((r) => r.json()),
+    // Poll every 15 s so all admins see each other's changes promptly.
+    refetchInterval: 15000,
+    // Don't auto-refetch on window focus — that would reset mid-edit forms.
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -41,9 +48,10 @@ const isValidYtId = (id: string) => /^[a-zA-Z0-9_-]{11}$/.test(id);
 
 // ─── Per-channel form ──────────────────────────────────────────────────────────
 
-function ChannelForm({ channel, settings, token, qc, isLoading, saveMutation }: {
+function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoading, saveMutation }: {
   channel: 1 | 2 | 3;
   settings: Record<string, string>;
+  settingsUpdatedAt: number;
   token: string | null;
   qc: ReturnType<typeof useQueryClient>;
   isLoading: boolean;
@@ -53,6 +61,14 @@ function ChannelForm({ channel, settings, token, qc, isLoading, saveMutation }: 
   const muxSyncPath = channel === 1 ? '/api/settings/sync-mux' : `/api/settings/sync-ch${channel}-mux`;
   const ytSyncPath  = channel === 1 ? '/api/settings/sync-yt'  : `/api/settings/sync-ch${channel}-yt`;
   const chLabel = channel === 1 ? 'Channel 1 — Main Live Page (/live)' : `Channel ${channel} — /live-${channel}`;
+
+  // Track whether we've seeded the form from DB for this mount.
+  // Prevents background refetches from wiping mid-edit values.
+  const initializedRef = useRef(false);
+  // Track the timestamp we last initialised from — so we can tell the admin
+  // when another admin has saved newer data.
+  const initTimestampRef = useRef(0);
+  const [externalUpdateAt, setExternalUpdateAt] = useState(0);
 
   // Page enabled (ch2/ch3 only)
   const [pageEnabled, setPageEnabled] = useState(channel === 1 ? true : false);
@@ -85,30 +101,54 @@ function ChannelForm({ channel, settings, token, qc, isLoading, saveMutation }: 
   const [syncingYt, setSyncingYt] = useState(false);
   const ytThumbInputRef = React.useRef<HTMLInputElement>(null);
 
+  const applySettings = (s: Record<string, string>) => {
+    if (channel !== 1) setPageEnabled(s[`ch${channel}_page_enabled`] === 'true');
+    setMuxPlaybackId(s[`${prefix}mux_playback_id`] ?? '');
+    setMuxIsLive(s[`${prefix}mux_is_live`] === 'true');
+    setMuxIsFree(s[`${prefix}mux_is_free`] === 'true');
+    setMuxPrice(s[`${prefix}mux_price`] ?? '1.50');
+    setMuxTitle(s[`${prefix}mux_title`] ?? '');
+    setMuxThumbnailUrl(s[`${prefix}mux_thumbnail_url`] ?? '');
+    setMuxPlayerA(s[`${prefix}mux_player_a`] ?? '');
+    setMuxPlayerB(s[`${prefix}mux_player_b`] ?? '');
+    setMuxPlayerACountry(s[`${prefix}mux_player_a_country`] ?? '');
+    setMuxPlayerBCountry(s[`${prefix}mux_player_b_country`] ?? '');
+    setYtVideoId(s[`${prefix}yt_video_id`] ?? '');
+    setYtIsLive(s[`${prefix}yt_is_live`] === 'true');
+    setYtIsFree(s[`${prefix}yt_is_free`] === 'true');
+    setYtPrice(s[`${prefix}yt_price`] ?? '1.50');
+    setYtTitle(s[`${prefix}yt_title`] ?? '');
+    setYtThumbnailUrl(s[`${prefix}yt_thumbnail_url`] ?? '');
+    setYtPlayerA(s[`${prefix}yt_player_a`] ?? '');
+    setYtPlayerB(s[`${prefix}yt_player_b`] ?? '');
+    setYtPlayerACountry(s[`${prefix}yt_player_a_country`] ?? '');
+    setYtPlayerBCountry(s[`${prefix}yt_player_b_country`] ?? '');
+  };
+
+  // Seed form on first load only — subsequent refetches do NOT reset the form
+  // so mid-edit values are preserved. A banner will appear if another admin
+  // saves newer data; clicking "Reload" re-seeds then.
   useEffect(() => {
     if (!settings) return;
-    if (channel !== 1) setPageEnabled(settings[`ch${channel}_page_enabled`] === 'true');
-    setMuxPlaybackId(settings[`${prefix}mux_playback_id`] ?? '');
-    setMuxIsLive(settings[`${prefix}mux_is_live`] === 'true');
-    setMuxIsFree(settings[`${prefix}mux_is_free`] === 'true');
-    setMuxPrice(settings[`${prefix}mux_price`] ?? '1.50');
-    setMuxTitle(settings[`${prefix}mux_title`] ?? '');
-    setMuxThumbnailUrl(settings[`${prefix}mux_thumbnail_url`] ?? '');
-    setMuxPlayerA(settings[`${prefix}mux_player_a`] ?? '');
-    setMuxPlayerB(settings[`${prefix}mux_player_b`] ?? '');
-    setMuxPlayerACountry(settings[`${prefix}mux_player_a_country`] ?? '');
-    setMuxPlayerBCountry(settings[`${prefix}mux_player_b_country`] ?? '');
-    setYtVideoId(settings[`${prefix}yt_video_id`] ?? '');
-    setYtIsLive(settings[`${prefix}yt_is_live`] === 'true');
-    setYtIsFree(settings[`${prefix}yt_is_free`] === 'true');
-    setYtPrice(settings[`${prefix}yt_price`] ?? '1.50');
-    setYtTitle(settings[`${prefix}yt_title`] ?? '');
-    setYtThumbnailUrl(settings[`${prefix}yt_thumbnail_url`] ?? '');
-    setYtPlayerA(settings[`${prefix}yt_player_a`] ?? '');
-    setYtPlayerB(settings[`${prefix}yt_player_b`] ?? '');
-    setYtPlayerACountry(settings[`${prefix}yt_player_a_country`] ?? '');
-    setYtPlayerBCountry(settings[`${prefix}yt_player_b_country`] ?? '');
-  }, [settings, channel, prefix]);
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      initTimestampRef.current = settingsUpdatedAt;
+      applySettings(settings);
+      return;
+    }
+    // Settings were refreshed in the background — notify if changed
+    if (settingsUpdatedAt > initTimestampRef.current) {
+      setExternalUpdateAt(settingsUpdatedAt);
+    }
+  }, [settings, settingsUpdatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const reloadSettings = () => {
+    if (!settings) return;
+    initializedRef.current = true;
+    initTimestampRef.current = settingsUpdatedAt;
+    applySettings(settings);
+    setExternalUpdateAt(0);
+  };
 
   const saveMuxSettings = async () => {
     if (!muxPlaybackId.trim()) { toast.error('Mux Playback ID is required'); return; }
@@ -178,6 +218,23 @@ function ChannelForm({ channel, settings, token, qc, isLoading, saveMutation }: 
 
   return (
     <div className="space-y-6">
+      {/* External update banner — shown when another admin has saved newer settings */}
+      {externalUpdateAt > 0 && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm">
+          <span className="text-amber-400 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            Settings were updated by another admin. Reload to see the latest values.
+          </span>
+          <button
+            type="button"
+            onClick={reloadSettings}
+            className="shrink-0 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 transition-colors"
+          >
+            Reload Settings
+          </button>
+        </div>
+      )}
+
       <div className="rounded-lg border border-slate-700 bg-slate-800/40 px-4 py-3 text-sm text-slate-400">
         {chLabel}
       </div>
@@ -455,7 +512,7 @@ export default function AdminLivestreamSettings() {
 
   const token = useAuthStore((s) => s.token);
   const qc = useQueryClient();
-  const { data: settings, isLoading } = useSettings();
+  const { data: settings, isLoading, dataUpdatedAt } = useSettings(token);
   const [selectedChannel, setSelectedChannel] = useState<1 | 2 | 3>(1);
 
   const saveMutation = useMutation({
@@ -523,6 +580,7 @@ export default function AdminLivestreamSettings() {
           key={selectedChannel}
           channel={selectedChannel}
           settings={settings}
+          settingsUpdatedAt={dataUpdatedAt}
           token={token}
           qc={qc}
           isLoading={isLoading}
