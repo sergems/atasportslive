@@ -28,9 +28,9 @@ Note: `artifacts/ata-platform/vite.config.ts` defaults to port 23218 when `PORT`
 
 ## Database
 
-Schema is defined in `lib/db/src/schema/` (Drizzle). The initial schema and seed data were applied from `bt.sql` via psql, skipping the `\restrict`/`\unrestrict` lines at top/bottom: `sed '5d;12204d' bt.sql | psql "$DATABASE_URL"` (line numbers may shift if the dump is regenerated — check with `grep -n restrict bt.sql` first). To push schema changes: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow).
+Schema is defined in `lib/db/src/schema/` (Drizzle). The initial schema and seed data were applied from `gktp.sql` via psql, stripping the `\restrict`/`\unrestrict` control lines: `grep -v "^\\\\restrict\|^\\\\unrestrict" gktp.sql | psql "$DATABASE_URL"`. To push schema changes: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow).
 
-> ⚠️ **`bt.sql` (and files under `attached_assets/`) may contain real user PII and API tokens** from the original deployment. Do not commit them to a public repository or share them. Rotate any API tokens they reference, and consider removing these dumps from the repo once the database has been restored.
+> ⚠️ **`gktp.sql` (and files under `attached_assets/`) may contain real user PII and API tokens** from the original deployment. Do not commit them to a public repository or share them. Rotate any API tokens they reference, and consider removing these dumps from the repo once the database has been restored.
 
 ## API Code Generation
 
