@@ -98,6 +98,76 @@ export function useSEO({
 
 // ─── Schema Helpers ──────────────────────────────────────────────────────────
 
+export function makeItemList(opts: {
+  name: string;
+  description: string;
+  url: string;
+  items: { name: string; url: string; image?: string; description?: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: opts.name,
+    description: opts.description,
+    url: opts.url,
+    numberOfItems: opts.items.length,
+    itemListElement: opts.items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      url: item.url,
+      ...(item.image ? { image: item.image } : {}),
+      ...(item.description ? { description: item.description } : {}),
+    })),
+  };
+}
+
+// Valid Schema.org EventStatusType values (https://schema.org/EventStatusType)
+export type EventStatusType =
+  | "EventScheduled"
+  | "EventCancelled"
+  | "EventMovedOnline"
+  | "EventPostponed"
+  | "EventRescheduled";
+
+export function makeEvent(opts: {
+  name: string;
+  sport: string;
+  startDate: string;
+  url: string;
+  location?: string;
+  description?: string;
+  /** Must be a valid Schema.org EventStatusType. Use EventScheduled for live or upcoming events. */
+  status?: EventStatusType;
+  image?: string;
+  playerA?: string;
+  playerB?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    name: opts.name,
+    sport: opts.sport,
+    startDate: opts.startDate,
+    url: opts.url,
+    description: opts.description || "",
+    eventStatus: `https://schema.org/${opts.status ?? "EventScheduled"}`,
+    ...(opts.image ? { image: opts.image } : {}),
+    location: opts.location
+      ? { "@type": "Place", name: opts.location }
+      : { "@type": "Place", name: "Kampala, Uganda", address: { "@type": "PostalAddress", addressLocality: "Kampala", addressCountry: "UG" } },
+    organizer: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    ...(opts.playerA && opts.playerB
+      ? {
+          competitor: [
+            { "@type": "Person", name: opts.playerA },
+            { "@type": "Person", name: opts.playerB },
+          ],
+        }
+      : {}),
+  };
+}
+
 export function makeBreadcrumb(items: { name: string; url: string }[]) {
   return {
     "@context": "https://schema.org",
@@ -118,7 +188,8 @@ export function makeSportsEvent(opts: {
   url: string;
   location?: string;
   description?: string;
-  status?: "EventScheduled" | "EventLive" | "EventCompleted" | "EventCancelled";
+  /** Must be a valid Schema.org EventStatusType. Use EventScheduled for live or upcoming events. */
+  status?: EventStatusType;
 }) {
   return {
     "@context": "https://schema.org",
@@ -210,7 +281,11 @@ export const STRUCTURED_DATA = {
       areaServed: "UG",
       availableLanguage: "English",
     },
-    sameAs: [],
+    sameAs: [
+      "https://www.facebook.com/ATASportsLive",
+      "https://twitter.com/ATASportsLive",
+      "https://www.youtube.com/ATASportsLive",
+    ],
   },
 
   website: {

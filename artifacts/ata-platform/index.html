@@ -11,15 +11,28 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
+    <meta name="rating" content="general" />
+
+    <!-- Geographic targeting — Uganda / East Africa -->
+    <meta name="geo.region" content="UG" />
+    <meta name="geo.placename" content="Kampala, Uganda" />
+    <meta name="geo.position" content="0.3476;32.5825" />
+    <meta name="ICBM" content="0.3476, 32.5825" />
 
     <title>ATA Sports Live — Africa's Premier Sports Streaming &amp; P2P Betting Exchange</title>
     <meta name="description" content="Watch live Pool and Boxing matches from across Africa. Bet peer-to-peer in real-time on Africa's #1 sports betting exchange. Stream from $1.50/day." />
-    <meta name="keywords" content="live sports streaming Africa, Pool betting, Boxing live stream, P2P sports betting Uganda, ATA Sports Live, sports exchange Kampala" />
+    <meta name="keywords" content="live sports streaming Africa, Pool betting Uganda, Boxing live stream Africa, P2P sports betting Uganda, ATA Sports Live, sports exchange Kampala, billiards streaming, mobile money betting" />
     <meta name="author" content="ATA Sports Live" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
 
+    <!-- Canonical & hreflang -->
     <link rel="canonical" href="https://atasportslive.com/" />
+    <link rel="alternate" hreflang="en" href="https://atasportslive.com/" />
+    <link rel="alternate" hreflang="en-UG" href="https://atasportslive.com/" />
+    <link rel="alternate" hreflang="en-KE" href="https://atasportslive.com/" />
+    <link rel="alternate" hreflang="en-TZ" href="https://atasportslive.com/" />
+    <link rel="alternate" hreflang="x-default" href="https://atasportslive.com/" />
 
     <!-- OpenGraph -->
     <meta property="og:type" content="website" />
@@ -33,6 +46,8 @@
     <meta property="og:image:alt" content="ATA Sports Live — Live Pool and Boxing Streaming from Africa" />
     <meta property="og:locale" content="en_UG" />
     <meta property="og:locale:alternate" content="en_GB" />
+    <meta property="og:locale:alternate" content="en_KE" />
+    <meta property="og:locale:alternate" content="en_TZ" />
 
     <!-- Twitter / X Card -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -48,14 +63,16 @@
     <link rel="apple-touch-icon" href="/ata-logo.png" />
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Preconnect for 3rd-party origins -->
+    <!-- Preconnect / DNS-prefetch for 3rd-party origins -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://flagcdn.com" />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
-    <link rel="dns-prefetch" href="https://atasportslive.com" />
+    <link rel="dns-prefetch" href="https://stream.mux.com" />
+    <link rel="dns-prefetch" href="https://image.mux.com" />
 
-    <!-- Fonts -->
+    <!-- Fonts — preload the stylesheet to reduce render-blocking -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
 
     <!-- Static JSON-LD: crawlers see this before JS executes -->
@@ -80,6 +97,26 @@
           }
         },
         {
+          "@type": "WebApplication",
+          "@id": "https://atasportslive.com/#webapp",
+          "name": "ATA Sports Live",
+          "url": "https://atasportslive.com",
+          "applicationCategory": "SportsApplication",
+          "operatingSystem": "Web, Android, iOS",
+          "offers": {
+            "@type": "Offer",
+            "price": "1.50",
+            "priceCurrency": "USD",
+            "description": "Per-stream 24-hour access"
+          },
+          "featureList": [
+            "Live sports streaming",
+            "Peer-to-peer betting exchange",
+            "Mobile Money deposits and withdrawals",
+            "Real-time match notifications"
+          ]
+        },
+        {
           "@type": "Organization",
           "@id": "https://atasportslive.com/#organization",
           "name": "ATA Sports Live",
@@ -102,7 +139,7 @@
             "@type": "ContactPoint",
             "telephone": "+256-772-364-513",
             "contactType": "customer service",
-            "areaServed": "UG",
+            "areaServed": ["UG", "KE", "TZ", "RW", "NG"],
             "availableLanguage": "English"
           },
           "sameAs": [
@@ -117,7 +154,86 @@
           "name": "ATA Sports Live",
           "url": "https://atasportslive.com",
           "sport": ["Pool", "Boxing"],
-          "description": "Live Pool and Boxing streaming with peer-to-peer betting exchange across Africa."
+          "description": "Live Pool and Boxing streaming with peer-to-peer betting exchange across Africa.",
+          "location": {
+            "@type": "Place",
+            "name": "Kampala, Uganda",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Kampala",
+              "addressCountry": "UG"
+            }
+          }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How much does it cost to watch live streams on ATA Sports Live?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Streaming costs $1.50 per day per stream. You pay from your wallet balance and receive 24-hour access to the stream."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does P2P betting work on ATA Sports Live?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "You place a bet at your desired odds. When another user matches your bet, the bet is locked in. The winner receives the total stake minus a 10% brokerage fee."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What payment methods are accepted on ATA Sports Live?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "ATA Sports Live accepts MTN Mobile Money, Airtel Money, and Bitcoin (via Binance) for deposits and withdrawals."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What sports can I watch and bet on?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "You can watch and bet on Pool (billiards) and Boxing matches streamed live from across Africa."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is ATA Sports Live available outside Uganda?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. ATA Sports Live streams are accessible across Africa. Anyone with an internet connection can register, fund their wallet, and watch live matches."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I deposit money into my ATA Sports Live wallet?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "You can deposit using MTN Mobile Money, Airtel Money, or Bitcoin via Binance. Go to your Wallet page, choose your preferred method, and follow the prompts."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How quickly are withdrawals processed?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Withdrawals to Mobile Money accounts are typically processed within 24 hours after admin approval."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can I watch streams on my phone?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. ATA Sports Live is fully optimised for mobile browsers on both Android and iOS. No app download is required."
+              }
+            }
+          ]
         }
       ]
     }

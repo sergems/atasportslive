@@ -9,6 +9,7 @@ import { Lock, Play, Users, ChevronLeft, Clock, CalendarClock } from 'lucide-rea
 import Hls from 'hls.js';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
+import { useSEO, makeVideoObject, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 
 export default function StreamDetail() {
   const [, params] = useRoute('/streams/:id');
@@ -21,12 +22,34 @@ export default function StreamDetail() {
   const purchaseMutation = usePurchaseStreamAccess();
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  
-  useEffect(() => {
-    if (stream) {
-      document.title = `${stream.title} - ATA Streams`;
-    }
-  }, [stream]);
+
+  // Dynamic SEO — updates as stream data loads. Called unconditionally (hook rules).
+  useSEO({
+    title: stream?.title ?? 'Stream',
+    description: stream
+      ? `Watch ${stream.title} live on ATA Sports Live — Africa's premier ${stream.sport ?? 'sports'} streaming platform. Stream from $1.50/day.`
+      : "Watch live sports streams on ATA Sports Live — Africa's premier streaming platform.",
+    path: `/streams/${streamId}`,
+    ogImage: stream?.thumbnailUrl ?? undefined,
+    ogType: 'video.other',
+    jsonLd: stream
+      ? [
+          makeVideoObject({
+            name: stream.title,
+            description:
+              stream.description ||
+              `Live ${stream.sport ?? 'sports'} stream on ATA Sports Live.`,
+            thumbnailUrl: stream.thumbnailUrl ?? undefined,
+            url: `${SITE_URL}/streams/${streamId}`,
+          }),
+          makeBreadcrumb([
+            { name: 'Home', url: SITE_URL },
+            { name: 'Streams', url: `${SITE_URL}/streams` },
+            { name: stream.title, url: `${SITE_URL}/streams/${streamId}` },
+          ]),
+        ]
+      : undefined,
+  });
 
   useEffect(() => {
     if (stream?.status === 'live' && access?.hasAccess && stream.hlsUrl && videoRef.current) {

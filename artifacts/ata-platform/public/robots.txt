@@ -11,12 +11,16 @@ Disallow: /wallet
 Disallow: /transactions
 Disallow: /notifications
 Disallow: /bets
+Disallow: /subscriptions
+Disallow: /profile
 Disallow: /set-password
 
 # Explicitly allow all public content
 Allow: /streams
 Allow: /games
 Allow: /live
+Allow: /live-2
+Allow: /live-3
 Allow: /upcoming
 Allow: /fixtures
 Allow: /highlights

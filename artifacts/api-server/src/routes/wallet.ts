@@ -461,7 +461,7 @@ router.patch("/admin/deposit/:id/confirm", authMiddleware, requireRole("admin", 
   // between the two cannot leave a "completed" tx with no wallet credit.
   let claimed: typeof transactionsTable.$inferSelect | undefined;
   try {
-    await db.transaction(async (dbTx) => {
+    await db.transaction(async (dbTx: any) => {
       const [result] = await dbTx
         .update(transactionsTable)
         .set({ status: "completed" })
@@ -551,27 +551,26 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
 
   const amount = parseFloat(voucher.amount as string);
 
-  // Atomic claim: UPDATE ... WHERE is_redeemed = false prevents double-redeem under concurrency
-  const [claimed] = await db
-    .update(vouchersTable)
-    .set({ isRedeemed: true, redeemedBy: req.userId!, redeemedAt: new Date() })
-    .where(and(eq(vouchersTable.id, voucher.id), eq(vouchersTable.isRedeemed, false)))
-    .returning();
-  if (!claimed) {
-    res.status(400).json({ error: "This voucher has already been redeemed" });
-    return;
-  }
+  // Fully atomic: claim voucher, credit wallet, and insert audit record in one transaction.
+  // If any step fails the whole thing rolls back — no dangling claimed-but-uncredited state.
+  const inserted = await db.transaction(async (dbTx: any) => {
+    // Step 1: claim — WHERE is_redeemed = false prevents double-redeem under concurrency.
+    const [claimed] = await dbTx
+      .update(vouchersTable)
+      .set({ isRedeemed: true, redeemedBy: req.userId!, redeemedAt: new Date() })
+      .where(and(eq(vouchersTable.id, voucher.id), eq(vouchersTable.isRedeemed, false)))
+      .returning();
+    if (!claimed) return null; // already redeemed — signal to abort response below
 
-  // Atomic: wallet credit + transaction record must succeed or fail together.
-  // If the insert fails after the update, the wallet would be credited with no audit trail.
-  const tx = await db.transaction(async (dbTx) => {
+    // Step 2: credit wallet
     await dbTx.update(walletsTable).set({
       balance: sql`balance + ${amount}`,
       availableBalance: sql`available_balance + ${amount}`,
       withdrawableBalance: sql`withdrawable_balance + ${amount}`,
     }).where(eq(walletsTable.userId, req.userId!));
 
-    const [inserted] = await dbTx.insert(transactionsTable).values({
+    // Step 3: audit record
+    const [tx] = await dbTx.insert(transactionsTable).values({
       transactionId: `VCH-${voucher.code}`,
       userId: req.userId!,
       type: "voucher_redeem",
@@ -581,11 +580,16 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
       description: `Voucher ${voucher.code} redeemed`,
     }).returning();
 
-    return inserted;
+    return tx;
   });
 
+  if (!inserted) {
+    res.status(400).json({ error: "This voucher has already been redeemed" });
+    return;
+  }
+
   await notify(req.userId!, "deposit_received", "Voucher Redeemed", `${amount.toFixed(2)} has been added to your wallet.`);
-  res.json({ success: true, amount, transaction: toTxResponse(tx) });
+  res.json({ success: true, amount, transaction: toTxResponse(inserted) });
 });
 
 router.get("/admin/wallets", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {

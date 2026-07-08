@@ -3,10 +3,13 @@
   "short_name": "ATA Sports",
   "description": "Africa's premier live sports streaming and P2P betting exchange. Watch Pool and Boxing from $1.50/day.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "lang": "en",
+  "dir": "ltr",
   "categories": ["sports", "entertainment"],
   "icons": [
     {
@@ -27,7 +30,10 @@
       "src": "/opengraph.jpg",
       "sizes": "1200x630",
       "type": "image/jpeg",
-      "label": "ATA Sports Live Home"
+      "label": "ATA Sports Live Home",
+      "form_factor": "wide"
     }
-  ]
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
