@@ -12,9 +12,11 @@ A full-stack sports streaming & P2P betting exchange platform targeting the Ugan
 
 ## How to Run
 
-Both workflows start automatically:
-- **Frontend** (`artifacts/ata-platform: web`): `pnpm --filter @workspace/ata-platform run dev`
-- **API Server** (`artifacts/api-server: API Server`): `pnpm --filter @workspace/api-server run dev`
+Both workflows start automatically (configured as plain Replit workflows in this environment — artifact-managed `.toml` services are not registered here):
+- **Start application** (frontend, port 5000, webview): `PORT=5000 BASE_PATH=/ pnpm --filter @workspace/ata-platform run dev`
+- **API Server** (port 8080, console): `pnpm --filter @workspace/api-server run dev`
+
+Note: `artifacts/ata-platform/vite.config.ts` defaults to port 23218 when `PORT` is unset (leftover from a prior artifact-managed setup); the workflow above overrides it to 5000, which is required for the Replit webview.
 
 ## Environment Variables
 
@@ -26,9 +28,9 @@ Both workflows start automatically:
 
 ## Database
 
-Schema is defined in `lib/db/src/schema/` (Drizzle). The initial schema and seed data were applied from `backup.sql` via psql (the `\restrict`/`\unrestrict` lines at top/bottom are skipped: `sed '5d' backup.sql | psql "$DATABASE_URL"`). To push schema changes: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow).
+Schema is defined in `lib/db/src/schema/` (Drizzle). The initial schema and seed data were applied from `bt.sql` via psql, skipping the `\restrict`/`\unrestrict` lines at top/bottom: `sed '5d;12204d' bt.sql | psql "$DATABASE_URL"` (line numbers may shift if the dump is regenerated — check with `grep -n restrict bt.sql` first). To push schema changes: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow).
 
-> ⚠️ **`backup.sql` contains real user PII and API tokens** from the original deployment. Do not commit it to a public repository or share it. Rotate any API tokens it references.
+> ⚠️ **`bt.sql` (and files under `attached_assets/`) may contain real user PII and API tokens** from the original deployment. Do not commit them to a public repository or share them. Rotate any API tokens they reference, and consider removing these dumps from the repo once the database has been restored.
 
 ## API Code Generation
 
