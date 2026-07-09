@@ -1,52 +1,61 @@
-# Advanced Talent Agency (ATA) Platform
+# ATA Sports Live
 
-A full-stack sports streaming & P2P betting exchange platform targeting the Ugandan market (Kampala). Features live stream access (wallet-gated, pay-per-view), P2P betting with a 10% brokerage fee, and integrated mobile money/crypto payments.
+A sports streaming and peer-to-peer betting platform for African grassroots sports (Pool, Boxing, Darts, FIFA, Chess, Futsal). Built for Kampala, Uganda.
 
-## Stack
+## Architecture
 
-- **Monorepo**: pnpm workspaces
-- **Frontend**: React 19 + Vite + Tailwind CSS v4 + TanStack Query + Wouter + Zustand (`artifacts/ata-platform`, port 5000)
-- **Backend**: Node.js + Express 5 + WebSockets (`artifacts/api-server`, port 8080)
-- **Database**: PostgreSQL (Replit managed) + Drizzle ORM (`lib/db`)
-- **API Contract**: OpenAPI spec (`lib/api-spec`) → Orval generates React hooks + Zod schemas (`lib/api-client-react`)
+pnpm monorepo with two main services:
 
-## How to Run
-
-The single **Start application** workflow starts both services in parallel and is supervised so the workflow fails visibly if either process dies (webview, port 5000):
-```
-(PORT=8080 pnpm --filter @workspace/api-server dev) & (PORT=5000 pnpm --filter @workspace/ata-platform dev) & wait -n; exit $?
-```
-`PORT` is set per-command above — there is no single global `PORT` value shared by both services.
-
-Note: `artifacts/ata-platform/vite.config.ts` defaults to port 23218 when `PORT` is unset (leftover from a prior artifact-managed setup); the workflow above overrides it to 5000, which is required for the Replit webview.
-
-## Environment Variables
-
-| Key | Source | Purpose |
+| Package | Purpose | Port |
 |---|---|---|
-| `DATABASE_URL` | Replit managed | PostgreSQL connection string |
-| `SESSION_SECRET` | Replit Secret | JWT signing key |
-| `PORT` | Workflow config | Set per-command in the workflow (8080 for API, 5000 for frontend) |
-| `GOOGLE_CLIENT_ID` | Replit Secret (optional) | Enables Google Sign-In; without it the API returns 503 for those endpoints and the feature is just hidden |
+| `artifacts/ata-platform` | React 19 + Vite frontend | 5000 |
+| `artifacts/api-server` | Node.js + Express API + WebSocket | 8080 |
+| `lib/db` | Shared Drizzle ORM schema & client | — |
+
+The frontend proxies `/api`, `/uploads`, and `/ws` to the API server at `localhost:8080`.
+
+## Running on Replit
+
+Two workflows must both be running:
+
+- **Start application** — `PORT=5000 pnpm --filter @workspace/ata-platform dev`
+- **API Server** — `PORT=8080 pnpm --filter @workspace/api-server dev` (console, no port check)
+
+> The API Server workflow is configured without `waitForPort` because the Replit platform's port-detection races with the process startup. The server is healthy — confirm with `curl -s http://localhost:8080/api/settings/public`.
 
 ## Database
 
-Schema is defined in `lib/db/src/schema/` (Drizzle). On a fresh import the database is empty; restore it from the dump in `attached_assets/` via: `psql "$DATABASE_URL" -f attached_assets/ata_db_1783623312620.sql`. To push schema changes going forward: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow) — or apply SQL directly via `psql "$DATABASE_URL"` if non-interactive.
+Replit-managed PostgreSQL 16. The schema is managed by Drizzle ORM (`lib/db/src/schema/`).
 
-> ⚠️ **Files under `attached_assets/` (the `.sql` dumps) may contain real user PII and API tokens** from the original deployment. Do not commit them to a public repository or share them. Rotate any API tokens they reference, and consider removing these dumps from the repo once the database has been restored.
-
-## API Code Generation
-
-After changing `lib/api-spec/openapi.yaml`, regenerate client hooks:
-```
-pnpm --filter @workspace/api-spec run codegen
+To apply schema changes:
+```bash
+psql $DATABASE_URL -f <migration.sql>
+# or push via drizzle-kit (requires a TTY — use the Shell tab, not a workflow)
+pnpm --filter @workspace/db db:push
 ```
 
-## Key Rules
+The initial dataset was imported from `bt.sql` (5 092 users, 12 streams, 2 games).
 
-- Use `req.log` (not `console.log`) in API server code — enforced by convention
-- Auth is JWT-based, stored in Zustand with persistence, passed as Bearer tokens
-- Streaming is pay-per-view ($1.50/24h); bets take a 10% brokerage fee
-- `pnpm-workspace.yaml` enforces `minimumReleaseAge: 1440` (1 day) for supply-chain safety — don't disable it
+## Key Environment Variables
+
+| Variable | Source | Notes |
+|---|---|---|
+| `DATABASE_URL` | Replit-managed | PostgreSQL connection string |
+| `SESSION_SECRET` | Replit Secret | Used as JWT secret |
+| `GOOGLE_CLIENT_ID` | Shared env var | Google OAuth client |
+| `PORT` | Set per-workflow | 5000 (frontend), 8080 (API) |
+| `PAWAPAY_API_TOKEN` | Not yet set | Mobile money payments |
+| `PESAPAL_CONSUMER_KEY/SECRET` | Not yet set | Pesapal payment gateway |
+| SMTP vars | Not yet set | Transactional email |
+
+## Stack
+
+- **Frontend:** React 19, Vite, Tailwind CSS 4, Framer Motion, TanStack Query, Zustand, Wouter
+- **Backend:** Node.js (ESM), Express 5, WebSocket (ws), JWT auth, Pino logging, node-cron
+- **Database:** PostgreSQL 16, Drizzle ORM
+- **Payments:** PawaPay, Pesapal (credentials needed)
+- **Package manager:** pnpm (workspace)
 
 ## User Preferences
+
+- Keep the existing monorepo structure — do not restructure or migrate.

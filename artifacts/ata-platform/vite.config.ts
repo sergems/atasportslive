@@ -4,8 +4,8 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// Port must match the artifact workflow's waitForPort (23218).
-// Replit's proxy routes the external dev URL to this port.
+// Frontend dev port. Defaults to 23218 when PORT is unset (used in some managed
+// environments); overridden to 5000 by the Replit "Start application" workflow.
 const port = Number(process.env.PORT) || 23218;
 
 const basePath = process.env.BASE_PATH || "/";
