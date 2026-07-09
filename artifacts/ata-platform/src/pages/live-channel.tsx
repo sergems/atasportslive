@@ -80,22 +80,30 @@ function useNextUpcoming() {
 
 /**
  * Fullscreen for a player, covering both:
- *  1. Auto-trigger on device rotation to landscape (and un-trigger on
- *     rotation back to portrait).
- *  2. A manual toggle for an on-player fullscreen button.
+ *  1. Auto-trigger on device rotation to landscape (and back on portrait).
+ *  2. A manual toggle via an on-player button.
  *
- * Fullscreen is driven entirely by React state — when active the caller
- * renders the player inside a createPortal() fixed overlay appended directly
- * to document.body. This bypasses every parent stacking context and CSS
- * transform that would otherwise trap a `position:fixed` child inside the
- * page layout, which is the root cause of the player not covering the full
- * screen on mobile when Framer Motion or other layout parents apply transforms.
+ * Strategy (avoids iframe remount = no stream interruption):
  *
- * ref is used only for the auto-rotate in-view check; no DOM styles are
- * mutated by this hook.
+ *  PRIMARY — native Fullscreen API on the container element itself.
+ *  The browser takes the element fullscreen natively; parent CSS transforms
+ *  (e.g. Framer Motion page transitions) do not affect it because the browser
+ *  composites it independently. This also hides the address bar on Android
+ *  Chrome. State is driven entirely by the 'fullscreenchange' event — we
+ *  never write isFullscreen=true speculatively so there's no desync.
+ *
+ *  FALLBACK — CSS portal overlay (createPortal into document.body).
+ *  Used only when native FS is unavailable (iOS Safari refuses requestFullscreen
+ *  on non-<video> divs). The portal bypasses parent stacking contexts. This
+ *  path does unmount/remount the iframe, which causes a brief stream reload —
+ *  acceptable since iOS doesn't hide browser chrome either way.
+ *
+ *  `portalFullscreen` is the flag callers use to decide which path is active.
  */
 function usePlayerFullscreen(ref: React.RefObject<HTMLElement | null>) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // true only when we fell back to the CSS portal path (native FS unavailable)
+  const [portalFullscreen, setPortalFullscreen] = useState(false);
 
   const lockLandscape = () => {
     try {
@@ -109,25 +117,85 @@ function usePlayerFullscreen(ref: React.RefObject<HTMLElement | null>) {
     } catch {}
   };
 
-  const enter = useCallback(() => {
+  // Activate portal fallback (iOS / environments without native FS on divs).
+  const enterPortal = useCallback(() => {
+    setPortalFullscreen(true);
     setIsFullscreen(true);
     document.body.style.overflow = 'hidden';
     lockLandscape();
   }, []);
 
-  const exit = useCallback(() => {
+  const exitPortal = useCallback(() => {
+    setPortalFullscreen(false);
     setIsFullscreen(false);
     document.body.style.overflow = '';
     unlockOrientation();
   }, []);
 
+  const enter = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    lockLandscape();
+    const anyEl = el as HTMLElement & { webkitRequestFullscreen?: () => void };
+    const p: Promise<void> | null = el.requestFullscreen
+      ? el.requestFullscreen({ navigationUI: 'hide' })
+      : anyEl.webkitRequestFullscreen
+        ? (anyEl.webkitRequestFullscreen(), Promise.resolve())
+        : null;
+    if (p === null) {
+      // No FS API at all — portal only
+      enterPortal();
+    } else {
+      // State driven by fullscreenchange on success.
+      // On rejection (iOS) fall back to portal.
+      p.catch(() => enterPortal());
+    }
+  }, [ref, enterPortal]);
+
+  const exit = useCallback(() => {
+    if (portalFullscreen) {
+      exitPortal();
+      return;
+    }
+    unlockOrientation();
+    const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
+    if (doc.fullscreenElement ?? doc.webkitFullscreenElement) {
+      (document.exitFullscreen
+        ? document.exitFullscreen()
+        : Promise.resolve(doc.webkitExitFullscreen?.())
+      ).catch(() => {});
+      // isFullscreen cleared by the fullscreenchange listener below
+    } else {
+      // Native FS already gone (shouldn't normally happen — keep state clean)
+      setIsFullscreen(false);
+    }
+  }, [portalFullscreen, exitPortal]);
+
   const toggle = useCallback(() => {
-    setIsFullscreen((prev) => {
-      const next = !prev;
-      if (next) { document.body.style.overflow = 'hidden'; lockLandscape(); }
-      else       { document.body.style.overflow = '';       unlockOrientation(); }
-      return next;
-    });
+    if (isFullscreen) exit(); else enter();
+  }, [isFullscreen, enter, exit]);
+
+  // Sync state from native fullscreenchange (enter AND exit).
+  // This is the only place isFullscreen is set for the native path.
+  useEffect(() => {
+    const onFsChange = () => {
+      const doc = document as Document & { webkitFullscreenElement?: Element };
+      const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
+      if (fsEl) {
+        setIsFullscreen(true);
+      } else {
+        setIsFullscreen(false);
+        setPortalFullscreen(false);
+        document.body.style.overflow = '';
+        unlockOrientation();
+      }
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
   }, []);
 
   // Auto rotate-to-fullscreen on touch devices only.
@@ -159,7 +227,7 @@ function usePlayerFullscreen(ref: React.RefObject<HTMLElement | null>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref]);
 
-  return { isFullscreen, enter, exit, toggle };
+  return { isFullscreen, portalFullscreen, toggle };
 }
 
 function FullscreenButton({ isFullscreen, onToggle, className }: { isFullscreen: boolean; onToggle: () => void; className?: string }) {
@@ -235,7 +303,7 @@ export function MuxPlayer({ playbackId, title }: { playbackId: string; title: st
 export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { isFullscreen, toggle: toggleFullscreen } = usePlayerFullscreen(containerRef);
+  const { isFullscreen, portalFullscreen, toggle: toggleFullscreen } = usePlayerFullscreen(containerRef);
   const { visible: controlsVisible, handlers: controlsHandlers } = useControlsAutoHide();
   const [volume, setVolume] = useState(100);
   const [muted, setMuted] = useState(false);
@@ -500,24 +568,30 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     </div>
   );
 
-  // ── Fullscreen via portal ────────────────────────────────────────────────────
-  // When fullscreen, we render via createPortal() directly into document.body.
-  // This completely bypasses any parent stacking context or CSS transform
-  // (e.g. Framer Motion page transitions) that would trap position:fixed
-  // children inside the page layout instead of covering the real viewport.
-  // The containerRef div stays in the normal DOM position so the
-  // auto-rotate orientation listener can still measure its bounding rect.
+  // ── Rendering strategy ───────────────────────────────────────────────────────
+  // PRIMARY (Android Chrome, desktop): native Fullscreen API is used on
+  // containerRef itself. The browser composites it fullscreen natively,
+  // bypassing parent CSS transforms. playerInner stays mounted inside
+  // containerRef the whole time — no iframe remount, no stream interruption.
+  //
+  // FALLBACK (iOS Safari): div.requestFullscreen() is unsupported; we fall
+  // back to portalFullscreen = a createPortal fixed overlay. This does remount
+  // the iframe, but on iOS there is no way to hide browser chrome regardless,
+  // so the UX cost is acceptable.
   return (
     <>
-      {/* Placeholder that keeps the layout space and holds the orientation ref */}
+      {/* containerRef always stays in the DOM for orientation detection.
+          When using native FS the browser takes this element fullscreen;
+          playerInner is always mounted here on the native path. */}
       <div ref={containerRef} className="relative w-full h-full bg-black">
-        {!isFullscreen && playerInner}
+        {!portalFullscreen && playerInner}
       </div>
 
-      {isFullscreen && createPortal(
+      {/* Portal fallback — iOS only. createPortal bypasses stacking contexts. */}
+      {portalFullscreen && createPortal(
         <div
           className="fixed inset-0 bg-black"
-          style={{ zIndex: 2147483647 /* max int32 — beats every stacking context */ }}
+          style={{ zIndex: 2147483647 }}
         >
           {playerInner}
         </div>,
