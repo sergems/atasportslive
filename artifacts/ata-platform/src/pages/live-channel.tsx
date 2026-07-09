@@ -321,24 +321,37 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
     const video = videoRef.current;
     if (!video) return;
 
-    // Try to play with sound on immediately. Most mobile browsers block
-    // unmuted autoplay without a prior user gesture, so if that rejects we
-    // fall back to muted autoplay and then unmute automatically the instant
+    // Mobile browsers only allow autoplay to start at all when the video is
+    // declared muted (the `muted` attribute below) *before* play() is ever
+    // called — starting unmuted or toggling `muted` off pre-emptively causes
+    // the browser to silently refuse to play anything. So: always start
+    // playback muted (guaranteed to work everywhere, including mobile),
+    // then immediately try to flip sound on. If that's rejected (no prior
+    // user gesture), the video keeps playing muted and we unmute the moment
     // the visitor makes any interaction with the page (tap/click/scroll/key)
-    // — this still gets sound "always on" without ever showing a manual
-    // play button or blocking the video behind a click-to-start screen.
-    function attemptUnmutedPlay() {
+    // — video playback itself is never blocked or paused waiting on that.
+    function startPlayback() {
       if (!video) return;
-      video.muted = false;
-      video.volume = 1;
+      video.muted = true;
       const playPromise = video.play();
-      if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(() => {
-          if (!video) return;
-          video.muted = true;
-          video.play().catch(() => {});
+      const tryUnmute = () => {
+        if (!video) return;
+        video.muted = false;
+        video.volume = 1;
+        // some browsers revert muted back to true if this unmute attempt
+        // itself isn't allowed yet — detect that and wait for a gesture
+        setTimeout(() => {
+          if (video && video.muted) unmuteOnFirstInteraction();
+        }, 50);
+      };
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(tryUnmute).catch(() => {
+          // even the muted play() failed (rare) — retry shortly, still muted
+          if (video) video.play().catch(() => {});
           unmuteOnFirstInteraction();
         });
+      } else {
+        tryUnmute();
       }
     }
 
@@ -359,18 +372,18 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
       const hls = new Hls();
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, attemptUnmutedPlay);
+      hls.on(Hls.Events.MANIFEST_PARSED, startPlayback);
       return () => hls.destroy();
     }
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = hlsUrl;
-      attemptUnmutedPlay();
+      startPlayback();
     }
     return undefined;
   }, [hlsUrl]);
 
   return (
-    <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay playsInline title={title} />
+    <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay muted playsInline title={title} />
   );
 }
 
