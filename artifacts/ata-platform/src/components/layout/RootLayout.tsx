@@ -3,7 +3,7 @@ import { Link, useLocation } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { MapPin, Phone, Mail, Home, Radio, Film, Swords, Wallet, LogIn, LogOut, LayoutDashboard, ShieldCheck, ChevronUp } from 'lucide-react';
-import { FaFacebook, FaYoutube, FaInstagram } from 'react-icons/fa';
+import { FaFacebook, FaYoutube, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
 import { useAuth } from '@/lib/auth';
@@ -261,6 +261,14 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
                   className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-slate-600 hover:text-white transition-all duration-200"
                 >
                   <FaTiktok className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://chat.whatsapp.com/DZG2W4CYsVR2owg5IhupAz?s=cl&p=a&ilr=1&amv=3"
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label="ATA Sports Live on WhatsApp"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-slate-800 text-slate-400 hover:bg-green-600 hover:text-white transition-all duration-200"
+                >
+                  <FaWhatsapp className="h-4 w-4" />
                 </a>
               </div>
               {/* Download App */}
