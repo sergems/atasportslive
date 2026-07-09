@@ -110,13 +110,30 @@ function usePlayerFullscreen(ref: React.RefObject<HTMLElement | null>) {
     Object.assign(el.style, ORIENTATION_FULLSCREEN_STYLE);
     document.body.style.overflow = 'hidden';
     setIsFullscreen(true);
+
+    // Lock orientation to landscape so the screen physically rotates.
+    // We attempt this regardless of whether the Fullscreen API succeeds —
+    // the CSS overlay already covers the viewport, orientation lock just
+    // makes the device rotate to fill it properly. iOS Safari does not
+    // support either API so it silently no-ops via the catch paths.
+    const lockLandscape = () => {
+      try { (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })?.lock?.('landscape').catch(() => {}); } catch {}
+    };
+
     const anyEl = el as HTMLElement & { webkitRequestFullscreen?: () => void };
-    (el.requestFullscreen ? el.requestFullscreen() : Promise.resolve(anyEl.webkitRequestFullscreen?.()))?.catch?.(() => {});
+    const fsPromise = el.requestFullscreen
+      ? el.requestFullscreen()
+      : anyEl.webkitRequestFullscreen
+        ? (anyEl.webkitRequestFullscreen(), Promise.resolve())
+        : Promise.resolve();
+    fsPromise.then(lockLandscape).catch(lockLandscape);
   }, [ref]);
 
   const exit = useCallback(() => {
     const el = ref.current;
     if (!el || originalStyleRef.current === null) return;
+    // Release orientation lock so the device can return to portrait.
+    try { (screen.orientation as ScreenOrientation & { unlock?: () => void })?.unlock?.(); } catch {}
     if (originalStyleRef.current) el.setAttribute('style', originalStyleRef.current);
     else el.removeAttribute('style');
     originalStyleRef.current = null;
@@ -440,10 +457,6 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       {/* Overlay: pointer-events-none so it never blocks the block layer
           above, except for the volume widget in the bottom-left corner */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Top strip hides YouTube's title / channel-info card that would
-            otherwise flash on load */}
-        <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent" />
-
         {/* Solid black bars covering the top and bottom for a few seconds
             right after switching channels — YouTube always briefly shows
             its title/channel card on load with no way to fully disable it,
@@ -460,10 +473,14 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
           }`}
         />
 
-        {/* Controls — fade in/out based on user activity */}
+        {/* Controls + top strip — all fade together on user inactivity */}
         <div
           className={`absolute inset-0 transition-opacity duration-300 ${controlsVisible ? 'opacity-100' : 'opacity-0'}`}
         >
+          {/* Top gradient hides YouTube's title/channel card that flashes on
+              load. Lives inside the fade wrapper so it doesn't permanently
+              darken the feed when controls are hidden. */}
+          <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent" />
           {ready && (
             <div
               className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
