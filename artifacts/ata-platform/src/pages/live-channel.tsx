@@ -84,41 +84,74 @@ const ORIENTATION_FULLSCREEN_STYLE: Partial<CSSStyleDeclaration> = {
 };
 
 /**
- * On mobile, rotating the device to landscape while a video container is
- * visible on screen makes that container fill the whole screen; rotating
- * back to portrait restores it. Desktop/no-touch devices are left alone.
+ * Fullscreen for a player container, covering both:
+ *  1. Auto-trigger on device rotation to landscape (and un-trigger on
+ *     rotation back to portrait).
+ *  2. A manual toggle for an on-player fullscreen button.
  *
- * We deliberately do NOT use the real Fullscreen API here: browsers only
- * grant requestFullscreen() inside a genuine user gesture (tap/click), and
- * a device rotation event does not count as one — so calling it from an
- * orientationchange handler is silently rejected on essentially every
- * mobile browser. Instead we fake it with a fixed, full-viewport overlay
- * (plus a body scroll lock), which works everywhere with no permissions.
+ * We always drive this with a fixed, full-viewport CSS overlay (plus a body
+ * scroll lock) rather than relying on the real Fullscreen API as the
+ * primary mechanism — it works unconditionally everywhere, including iOS
+ * Safari, which does not implement Element.requestFullscreen() at all for
+ * plain containers (only <video> elements get a fullscreen affordance
+ * there, via the non-standard webkitEnterFullscreen). We still *attempt*
+ * the real API on top, best-effort, so Android/desktop get native chrome,
+ * rotation lock, and hardware back-button support where available — but
+ * nothing depends on it succeeding.
  */
-function useOrientationFullscreen(ref: React.RefObject<HTMLElement | null>) {
+function usePlayerFullscreen(ref: React.RefObject<HTMLElement | null>) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const originalStyleRef = useRef<string | null>(null);
+
+  const enter = useCallback(() => {
+    const el = ref.current;
+    if (!el || originalStyleRef.current !== null) return;
+    originalStyleRef.current = el.getAttribute('style') ?? '';
+    Object.assign(el.style, ORIENTATION_FULLSCREEN_STYLE);
+    document.body.style.overflow = 'hidden';
+    setIsFullscreen(true);
+    const anyEl = el as HTMLElement & { webkitRequestFullscreen?: () => void };
+    (el.requestFullscreen ? el.requestFullscreen() : Promise.resolve(anyEl.webkitRequestFullscreen?.()))?.catch?.(() => {});
+  }, [ref]);
+
+  const exit = useCallback(() => {
+    const el = ref.current;
+    if (!el || originalStyleRef.current === null) return;
+    if (originalStyleRef.current) el.setAttribute('style', originalStyleRef.current);
+    else el.removeAttribute('style');
+    originalStyleRef.current = null;
+    document.body.style.overflow = '';
+    setIsFullscreen(false);
+    const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
+    const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
+    if (fsEl) (document.exitFullscreen ? document.exitFullscreen() : Promise.resolve(doc.webkitExitFullscreen?.()))?.catch?.(() => {});
+  }, [ref]);
+
+  const toggle = useCallback(() => {
+    if (originalStyleRef.current !== null) exit(); else enter();
+  }, [enter, exit]);
+
+  // Keep our state in sync if the user exits real fullscreen via ESC / the
+  // OS back gesture / browser chrome instead of our own button.
+  useEffect(() => {
+    const onFsChange = () => {
+      const doc = document as Document & { webkitFullscreenElement?: Element };
+      const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
+      if (!fsEl && originalStyleRef.current !== null) exit();
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
+  }, [exit]);
+
+  // Auto rotate-to-fullscreen on touch devices only.
   useEffect(() => {
     const isTouchDevice = typeof window !== 'undefined' &&
       (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
     if (!isTouchDevice) return undefined;
-
-    let originalStyle: string | null = null;
-    let isFullscreen = false;
-
-    const enter = (el: HTMLElement) => {
-      if (isFullscreen) return;
-      isFullscreen = true;
-      originalStyle = el.getAttribute('style');
-      Object.assign(el.style, ORIENTATION_FULLSCREEN_STYLE);
-      document.body.style.overflow = 'hidden';
-    };
-
-    const exit = (el: HTMLElement) => {
-      if (!isFullscreen) return;
-      isFullscreen = false;
-      if (originalStyle !== null) el.setAttribute('style', originalStyle);
-      else el.removeAttribute('style');
-      document.body.style.overflow = '';
-    };
 
     const handleOrientationChange = () => {
       const el = ref.current;
@@ -127,10 +160,9 @@ function useOrientationFullscreen(ref: React.RefObject<HTMLElement | null>) {
       if (isLandscape) {
         const rect = el.getBoundingClientRect();
         const inView = rect.bottom > 0 && rect.top < window.innerHeight;
-        if (!inView) return;
-        enter(el);
+        if (inView) enter();
       } else {
-        exit(el);
+        exit();
       }
     };
     const api = window.screen?.orientation;
@@ -139,58 +171,18 @@ function useOrientationFullscreen(ref: React.RefObject<HTMLElement | null>) {
     return () => {
       if (api) api.removeEventListener('change', handleOrientationChange);
       else window.removeEventListener('orientationchange', handleOrientationChange);
-      const el = ref.current;
-      if (el) exit(el);
+      exit();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref]);
+
+  return { isFullscreen, toggle };
 }
 
-/**
- * Manual fullscreen toggle for a "fullscreen" button rendered on the player
- * itself. Unlike the orientation-driven version above, this always runs
- * inside a real click handler — a genuine user gesture — so we can (and
- * should) use the real Fullscreen API here: it gives native OS chrome,
- * proper Android/iOS support, and (for the HLS <video> element) iOS's
- * dedicated fullscreen video UI via webkitEnterFullscreen.
- */
-function toggleManualFullscreen(el: HTMLElement | null) {
-  if (!el) return;
-  const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
-  const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
-  if (fsEl) {
-    (document.exitFullscreen ? document.exitFullscreen() : doc.webkitExitFullscreen?.())?.catch?.(() => {});
-    return;
-  }
-  const anyEl = el as HTMLElement & { webkitRequestFullscreen?: () => void; webkitEnterFullscreen?: () => void };
-  if (el.requestFullscreen) { el.requestFullscreen().catch(() => {}); return; }
-  if (anyEl.webkitRequestFullscreen) { anyEl.webkitRequestFullscreen(); return; }
-  if (anyEl.webkitEnterFullscreen) { anyEl.webkitEnterFullscreen(); return; }
-}
-
-/** Tracks whether `ref`'s element is currently the fullscreen element, so a button can swap its icon. */
-function useIsManualFullscreen(ref: React.RefObject<HTMLElement | null>) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  useEffect(() => {
-    const check = () => {
-      const doc = document as Document & { webkitFullscreenElement?: Element };
-      const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
-      setIsFullscreen(!!fsEl && fsEl === ref.current);
-    };
-    document.addEventListener('fullscreenchange', check);
-    document.addEventListener('webkitfullscreenchange', check);
-    return () => {
-      document.removeEventListener('fullscreenchange', check);
-      document.removeEventListener('webkitfullscreenchange', check);
-    };
-  }, [ref]);
-  return isFullscreen;
-}
-
-function FullscreenButton({ targetRef, className }: { targetRef: React.RefObject<HTMLElement | null>; className?: string }) {
-  const isFullscreen = useIsManualFullscreen(targetRef);
+function FullscreenButton({ isFullscreen, onToggle, className }: { isFullscreen: boolean; onToggle: () => void; className?: string }) {
   return (
     <button
-      onClick={() => toggleManualFullscreen(targetRef.current)}
+      onClick={onToggle}
       className={className ?? 'flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors'}
       aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
       title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
@@ -206,7 +198,7 @@ const FALLBACK_MUX_PLAYBACK_ID = 'QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ0
 
 export function MuxPlayer({ playbackId, title }: { playbackId: string; title: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  useOrientationFullscreen(containerRef);
+  usePlayerFullscreen(containerRef);
   return (
     <div ref={containerRef} className="relative w-full h-full">
       <iframe
@@ -223,7 +215,7 @@ export function MuxPlayer({ playbackId, title }: { playbackId: string; title: st
 export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  useOrientationFullscreen(containerRef);
+  const { isFullscreen, toggle: toggleFullscreen } = usePlayerFullscreen(containerRef);
   const [volume, setVolume] = useState(100);
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
@@ -470,7 +462,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
             </button>
 
             {/* Fullscreen button */}
-            <FullscreenButton targetRef={containerRef} />
+            <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
           </div>
         )}
 
@@ -494,7 +486,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
 export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  useOrientationFullscreen(containerRef);
+  const { isFullscreen, toggle: toggleFullscreen } = usePlayerFullscreen(containerRef);
   const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
@@ -554,7 +546,7 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
           controls hide or omit one */}
       <div className="absolute bottom-3 right-3 flex items-center gap-2 pointer-events-none">
         <div className="pointer-events-auto">
-          <FullscreenButton targetRef={containerRef} />
+          <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
         </div>
       </div>
 
@@ -750,7 +742,7 @@ function SneakPeekPlayer({ secondsLeft, onSkip, isAuthenticated, children }: { s
   const pct = (secondsLeft / SNEAK_PEEK_SECONDS) * 100;
   const urgent = secondsLeft <= 15;
   const containerRef = useRef<HTMLDivElement>(null);
-  useOrientationFullscreen(containerRef);
+  usePlayerFullscreen(containerRef);
   return (
     <div ref={containerRef} className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
       {children}
