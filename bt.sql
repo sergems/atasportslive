@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict mnBEsdjMoDaVgHSVR4wGuq6i64sJ7Ds3nzEdsuNg45kpgBpgx8LVvxIsfPGnojA
+\restrict e8JbIcOeWi7aNRTQIVvVgtO6MagYkiQOGKrrg8lBIoFwRqnAwgnqN2c16faYs6Q
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1202,7 +1202,6 @@ COPY public.audit_logs (id, user_id, action, entity_type, entity_id, details, ip
 
 COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_return, status, matched_bet_id, settled_at, created_at, updated_at) FROM stdin;
 7	TKT-7556700A	4	18	player_a_wins	3.00	0.00	pending	\N	\N	2026-07-09 11:41:26.045568+00	2026-07-09 11:41:26.045568+00
-8	TKT-939E7326	1	17	player_a_wins	0.50	0.00	pending	\N	\N	2026-07-09 12:52:28.003722+00	2026-07-09 12:52:28.003722+00
 \.
 
 
@@ -1389,14 +1388,14 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 20	HEYBALL CHAMPION OF CHAMPIONS	Sanctioned WPA Sanctioned Category Men Women WPA Ranking Points WPA Heyball Ranking Description Arrival Day: 21 July 2026 Athletes’ Meeting & 22 July 2026, 16:30 (Mandatory)  Opening Ceremony: 22 July 2026, 19:00 (Mandatory) Tournament Start & Conclude: 23 July to 26 July 2026 Medal Ceremony: 26 July 2026, between 19:00 and 20:00 Departure Day: 27 July 2026	pool	\N	\N	\N	upcoming	2026-07-23 10:00:00+00	2026-07-26 12:00:00+00	0	0.00	2026-07-06 09:51:52.781332+00	2026-07-06 09:51:52.781332+00	Kuala Lumpur	Malaysia	\N	\N	\N	\N	competition	\N
 21	European Championships Heyball - Single	\N	pool	\N	\N	\N	upcoming	2026-08-03 10:00:00+00	2026-08-04 12:56:00+00	0	0.00	2026-07-06 09:58:59.703495+00	2026-07-06 09:58:59.703495+00	Kielce	Poland	\N	\N	\N	\N	competition	\N
 26	GENESIS JUNIORS POOL CHAMPIONSHIPS	\N	pool	\N	\N	\N	upcoming	2026-09-04 09:00:00+00	2026-09-05 00:00:00+00	0	0.00	2026-07-06 14:20:45.691523+00	2026-07-06 14:20:45.691523+00	The Olive School - Namugongo	Uganda	\N	\N	\N	\N	competition	\N
-28	UGANDA BOXING CHAMPIONSHP LEAGUE	\N	boxing	/uploads/thumb-1783359641816-h579a6.jpg	\N	\N	upcoming	2026-07-18 00:00:00+00	2026-07-06 01:30:00+00	0	1.50	2026-07-06 17:40:42.16567+00	2026-07-06 17:40:42.16567+00	Lugogo Arena	Uganda	RASKARA PAUL	MUSULUBE STEPHAN	UG	UG	single	27
 32	BILLIARDS CAFE CLASSIC OPEN	\N	pool	\N	\N	\N	upcoming	2026-11-26 09:00:00+00	2026-11-29 00:00:00+00	0	0.00	2026-07-09 10:46:03.854465+00	2026-07-09 10:46:03.854465+00	Lusaka 	Zambia	\N	\N	\N	\N	competition	\N
 33	NYENDO MASAKA GRAND OPEN CHAMPIONSHIPS	\N	pool	\N	\N	\N	upcoming	2026-08-01 20:00:00+00	2026-08-02 00:00:00+00	0	0.00	2026-07-09 10:49:17.793099+00	2026-07-09 10:49:17.793099+00	Masaka	Uganda	\N	\N	\N	\N	competition	\N
-34	CUEXTV - BATTLE FOR LEGACY	A £50,000 battle race to 31. 	pool	/uploads/thumb-1783594389206-ag488b.jpg	\N	\N	upcoming	2026-09-11 19:00:00+00	2026-09-12 23:00:00+00	0	5.00	2026-07-09 10:53:09.678062+00	2026-07-09 10:53:09.678062+00	Coalville	United Kingdom	CHRIS MELLING - Magician	TOM COUSINS - Top Cat	UK	WH	single	\N
 27	UGANDA BOXING CHAMP LEAGUE SEASON 5 	\N	boxing	\N	\N	\N	upcoming	2026-07-18 18:00:00+00	2026-07-18 04:30:00+00	0	1.50	2026-07-06 17:38:03.006088+00	2026-07-09 11:20:51.198+00	Lugogo Arena	Uganda	\N	\N	\N	\N	competition	\N
 35	2026 BetVictor Championship League Snooker: Ranking Edition	\N	other	\N	\N	__yt_default__	upcoming	2026-07-09 12:25:22.216413+00	2026-07-09 18:25:58.397+00	0	1.50	2026-07-09 12:25:22.216413+00	2026-07-09 18:27:19.731008+00	\N	\N	\N	\N	\N	\N	single	\N
 36	IABF Professional Boxing League Season 1	\N	other	\N	\N	__ch2_yt_default__	upcoming	2026-07-09 12:32:14.128153+00	2026-07-09 18:25:59.547+00	0	1.50	2026-07-09 12:32:14.128153+00	2026-07-09 18:27:24.568987+00	\N	\N	\N	\N	\N	\N	single	\N
 37	Live Darts | Series 14 Week 11	\N	other	\N	\N	__ch3_yt_default__	upcoming	2026-07-09 12:37:10.176364+00	2026-07-09 18:25:57.034+00	0	1.50	2026-07-09 12:37:10.176364+00	2026-07-09 18:27:30.010404+00	\N	\N	\N	\N	\N	\N	single	\N
+28	UGANDA BOXING CHAMPIONSHP LEAGUE	\N	boxing	\N	\N	\N	upcoming	2026-07-18 00:00:00+00	2026-07-06 01:30:00+00	0	1.50	2026-07-06 17:40:42.16567+00	2026-07-06 17:40:42.16567+00	Lugogo Arena	Uganda	RASKARA PAUL	MUSULUBE STEPHAN	UG	UG	single	27
+34	CUEXTV - BATTLE FOR LEGACY	A £50,000 battle race to 31. 	pool	\N	\N	\N	upcoming	2026-09-11 19:00:00+00	2026-09-12 23:00:00+00	0	5.00	2026-07-09 10:53:09.678062+00	2026-07-09 10:53:09.678062+00	Coalville	United Kingdom	CHRIS MELLING - Magician	TOM COUSINS - Top Cat	UK	WH	single	\N
 \.
 
 
@@ -1462,6 +1461,7 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 99	DEP-CCA45B28	5084	deposit	1.65	completed	pesapal	a4c1629e-07c4-4547-b6c5-da2cc2d687d1	Pesapal deposit of USD 1.65	{"orderTrackingId":"a4c1629e-07c4-4547-b6c5-da2cc2d687d1"}	2026-07-07 10:47:02.698632+00	2026-07-07 10:47:43.593+00
 100	BET-AAE79872	4	bet_stake	3.00	completed	internal	\N	Bet stake on game #18	\N	2026-07-09 11:41:26.045568+00	2026-07-09 11:41:26.045568+00
 101	BET-AA842D6C	1	bet_stake	0.50	completed	internal	\N	Bet stake on game #17	\N	2026-07-09 12:52:28.003722+00	2026-07-09 12:52:28.003722+00
+102	ADJ-AD24B666	1	bet_stake	0.50	completed	internal	\N	Bet #8 removed — sub-minimum $0.50 stake refunded	\N	2026-07-09 19:42:20.139402+00	2026-07-09 19:42:20.139402+00
 \.
 
 
@@ -6543,7 +6543,6 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 4347	rojahphinellah@gmail.com	$2b$10$QHrHvNHDV49.tS1oxAmyc.sFaCYx3pg5cLwo415Wu794ba8oe1l92	Ssemanda Rogers	256752314095	content_editor	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQzNDcsInJvbGUiOiJjb250ZW50X2VkaXRvciIsInN2IjoiM2Q2NmJiM2UtNWZiYi00M2M2LTgxNzUtMTk1Yzk3ZDdiYjJmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MDg5MDQsImV4cCI6MTc4NjIwMDkwNH0.ldTWUHPJg12nvIRYgS4KLPKFALsGI-YMkJdPO5TO71A	2026-06-26 13:40:29.768124+00	2026-07-09 14:55:04.282+00	\N	\N	\N	f	3d66bb3e-5fbb-43c6-8175-195c97d7bb2f	\N	10FB49F2	\N	ssemanda_rogers_4347	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 82	hussenmchepa1@gmail.com	$2b$10$VSLsR.O/kljehS93TifK7uzEoBZ1JsQQB4qUPIc9vODnCBYCPG0Ji	Hussein Mchepa	0981170377	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgyLCJyb2xlIjoidXNlciIsInN2IjoiMzM3NjJmNDQtMzgyMS00NmRiLWJiNzctY2YyNDg1ZWU5N2UxIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MDM5MDQsImV4cCI6MTc4NjE5NTkwNH0.3EaafyuY8XX5xr_VEjAlK-x4cmc33ORSae5GyTjfZNA	2026-06-26 13:40:08.500334+00	2026-07-09 13:31:44.902+00	\N	\N	\N	f	33762f44-3821-46db-bb77-cf2485ee97e1	\N	005294A4	\N	hussein_mchepa_82	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 2	demo@ata.ug	$2b$10$/riYlLq42rc5f5OkOQexcuwyh2MsRm2BdWIMjFfIwOWRAudcddz6K	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiJiNDY2ODI4Yy02M2UzLTQ0ODItOGU5Zi0zYzg5ZjkzYjVmMjUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzUzNDU4NiwiZXhwIjoxNzg2MTI2NTg2fQ.645Yo2RsYmv4VoOAgrjeQsgekiJ7FpcGZHPFP_TsqM4	2026-06-15 16:31:06.605107+00	2026-07-08 18:16:26.493+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	b466828c-63e3-4482-8e9f-3c89f93b5f25	\N	MRMANCMD	\N	mrmancomedy	1	\N	\N	\N	\N	\N	f	t	t	\N	\N
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiZjAyNzg2YzYtMTUzMS00ZDQ0LThiYmUtZGFmN2E1ZTI5Njc5IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM1ODQ0MzEsImV4cCI6MTc4NjE3NjQzMX0.5KVnQQxQikft6PobLNfI0NCzsJVg5tMQS2NpCvar6Hs	2026-06-15 16:31:06.226579+00	2026-07-09 08:07:11.603+00	\N	\N	\N	f	f02786c6-1531-4d44-8bbe-daf7a5e29679	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t	f	f	\N	\N
 5089	brianahanz@gmail.com		Briana Hanz	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocInhaHjCUtgI_ji-8i6DNYgIZY6o5PvDtWMct7Fuq9OTMNgHg=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODksInJvbGUiOiJ1c2VyIiwic3YiOiJmYmRiNzZkNy02YjM3LTRlZWQtOTdjYS0zZTMwZjM4NTQ3YmQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzU4NzEwNiwiZXhwIjoxNzg2MTc5MTA2fQ.4Uh0pVl-bmIjHtMoueVLUo5ZV7p392tJcDl-kf1txco	2026-07-09 08:51:46.441849+00	2026-07-09 08:51:46.446+00	\N	\N	\N	f	fbdb76d7-6b37-4eed-97ca-3e30f38547bd	109363649613229764814	W8E36RY2	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 5043	anwenhanz@gmail.com		Anwen Hanz	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocL7Kqqiu6-YoZ9B_iPzaxK7ToZz1qkMu5e2VuDdNipSJzNahg=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDMsInJvbGUiOiJ1c2VyIiwic3YiOiI4MzY4MWU0NC1iY2IzLTRkMGMtOTViMC01MzVjOTQyODU0MDAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzU4NzE0MSwiZXhwIjoxNzg2MTc5MTQxfQ.-PKrGAAWwdxRUnbYSs4RR67upRlBrD29vbpOvSXibqk	2026-07-04 08:51:57.484666+00	2026-07-09 08:52:21.287+00	\N	\N	\N	f	83681e44-bcb3-4d0c-95b0-535c94285400	104417085438478477431	HXSEWPZE	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 5090	matovus901@gmail.com	$2b$10$wGzL49EmmvY9Gcl7iM6vMu8t3BdCLwLZP628eIZLB/lfvwcaqCgcq	Matovu Sula	+254114593145	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTAsInJvbGUiOiJ1c2VyIiwic3YiOiIyNjgzOGZmYi1mZmM0LTRjMzQtYWRlMy02NTMxNTA1MjE5MTEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwNDcxMiwiZXhwIjoxNzg2MTk2NzEyfQ.liY3tUloeGSZynnMeoT0Hyw5bfB5Cj7UmUQwM-UNth0	2026-07-09 13:45:12.017287+00	2026-07-09 13:45:12.022+00	\N	\N	\N	f	26838ffb-ffc4-4c34-ade3-653150521911	\N	AXTGCBAM	189	matovus901gmailcom	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
@@ -6562,6 +6561,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 45	trinitymugumya22@gmail.com	$2b$10$avZ6LQOxLw07HTV45hPLYu1lfLjhZiMqeEcjF3pDU1lbvzZQt4SKa	Mugumya Trinity	752330274	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ1LCJyb2xlIjoidXNlciIsInN2IjoiMjAzMzRlYzQtNzVjZi00OWFmLWEwZjMtZjY3YjQzNmRmM2QzIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MTM2MzEsImV4cCI6MTc4NjIwNTYzMX0.hvIrzvAdhFRgwsqMQ_PlkpRoqAp4kZ_vCnaGYNHUdDc	2026-06-26 13:40:08.345232+00	2026-07-09 16:13:51.842+00	\N	\N	\N	f	20334ec4-75cf-49af-a0f3-f67b436df3d3	\N	002D1650	\N	mugumya_trinity_45	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 3209	fungaimuronzi@gmail.com	$2b$10$EBc8REt9PF4ZV/KqpqKkiuAL5cWn/cTEAogZo6ECKjG5ypOfmC1SW	Fungai Muronzi	0777450031	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMyMDksInJvbGUiOiJ1c2VyIiwic3YiOiJiMjA3Y2FmNC1jYjQ4LTQ1YmYtOTI4Zi0zMTg3NjJiZDVmMTIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYxMzg3NywiZXhwIjoxNzg2MjA1ODc3fQ.KBPIxjp_U_FwwRJ0zKkz0pwJEvBWkQJtdjOt23Kzjkg	2026-06-26 13:40:24.155457+00	2026-07-09 16:17:57.781+00	\N	\N	\N	f	b207caf4-cb48-45bf-928f-318762bd5f12	\N	0C89DEF7	\N	fungai_muronzi_3209	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 5094	kayanjaibrahim11@gmail.com	$2b$10$05KMYS9I5PFMqNNZyZjMruCY2Pc7wj1888UyR/1kak6YfXv.4e3Ni	Kayanja Ibrahim 	+256708995764	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTQsInJvbGUiOiJ1c2VyIiwic3YiOiJlZWRkYzdlNi00YTI4LTRjYmYtODkzOC0wNDQzZjlkNGUwY2EiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYxNTE0MiwiZXhwIjoxNzg2MjA3MTQyfQ.xbW2ja48vEqJ0uNMESb8s6IJX9as1jF1dhqGSCy8V20	2026-07-09 16:39:02.168573+00	2026-07-09 16:39:02.173+00	\N	\N	\N	f	eeddc7e6-4a28-4cbf-8938-0443f9d4e0ca	\N	DVF9W9KS	\N	ibrahk11	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiMGM2OGFmNjQtODQzZC00ZDcwLWI0OTctZDA1ZDNlNWNiNTVlIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MjU0MDYsImV4cCI6MTc4NjIxNzQwNn0.Gzbe5twd4E8G96v0kkIzZjBqkzEPg9AKjOKJ4rjxcbQ	2026-06-15 16:31:06.226579+00	2026-07-09 19:30:06.424+00	\N	\N	\N	f	0c68af64-843d-4d70-b497-d05d3e5cb55e	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t	f	f	\N	\N
 \.
 
 
@@ -11663,12 +11663,12 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 5099	5088	0.00	0.00	0.00	0.00	USD	2026-07-07 20:37:44.335995+00	2026-07-07 20:37:44.335995+00	0.00
 5100	5089	0.00	0.00	0.00	0.00	USD	2026-07-09 08:51:46.444482+00	2026-07-09 08:51:46.444482+00	0.00
 3	4	0.00	0.00	3.00	3.00	USD	2026-06-26 13:40:07.824468+00	2026-07-09 11:41:26.045+00	0.00
-1	1	0.00	0.00	0.50	0.50	USD	2026-06-15 16:31:06.51595+00	2026-07-09 12:52:28.003+00	0.00
 5104	5090	0.00	0.00	0.00	0.00	USD	2026-07-09 13:45:12.020415+00	2026-07-09 13:45:12.020415+00	0.00
 5105	5091	0.00	0.00	0.00	0.00	USD	2026-07-09 14:26:44.468026+00	2026-07-09 14:26:44.468026+00	0.00
 5106	5092	0.00	0.00	0.00	0.00	USD	2026-07-09 14:54:37.715643+00	2026-07-09 14:54:37.715643+00	0.00
 5107	5093	0.00	0.00	0.00	0.00	USD	2026-07-09 14:58:09.191626+00	2026-07-09 14:58:09.191626+00	0.00
 5110	5094	0.00	0.00	0.00	0.00	USD	2026-07-09 16:39:02.171621+00	2026-07-09 16:39:02.171621+00	0.00
+1	1	0.00	0.50	0.00	0.50	USD	2026-06-15 16:31:06.51595+00	2026-07-09 12:52:28.003+00	0.00
 \.
 
 
@@ -11774,7 +11774,7 @@ SELECT pg_catalog.setval('public.streams_id_seq', 38, false);
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 102, false);
+SELECT pg_catalog.setval('public.transactions_id_seq', 102, true);
 
 
 --
@@ -12224,5 +12224,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict mnBEsdjMoDaVgHSVR4wGuq6i64sJ7Ds3nzEdsuNg45kpgBpgx8LVvxIsfPGnojA
+\unrestrict e8JbIcOeWi7aNRTQIVvVgtO6MagYkiQOGKrrg8lBIoFwRqnAwgnqN2c16faYs6Q
 
