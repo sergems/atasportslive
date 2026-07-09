@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict e8JbIcOeWi7aNRTQIVvVgtO6MagYkiQOGKrrg8lBIoFwRqnAwgnqN2c16faYs6Q
+\restrict Mw59Mdvcfbs2USJ6CEo9n79hC1pS9eovRnt4ouy8lg083wzpUMa1h9echFp9LAz
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1319,28 +1319,11 @@ pawapay_environment	sandbox	2026-07-03 19:32:56.870497+00
 pawapay_currency	UGX	2026-07-03 19:32:56.87614+00
 pawapay_exchange_rate	3700	2026-07-03 19:32:56.886232+00
 liveStreamUrl		2026-07-05 00:06:23.305169+00
-yt_video_id	hU9n9dOCoYU	2026-07-05 09:28:34.286813+00
-yt_is_free	false	2026-07-05 09:28:34.301625+00
-yt_price	1.50	2026-07-05 09:28:34.304704+00
-yt_title	Test YT Feed	2026-07-05 09:28:34.316329+00
-yt_stream_db_id	17	2026-07-05 09:28:34.577022+00
-yt_is_live	false	2026-07-06 19:02:11.728288+00
 mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-06 19:04:13.826689+00
-mux_is_live	false	2026-07-06 19:04:13.901571+00
 mux_is_free	false	2026-07-06 19:04:13.905082+00
 mux_price	1.70	2026-07-06 19:04:13.912353+00
 mux_title	ATA Live Streaming	2026-07-06 19:04:13.916215+00
 mux_stream_db_id	30	2026-07-06 19:04:14.193117+00
-ch2_yt_video_id	BiXBMe5jzL4	2026-07-06 19:04:24.35203+00
-ch2_yt_is_free	false	2026-07-06 19:04:24.363095+00
-ch2_yt_price	1.50	2026-07-06 19:04:24.366229+00
-ch2_yt_title	Here we go	2026-07-06 19:04:24.369866+00
-ch2_yt_thumbnail_url	/uploads/thumb-1783364473470-kx1kwu.jpeg	2026-07-06 19:04:24.373064+00
-ch2_yt_player_a	Charles	2026-07-06 19:04:24.377403+00
-ch2_yt_player_b	Boboza	2026-07-06 19:04:24.3807+00
-ch2_yt_player_a_country	CD	2026-07-06 19:04:24.384615+00
-ch2_yt_player_b_country	TZ	2026-07-06 19:04:24.38844+00
-ch2_yt_stream_db_id	31	2026-07-06 19:04:24.66288+00
 ch2_mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-06 19:00:38.372547+00
 ch2_mux_is_free	false	2026-07-06 19:00:38.389197+00
 ch2_mux_price	1.50	2026-07-06 19:00:38.392254+00
@@ -1356,10 +1339,32 @@ mux_player_a		2026-07-06 19:04:13.923975+00
 mux_player_b		2026-07-06 19:04:13.927293+00
 mux_player_a_country		2026-07-06 19:04:13.930578+00
 mux_player_b_country		2026-07-06 19:04:13.936297+00
-ch2_yt_is_live	false	2026-07-06 19:04:24.35818+00
-ch2_page_enabled	true	2026-07-06 19:04:24.40121+00
 influencer_commission_rate	30	2026-07-06 20:46:16.102589+00
-ch2_mux_is_live	false	2026-07-06 19:02:01.154688+00
+yt_stream_db_id	35	2026-07-09 21:17:11.438307+00
+mux_is_live	false	2026-07-09 20:46:26.067508+00
+ch2_mux_is_live	false	2026-07-09 20:49:17.220614+00
+ch2_yt_video_id	8wIyBKyt6k0	2026-07-09 21:17:01.645453+00
+ch2_yt_is_live	false	2026-07-09 21:17:01.685952+00
+ch2_yt_is_free	false	2026-07-09 21:17:01.698606+00
+ch2_yt_price	1.50	2026-07-09 21:17:01.701225+00
+ch2_yt_title	Here we go	2026-07-09 21:17:01.70399+00
+ch2_yt_thumbnail_url	/uploads/thumb-1783364473470-kx1kwu.jpeg	2026-07-09 21:17:01.707892+00
+ch2_yt_player_a	Charles	2026-07-09 21:17:01.71108+00
+ch2_yt_player_b	Boboza	2026-07-09 21:17:01.713045+00
+ch2_yt_player_a_country	CD	2026-07-09 21:17:01.716022+00
+ch2_yt_player_b_country	TZ	2026-07-09 21:17:01.719698+00
+ch2_page_enabled	true	2026-07-09 21:17:01.722592+00
+ch2_yt_stream_db_id	36	2026-07-09 21:17:02.019022+00
+yt_video_id	6DbU9UaUOJs	2026-07-09 21:17:10.955986+00
+yt_is_live	false	2026-07-09 21:17:10.958732+00
+yt_is_free	false	2026-07-09 21:17:10.961579+00
+yt_price	1.50	2026-07-09 21:17:10.963457+00
+yt_title	Test YT Feed	2026-07-09 21:17:10.965695+00
+yt_thumbnail_url		2026-07-09 21:17:10.967663+00
+yt_player_a		2026-07-09 21:17:10.970119+00
+yt_player_b		2026-07-09 21:17:10.973143+00
+yt_player_a_country		2026-07-09 21:17:10.976688+00
+yt_player_b_country		2026-07-09 21:17:10.979044+00
 \.
 
 
@@ -1391,11 +1396,11 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 32	BILLIARDS CAFE CLASSIC OPEN	\N	pool	\N	\N	\N	upcoming	2026-11-26 09:00:00+00	2026-11-29 00:00:00+00	0	0.00	2026-07-09 10:46:03.854465+00	2026-07-09 10:46:03.854465+00	Lusaka 	Zambia	\N	\N	\N	\N	competition	\N
 33	NYENDO MASAKA GRAND OPEN CHAMPIONSHIPS	\N	pool	\N	\N	\N	upcoming	2026-08-01 20:00:00+00	2026-08-02 00:00:00+00	0	0.00	2026-07-09 10:49:17.793099+00	2026-07-09 10:49:17.793099+00	Masaka	Uganda	\N	\N	\N	\N	competition	\N
 27	UGANDA BOXING CHAMP LEAGUE SEASON 5 	\N	boxing	\N	\N	\N	upcoming	2026-07-18 18:00:00+00	2026-07-18 04:30:00+00	0	1.50	2026-07-06 17:38:03.006088+00	2026-07-09 11:20:51.198+00	Lugogo Arena	Uganda	\N	\N	\N	\N	competition	\N
-35	2026 BetVictor Championship League Snooker: Ranking Edition	\N	other	\N	\N	__yt_default__	upcoming	2026-07-09 12:25:22.216413+00	2026-07-09 18:25:58.397+00	0	1.50	2026-07-09 12:25:22.216413+00	2026-07-09 18:27:19.731008+00	\N	\N	\N	\N	\N	\N	single	\N
-36	IABF Professional Boxing League Season 1	\N	other	\N	\N	__ch2_yt_default__	upcoming	2026-07-09 12:32:14.128153+00	2026-07-09 18:25:59.547+00	0	1.50	2026-07-09 12:32:14.128153+00	2026-07-09 18:27:24.568987+00	\N	\N	\N	\N	\N	\N	single	\N
 37	Live Darts | Series 14 Week 11	\N	other	\N	\N	__ch3_yt_default__	upcoming	2026-07-09 12:37:10.176364+00	2026-07-09 18:25:57.034+00	0	1.50	2026-07-09 12:37:10.176364+00	2026-07-09 18:27:30.010404+00	\N	\N	\N	\N	\N	\N	single	\N
 28	UGANDA BOXING CHAMPIONSHP LEAGUE	\N	boxing	\N	\N	\N	upcoming	2026-07-18 00:00:00+00	2026-07-06 01:30:00+00	0	1.50	2026-07-06 17:40:42.16567+00	2026-07-06 17:40:42.16567+00	Lugogo Arena	Uganda	RASKARA PAUL	MUSULUBE STEPHAN	UG	UG	single	27
 34	CUEXTV - BATTLE FOR LEGACY	A £50,000 battle race to 31. 	pool	\N	\N	\N	upcoming	2026-09-11 19:00:00+00	2026-09-12 23:00:00+00	0	5.00	2026-07-09 10:53:09.678062+00	2026-07-09 10:53:09.678062+00	Coalville	United Kingdom	CHRIS MELLING - Magician	TOM COUSINS - Top Cat	UK	WH	single	\N
+36	Here we go	\N	other	\N	\N	__ch2_yt_default__	upcoming	2026-07-09 12:32:14.128153+00	2026-07-09 18:25:59.547+00	0	1.50	2026-07-09 12:32:14.128153+00	2026-07-09 21:17:02.019022+00	\N	\N	\N	\N	\N	\N	single	\N
+35	Test YT Feed	\N	other	\N	\N	__yt_default__	upcoming	2026-07-09 12:25:22.216413+00	2026-07-09 18:25:58.397+00	0	1.50	2026-07-09 12:25:22.216413+00	2026-07-09 21:17:11.438307+00	\N	\N	\N	\N	\N	\N	single	\N
 \.
 
 
@@ -6542,10 +6547,10 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5088	matovun50@gmail.com	$2b$10$tNCw0XueYGV8rDEdtUGxmOryD6zP8fBUiN85KdRXljPF2a8vvD4Lq	Matovu Najib	0700754256	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODgsInJvbGUiOiJ1c2VyIiwic3YiOiI5MjVlNTg2ZS1mYjlhLTRkODItOWQ3Yy1hMjVjZTRiMDVmM2YiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzQ1NjY2NCwiZXhwIjoxNzg2MDQ4NjY0fQ.VVowEnGaSWhsPAmSXTaSfPu6Yh-ee3fXmKpYP1gxO2U	2026-07-07 20:37:44.33353+00	2026-07-07 21:46:37.222+00	\N	\N	\N	f	925e586e-fb9a-4d82-9d7c-a25ce4b05f3f	\N	INF2LNAYH	\N	najib	0	\N	\N	\N	\N	\N	f	t	f	\N	\N
 4347	rojahphinellah@gmail.com	$2b$10$QHrHvNHDV49.tS1oxAmyc.sFaCYx3pg5cLwo415Wu794ba8oe1l92	Ssemanda Rogers	256752314095	content_editor	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQzNDcsInJvbGUiOiJjb250ZW50X2VkaXRvciIsInN2IjoiM2Q2NmJiM2UtNWZiYi00M2M2LTgxNzUtMTk1Yzk3ZDdiYjJmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MDg5MDQsImV4cCI6MTc4NjIwMDkwNH0.ldTWUHPJg12nvIRYgS4KLPKFALsGI-YMkJdPO5TO71A	2026-06-26 13:40:29.768124+00	2026-07-09 14:55:04.282+00	\N	\N	\N	f	3d66bb3e-5fbb-43c6-8175-195c97d7bb2f	\N	10FB49F2	\N	ssemanda_rogers_4347	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 82	hussenmchepa1@gmail.com	$2b$10$VSLsR.O/kljehS93TifK7uzEoBZ1JsQQB4qUPIc9vODnCBYCPG0Ji	Hussein Mchepa	0981170377	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgyLCJyb2xlIjoidXNlciIsInN2IjoiMzM3NjJmNDQtMzgyMS00NmRiLWJiNzctY2YyNDg1ZWU5N2UxIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MDM5MDQsImV4cCI6MTc4NjE5NTkwNH0.3EaafyuY8XX5xr_VEjAlK-x4cmc33ORSae5GyTjfZNA	2026-06-26 13:40:08.500334+00	2026-07-09 13:31:44.902+00	\N	\N	\N	f	33762f44-3821-46db-bb77-cf2485ee97e1	\N	005294A4	\N	hussein_mchepa_82	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
-2	demo@ata.ug	$2b$10$/riYlLq42rc5f5OkOQexcuwyh2MsRm2BdWIMjFfIwOWRAudcddz6K	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiJiNDY2ODI4Yy02M2UzLTQ0ODItOGU5Zi0zYzg5ZjkzYjVmMjUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzUzNDU4NiwiZXhwIjoxNzg2MTI2NTg2fQ.645Yo2RsYmv4VoOAgrjeQsgekiJ7FpcGZHPFP_TsqM4	2026-06-15 16:31:06.605107+00	2026-07-08 18:16:26.493+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	b466828c-63e3-4482-8e9f-3c89f93b5f25	\N	MRMANCMD	\N	mrmancomedy	1	\N	\N	\N	\N	\N	f	t	t	\N	\N
 5089	brianahanz@gmail.com		Briana Hanz	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocInhaHjCUtgI_ji-8i6DNYgIZY6o5PvDtWMct7Fuq9OTMNgHg=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODksInJvbGUiOiJ1c2VyIiwic3YiOiJmYmRiNzZkNy02YjM3LTRlZWQtOTdjYS0zZTMwZjM4NTQ3YmQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzU4NzEwNiwiZXhwIjoxNzg2MTc5MTA2fQ.4Uh0pVl-bmIjHtMoueVLUo5ZV7p392tJcDl-kf1txco	2026-07-09 08:51:46.441849+00	2026-07-09 08:51:46.446+00	\N	\N	\N	f	fbdb76d7-6b37-4eed-97ca-3e30f38547bd	109363649613229764814	W8E36RY2	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 5043	anwenhanz@gmail.com		Anwen Hanz	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocL7Kqqiu6-YoZ9B_iPzaxK7ToZz1qkMu5e2VuDdNipSJzNahg=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDMsInJvbGUiOiJ1c2VyIiwic3YiOiI4MzY4MWU0NC1iY2IzLTRkMGMtOTViMC01MzVjOTQyODU0MDAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzU4NzE0MSwiZXhwIjoxNzg2MTc5MTQxfQ.-PKrGAAWwdxRUnbYSs4RR67upRlBrD29vbpOvSXibqk	2026-07-04 08:51:57.484666+00	2026-07-09 08:52:21.287+00	\N	\N	\N	f	83681e44-bcb3-4d0c-95b0-535c94285400	104417085438478477431	HXSEWPZE	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 5090	matovus901@gmail.com	$2b$10$wGzL49EmmvY9Gcl7iM6vMu8t3BdCLwLZP628eIZLB/lfvwcaqCgcq	Matovu Sula	+254114593145	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTAsInJvbGUiOiJ1c2VyIiwic3YiOiIyNjgzOGZmYi1mZmM0LTRjMzQtYWRlMy02NTMxNTA1MjE5MTEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwNDcxMiwiZXhwIjoxNzg2MTk2NzEyfQ.liY3tUloeGSZynnMeoT0Hyw5bfB5Cj7UmUQwM-UNth0	2026-07-09 13:45:12.017287+00	2026-07-09 13:45:12.022+00	\N	\N	\N	f	26838ffb-ffc4-4c34-ade3-653150521911	\N	AXTGCBAM	189	matovus901gmailcom	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
+2	demo@ata.ug	$2b$10$/riYlLq42rc5f5OkOQexcuwyh2MsRm2BdWIMjFfIwOWRAudcddz6K	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiI2ZjM4MzNiYy0zMmEzLTRhZGItYWE1OS0xZjlmODZhYjRkODAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYzMTY5OSwiZXhwIjoxNzg2MjIzNjk5fQ.hcD46VoqgS26HZpWJDP-GZVPEH7OpuzvPOR6PNxO_QU	2026-06-15 16:31:06.605107+00	2026-07-09 21:14:59.199+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	6f3833bc-32a3-4adb-aa59-1f9f86ab4d80	\N	MRMANCMD	\N	mrmancomedy	1	\N	\N	\N	\N	\N	f	t	t	\N	\N
 5091	sirmichaels08@gmail.com	$2b$10$LyF6UkHiS7SZL2oasLkf3.PZj0r9j.7rlz6rUHOxpjGu9JEEyMLsS	Michael	+263783941600	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTEsInJvbGUiOiJ1c2VyIiwic3YiOiI1MGFmYTAzNy1hMGYxLTQ2N2YtYWRkZi0yYmU4N2EyN2I5NmEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwNzIwNCwiZXhwIjoxNzg2MTk5MjA0fQ.AiRM_kuHXsMFHs7GRBysPnoyOEiizsqL1JTQBu_y--8	2026-07-09 14:26:44.465372+00	2026-07-09 14:26:44.469+00	\N	\N	\N	f	50afa037-a0f1-467f-addf-2be87a27b96a	\N	JVQUGPZX	189	michaels	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 2918	joelcena.47@gmail.com	MUST_SET_PASSWORD	Joel Cena	256782404628	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI5MTgsInJvbGUiOiJ1c2VyIiwic3YiOiI3MjliOTRiMi0wYmM4LTQ0YzQtYWE5MC1mYjg5YjljYzk2OGYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzU5OTk2OSwiZXhwIjoxNzg2MTkxOTY5fQ._jvQs2CLmGfQSFd8NC9GPIKr6L7wIli-wFpY6uoC1Ks	2026-06-26 13:40:22.597797+00	2026-07-09 12:26:09.596+00	\N	\N	\N	t	729b94b2-0bc8-44c4-aa90-fb89b9cc968f	106481511856544130295	0B66A8B7	\N	joel_cena_2918	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
 189	jtyawe@gmail.com	$2b$10$Y0oKG8eFxV7XFj.Qxen8pegdzxKz0axS630mM//UpghGUL/ET/mR6	Turyamureeba John	701183514	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE4OSwicm9sZSI6InVzZXIiLCJzdiI6IjBiM2VmMTZlLTEzNWItNDBiYS04OTg2LTBlMmQzOTc1ZjdjMSIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzNjAxMzM1LCJleHAiOjE3ODYxOTMzMzV9.3Lb8_VQBG8nzpyTW6enL_cxiYikqadlyl9PZBxopmLY	2026-06-26 13:40:08.954747+00	2026-07-09 12:48:55.52+00	\N	\N	\N	f	0b3ef16e-135b-40ba-8986-0e2d3975f7c1	\N	00BDAD75	\N	turyamureeba_john_189	0	\N	\N	\N	\N	\N	f	f	f	\N	\N
@@ -12224,5 +12229,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict e8JbIcOeWi7aNRTQIVvVgtO6MagYkiQOGKrrg8lBIoFwRqnAwgnqN2c16faYs6Q
+\unrestrict Mw59Mdvcfbs2USJ6CEo9n79hC1pS9eovRnt4ouy8lg083wzpUMa1h9echFp9LAz
 
