@@ -384,15 +384,16 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       setTimeout(() => { if (playerState !== 1) commandPlay(); else disableCaptions(); }, delay)
     );
 
+    const interactionEvents: Array<keyof DocumentEventMap> = ['touchstart', 'touchend', 'click', 'keydown'];
     function unstickOnFirstInteraction() {
-      const events: Array<keyof DocumentEventMap> = ['touchstart', 'touchend', 'click', 'keydown'];
       const kick = () => {
         commandPlay();
-        events.forEach((ev) => document.removeEventListener(ev, kick));
+        interactionEvents.forEach((ev) => document.removeEventListener(ev, kick));
       };
-      events.forEach((ev) => document.addEventListener(ev, kick, { once: true, passive: true }));
+      interactionEvents.forEach((ev) => document.addEventListener(ev, kick, { once: true, passive: true }));
+      return kick; // returned so we can remove on cleanup if never fired
     }
-    unstickOnFirstInteraction();
+    const kickRef = unstickOnFirstInteraction();
 
     function onMessage(e: MessageEvent) {
       try {
@@ -400,7 +401,12 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         if (data?.event === 'onReady') { init(); commandPlay(); }
         if (data?.event === 'infoDelivery' && typeof data?.info?.playerState === 'number') {
           playerState = data.info.playerState;
-          if (playerState === 1) init();
+          if (playerState === 1) {
+            init();
+            // Video is actually playing — remove the cover bars immediately
+            // instead of waiting for the 7-second timer to expire.
+            setJustSwitched(false);
+          }
           setIsPlaying(playerState === 1 || playerState === 3);
           // 2 = paused, 5 = cued — both mean autoplay didn't take; nudge it again
           // (only auto-nudge before the user has taken manual control)
@@ -416,6 +422,8 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       clearTimeout(fallback);
       clearTimeout(switchCoverTimer);
       playRetries.forEach(clearTimeout);
+      // Remove first-interaction listeners if they were never triggered
+      interactionEvents.forEach((ev) => document.removeEventListener(ev, kickRef));
     };
   }, [videoId]);
 
