@@ -476,10 +476,26 @@ function NoLiveBroadcast({ channelLabel }: { channelLabel: string }) {
 const SNEAK_PEEK_SECONDS = 60;
 
 function useSneakPeek(peekKey: string) {
+  // Visiting with ?resetPreview=1 clears this stream's one-time preview flag
+  // so it can be watched again — handy for testing without opening devtools.
   const alreadyUsed = () => { try { return localStorage.getItem(peekKey) === 'true'; } catch { return false; } };
   const markUsed = () => { try { localStorage.setItem(peekKey, 'true'); } catch {} };
   const [active, setActive] = useState(false);
   const [used, setUsed] = useState(() => alreadyUsed());
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('resetPreview') === '1') {
+        localStorage.removeItem(peekKey);
+        setUsed(false);
+        params.delete('resetPreview');
+        const newSearch = params.toString();
+        window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''));
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [secondsLeft, setSecondsLeft] = useState(SNEAK_PEEK_SECONDS);
   useEffect(() => {
     if (!active) return;
