@@ -99,7 +99,6 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [playing, setPlaying] = useState(true);
   // remember last non-zero volume so unmuting restores it
   const lastVolumeRef = useRef(100);
 
@@ -121,22 +120,17 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   useEffect(() => {
     let initialised = false;
     // reset UI state whenever the video changes so we don't act on stale
-    // readiness/play state from the previous video
+    // readiness assumptions from the previous video
     setReady(false);
-    setPlaying(true);
 
     function init() {
       if (initialised) return;
       initialised = true;
       send('unMute');
       send('setVolume', [100]);
-      // subscribe to state updates so we can track play/pause ourselves
-      // instead of relying on YouTube's native (branded) controls
-      send('addEventListener', ['onStateChange']);
       setMuted(false);
       setVolume(100);
       setReady(true);
-      setPlaying(true);
     }
 
     function onMessage(e: MessageEvent) {
@@ -144,12 +138,6 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
         if (data?.event === 'onReady') init();
         if (data?.event === 'infoDelivery' && data?.info?.playerState === 1) init();
-        if (data?.event === 'onStateChange' || (data?.event === 'infoDelivery' && typeof data?.info?.playerState === 'number')) {
-          const state = data.event === 'onStateChange' ? data.info : data.info?.playerState;
-          // 1 = playing; everything else (paused, ended, buffering, cued, unstarted)
-          // shows the paused-style play button so the overlay never desyncs
-          setPlaying(state === 1);
-        }
       } catch {}
     }
 
@@ -191,17 +179,6 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     fs: '0', disablekb: '1', enablejsapi: '1', origin: window.location.origin,
   });
 
-  function togglePlay() {
-    if (!ready) return;
-    if (playing) {
-      send('pauseVideo');
-      setPlaying(false);
-    } else {
-      send('playVideo');
-      setPlaying(true);
-    }
-  }
-
   return (
     <div className="relative w-full h-full">
       <iframe
@@ -212,30 +189,25 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
       />
 
-      {/* Click-capture layer: sits above the iframe so the mouse/click never
-          reaches the YouTube surface. This is what stops YouTube's native
-          hover chrome, title card, and end/pause "suggested video" cards
-          from appearing — clicks here just toggle play/pause ourselves. */}
-      <button
-        type="button"
-        onClick={togglePlay}
-        aria-label={playing ? 'Pause' : 'Play'}
-        className="absolute inset-0 w-full h-full cursor-pointer bg-transparent border-0"
+      {/* Block layer: sits above the iframe and absorbs every mouse/touch/click
+          event so viewers can never interact with the raw YouTube surface.
+          This is what stops YouTube's native hover chrome, title card, and
+          end/pause "suggested video" cards from ever appearing — the video
+          just plays continuously and is only controllable via our own
+          volume widget below (which sits above this layer). */}
+      <div
+        className="absolute inset-0 w-full h-full"
+        style={{ cursor: 'default' }}
+        onClickCapture={(e) => e.preventDefault()}
+        aria-hidden="true"
       />
 
-      {/* Overlay: pointer-events-none so it never blocks the click-capture
-          layer above, except for the volume widget in the bottom-left corner */}
+      {/* Overlay: pointer-events-none so it never blocks the block layer
+          above, except for the volume widget in the bottom-left corner */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Top strip hides YouTube's title / channel-info card that would
             otherwise flash on load */}
         <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent" />
-        {!playing && ready && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 ml-1"><path d="M8 5v14l11-7z" /></svg>
-            </div>
-          </div>
-        )}
         {ready && (
           <div
             className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
