@@ -320,22 +320,57 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Try to play with sound on immediately. Most mobile browsers block
+    // unmuted autoplay without a prior user gesture, so if that rejects we
+    // fall back to muted autoplay and then unmute automatically the instant
+    // the visitor makes any interaction with the page (tap/click/scroll/key)
+    // — this still gets sound "always on" without ever showing a manual
+    // play button or blocking the video behind a click-to-start screen.
+    function attemptUnmutedPlay() {
+      if (!video) return;
+      video.muted = false;
+      video.volume = 1;
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          if (!video) return;
+          video.muted = true;
+          video.play().catch(() => {});
+          unmuteOnFirstInteraction();
+        });
+      }
+    }
+
+    function unmuteOnFirstInteraction() {
+      const events: Array<keyof DocumentEventMap> = ['touchstart', 'touchend', 'click', 'keydown', 'scroll'];
+      const unmute = () => {
+        if (video) {
+          video.muted = false;
+          video.volume = 1;
+          video.play().catch(() => {});
+        }
+        events.forEach((ev) => document.removeEventListener(ev, unmute));
+      };
+      events.forEach((ev) => document.addEventListener(ev, unmute, { once: true, passive: true }));
+    }
+
     if (Hls.isSupported()) {
       const hls = new Hls();
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
+      hls.on(Hls.Events.MANIFEST_PARSED, attemptUnmutedPlay);
       return () => hls.destroy();
     }
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = hlsUrl;
-      video.play().catch(() => {});
+      attemptUnmutedPlay();
     }
     return undefined;
   }, [hlsUrl]);
 
   return (
-    <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay muted playsInline title={title} />
+    <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay playsInline title={title} />
   );
 }
 
