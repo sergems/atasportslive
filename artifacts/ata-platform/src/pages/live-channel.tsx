@@ -520,12 +520,14 @@ function SneakPeekPlayer({ secondsLeft, onSkip, isAuthenticated, children }: { s
   return (
     <div ref={containerRef} className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
       {children}
-      <div className="absolute top-0 inset-x-0 flex flex-col gap-0.5 bg-gradient-to-b from-black/85 to-transparent px-2.5 sm:px-4 py-2 sm:py-3 pointer-events-none">
+      {/* Solid (non-fading) backing so the underlying video never bleeds
+          through the overlay text on any screen size */}
+      <div className="absolute top-0 inset-x-0 flex flex-col gap-0.5 bg-slate-950/95 px-2.5 sm:px-4 py-2 sm:py-2.5 pointer-events-none">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400 shrink-0" />
           <span className="text-white text-xs sm:text-sm font-semibold truncate">Sneak Peek Preview</span>
         </div>
-        <span className="text-slate-300 text-[10px] sm:text-xs pl-5 sm:pl-6">
+        <span className="text-slate-300 text-[10px] sm:text-xs pl-5 sm:pl-6 truncate">
           {isAuthenticated ? 'Top up your wallet to keep watching' : 'Sign in to keep watching'}
         </span>
       </div>
@@ -533,7 +535,7 @@ function SneakPeekPlayer({ secondsLeft, onSkip, isAuthenticated, children }: { s
         <div className="h-1 bg-slate-800/80">
           <div className={`h-full transition-all duration-1000 ease-linear ${urgent ? 'bg-red-500' : 'bg-amber-400'}`} style={{ width: `${pct}%` }} />
         </div>
-        <div className="flex items-center justify-between gap-2 sm:gap-3 bg-gradient-to-t from-black/90 to-transparent px-2.5 sm:px-4 pt-2 sm:pt-3 pb-2.5 sm:pb-4 pointer-events-auto">
+        <div className="flex items-center justify-between gap-2 sm:gap-3 bg-slate-950/95 px-2.5 sm:px-4 pt-2 sm:pt-2.5 pb-2.5 sm:pb-3 pointer-events-auto">
           <div className={`flex items-center gap-1.5 sm:gap-2 min-w-0 ${urgent ? 'text-red-400' : 'text-amber-400'}`}>
             <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
             <span className="font-mono font-bold text-xs sm:text-sm tabular-nums shrink-0">{String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')}</span>
