@@ -193,8 +193,8 @@ function StreamForm({
           </div>
         )}
 
-        {/* Thumbnail — single only */}
-        {!isCompetition && onFileChange && fileInputRef && (
+        {/* Thumbnail */}
+        {onFileChange && fileInputRef && (
           <div className="space-y-1">
             <Label className="text-[10px] text-slate-400 uppercase tracking-wider">Thumbnail</Label>
             <div className="flex items-center gap-2">
@@ -294,14 +294,12 @@ function StreamCard({
             )}
             {isChild && <Swords className="h-3 w-3 text-slate-600 flex-shrink-0 mt-1.5 sm:mt-0" />}
 
-            {/* Thumbnail (single streams) */}
-            {!isCompetition && (
-              <div className="flex-shrink-0 w-16 h-10 rounded overflow-hidden bg-slate-800/50 flex items-center justify-center border border-slate-800">
-                {stream.thumbnailUrl
-                  ? <img src={stream.thumbnailUrl} alt={stream.title} className="w-full h-full object-cover" />
-                  : <ImageIcon className="h-4 w-4 text-slate-600" />}
-              </div>
-            )}
+            {/* Thumbnail */}
+            <div className="flex-shrink-0 w-16 h-10 rounded overflow-hidden bg-slate-800/50 flex items-center justify-center border border-slate-800">
+              {stream.thumbnailUrl
+                ? <img src={stream.thumbnailUrl} alt={stream.title} className="w-full h-full object-cover" />
+                : <ImageIcon className="h-4 w-4 text-slate-600" />}
+            </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
