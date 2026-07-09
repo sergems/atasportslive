@@ -75,13 +75,51 @@ function useNextUpcoming() {
   });
 }
 
+// ─── Orientation → fullscreen ───────────────────────────────────────────────
+
+/**
+ * On mobile, rotating the device to landscape while a video container is
+ * visible on screen requests fullscreen for that container; rotating back
+ * to portrait exits fullscreen. Desktop/no-touch devices are left alone.
+ */
+function useOrientationFullscreen(ref: React.RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const isTouchDevice = typeof window !== 'undefined' &&
+      (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
+    if (!isTouchDevice) return undefined;
+
+    const handleOrientationChange = () => {
+      const el = ref.current;
+      if (!el) return;
+      const isLandscape = window.innerWidth > window.innerHeight;
+      if (isLandscape) {
+        const rect = el.getBoundingClientRect();
+        const inView = rect.bottom > 0 && rect.top < window.innerHeight;
+        if (!inView || document.fullscreenElement) return;
+        (el.requestFullscreen?.() ?? (el as any).webkitRequestFullscreen?.())?.catch?.(() => {});
+      } else if (document.fullscreenElement === el) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    };
+    const api = window.screen?.orientation;
+    if (api) api.addEventListener('change', handleOrientationChange);
+    else window.addEventListener('orientationchange', handleOrientationChange);
+    return () => {
+      if (api) api.removeEventListener('change', handleOrientationChange);
+      else window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, [ref]);
+}
+
 // ─── Players ─────────────────────────────────────────────────────────────────
 
 const FALLBACK_MUX_PLAYBACK_ID = 'QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00';
 
 export function MuxPlayer({ playbackId, title }: { playbackId: string; title: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useOrientationFullscreen(containerRef);
   return (
-    <div className="relative w-full h-full">
+    <div ref={containerRef} className="relative w-full h-full">
       <iframe
         src={`https://player.mux.com/${playbackId}?autoplay=true&muted=false`}
         title={title}
@@ -95,6 +133,8 @@ export function MuxPlayer({ playbackId, title }: { playbackId: string; title: st
 
 export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useOrientationFullscreen(containerRef);
   const [volume, setVolume] = useState(100);
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
@@ -190,7 +230,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   });
 
   return (
-    <div className="relative w-full h-full">
+    <div ref={containerRef} className="relative w-full h-full">
       <iframe
         ref={iframeRef}
         src={`https://www.youtube-nocookie.com/embed/${videoId}?${src.toString()}`}
@@ -275,6 +315,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
 
 export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  useOrientationFullscreen(videoRef);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -292,26 +333,6 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
     }
     return undefined;
   }, [hlsUrl]);
-
-  useEffect(() => {
-    const handleOrientationChange = () => {
-      const video = videoRef.current;
-      if (!video) return;
-      const isLandscape = window.innerWidth > window.innerHeight;
-      if (isLandscape) {
-        (video.requestFullscreen?.() ?? (video as any).webkitEnterFullscreen?.())?.catch?.(() => {});
-      } else {
-        (document.fullscreenElement && document.exitFullscreen?.())?.catch?.(() => {});
-      }
-    };
-    const api = window.screen?.orientation;
-    if (api) api.addEventListener('change', handleOrientationChange);
-    else window.addEventListener('orientationchange', handleOrientationChange);
-    return () => {
-      if (api) api.removeEventListener('change', handleOrientationChange);
-      else window.removeEventListener('orientationchange', handleOrientationChange);
-    };
-  }, []);
 
   return (
     <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay muted playsInline title={title} />
@@ -478,28 +499,32 @@ function useSneakPeek(peekKey: string) {
 function SneakPeekPlayer({ secondsLeft, onSkip, isAuthenticated, children }: { secondsLeft: number; onSkip: () => void; isAuthenticated: boolean; children: React.ReactNode }) {
   const pct = (secondsLeft / SNEAK_PEEK_SECONDS) * 100;
   const urgent = secondsLeft <= 15;
+  const containerRef = useRef<HTMLDivElement>(null);
+  useOrientationFullscreen(containerRef);
   return (
-    <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
+    <div ref={containerRef} className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl w-full">
       {children}
-      <div className="absolute top-0 inset-x-0 flex items-center justify-between gap-3 bg-gradient-to-b from-black/80 to-transparent px-4 py-3 pointer-events-none">
-        <div className="flex items-center gap-2">
-          <Eye className="h-4 w-4 text-amber-400 shrink-0" />
-          <span className="text-white text-sm font-semibold">Sneak Peek Preview</span>
-          <span className="text-slate-400 text-xs">— {isAuthenticated ? 'top up your wallet to keep watching' : 'sign in to keep watching'}</span>
+      <div className="absolute top-0 inset-x-0 flex flex-col gap-0.5 bg-gradient-to-b from-black/85 to-transparent px-2.5 sm:px-4 py-2 sm:py-3 pointer-events-none">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400 shrink-0" />
+          <span className="text-white text-xs sm:text-sm font-semibold truncate">Sneak Peek Preview</span>
         </div>
+        <span className="text-slate-300 text-[10px] sm:text-xs pl-5 sm:pl-6">
+          {isAuthenticated ? 'Top up your wallet to keep watching' : 'Sign in to keep watching'}
+        </span>
       </div>
       <div className="absolute bottom-0 inset-x-0 pointer-events-none">
         <div className="h-1 bg-slate-800/80">
           <div className={`h-full transition-all duration-1000 ease-linear ${urgent ? 'bg-red-500' : 'bg-amber-400'}`} style={{ width: `${pct}%` }} />
         </div>
-        <div className="flex items-center justify-between gap-3 bg-gradient-to-t from-black/90 to-transparent px-4 pt-3 pb-4 pointer-events-auto">
-          <div className={`flex items-center gap-2 ${urgent ? 'text-red-400' : 'text-amber-400'}`}>
-            <Timer className="h-4 w-4 shrink-0" />
-            <span className="font-mono font-bold text-sm tabular-nums">{String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')}</span>
-            <span className="text-slate-400 text-xs">preview remaining</span>
+        <div className="flex items-center justify-between gap-2 sm:gap-3 bg-gradient-to-t from-black/90 to-transparent px-2.5 sm:px-4 pt-2 sm:pt-3 pb-2.5 sm:pb-4 pointer-events-auto">
+          <div className={`flex items-center gap-1.5 sm:gap-2 min-w-0 ${urgent ? 'text-red-400' : 'text-amber-400'}`}>
+            <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="font-mono font-bold text-xs sm:text-sm tabular-nums shrink-0">{String(Math.floor(secondsLeft / 60)).padStart(2, '0')}:{String(secondsLeft % 60).padStart(2, '0')}</span>
+            <span className="text-slate-400 text-[10px] sm:text-xs truncate hidden sm:inline">preview remaining</span>
           </div>
-          <button onClick={onSkip} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors">
-            <EyeOff className="h-3.5 w-3.5" />Skip preview
+          <button onClick={onSkip} className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-slate-400 hover:text-white transition-colors shrink-0">
+            <EyeOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /><span className="hidden sm:inline">Skip preview</span><span className="sm:hidden">Skip</span>
           </button>
         </div>
       </div>
