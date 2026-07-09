@@ -172,6 +172,8 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     setJustSwitched(true);
     const switchCoverTimer = setTimeout(() => setJustSwitched(false), 7000);
 
+    let playerState: number | null = null;
+
     function init() {
       if (initialised) return;
       initialised = true;
@@ -182,11 +184,42 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       setReady(true);
     }
 
+    // Mobile browsers frequently refuse to autoplay a cross-origin iframe's
+    // <video> even with autoplay=1&mute=1 in the URL — YouTube then shows
+    // its own paused "tap to play" overlay instead of starting on its own.
+    // We work around it by explicitly issuing the playVideo command right
+    // away, and repeatedly for the first several seconds in case the iframe
+    // wasn't ready yet, plus once more on the visitor's very first tap
+    // anywhere on the page (which YouTube's own overlay button would have
+    // required anyway, just aimed at the wrong target).
+    function commandPlay() {
+      send('playVideo');
+    }
+    commandPlay();
+    const playRetries = [300, 800, 1500, 2500, 4000, 6000].map((delay) =>
+      setTimeout(() => { if (playerState !== 1) commandPlay(); }, delay)
+    );
+
+    function unstickOnFirstInteraction() {
+      const events: Array<keyof DocumentEventMap> = ['touchstart', 'touchend', 'click', 'keydown'];
+      const kick = () => {
+        commandPlay();
+        events.forEach((ev) => document.removeEventListener(ev, kick));
+      };
+      events.forEach((ev) => document.addEventListener(ev, kick, { once: true, passive: true }));
+    }
+    unstickOnFirstInteraction();
+
     function onMessage(e: MessageEvent) {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (data?.event === 'onReady') init();
-        if (data?.event === 'infoDelivery' && data?.info?.playerState === 1) init();
+        if (data?.event === 'onReady') { init(); commandPlay(); }
+        if (data?.event === 'infoDelivery' && typeof data?.info?.playerState === 'number') {
+          playerState = data.info.playerState;
+          if (playerState === 1) init();
+          // 2 = paused, 5 = cued — both mean autoplay didn't take; nudge it again
+          if (playerState === 2 || playerState === 5) commandPlay();
+        }
       } catch {}
     }
 
@@ -196,6 +229,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       window.removeEventListener('message', onMessage);
       clearTimeout(fallback);
       clearTimeout(switchCoverTimer);
+      playRetries.forEach(clearTimeout);
     };
   }, [videoId]);
 
