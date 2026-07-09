@@ -1035,7 +1035,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction }
     const connect = () => {
       if (destroyed) return;
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const url = `${proto}//${window.location.host}/ws?streamId=${streamId}${userId ? `&userId=${userId}` : ''}`;
+      const url = `${proto}//${window.location.host}/ws?streamId=${streamId}${token ? `&token=${encodeURIComponent(token)}` : ''}`;
       const ws = new WebSocket(url);
       wsRef.current = ws;
       ws.onmessage = (e) => {
@@ -1404,6 +1404,16 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
     activeFeed === 'yt'  && !ytIsFree  ? ytStreamDbId  :
     undefined;
 
+  // chatStreamId is separate from paywallStreamId — chat should always work
+  // regardless of whether the stream has a paywall.  Free streams still need
+  // a DB stream row to anchor comments; we fall through to any configured ID
+  // even when activeFeed is null (the fallback MuxPlayer is playing).
+  const chatStreamId: number | undefined =
+    activeFeed === 'db'  ? stream!.id :
+    activeFeed === 'mux' ? muxStreamDbId :
+    activeFeed === 'yt'  ? ytStreamDbId  :
+    muxStreamDbId ?? ytStreamDbId;
+
   const paywallPrice = activeFeed === 'db' ? stream!.accessPrice : activeFeed === 'yt' ? ytPrice : muxPrice;
   const paywallTitle = activeFeed === 'db' ? stream!.title : activeFeed === 'yt' ? ytTitle : muxTitle;
   const isFreeStream = activeFeed === 'db' ? false : activeFeed === 'yt' ? ytIsFree : muxIsFree;
@@ -1453,7 +1463,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
     <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 h-full min-h-0">
       {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? s[`${prefix}mux_sport`]} />}
       <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-none flex flex-col overflow-hidden">
-        <CommentSection streamId={paywallStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} />
+        <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} />
       </div>
     </div>
   );
@@ -1513,7 +1523,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
             </div>
           </div>
           <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0">
-            <CommentSection streamId={paywallStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} />
+            <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} />
           </div>
         </div>
       ) : (
