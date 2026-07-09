@@ -323,49 +323,13 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
 
     // Mobile browsers only allow autoplay to start at all when the video is
     // declared muted (the `muted` attribute below) *before* play() is ever
-    // called — starting unmuted or toggling `muted` off pre-emptively causes
-    // the browser to silently refuse to play anything. So: always start
-    // playback muted (guaranteed to work everywhere, including mobile),
-    // then immediately try to flip sound on. If that's rejected (no prior
-    // user gesture), the video keeps playing muted and we unmute the moment
-    // the visitor makes any interaction with the page (tap/click/scroll/key)
-    // — video playback itself is never blocked or paused waiting on that.
+    // called. We keep it simply muted — no post-play unmute attempts, since
+    // those can trigger the browser to pause playback again. Users control
+    // sound themselves via our own volume control UI.
     function startPlayback() {
       if (!video) return;
       video.muted = true;
-      const playPromise = video.play();
-      const tryUnmute = () => {
-        if (!video) return;
-        video.muted = false;
-        video.volume = 1;
-        // some browsers revert muted back to true if this unmute attempt
-        // itself isn't allowed yet — detect that and wait for a gesture
-        setTimeout(() => {
-          if (video && video.muted) unmuteOnFirstInteraction();
-        }, 50);
-      };
-      if (playPromise && typeof playPromise.then === 'function') {
-        playPromise.then(tryUnmute).catch(() => {
-          // even the muted play() failed (rare) — retry shortly, still muted
-          if (video) video.play().catch(() => {});
-          unmuteOnFirstInteraction();
-        });
-      } else {
-        tryUnmute();
-      }
-    }
-
-    function unmuteOnFirstInteraction() {
-      const events: Array<keyof DocumentEventMap> = ['touchstart', 'touchend', 'click', 'keydown', 'scroll'];
-      const unmute = () => {
-        if (video) {
-          video.muted = false;
-          video.volume = 1;
-          video.play().catch(() => {});
-        }
-        events.forEach((ev) => document.removeEventListener(ev, unmute));
-      };
-      events.forEach((ev) => document.addEventListener(ev, unmute, { once: true, passive: true }));
+      video.play().catch(() => {});
     }
 
     if (Hls.isSupported()) {
