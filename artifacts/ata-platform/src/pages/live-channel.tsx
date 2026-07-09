@@ -261,6 +261,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     autoplay: '1', mute: '1', rel: '0', modestbranding: '1',
     iv_load_policy: '3', playsinline: '1', controls: '0',
     fs: '0', disablekb: '1', enablejsapi: '1', origin: window.location.origin,
+    cc_load_policy: '0', cc_lang_pref: 'none',
   });
 
   return (
