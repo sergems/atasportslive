@@ -77,16 +77,48 @@ function useNextUpcoming() {
 
 // ─── Orientation → fullscreen ───────────────────────────────────────────────
 
+const ORIENTATION_FULLSCREEN_STYLE: Partial<CSSStyleDeclaration> = {
+  position: 'fixed', inset: '0', top: '0', left: '0', right: '0', bottom: '0',
+  width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh',
+  zIndex: '9999', margin: '0', borderRadius: '0',
+};
+
 /**
  * On mobile, rotating the device to landscape while a video container is
- * visible on screen requests fullscreen for that container; rotating back
- * to portrait exits fullscreen. Desktop/no-touch devices are left alone.
+ * visible on screen makes that container fill the whole screen; rotating
+ * back to portrait restores it. Desktop/no-touch devices are left alone.
+ *
+ * We deliberately do NOT use the real Fullscreen API here: browsers only
+ * grant requestFullscreen() inside a genuine user gesture (tap/click), and
+ * a device rotation event does not count as one — so calling it from an
+ * orientationchange handler is silently rejected on essentially every
+ * mobile browser. Instead we fake it with a fixed, full-viewport overlay
+ * (plus a body scroll lock), which works everywhere with no permissions.
  */
 function useOrientationFullscreen(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const isTouchDevice = typeof window !== 'undefined' &&
       (('ontouchstart' in window) || navigator.maxTouchPoints > 0);
     if (!isTouchDevice) return undefined;
+
+    let originalStyle: string | null = null;
+    let isFullscreen = false;
+
+    const enter = (el: HTMLElement) => {
+      if (isFullscreen) return;
+      isFullscreen = true;
+      originalStyle = el.getAttribute('style');
+      Object.assign(el.style, ORIENTATION_FULLSCREEN_STYLE);
+      document.body.style.overflow = 'hidden';
+    };
+
+    const exit = (el: HTMLElement) => {
+      if (!isFullscreen) return;
+      isFullscreen = false;
+      if (originalStyle !== null) el.setAttribute('style', originalStyle);
+      else el.removeAttribute('style');
+      document.body.style.overflow = '';
+    };
 
     const handleOrientationChange = () => {
       const el = ref.current;
@@ -95,10 +127,10 @@ function useOrientationFullscreen(ref: React.RefObject<HTMLElement | null>) {
       if (isLandscape) {
         const rect = el.getBoundingClientRect();
         const inView = rect.bottom > 0 && rect.top < window.innerHeight;
-        if (!inView || document.fullscreenElement) return;
-        (el.requestFullscreen?.() ?? (el as any).webkitRequestFullscreen?.())?.catch?.(() => {});
-      } else if (document.fullscreenElement === el) {
-        document.exitFullscreen?.().catch(() => {});
+        if (!inView) return;
+        enter(el);
+      } else {
+        exit(el);
       }
     };
     const api = window.screen?.orientation;
@@ -107,6 +139,8 @@ function useOrientationFullscreen(ref: React.RefObject<HTMLElement | null>) {
     return () => {
       if (api) api.removeEventListener('change', handleOrientationChange);
       else window.removeEventListener('orientationchange', handleOrientationChange);
+      const el = ref.current;
+      if (el) exit(el);
     };
   }, [ref]);
 }
