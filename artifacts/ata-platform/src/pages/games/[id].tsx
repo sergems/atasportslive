@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 const CONTAINER_TYPES = new Set(['competition', 'tour']);
+const MIN_STAKE = 1;
 
 function FlagImg({ code, className = '' }: { code?: string | null; className?: string }) {
   if (!code || code.trim().length < 2) return null;
@@ -82,7 +83,7 @@ export default function GameDetail() {
     if (!isAuthenticated) { setLocation('/login'); return; }
     if (!selectedOutcome || !stakeAmount) { toast.error('Select an outcome and enter a stake'); return; }
     const stake = parseFloat(stakeAmount);
-    if (isNaN(stake) || stake <= 0) { toast.error('Enter a valid stake amount'); return; }
+    if (isNaN(stake) || stake < MIN_STAKE) { toast.error(`Minimum stake is ${MIN_STAKE}`); return; }
 
     try {
       const result = await placeBet.mutateAsync({ data: { gameId, outcome: selectedOutcome as any, stake } });
@@ -361,7 +362,7 @@ export default function GameDetail() {
                   </div>
                   <Input
                     type="number"
-                    min="0.01"
+                    min={MIN_STAKE}
                     step="0.01"
                     placeholder="Or enter custom amount..."
                     value={stakeAmount}
@@ -393,7 +394,7 @@ export default function GameDetail() {
 
                 <Button
                   onClick={handlePlaceBet}
-                  disabled={!selectedOutcome || !stakeAmount || placeBet.isPending}
+                  disabled={!selectedOutcome || !stakeAmount || parseFloat(stakeAmount) < MIN_STAKE || placeBet.isPending}
                   className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold h-12"
                 >
                   {placeBet.isPending ? 'Placing Bet...' : 'Place Bet'}

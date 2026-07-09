@@ -28,13 +28,14 @@ const toBet = (b: typeof betsTable.$inferSelect, game?: any) => ({
 });
 
 const BROKERAGE_FEE = 0.10;
+const MIN_STAKE = 1;
 
 router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
   const { gameId, outcome, stake } = req.body;
   const userId = req.userId!;
 
-  if (!gameId || !outcome || !stake || stake <= 0) {
-    res.status(400).json({ error: "gameId, outcome, stake required" });
+  if (!gameId || !outcome || !stake || Number(stake) < MIN_STAKE) {
+    res.status(400).json({ error: `gameId, outcome required; stake must be at least ${MIN_STAKE}` });
     return;
   }
 
@@ -339,6 +340,10 @@ router.post("/:id/accept-near-match", authMiddleware, async (req: AuthRequest, r
   const opStake = parseFloat(opponentBet.stake as string);
   // Always match at the opponent's exact stake amount
   const matchStake = opStake;
+  if (!Number.isFinite(matchStake) || matchStake < MIN_STAKE) {
+    res.status(400).json({ error: `Match stake must be at least ${MIN_STAKE}` });
+    return;
+  }
   const pool = matchStake * 2;
   const fee = pool * BROKERAGE_FEE;
   const winnerPayout = pool - fee;
