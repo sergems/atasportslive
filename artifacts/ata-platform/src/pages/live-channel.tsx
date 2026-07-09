@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords, PanelRightClose, PanelRightOpen, Volume2, Volume1, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
@@ -95,52 +95,87 @@ export function MuxPlayer({ playbackId, title }: { playbackId: string; title: st
 
 export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [volume, setVolume] = useState(100);
+  const [muted, setMuted] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  // remember last non-zero volume so unmuting restores it
+  const lastVolumeRef = useRef(100);
+
+  function send(func: string, args: unknown[] = []) {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func, args }), '*'
+    );
+  }
+
+  function applyToPlayer(vol: number, isMuted: boolean) {
+    if (isMuted) {
+      send('mute');
+    } else {
+      send('unMute');
+      send('setVolume', [vol]);
+    }
+  }
 
   useEffect(() => {
-    let unmuted = false;
+    let initialised = false;
 
-    function tryUnmute() {
-      if (unmuted) return;
-      const iframe = iframeRef.current;
-      if (!iframe?.contentWindow) return;
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-      );
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*'
-      );
-      unmuted = true;
+    function init() {
+      if (initialised) return;
+      initialised = true;
+      send('unMute');
+      send('setVolume', [100]);
+      setMuted(false);
+      setVolume(100);
+      setReady(true);
     }
 
     function onMessage(e: MessageEvent) {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        // YouTube sends event:"onReady" when the player is initialised (info is the player ID, not an object)
-        if (data?.event === 'onReady') {
-          tryUnmute();
-        }
-        // YouTube sends event:"infoDelivery" with playerState:1 when playback starts
-        if (data?.event === 'infoDelivery' && data?.info?.playerState === 1) {
-          tryUnmute();
-        }
+        if (data?.event === 'onReady') init();
+        if (data?.event === 'infoDelivery' && data?.info?.playerState === 1) init();
       } catch {}
     }
 
     window.addEventListener('message', onMessage);
-    // Fallback: if the postMessage events are missed (e.g. iframe already loaded), retry after 1.5 s
-    const fallback = setTimeout(tryUnmute, 1500);
-
+    const fallback = setTimeout(init, 1500);
     return () => {
       window.removeEventListener('message', onMessage);
       clearTimeout(fallback);
     };
   }, [videoId]);
 
+  function handleVolumeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = Number(e.target.value);
+    setVolume(val);
+    if (val > 0) lastVolumeRef.current = val;
+    const nowMuted = val === 0;
+    setMuted(nowMuted);
+    applyToPlayer(val, nowMuted);
+  }
+
+  function handleToggleMute() {
+    const next = !muted;
+    setMuted(next);
+    if (!next && volume === 0) {
+      // restore last known volume when unmuting from 0
+      const restored = lastVolumeRef.current || 100;
+      setVolume(restored);
+      applyToPlayer(restored, false);
+    } else {
+      applyToPlayer(volume, next);
+    }
+  }
+
+  const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
+
   const src = new URLSearchParams({
     autoplay: '1', mute: '1', rel: '0', modestbranding: '1',
     iv_load_policy: '3', playsinline: '1', controls: '1',
     fs: '1', disablekb: '0', enablejsapi: '1',
   });
+
   return (
     <div className="relative w-full h-full">
       <iframe
@@ -151,7 +186,45 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
         allowFullScreen
       />
-      <div className="absolute inset-0 pointer-events-auto" />
+
+      {/* Overlay: pointer-events-none so YouTube's own controls still work,
+          except for the volume widget in the bottom-left corner */}
+      <div className="absolute inset-0 pointer-events-none">
+        {ready && (
+          <div
+            className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
+            onMouseEnter={() => setExpanded(true)}
+            onMouseLeave={() => setExpanded(false)}
+          >
+            {/* Slider — visible on hover or touch-expand */}
+            <div
+              className={`flex items-center transition-all duration-200 overflow-hidden ${
+                expanded ? 'w-24 opacity-100' : 'w-0 opacity-0'
+              }`}
+            >
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={muted ? 0 : volume}
+                onChange={handleVolumeChange}
+                className="w-full h-1 accent-teal-400 cursor-pointer"
+                aria-label="Volume"
+              />
+            </div>
+
+            {/* Mute / unmute button */}
+            <button
+              onClick={handleToggleMute}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors"
+              aria-label={muted ? 'Unmute' : 'Mute'}
+              title={muted ? 'Unmute' : 'Mute'}
+            >
+              <VolumeIcon className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
