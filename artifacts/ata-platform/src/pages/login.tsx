@@ -225,6 +225,7 @@ export default function Login() {
   const [googleLoading, setGoogleLoading]   = useState(false);
   const [activeTab, setActiveTab]           = useState<LoginTab>('email');
   const [setPasswordChallenge, setSetPasswordChallenge] = useState<{ email: string; nonce: string } | null>(null);
+  const [showPassword, setShowPassword]     = useState(false);
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -417,14 +418,29 @@ export default function Login() {
                     <FormItem>
                       <FormLabel className="text-white">Password</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="••••••••"
-                          autoComplete="current-password"
-                          className={`bg-background/50 border-input text-white ${loginError ? 'border-red-500/60' : ''}`}
-                          {...field}
-                          onChange={(e) => { field.onChange(e); setLoginError(null); }}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="••••••••"
+                            autoComplete="current-password"
+                            className={`bg-background/50 border-input text-white pr-10 ${loginError ? 'border-red-500/60' : ''}`}
+                            {...field}
+                            onChange={(e) => { field.onChange(e); setLoginError(null); }}
+                          />
+                          <button
+                            type="button"
+                            onMouseDown={() => setShowPassword(true)}
+                            onMouseUp={() => setShowPassword(false)}
+                            onMouseLeave={() => setShowPassword(false)}
+                            onTouchStart={() => setShowPassword(true)}
+                            onTouchEnd={() => setShowPassword(false)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors select-none"
+                            aria-label={showPassword ? 'Hide password' : 'Hold to show password'}
+                            tabIndex={-1}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

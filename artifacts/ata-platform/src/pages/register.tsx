@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { GoogleLogin } from '@react-oauth/google';
-import { Gift } from 'lucide-react';
+import { Gift, Eye, EyeOff } from 'lucide-react';
 
 /** Read ?ref=CODE from the URL at page load. */
 function getReferralCodeFromUrl(): string | null {
@@ -33,6 +33,7 @@ export default function Register() {
   const registerMutation = useRegister();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(() => getReferralCodeFromUrl());
   const [referralInput, setReferralInput] = useState(() => getReferralCodeFromUrl() ?? '');
 
@@ -210,7 +211,28 @@ export default function Register() {
                   <FormItem>
                     <FormLabel className="text-white">Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" className="bg-background/50 border-input text-white" {...field} />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          autoComplete="new-password"
+                          className="bg-background/50 border-input text-white pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onMouseDown={() => setShowPassword(true)}
+                          onMouseUp={() => setShowPassword(false)}
+                          onMouseLeave={() => setShowPassword(false)}
+                          onTouchStart={() => setShowPassword(true)}
+                          onTouchEnd={() => setShowPassword(false)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors select-none"
+                          aria-label={showPassword ? 'Hide password' : 'Hold to show password'}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
