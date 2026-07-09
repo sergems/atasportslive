@@ -99,6 +99,9 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  // true for a few seconds right after (re)loading a video, while YouTube's
+  // title/channel card is still animating in/out — covered with solid bars
+  const [justSwitched, setJustSwitched] = useState(true);
   // remember last non-zero volume so unmuting restores it
   const lastVolumeRef = useRef(100);
 
@@ -122,6 +125,12 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     // reset UI state whenever the video changes so we don't act on stale
     // readiness assumptions from the previous video
     setReady(false);
+    // cover the feed with solid bars for a few seconds after switching —
+    // YouTube's title/channel card animates in on load and there's no
+    // param that fully suppresses it, so we hide it behind opaque bars
+    // instead until it's had time to disappear on its own
+    setJustSwitched(true);
+    const switchCoverTimer = setTimeout(() => setJustSwitched(false), 7000);
 
     function init() {
       if (initialised) return;
@@ -146,6 +155,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     return () => {
       window.removeEventListener('message', onMessage);
       clearTimeout(fallback);
+      clearTimeout(switchCoverTimer);
     };
   }, [videoId]);
 
@@ -208,6 +218,22 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         {/* Top strip hides YouTube's title / channel-info card that would
             otherwise flash on load */}
         <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent" />
+
+        {/* Solid black bars covering the top and bottom for a few seconds
+            right after switching channels — YouTube always briefly shows
+            its title/channel card on load with no way to fully disable it,
+            so we hide it behind these until it's had time to go away,
+            then fade the bars out on their own */}
+        <div
+          className={`absolute top-0 inset-x-0 h-1/4 bg-black transition-opacity duration-700 ${
+            justSwitched ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+        <div
+          className={`absolute bottom-0 inset-x-0 h-1/4 bg-black transition-opacity duration-700 ${
+            justSwitched ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
         {ready && (
           <div
             className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
