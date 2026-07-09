@@ -192,6 +192,43 @@ function FullscreenButton({ isFullscreen, onToggle, className }: { isFullscreen:
   );
 }
 
+const CONTROLS_HIDE_DELAY_MS = 3000;
+
+/**
+ * Auto-hides player controls after a few seconds of no interaction, and
+ * brings them back on mouse move / touch / tap over the player. Returns a
+ * `visible` flag plus the mouse/touch handlers to spread onto the player's
+ * container element.
+ */
+function useControlsAutoHide() {
+  const [visible, setVisible] = useState(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimer = () => { if (timerRef.current) clearTimeout(timerRef.current); };
+
+  const show = useCallback(() => {
+    setVisible(true);
+    clearTimer();
+    timerRef.current = setTimeout(() => setVisible(false), CONTROLS_HIDE_DELAY_MS);
+  }, []);
+
+  useEffect(() => {
+    show();
+    return clearTimer;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return {
+    visible,
+    handlers: {
+      onMouseMove: show,
+      onMouseEnter: show,
+      onTouchStart: show,
+      onClick: show,
+    },
+  };
+}
+
 // ─── Players ─────────────────────────────────────────────────────────────────
 
 const FALLBACK_MUX_PLAYBACK_ID = 'QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00';
@@ -216,6 +253,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggle: toggleFullscreen } = usePlayerFullscreen(containerRef);
+  const { visible: controlsVisible, handlers: controlsHandlers } = useControlsAutoHide();
   const [volume, setVolume] = useState(100);
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
