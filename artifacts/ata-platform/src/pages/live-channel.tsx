@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords, PanelRightClose, PanelRightOpen, Volume2, Volume1, VolumeX } from 'lucide-react';
+import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords, PanelRightClose, PanelRightOpen, Volume2, Volume1, VolumeX, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
@@ -145,6 +145,61 @@ function useOrientationFullscreen(ref: React.RefObject<HTMLElement | null>) {
   }, [ref]);
 }
 
+/**
+ * Manual fullscreen toggle for a "fullscreen" button rendered on the player
+ * itself. Unlike the orientation-driven version above, this always runs
+ * inside a real click handler — a genuine user gesture — so we can (and
+ * should) use the real Fullscreen API here: it gives native OS chrome,
+ * proper Android/iOS support, and (for the HLS <video> element) iOS's
+ * dedicated fullscreen video UI via webkitEnterFullscreen.
+ */
+function toggleManualFullscreen(el: HTMLElement | null) {
+  if (!el) return;
+  const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
+  const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
+  if (fsEl) {
+    (document.exitFullscreen ? document.exitFullscreen() : doc.webkitExitFullscreen?.())?.catch?.(() => {});
+    return;
+  }
+  const anyEl = el as HTMLElement & { webkitRequestFullscreen?: () => void; webkitEnterFullscreen?: () => void };
+  if (el.requestFullscreen) { el.requestFullscreen().catch(() => {}); return; }
+  if (anyEl.webkitRequestFullscreen) { anyEl.webkitRequestFullscreen(); return; }
+  if (anyEl.webkitEnterFullscreen) { anyEl.webkitEnterFullscreen(); return; }
+}
+
+/** Tracks whether `ref`'s element is currently the fullscreen element, so a button can swap its icon. */
+function useIsManualFullscreen(ref: React.RefObject<HTMLElement | null>) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const doc = document as Document & { webkitFullscreenElement?: Element };
+      const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
+      setIsFullscreen(!!fsEl && fsEl === ref.current);
+    };
+    document.addEventListener('fullscreenchange', check);
+    document.addEventListener('webkitfullscreenchange', check);
+    return () => {
+      document.removeEventListener('fullscreenchange', check);
+      document.removeEventListener('webkitfullscreenchange', check);
+    };
+  }, [ref]);
+  return isFullscreen;
+}
+
+function FullscreenButton({ targetRef, className }: { targetRef: React.RefObject<HTMLElement | null>; className?: string }) {
+  const isFullscreen = useIsManualFullscreen(targetRef);
+  return (
+    <button
+      onClick={() => toggleManualFullscreen(targetRef.current)}
+      className={className ?? 'flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors'}
+      aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+      title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+    >
+      {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+    </button>
+  );
+}
+
 // ─── Players ─────────────────────────────────────────────────────────────────
 
 const FALLBACK_MUX_PLAYBACK_ID = 'QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00';
@@ -173,11 +228,14 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   // true for a few seconds right after (re)loading a video, while YouTube's
   // title/channel card is still animating in/out — covered with solid bars
   const [justSwitched, setJustSwitched] = useState(true);
   // remember last non-zero volume so unmuting restores it
   const lastVolumeRef = useRef(100);
+  // once the user manually pauses, stop the autoplay-recovery nudges from fighting them
+  const userPausedRef = useRef(false);
 
   function send(func: string, args: unknown[] = []) {
     iframeRef.current?.contentWindow?.postMessage(
@@ -262,8 +320,10 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         if (data?.event === 'infoDelivery' && typeof data?.info?.playerState === 'number') {
           playerState = data.info.playerState;
           if (playerState === 1) init();
+          setIsPlaying(playerState === 1 || playerState === 3);
           // 2 = paused, 5 = cued — both mean autoplay didn't take; nudge it again
-          if (playerState === 2 || playerState === 5) commandPlay();
+          // (only auto-nudge before the user has taken manual control)
+          if ((playerState === 2 || playerState === 5) && !userPausedRef.current) commandPlay();
         }
       } catch {}
     }
@@ -297,6 +357,18 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       applyToPlayer(restored, false);
     } else {
       applyToPlayer(volume, next);
+    }
+  }
+
+  function handleTogglePlay() {
+    if (isPlaying) {
+      userPausedRef.current = true;
+      send('pauseVideo');
+      setIsPlaying(false);
+    } else {
+      userPausedRef.current = false;
+      send('playVideo');
+      setIsPlaying(true);
     }
   }
 
@@ -386,7 +458,33 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
             >
               <VolumeIcon className="w-4 h-4" />
             </button>
+
+            {/* Play / pause button */}
+            <button
+              onClick={handleTogglePlay}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors"
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+              title={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+
+            {/* Fullscreen button */}
+            <FullscreenButton targetRef={containerRef} />
           </div>
+        )}
+
+        {/* Large centered play button while paused, mirroring a native player */}
+        {ready && !isPlaying && (
+          <button
+            onClick={handleTogglePlay}
+            className="absolute inset-0 flex items-center justify-center pointer-events-auto"
+            aria-label="Play"
+          >
+            <span className="flex items-center justify-center w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-white hover:bg-black/80 transition-colors">
+              <Play className="w-7 h-7 ml-1" />
+            </span>
+          </button>
         )}
       </div>
     </div>
@@ -395,7 +493,9 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
 
 export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  useOrientationFullscreen(videoRef);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useOrientationFullscreen(containerRef);
+  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -412,22 +512,64 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
       video.play().catch(() => {});
     }
 
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', onPause);
+
     if (Hls.isSupported()) {
       const hls = new Hls();
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, startPlayback);
-      return () => hls.destroy();
+      return () => {
+        hls.destroy();
+        video.removeEventListener('play', onPlay);
+        video.removeEventListener('pause', onPause);
+      };
     }
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = hlsUrl;
       startPlayback();
     }
-    return undefined;
+    return () => {
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPause);
+    };
   }, [hlsUrl]);
 
+  function handleTogglePlay() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
+  }
+
   return (
-    <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay muted playsInline title={title} />
+    <div ref={containerRef} className="relative w-full h-full bg-black">
+      <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay muted playsInline title={title} />
+
+      {/* Manual controls, kept alongside the native <video> controls so a
+          fullscreen button is always available even where native browser
+          controls hide or omit one */}
+      <div className="absolute bottom-3 right-3 flex items-center gap-2 pointer-events-none">
+        <div className="pointer-events-auto">
+          <FullscreenButton targetRef={containerRef} />
+        </div>
+      </div>
+
+      {!isPlaying && (
+        <button
+          onClick={handleTogglePlay}
+          className="absolute inset-0 flex items-center justify-center"
+          aria-label="Play"
+        >
+          <span className="flex items-center justify-center w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-white hover:bg-black/80 transition-colors">
+            <Play className="w-7 h-7 ml-1" />
+          </span>
+        </button>
+      )}
+    </div>
   );
 }
 
