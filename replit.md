@@ -12,9 +12,11 @@ A full-stack sports streaming & P2P betting exchange platform targeting the Ugan
 
 ## How to Run
 
-Both workflows start automatically (configured as plain Replit workflows in this environment — artifact-managed `.toml` services are not registered here):
-- **Start application** (frontend, port 5000, webview): `PORT=5000 BASE_PATH=/ pnpm --filter @workspace/ata-platform run dev`
-- **API Server** (port 8080, console): `pnpm --filter @workspace/api-server run dev`
+The single **Start application** workflow starts both services in parallel and is supervised so the workflow fails visibly if either process dies (webview, port 5000):
+```
+(PORT=8080 pnpm --filter @workspace/api-server dev) & (PORT=5000 pnpm --filter @workspace/ata-platform dev) & wait -n; exit $?
+```
+`PORT` is set per-command above — there is no single global `PORT` value shared by both services.
 
 Note: `artifacts/ata-platform/vite.config.ts` defaults to port 23218 when `PORT` is unset (leftover from a prior artifact-managed setup); the workflow above overrides it to 5000, which is required for the Replit webview.
 
@@ -24,13 +26,14 @@ Note: `artifacts/ata-platform/vite.config.ts` defaults to port 23218 when `PORT`
 |---|---|---|
 | `DATABASE_URL` | Replit managed | PostgreSQL connection string |
 | `SESSION_SECRET` | Replit Secret | JWT signing key |
-| `PORT` | Workflow config | Server port (8080 for API, 5000 for frontend) |
+| `PORT` | Workflow config | Set per-command in the workflow (8080 for API, 5000 for frontend) |
+| `GOOGLE_CLIENT_ID` | Replit Secret (optional) | Enables Google Sign-In; without it the API returns 503 for those endpoints and the feature is just hidden |
 
 ## Database
 
-Schema is defined in `lib/db/src/schema/` (Drizzle). The initial schema and seed data were applied from `gktp.sql` via psql, stripping the `\restrict`/`\unrestrict` control lines: `grep -v "^\\\\restrict\|^\\\\unrestrict" gktp.sql | psql "$DATABASE_URL"`. To push schema changes: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow).
+Schema is defined in `lib/db/src/schema/` (Drizzle). On a fresh import the database is empty; restore it from the dump in `attached_assets/` via: `psql "$DATABASE_URL" -f attached_assets/ata_db_1783623312620.sql`. To push schema changes going forward: `pnpm --filter @workspace/db run push` (requires a TTY — run from the Shell tab, not a workflow) — or apply SQL directly via `psql "$DATABASE_URL"` if non-interactive.
 
-> ⚠️ **`gktp.sql` (and files under `attached_assets/`) may contain real user PII and API tokens** from the original deployment. Do not commit them to a public repository or share them. Rotate any API tokens they reference, and consider removing these dumps from the repo once the database has been restored.
+> ⚠️ **Files under `attached_assets/` (the `.sql` dumps) may contain real user PII and API tokens** from the original deployment. Do not commit them to a public repository or share them. Rotate any API tokens they reference, and consider removing these dumps from the repo once the database has been restored.
 
 ## API Code Generation
 
