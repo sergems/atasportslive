@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, pgEnum, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, pgEnum, boolean, integer, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -21,6 +21,8 @@ export const usersTable = pgTable("users", {
   usernameChangesCount: integer("username_changes_count").notNull().default(0),
   googleId: text("google_id").unique(),
   mustSetPassword: boolean("must_set_password").notNull().default(false),
+  setPasswordNonce: text("set_password_nonce"),
+  setPasswordNonceExpiry: timestamp("set_password_nonce_expiry", { withTimezone: true }),
   referralCode: text("referral_code").unique(),
   referredBy: integer("referred_by"),
   dateOfBirth: text("date_of_birth"),

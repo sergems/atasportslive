@@ -143,12 +143,20 @@ router.post("/login", async (req, res): Promise<void> => {
     return;
   }
 
-  // Imported users must set their password before they can log in
+  // Imported users must set their password before they can log in.
+  // Issue a short-lived nonce so only the user who just attempted login
+  // can call /set-password — prevents account takeover via email enumeration.
   if (user.mustSetPassword) {
+    const nonce = crypto.randomUUID();
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    await db.update(usersTable)
+      .set({ setPasswordNonce: nonce, setPasswordNonceExpiry: expiry })
+      .where(eq(usersTable.id, user.id));
     res.status(403).json({
       error: "Password setup required",
       reason: "password_reset_required",
       email: user.email,
+      nonce,
     });
     return;
   }
@@ -181,11 +189,12 @@ router.post("/login", async (req, res): Promise<void> => {
   res.json({ ...tokens, user: userPayload(user), displacedExistingSession });
 });
 
-// Activated by imported users on their first login
+// Activated by imported users on their first login.
+// Requires a short-lived nonce issued by POST /login to prevent account takeover.
 router.post("/set-password", async (req, res): Promise<void> => {
-  const { email, newPassword } = req.body;
-  if (!email || !newPassword) {
-    res.status(400).json({ error: "email and newPassword required" });
+  const { email, nonce, newPassword } = req.body;
+  if (!email || !nonce || !newPassword) {
+    res.status(400).json({ error: "email, nonce and newPassword are required" });
     return;
   }
   if (newPassword.length < 8) {
@@ -205,18 +214,40 @@ router.post("/set-password", async (req, res): Promise<void> => {
     res.status(403).json({ error: "Account suspended" });
     return;
   }
+
+  // Validate nonce — must match and not be expired
+  const now = new Date();
+  if (
+    !user.setPasswordNonce ||
+    user.setPasswordNonce !== nonce ||
+    !user.setPasswordNonceExpiry ||
+    user.setPasswordNonceExpiry < now
+  ) {
+    res.status(403).json({ error: "Invalid or expired setup link — please go back and try signing in again" });
+    return;
+  }
+
   const passwordHash = await bcrypt.hash(newPassword, 10);
   const sv = generateSessionToken();
   const tokens = generateTokens(user.id, user.role, sv);
   await db
     .update(usersTable)
-    .set({ passwordHash, mustSetPassword: false, refreshToken: tokens.refreshToken, sessionToken: sv })
+    .set({
+      passwordHash,
+      mustSetPassword: false,
+      setPasswordNonce: null,
+      setPasswordNonceExpiry: null,
+      refreshToken: tokens.refreshToken,
+      sessionToken: sv,
+    })
     .where(eq(usersTable.id, user.id));
 
   // Ensure wallet exists (imported users may not have one yet)
   await db.insert(walletsTable).values({ userId: user.id }).onConflictDoNothing();
 
-  res.json({ ...tokens, user: userPayload(user) });
+  // Re-fetch so the returned user payload reflects the updated row
+  const [freshUser] = await db.select().from(usersTable).where(eq(usersTable.id, user.id)).limit(1);
+  res.json({ ...tokens, user: userPayload(freshUser) });
 });
 
 router.post("/refresh", async (req, res): Promise<void> => {
