@@ -174,11 +174,21 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
 
     let playerState: number | null = null;
 
+    function disableCaptions() {
+      // cc_load_policy=0 in the URL only stops auto-loading for videos that
+      // don't force captions on — some broadcasts force them on regardless,
+      // so we also clear the caption track directly via the player API,
+      // which works even when the uploader/livestream forces captions.
+      send('setOption', ['captions', 'track', {}]);
+      send('unloadModule', ['captions']);
+    }
+
     function init() {
       if (initialised) return;
       initialised = true;
       send('unMute');
       send('setVolume', [100]);
+      disableCaptions();
       setMuted(false);
       setVolume(100);
       setReady(true);
@@ -194,10 +204,11 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     // required anyway, just aimed at the wrong target).
     function commandPlay() {
       send('playVideo');
+      disableCaptions();
     }
     commandPlay();
     const playRetries = [300, 800, 1500, 2500, 4000, 6000].map((delay) =>
-      setTimeout(() => { if (playerState !== 1) commandPlay(); }, delay)
+      setTimeout(() => { if (playerState !== 1) commandPlay(); else disableCaptions(); }, delay)
     );
 
     function unstickOnFirstInteraction() {
