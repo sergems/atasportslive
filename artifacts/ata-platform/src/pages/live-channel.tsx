@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
@@ -77,92 +78,57 @@ function useNextUpcoming() {
 
 // ─── Orientation → fullscreen ───────────────────────────────────────────────
 
-const ORIENTATION_FULLSCREEN_STYLE: Partial<CSSStyleDeclaration> = {
-  position: 'fixed', inset: '0', top: '0', left: '0', right: '0', bottom: '0',
-  width: '100vw', height: '100vh', maxWidth: '100vw', maxHeight: '100vh',
-  zIndex: '9999', margin: '0', borderRadius: '0',
-};
-
 /**
- * Fullscreen for a player container, covering both:
+ * Fullscreen for a player, covering both:
  *  1. Auto-trigger on device rotation to landscape (and un-trigger on
  *     rotation back to portrait).
  *  2. A manual toggle for an on-player fullscreen button.
  *
- * We always drive this with a fixed, full-viewport CSS overlay (plus a body
- * scroll lock) rather than relying on the real Fullscreen API as the
- * primary mechanism — it works unconditionally everywhere, including iOS
- * Safari, which does not implement Element.requestFullscreen() at all for
- * plain containers (only <video> elements get a fullscreen affordance
- * there, via the non-standard webkitEnterFullscreen). We still *attempt*
- * the real API on top, best-effort, so Android/desktop get native chrome,
- * rotation lock, and hardware back-button support where available — but
- * nothing depends on it succeeding.
+ * Fullscreen is driven entirely by React state — when active the caller
+ * renders the player inside a createPortal() fixed overlay appended directly
+ * to document.body. This bypasses every parent stacking context and CSS
+ * transform that would otherwise trap a `position:fixed` child inside the
+ * page layout, which is the root cause of the player not covering the full
+ * screen on mobile when Framer Motion or other layout parents apply transforms.
+ *
+ * ref is used only for the auto-rotate in-view check; no DOM styles are
+ * mutated by this hook.
  */
 function usePlayerFullscreen(ref: React.RefObject<HTMLElement | null>) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const originalStyleRef = useRef<string | null>(null);
+
+  const lockLandscape = () => {
+    try {
+      (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })
+        ?.lock?.('landscape').catch(() => {});
+    } catch {}
+  };
+  const unlockOrientation = () => {
+    try {
+      (screen.orientation as ScreenOrientation & { unlock?: () => void })?.unlock?.();
+    } catch {}
+  };
 
   const enter = useCallback(() => {
-    const el = ref.current;
-    if (!el || originalStyleRef.current !== null) return;
-    originalStyleRef.current = el.getAttribute('style') ?? '';
-    Object.assign(el.style, ORIENTATION_FULLSCREEN_STYLE);
-    document.body.style.overflow = 'hidden';
     setIsFullscreen(true);
-
-    // Lock orientation to landscape so the screen physically rotates.
-    // We attempt this regardless of whether the Fullscreen API succeeds —
-    // the CSS overlay already covers the viewport, orientation lock just
-    // makes the device rotate to fill it properly. iOS Safari does not
-    // support either API so it silently no-ops via the catch paths.
-    const lockLandscape = () => {
-      try { (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })?.lock?.('landscape').catch(() => {}); } catch {}
-    };
-
-    const anyEl = el as HTMLElement & { webkitRequestFullscreen?: () => void };
-    const fsPromise = el.requestFullscreen
-      ? el.requestFullscreen()
-      : anyEl.webkitRequestFullscreen
-        ? (anyEl.webkitRequestFullscreen(), Promise.resolve())
-        : Promise.resolve();
-    fsPromise.then(lockLandscape).catch(lockLandscape);
-  }, [ref]);
+    document.body.style.overflow = 'hidden';
+    lockLandscape();
+  }, []);
 
   const exit = useCallback(() => {
-    const el = ref.current;
-    if (!el || originalStyleRef.current === null) return;
-    // Release orientation lock so the device can return to portrait.
-    try { (screen.orientation as ScreenOrientation & { unlock?: () => void })?.unlock?.(); } catch {}
-    if (originalStyleRef.current) el.setAttribute('style', originalStyleRef.current);
-    else el.removeAttribute('style');
-    originalStyleRef.current = null;
-    document.body.style.overflow = '';
     setIsFullscreen(false);
-    const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
-    const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
-    if (fsEl) (document.exitFullscreen ? document.exitFullscreen() : Promise.resolve(doc.webkitExitFullscreen?.()))?.catch?.(() => {});
-  }, [ref]);
+    document.body.style.overflow = '';
+    unlockOrientation();
+  }, []);
 
   const toggle = useCallback(() => {
-    if (originalStyleRef.current !== null) exit(); else enter();
-  }, [enter, exit]);
-
-  // Keep our state in sync if the user exits real fullscreen via ESC / the
-  // OS back gesture / browser chrome instead of our own button.
-  useEffect(() => {
-    const onFsChange = () => {
-      const doc = document as Document & { webkitFullscreenElement?: Element };
-      const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement;
-      if (!fsEl && originalStyleRef.current !== null) exit();
-    };
-    document.addEventListener('fullscreenchange', onFsChange);
-    document.addEventListener('webkitfullscreenchange', onFsChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', onFsChange);
-      document.removeEventListener('webkitfullscreenchange', onFsChange);
-    };
-  }, [exit]);
+    setIsFullscreen((prev) => {
+      const next = !prev;
+      if (next) { document.body.style.overflow = 'hidden'; lockLandscape(); }
+      else       { document.body.style.overflow = '';       unlockOrientation(); }
+      return next;
+    });
+  }, []);
 
   // Auto rotate-to-fullscreen on touch devices only.
   useEffect(() => {
@@ -193,7 +159,7 @@ function usePlayerFullscreen(ref: React.RefObject<HTMLElement | null>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref]);
 
-  return { isFullscreen, toggle };
+  return { isFullscreen, enter, exit, toggle };
 }
 
 function FullscreenButton({ isFullscreen, onToggle, className }: { isFullscreen: boolean; onToggle: () => void; className?: string }) {
@@ -428,8 +394,12 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     cc_load_policy: '0', cc_lang_pref: 'none',
   });
 
-  return (
-    <div ref={containerRef} className="relative w-full h-full">
+  // ── Player inner content ────────────────────────────────────────────────────
+  // Extracted so it can be rendered either in-place or inside a portal without
+  // duplicating JSX. The iframe ref is always attached here, so the YouTube
+  // postMessage API keeps working regardless of where this tree is mounted.
+  const playerInner = (
+    <div className="relative w-full h-full bg-black">
       <iframe
         ref={iframeRef}
         src={`https://www.youtube-nocookie.com/embed/${videoId}?${src.toString()}`}
@@ -438,14 +408,9 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
       />
 
-      {/* Block layer: sits above the iframe and absorbs every mouse/touch/click
-          event so viewers can never interact with the raw YouTube surface.
-          This is what stops YouTube's native hover chrome, title card, and
-          end/pause "suggested video" cards from ever appearing — the video
-          just plays continuously and is only controllable via our own
-          volume widget below (which sits above this layer).
-          We also attach controlsHandlers here so any tap/move on the video
-          surface wakes the controls back up. */}
+      {/* Block layer — absorbs all pointer events on the iframe surface so
+          YouTube's own chrome (title card, suggested videos, end cards) can
+          never appear. Also wakes the controls auto-hide timer on interaction. */}
       <div
         className="absolute inset-0 w-full h-full"
         style={{ cursor: 'default' }}
@@ -454,14 +419,10 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         aria-hidden="true"
       />
 
-      {/* Overlay: pointer-events-none so it never blocks the block layer
-          above, except for the volume widget in the bottom-left corner */}
+      {/* Overlay — pointer-events-none except for the control buttons */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Solid black bars covering the top and bottom for a few seconds
-            right after switching channels — YouTube always briefly shows
-            its title/channel card on load with no way to fully disable it,
-            so we hide it behind these until it's had time to go away,
-            then fade the bars out on their own */}
+        {/* Solid black bars for a few seconds after switching — hides YouTube's
+            title/channel card that briefly animates in on load */}
         <div
           className={`absolute top-0 inset-x-0 h-[22%] sm:h-[12.5%] bg-black transition-opacity duration-700 ${
             justSwitched ? 'opacity-100' : 'opacity-0'
@@ -473,14 +434,14 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
           }`}
         />
 
-        {/* Controls + top strip — all fade together on user inactivity */}
+        {/* Controls + top gradient — fade together on inactivity */}
         <div
           className={`absolute inset-0 transition-opacity duration-300 ${controlsVisible ? 'opacity-100' : 'opacity-0'}`}
         >
-          {/* Top gradient hides YouTube's title/channel card that flashes on
-              load. Lives inside the fade wrapper so it doesn't permanently
-              darken the feed when controls are hidden. */}
+          {/* Top gradient hides YouTube's title/channel card; inside the fade
+              wrapper so it doesn't permanently darken the feed */}
           <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent" />
+
           {ready && (
             <div
               className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
@@ -488,16 +449,14 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
               onMouseLeave={() => setExpanded(false)}
               {...controlsHandlers}
             >
-              {/* Slider — visible on hover or touch-expand */}
+              {/* Volume slider */}
               <div
                 className={`flex items-center transition-all duration-200 overflow-hidden ${
                   expanded ? 'w-24 opacity-100' : 'w-0 opacity-0'
                 }`}
               >
                 <input
-                  type="range"
-                  min={0}
-                  max={100}
+                  type="range" min={0} max={100}
                   value={muted ? 0 : volume}
                   onChange={handleVolumeChange}
                   className="w-full h-1 accent-teal-400 cursor-pointer"
@@ -505,32 +464,26 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
                 />
               </div>
 
-              {/* Mute / unmute button */}
               <button
                 onClick={handleToggleMute}
                 className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors"
                 aria-label={muted ? 'Unmute' : 'Mute'}
-                title={muted ? 'Unmute' : 'Mute'}
               >
                 <VolumeIcon className="w-4 h-4" />
               </button>
 
-              {/* Play / pause button */}
               <button
                 onClick={handleTogglePlay}
                 className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors"
                 aria-label={isPlaying ? 'Pause' : 'Play'}
-                title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
 
-              {/* Fullscreen button */}
               <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
             </div>
           )}
 
-          {/* Large centered play button while paused, mirroring a native player */}
           {ready && !isPlaying && (
             <button
               onClick={handleTogglePlay}
@@ -545,6 +498,32 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
         </div>
       </div>
     </div>
+  );
+
+  // ── Fullscreen via portal ────────────────────────────────────────────────────
+  // When fullscreen, we render via createPortal() directly into document.body.
+  // This completely bypasses any parent stacking context or CSS transform
+  // (e.g. Framer Motion page transitions) that would trap position:fixed
+  // children inside the page layout instead of covering the real viewport.
+  // The containerRef div stays in the normal DOM position so the
+  // auto-rotate orientation listener can still measure its bounding rect.
+  return (
+    <>
+      {/* Placeholder that keeps the layout space and holds the orientation ref */}
+      <div ref={containerRef} className="relative w-full h-full bg-black">
+        {!isFullscreen && playerInner}
+      </div>
+
+      {isFullscreen && createPortal(
+        <div
+          className="fixed inset-0 bg-black"
+          style={{ zIndex: 2147483647 /* max int32 — beats every stacking context */ }}
+        >
+          {playerInner}
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
 
