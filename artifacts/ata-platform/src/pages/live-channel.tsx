@@ -426,11 +426,14 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
           This is what stops YouTube's native hover chrome, title card, and
           end/pause "suggested video" cards from ever appearing — the video
           just plays continuously and is only controllable via our own
-          volume widget below (which sits above this layer). */}
+          volume widget below (which sits above this layer).
+          We also attach controlsHandlers here so any tap/move on the video
+          surface wakes the controls back up. */}
       <div
         className="absolute inset-0 w-full h-full"
         style={{ cursor: 'default' }}
         onClickCapture={(e) => e.preventDefault()}
+        {...controlsHandlers}
         aria-hidden="true"
       />
 
@@ -456,66 +459,73 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
             justSwitched ? 'opacity-100' : 'opacity-0'
           }`}
         />
-        {ready && (
-          <div
-            className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
-            onMouseEnter={() => setExpanded(true)}
-            onMouseLeave={() => setExpanded(false)}
-          >
-            {/* Slider — visible on hover or touch-expand */}
+
+        {/* Controls — fade in/out based on user activity */}
+        <div
+          className={`absolute inset-0 transition-opacity duration-300 ${controlsVisible ? 'opacity-100' : 'opacity-0'}`}
+        >
+          {ready && (
             <div
-              className={`flex items-center transition-all duration-200 overflow-hidden ${
-                expanded ? 'w-24 opacity-100' : 'w-0 opacity-0'
-              }`}
+              className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
+              onMouseEnter={() => setExpanded(true)}
+              onMouseLeave={() => setExpanded(false)}
+              {...controlsHandlers}
             >
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={muted ? 0 : volume}
-                onChange={handleVolumeChange}
-                className="w-full h-1 accent-teal-400 cursor-pointer"
-                aria-label="Volume"
-              />
+              {/* Slider — visible on hover or touch-expand */}
+              <div
+                className={`flex items-center transition-all duration-200 overflow-hidden ${
+                  expanded ? 'w-24 opacity-100' : 'w-0 opacity-0'
+                }`}
+              >
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={muted ? 0 : volume}
+                  onChange={handleVolumeChange}
+                  className="w-full h-1 accent-teal-400 cursor-pointer"
+                  aria-label="Volume"
+                />
+              </div>
+
+              {/* Mute / unmute button */}
+              <button
+                onClick={handleToggleMute}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors"
+                aria-label={muted ? 'Unmute' : 'Mute'}
+                title={muted ? 'Unmute' : 'Mute'}
+              >
+                <VolumeIcon className="w-4 h-4" />
+              </button>
+
+              {/* Play / pause button */}
+              <button
+                onClick={handleTogglePlay}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors"
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+                title={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </button>
+
+              {/* Fullscreen button */}
+              <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
             </div>
+          )}
 
-            {/* Mute / unmute button */}
-            <button
-              onClick={handleToggleMute}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors"
-              aria-label={muted ? 'Unmute' : 'Mute'}
-              title={muted ? 'Unmute' : 'Mute'}
-            >
-              <VolumeIcon className="w-4 h-4" />
-            </button>
-
-            {/* Play / pause button */}
+          {/* Large centered play button while paused, mirroring a native player */}
+          {ready && !isPlaying && (
             <button
               onClick={handleTogglePlay}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-white hover:bg-black/80 hover:border-teal-500/50 transition-colors"
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-              title={isPlaying ? 'Pause' : 'Play'}
+              className="absolute inset-0 flex items-center justify-center pointer-events-auto"
+              aria-label="Play"
             >
-              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              <span className="flex items-center justify-center w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-white hover:bg-black/80 transition-colors">
+                <Play className="w-7 h-7 ml-1" />
+              </span>
             </button>
-
-            {/* Fullscreen button */}
-            <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
-          </div>
-        )}
-
-        {/* Large centered play button while paused, mirroring a native player */}
-        {ready && !isPlaying && (
-          <button
-            onClick={handleTogglePlay}
-            className="absolute inset-0 flex items-center justify-center pointer-events-auto"
-            aria-label="Play"
-          >
-            <span className="flex items-center justify-center w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 text-white hover:bg-black/80 transition-colors">
-              <Play className="w-7 h-7 ml-1" />
-            </span>
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
