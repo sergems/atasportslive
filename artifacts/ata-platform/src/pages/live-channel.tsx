@@ -225,12 +225,12 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
             so we hide it behind these until it's had time to go away,
             then fade the bars out on their own */}
         <div
-          className={`absolute top-0 inset-x-0 h-1/4 bg-black transition-opacity duration-700 ${
+          className={`absolute top-0 inset-x-0 h-[12.5%] bg-black transition-opacity duration-700 ${
             justSwitched ? 'opacity-100' : 'opacity-0'
           }`}
         />
         <div
-          className={`absolute bottom-0 inset-x-0 h-1/4 bg-black transition-opacity duration-700 ${
+          className={`absolute bottom-0 inset-x-0 h-[12.5%] bg-black transition-opacity duration-700 ${
             justSwitched ? 'opacity-100' : 'opacity-0'
           }`}
         />
