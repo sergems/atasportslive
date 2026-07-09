@@ -494,7 +494,7 @@ export default function GameDetail() {
                 ) : (
                   [...pendingBets.slice(0, 3), ...matchedBets.slice(0, 3)].map((bet: any) => (
                     <div key={bet.id} className="flex justify-between text-xs">
-                      <span className="text-slate-400">${bet.stake.toFixed(2)} on {bet.outcome.includes('player_a') ? game.playerA : game.playerB}</span>
+                      <span className="text-slate-400">${Number(bet.stake ?? 0).toFixed(2)} on {bet.outcome?.includes('player_a') ? game.playerA : game.playerB}</span>
                       <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-400">{bet.status}</Badge>
                     </div>
                   ))
