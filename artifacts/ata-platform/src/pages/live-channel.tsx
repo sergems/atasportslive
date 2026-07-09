@@ -190,6 +190,9 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       {/* Overlay: pointer-events-none so YouTube's own controls still work,
           except for the volume widget in the bottom-left corner */}
       <div className="absolute inset-0 pointer-events-none">
+        {/* Top strip hides YouTube's title / channel-info card that appears
+            on load and on hover, without blocking clicks on the video itself */}
+        <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-950 via-slate-950/70 to-transparent" />
         {ready && (
           <div
             className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
