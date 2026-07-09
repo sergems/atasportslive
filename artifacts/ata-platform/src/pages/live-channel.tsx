@@ -97,23 +97,43 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
+    let unmuted = false;
+
+    function tryUnmute() {
+      if (unmuted) return;
+      const iframe = iframeRef.current;
+      if (!iframe?.contentWindow) return;
+      iframe.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+      );
+      iframe.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*'
+      );
+      unmuted = true;
+    }
+
     function onMessage(e: MessageEvent) {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (data?.event === 'onReady' || data?.info?.playerState === 1) {
-          const iframe = iframeRef.current;
-          if (!iframe?.contentWindow) return;
-          iframe.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-          );
-          iframe.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'setVolume', args: [70] }), '*'
-          );
+        // YouTube sends event:"onReady" when the player is initialised (info is the player ID, not an object)
+        if (data?.event === 'onReady') {
+          tryUnmute();
+        }
+        // YouTube sends event:"infoDelivery" with playerState:1 when playback starts
+        if (data?.event === 'infoDelivery' && data?.info?.playerState === 1) {
+          tryUnmute();
         }
       } catch {}
     }
+
     window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
+    // Fallback: if the postMessage events are missed (e.g. iframe already loaded), retry after 1.5 s
+    const fallback = setTimeout(tryUnmute, 1500);
+
+    return () => {
+      window.removeEventListener('message', onMessage);
+      clearTimeout(fallback);
+    };
   }, [videoId]);
 
   const src = new URLSearchParams({
