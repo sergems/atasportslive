@@ -1054,7 +1054,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction }
     };
     connect();
     return () => { destroyed = true; clearTimeout(reconnect); wsRef.current?.close(); };
-  }, [streamId, userId]);
+  }, [streamId, token]);
 
   useEffect(() => {
     const el = messagesRef.current;
