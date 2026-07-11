@@ -104,12 +104,12 @@ function StreamCard({ stream, isAuthenticated, isAdmin }: { stream: Stream; isAu
         }`}
       >
         {/* Cover image / placeholder */}
-        <div className="relative aspect-video overflow-hidden bg-slate-900">
+        <div className="relative aspect-[210/297] overflow-hidden bg-slate-900">
           {stream.thumbnailUrl ? (
             <img
               src={stream.thumbnailUrl}
               alt={stream.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-contain transition-transform duration-500"
             />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
@@ -256,7 +256,7 @@ function LiveLeaderboard({ streams, isAdmin }: { streams: Stream[]; isAdmin: boo
 
                 <div className="h-10 w-16 shrink-0 rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
                   {stream.thumbnailUrl ? (
-                    <img src={stream.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={stream.thumbnailUrl} alt="" className="w-full h-full object-contain" />
                   ) : (
                     <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${SPORT_GRADIENT[stream.sport] ?? 'from-slate-800 to-slate-900'}`}>
                       <Film className="h-4 w-4 text-white/20" />

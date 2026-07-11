@@ -378,9 +378,9 @@ export default function Home() {
             upcomingStreams.slice(0, 6).map((stream: any, i: number) => (
               <Link key={stream.id} href="/live" className="card-enter block" style={{ animationDelay: `${i * 70}ms` }}>
                 <Card className="group overflow-hidden border-primary/20 bg-card hover:border-teal-500/50 hover:-translate-y-1 hover:shadow-lg hover:shadow-teal-500/10 transition-all duration-300 cursor-pointer h-full">
-                  <div className="relative aspect-video bg-slate-900 overflow-hidden">
+                  <div className="relative aspect-[210/297] bg-slate-900 overflow-hidden">
                     {stream.thumbnailUrl ? (
-                      <img src={stream.thumbnailUrl} alt={stream.title} className="object-cover w-full h-full opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                      <img src={stream.thumbnailUrl} alt={stream.title} className="object-contain w-full h-full opacity-80 group-hover:opacity-100 transition-all duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-slate-800">
                         <Play className="h-12 w-12 text-slate-600" />
