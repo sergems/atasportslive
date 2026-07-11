@@ -165,18 +165,18 @@ docker compose build --no-cache
 
 ---
 
-## Step 10 — Copy uploaded images into the Docker volume
+## Step 10 — Copy new uploaded images into the Docker volume (non-destructive)
 
-Image files in the repo (`artifacts/api-server/uploads/`) need to be seeded into the Docker volume:
+This adds any image files from the repo that are **not already on the server**. It will never overwrite or delete images that were uploaded directly to the production server. The `-n` flag (no-clobber) is what makes this safe.
 
 ```bash
 docker run --rm \
   -v ata_uploads:/target \
   -v /opt/ata/artifacts/api-server/uploads:/source:ro \
-  alpine sh -c "cp -r /source/. /target/ && echo 'Done' && ls /target | head -10"
+  alpine sh -c "cp -rn /source/. /target/ && echo 'Done' && ls /target | wc -l"
 ```
 
-You should see `Done` followed by a list of image files.
+You should see `Done` followed by the total image count in the volume. If you had, say, 40 images on the server and the repo has 5 new ones, the count will go up by 5 — existing files are untouched.
 
 ---
 
@@ -283,10 +283,11 @@ cd /opt/ata
 ./deploy/backup.sh
 git pull origin main
 docker compose build
+# Add new repo images without overwriting anything already on the server
 docker run --rm \
   -v ata_uploads:/target \
   -v /opt/ata/artifacts/api-server/uploads:/source:ro \
-  alpine sh -c "cp -r /source/. /target/"
+  alpine sh -c "cp -rn /source/. /target/ && echo 'Done'"
 docker compose up -d
 docker compose ps
 ```
