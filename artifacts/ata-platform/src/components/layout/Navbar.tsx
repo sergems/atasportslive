@@ -79,7 +79,7 @@ function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
 }
 
 export function Navbar() {
-  const { isAuthenticated, logout, isAdmin, user } = useAuth();
+  const { isAuthenticated, logout, isAdmin, isManager, user } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { ch1Live, ch2Live, ch3Live } = useChannelStatus();
@@ -156,7 +156,7 @@ export function Navbar() {
           >
             E-Shop
           </a>
-          {isAdmin && (
+          {isManager && (
             <Link
               href="/admin"
               className={`transition-colors hover:text-amber-400 ${location.startsWith('/admin') ? 'text-amber-400' : 'text-slate-400'}`}
