@@ -255,6 +255,149 @@ Because the database was rebuilt from `bt.sql`, confirm the following:
 
 ---
 
+## Database schema changes (adding columns, tables, or indexes)
+
+### How it works
+
+This project uses **Drizzle ORM** with a **push-based schema system** — there are no numbered migration files. Instead, `drizzle-kit` compares the TypeScript schema in `lib/db/src/schema/` against the live database and applies the difference.
+
+The `migrate` Docker service (defined in `docker-compose.yml`) runs `drizzle-kit push --force` automatically **every time you run `docker compose up -d`**. It starts before the API, applies any schema changes, then exits. If there are no changes it exits immediately. You never need to run it by hand under normal conditions.
+
+This means:
+
+- Adding a new column or table → commit the schema change → deploy normally → it applies itself.
+- The `--force` flag suppresses the interactive confirmation prompt (required for non-TTY Docker environments).
+- Drizzle push **never drops data from columns that still exist** in the schema. If you remove a column from the schema it will be left in the database untouched (Drizzle does not automatically drop columns).
+
+---
+
+### Making a schema change — step by step
+
+#### 1. Edit the schema file in `lib/db/src/schema/`
+
+Each table has its own file, e.g. `users.ts`, `wallets.ts`. Add your column or table there. Export any new table from `lib/db/src/schema/index.ts`.
+
+Example — adding a `verified_at` timestamp to users:
+
+```ts
+// lib/db/src/schema/users.ts
+verifiedAt: timestamp("verified_at"),
+```
+
+#### 2. Apply the change in the dev database
+
+`drizzle-kit push` requires an interactive TTY, which the Replit shell does not fully support. Apply the column directly with `psql` instead:
+
+```bash
+# Dev database
+psql postgresql://postgres:password@helium/heliumdb \
+  -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;"
+```
+
+Use `IF NOT EXISTS` so the command is safe to re-run.
+
+#### 3. Update any API routes that read or write the new column
+
+The Drizzle schema type is derived automatically — after saving the schema file, TypeScript will flag any queries that need updating.
+
+#### 4. Commit and deploy
+
+```bash
+# On Replit
+git add -A
+git commit -m "schema: add verified_at to users"
+git push origin main
+
+# On server (SSH into 45.79.219.243)
+cd /opt/ata
+./deploy/backup.sh          # always back up first
+git pull origin main
+docker compose build        # rebuild API image with new schema
+docker compose up -d        # migrate service runs automatically
+docker compose logs migrate # confirm: "All migrations applied"
+```
+
+The migrate service output will show the change it applied. The API then starts with the updated schema.
+
+---
+
+### Verifying a schema change applied in production
+
+```bash
+# Check the column exists
+docker compose exec db psql -U ata_user -d ata_db \
+  -c "\d users"
+
+# Or query the specific column
+docker compose exec db psql -U ata_user -d ata_db \
+  -c "SELECT column_name, data_type FROM information_schema.columns
+      WHERE table_name = 'users' AND column_name = 'verified_at';"
+```
+
+---
+
+### Emergency: running the migrate service manually
+
+If the migrate service failed or you need to force a re-run without restarting everything:
+
+```bash
+# Run migrate as a one-off container against the live DB
+docker compose run --rm migrate
+```
+
+If it still fails, check the error:
+
+```bash
+docker compose logs migrate
+```
+
+Common reasons:
+- **Enum type conflict** — a custom PostgreSQL enum was renamed in the schema but already exists in the DB. Fix: either rename the enum in the DB to match, or (only if safe) drop and recreate it.
+- **Column type change** — Drizzle push cannot change a column's type if data exists. Fix: run the `ALTER TABLE ... ALTER COLUMN ... TYPE ...` manually in `psql`, then re-run the migrate service.
+- **DATABASE_URL not set** — check the `.env` file exists at `/opt/ata/.env` and contains `POSTGRES_PASSWORD`.
+
+---
+
+### Updating data in production without a schema wipe
+
+If you need to update or insert rows (e.g. seeding new settings, fixing data) without going through the full DB-wipe flow (Steps 5–8), run SQL directly against the live container:
+
+```bash
+# Single statement
+docker compose exec db psql -U ata_user -d ata_db \
+  -c "INSERT INTO settings (key, value) VALUES ('my_key', 'my_value')
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;"
+
+# Multi-line script from a file
+cat my_patch.sql | docker compose exec -T db psql -U ata_user -d ata_db
+```
+
+**Always back up first:**
+
+```bash
+./deploy/backup.sh
+```
+
+---
+
+### Dropping a column or table (destructive)
+
+Drizzle push does **not** automatically drop columns or tables you remove from the schema. You must do it manually if you want the database to match the schema exactly:
+
+```bash
+# Drop a column
+docker compose exec db psql -U ata_user -d ata_db \
+  -c "ALTER TABLE users DROP COLUMN IF EXISTS old_column;"
+
+# Drop a table
+docker compose exec db psql -U ata_user -d ata_db \
+  -c "DROP TABLE IF EXISTS old_table;"
+```
+
+> ⚠️ Dropping a column or table is permanent. Back up first and confirm no API code still references it.
+
+---
+
 ## Troubleshooting
 
 | Problem | What to do |
@@ -289,6 +432,31 @@ docker run --rm \
   -v /opt/ata/artifacts/api-server/uploads:/source:ro \
   alpine sh -c "cp -rn /source/. /target/ && echo 'Done'"
 docker compose up -d
+docker compose ps
+```
+
+---
+
+## Quick reference — schema-only change (new column or table, no data wipe)
+
+Use this when you only changed `lib/db/src/schema/` and need the production database updated:
+
+```bash
+# On Replit — apply the column to dev DB first
+psql postgresql://postgres:password@helium/heliumdb \
+  -c "ALTER TABLE <table> ADD COLUMN IF NOT EXISTS <col> <type>;"
+
+# Commit and push
+git add -A && git commit -m "schema: describe change" && git push origin main
+
+# On server
+ssh root@45.79.219.243
+cd /opt/ata
+./deploy/backup.sh
+git pull origin main
+docker compose build
+docker compose up -d           # migrate service applies the diff automatically
+docker compose logs migrate    # confirm no errors
 docker compose ps
 ```
 
