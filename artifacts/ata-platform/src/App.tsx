@@ -61,6 +61,24 @@ const MGR_ROLES = ['admin', 'manager'];                   // manager and above
 const FIN_ROLES = ['admin', 'manager', 'finance'];        // finance and above
 const ADM_ROLES = ['admin'];                              // admin only
 
+/**
+ * AdminIndex — shows the financial admin dashboard to admins only.
+ * Managers and content editors are sent to their first accessible page.
+ */
+function AdminIndex() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      setLocation('/admin/slides');
+    }
+  }, [user?.role, setLocation]);
+
+  if (!user || user.role !== 'admin') return null;
+  return <AdminLayout><AdminDashboard /></AdminLayout>;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -156,7 +174,7 @@ function Router() {
 
         {/* ── Admin panel — content_editor + manager + admin ─────────────── */}
         <Route path="/admin">
-          {() => <ProtectedRoute allowedRoles={CE_ROLES} component={() => <AdminLayout><AdminDashboard /></AdminLayout>} />}
+          {() => <ProtectedRoute allowedRoles={CE_ROLES} component={AdminIndex} />}
         </Route>
         <Route path="/admin/slides">
           {() => <ProtectedRoute allowedRoles={CE_ROLES} component={() => <AdminLayout><AdminSlides /></AdminLayout>} />}
