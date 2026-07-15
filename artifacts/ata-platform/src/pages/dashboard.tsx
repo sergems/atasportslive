@@ -152,7 +152,7 @@ export default function Dashboard() {
             </Link>
             <Link href="/games">
               <div className="inline-flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3 py-1.5 border border-slate-700 transition-all cursor-pointer">
-                <Swords className="h-3 w-3 text-amber-400" /> Place Bet
+                <Swords className="h-3 w-3 text-amber-400" /> Predict
               </div>
             </Link>
           </div>
@@ -220,7 +220,7 @@ export default function Dashboard() {
             <Activity className="h-3.5 w-3.5 text-amber-400" />
           </div>
           <div className="min-w-0">
-            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">In Bets</p>
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">In Play</p>
             {loadingWallet ? (
               <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
             ) : (
@@ -250,7 +250,7 @@ export default function Dashboard() {
         {[
           { href: '/live',    label: 'Live',     icon: Radio,  color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
           { href: '/streams', label: 'Streams',  icon: Film,   color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20' },
-          { href: '/games',   label: 'Bet',      icon: Target, color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/20' },
+          { href: '/games',   label: 'Predict',  icon: Target, color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/20' },
           { href: '/fixtures',label: 'Fixtures', icon: Zap,    color: 'text-teal-400',   bg: 'bg-teal-500/10 border-teal-500/20' },
         ].map(({ href, label, icon: Icon, color, bg }) => (
           <Link key={href} href={href}>
@@ -308,7 +308,7 @@ export default function Dashboard() {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800">
             <h2 className="font-bold text-white text-sm flex items-center gap-2">
-              <Trophy className="h-3.5 w-3.5 text-amber-400" /> Recent Bets
+              <Trophy className="h-3.5 w-3.5 text-amber-400" /> Recent Predictions
             </h2>
             <Link href="/bets">
               <span className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1">
@@ -353,7 +353,7 @@ export default function Dashboard() {
             ) : (
               <div className="py-8 text-center">
                 <Swords className="h-7 w-7 mx-auto text-slate-700 mb-2" />
-                <p className="text-slate-500 text-sm">No bets yet</p>
+                <p className="text-slate-500 text-sm">No predictions yet</p>
                 <Link href="/games">
                   <span className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer mt-1 inline-block">
                     Browse games →

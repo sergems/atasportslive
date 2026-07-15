@@ -33,7 +33,7 @@ function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
   const items = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/subscriptions', label: 'Subscription', icon: CreditCard },
-    { href: '/bets', label: 'My Bets', icon: Trophy },
+    { href: '/bets', label: 'My Predictions', icon: Trophy },
     { href: '/transactions', label: 'Transactions', icon: History },
     { href: '/profile', label: 'Profile Settings', icon: Settings },
   ];

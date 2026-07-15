@@ -14,7 +14,7 @@ import {
 const TX_META: Record<string, { label: string; sign: '+' | '-'; color: string; iconBg: string; icon: React.ElementType }> = {
   deposit:        { label: 'Deposit',          sign: '+', color: 'text-teal-400',   iconBg: 'bg-teal-500/10 border-teal-500/30',   icon: ArrowDownCircle },
   withdrawal:     { label: 'Withdrawal',       sign: '-', color: 'text-red-400',    iconBg: 'bg-red-500/10 border-red-500/30',     icon: ArrowUpCircle },
-  bet_stake:      { label: 'Bet Placed',       sign: '-', color: 'text-amber-400',  iconBg: 'bg-amber-500/10 border-amber-500/30', icon: Trophy },
+  bet_stake:      { label: 'Prediction Placed', sign: '-', color: 'text-amber-400',  iconBg: 'bg-amber-500/10 border-amber-500/30', icon: Trophy },
   bet_win:        { label: 'Bet Won',          sign: '+', color: 'text-teal-400',   iconBg: 'bg-teal-500/10 border-teal-500/30',   icon: Trophy },
   bet_refund:     { label: 'Bet Refund',       sign: '+', color: 'text-sky-400',    iconBg: 'bg-sky-500/10 border-sky-500/30',     icon: RefreshCw },
   stream_access:  { label: 'Stream / Sub',     sign: '-', color: 'text-violet-400', iconBg: 'bg-violet-500/10 border-violet-500/30', icon: PlayCircle },
@@ -28,7 +28,7 @@ const FILTER_OPTIONS = [
   { key: 'all',           label: 'All' },
   { key: 'deposit',       label: 'Deposits' },
   { key: 'withdrawal',    label: 'Withdrawals' },
-  { key: 'bet_stake',     label: 'Bets' },
+  { key: 'bet_stake',     label: 'Predictions' },
   { key: 'bet_win',       label: 'Winnings' },
   { key: 'stream_access', label: 'Streams' },
   { key: 'bet_refund',    label: 'Refunds' },

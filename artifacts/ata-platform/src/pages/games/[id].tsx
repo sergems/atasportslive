@@ -95,16 +95,16 @@ export default function GameDetail() {
       setMyPlacedStake(stake);
       setDismissedMatches(new Set());
       if (result.matchStatus === 'exact_match') {
-        toast.success('Bet Matched!', { description: 'Your bet was instantly matched.' });
+        toast.success('Prediction Matched!', { description: 'Your prediction was instantly matched.' });
       } else if (result.matchStatus === 'near_match') {
         toast.info('Near Matches Found', { description: 'Check below to accept or reject each near match.' });
       } else {
-        toast.success('Bet Placed', { description: 'Your bet is in the queue waiting for a match.' });
+        toast.success('Prediction Placed', { description: 'Your prediction is in the queue waiting for a match.' });
       }
       setStakeAmount('');
       setSelectedOutcome(null);
     } catch (err: any) {
-      toast.error(err?.data?.error || 'Failed to place bet');
+      toast.error(err?.data?.error || 'Failed to place prediction');
     }
   };
 
@@ -116,11 +116,11 @@ export default function GameDetail() {
       queryClient.invalidateQueries({ queryKey: getListMyBetsQueryKey() });
       const diff = opponentStake - myStake;
       if (diff > 0) {
-        toast.success('Bet Matched!', { description: `$${diff.toFixed(2)} was charged from your wallet. Matched at $${opponentStake.toFixed(2)}.` });
+        toast.success('Prediction Matched!', { description: `${diff.toFixed(2)} was charged from your wallet. Matched at ${opponentStake.toFixed(2)}.` });
       } else if (diff < 0) {
-        toast.success('Bet Matched!', { description: `$${Math.abs(diff).toFixed(2)} refunded to your wallet. Matched at $${opponentStake.toFixed(2)}.` });
+        toast.success('Prediction Matched!', { description: `${Math.abs(diff).toFixed(2)} refunded to your wallet. Matched at ${opponentStake.toFixed(2)}.` });
       } else {
-        toast.success('Bet Matched!', { description: `Matched at $${opponentStake.toFixed(2)}.` });
+        toast.success('Prediction Matched!', { description: `Matched at ${opponentStake.toFixed(2)}.` });
       }
       setNearMatches([]);
       setMyPlacedBetId(null);
@@ -224,7 +224,7 @@ export default function GameDetail() {
               </div>
               <div className="flex justify-center gap-6 mt-6 text-sm text-slate-400">
                 <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{game.eventDate} at {game.eventTime}</span>
-                <span className="flex items-center gap-1.5"><Users className="h-4 w-4" />{game.openBetsCount} open bets</span>
+                <span className="flex items-center gap-1.5"><Users className="h-4 w-4" />{game.openBetsCount} predictions</span>
                 <span className="flex items-center gap-1.5"><TrendingUp className="h-4 w-4" />Pool: ${(game.totalBetPool ?? 0).toFixed(2)}</span>
               </div>
               {game.result && (
@@ -243,14 +243,14 @@ export default function GameDetail() {
         </div>
       </Card>
 
-      {/* Betting closed banner — shown for non-container matches that have started but aren't settled */}
+      {/* Predictions closed banner — shown for non-container matches that have started but aren't settled */}
       {!isContainer && hasStarted && game.status !== 'completed' && (
         <div className="flex items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 px-5 py-4">
           <Lock className="h-5 w-5 text-orange-400 shrink-0" />
           <div>
-            <p className="text-sm font-semibold text-orange-300">Betting is closed for this event</p>
+            <p className="text-sm font-semibold text-orange-300">Predictions are closed for this event</p>
             <p className="text-xs text-slate-400 mt-0.5">
-              This match has started. All existing matched bets will be settled once the result is confirmed by an admin.
+              This match has started. All existing matched predictions will be settled once the result is confirmed by an admin.
             </p>
           </div>
         </div>
@@ -262,7 +262,7 @@ export default function GameDetail() {
           <div className="flex items-center gap-2">
             <Swords className="h-5 w-5 text-amber-400" />
             <h2 className="text-lg font-bold text-white">Matches in this {containerLabel}</h2>
-            <span className="text-xs text-slate-500 ml-1">— select a match below to place your bet</span>
+            <span className="text-xs text-slate-500 ml-1">— select a match below to make your prediction</span>
           </div>
 
           {!childMatchesData ? (
@@ -295,7 +295,7 @@ export default function GameDetail() {
                       </div>
                       <div className="flex items-center gap-3 text-[10px] text-slate-500">
                         <span className="text-amber-400 font-mono font-semibold">Pool ${(m.totalBetPool || 0).toFixed(2)}</span>
-                        <span>{m.openBetsCount || 0} open bets</span>
+                        <span>{m.openBetsCount || 0} predictions</span>
                       </div>
                     </div>
                     <div className="flex items-center pr-3 shrink-0">
@@ -313,7 +313,7 @@ export default function GameDetail() {
           {game.status === 'upcoming' && !hasStarted && (
             <Card className="lg:col-span-2 bg-slate-900 border-primary/20">
               <CardHeader>
-                <CardTitle className="text-white">Place Your Bet</CardTitle>
+                <CardTitle className="text-white">Make Your Prediction</CardTitle>
                 <p className="text-slate-400 text-sm">10% brokerage fee on winnings. Stakes are locked until matched.</p>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -397,7 +397,7 @@ export default function GameDetail() {
                   disabled={!selectedOutcome || !stakeAmount || parseFloat(stakeAmount) < MIN_STAKE || placeBet.isPending}
                   className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold h-12"
                 >
-                  {placeBet.isPending ? 'Placing Bet...' : 'Place Bet'}
+                  {placeBet.isPending ? 'Submitting...' : 'Place Prediction'}
                 </Button>
 
                 {nearMatches.filter((nm) => !dismissedMatches.has(nm.betId)).length > 0 && myPlacedBetId && (() => {
@@ -409,7 +409,7 @@ export default function GameDetail() {
                         Near Matches Available
                       </div>
                       <p className="text-sm text-slate-400">
-                        These open bets are within 20% of your stake. Accept to get matched now — your wallet will be adjusted to the matched amount.
+                        These open predictions are within 20% of your stake. Accept to get matched now — your wallet will be adjusted to the matched amount.
                       </p>
                       {visible.map((nm) => {
                         const myStake = myPlacedStake;
@@ -470,10 +470,10 @@ export default function GameDetail() {
           {/* Stats */}
           <div className="space-y-4">
             <Card className="bg-slate-900 border-primary/20">
-              <CardHeader><CardTitle className="text-white text-base">Bet Activity</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-white text-base">Match Activity</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Open Bets</span>
+                  <span className="text-slate-400">Open Predictions</span>
                   <span className="text-white font-mono">{game.openBetsCount}</span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -488,10 +488,10 @@ export default function GameDetail() {
             </Card>
 
             <Card className="bg-slate-900 border-primary/20">
-              <CardHeader><CardTitle className="text-white text-base">Recent Bets</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-white text-base">Recent Predictions</CardTitle></CardHeader>
               <CardContent className="space-y-2">
                 {pendingBets.length === 0 && matchedBets.length === 0 ? (
-                  <p className="text-slate-500 text-sm text-center py-4">No bets yet. Be the first!</p>
+                  <p className="text-slate-500 text-sm text-center py-4">No predictions yet. Be the first!</p>
                 ) : (
                   [...pendingBets.slice(0, 3), ...matchedBets.slice(0, 3)].map((bet: any) => (
                     <div key={bet.id} className="flex justify-between text-xs">

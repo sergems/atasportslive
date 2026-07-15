@@ -1203,11 +1203,11 @@ function QuickBetPanel({ token, streamSport }: { token: string | null; streamSpo
     setPlacing(true);
     try {
       const r = await fetch('/api/bets', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ gameId: game.id, outcome, stake: stakeNum.toFixed(2) }) });
-      if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Bet failed'); }
-      toast.success('Bet placed! 🎯');
+      if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Failed'); }
+      toast.success('Prediction placed! 🎯');
       setStake(''); setOutcome(null);
       qc.invalidateQueries({ queryKey: ['wallet'] });
-    } catch (e: any) { toast.error(e.message || 'Failed to place bet'); } finally { setPlacing(false); }
+    } catch (e: any) { toast.error(e.message || 'Failed to place prediction'); } finally { setPlacing(false); }
   };
 
   if (!liveGames.length) return null;
@@ -1215,7 +1215,7 @@ function QuickBetPanel({ token, streamSport }: { token: string | null; streamSpo
     <div className="rounded-lg border border-amber-500/20 bg-slate-900 overflow-hidden shrink-0">
       <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-slate-800 bg-amber-500/5">
         <Swords className="h-3 w-3 text-amber-400" />
-        <span className="text-xs font-semibold text-white">Quick Bet</span>
+        <span className="text-xs font-semibold text-white">Quick Predict</span>
         <span className="ml-auto text-[9px] text-amber-400/50 font-mono">P2P · 10% fee</span>
       </div>
       <div className="p-2 space-y-1.5">
@@ -1251,7 +1251,7 @@ function QuickBetPanel({ token, streamSport }: { token: string | null; streamSpo
               </div>
               <button onClick={placeBet} disabled={placing || !outcome || !stake || parseFloat(stake) <= 0}
                 className="flex items-center gap-1 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold text-xs px-3 py-1.5 transition-colors shrink-0">
-                {placing ? <span className="h-3 w-3 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" /> : <><Swords className="h-3 w-3" /> Bet</>}
+                {placing ? <span className="h-3 w-3 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" /> : <><Swords className="h-3 w-3" /> Predict</>}
               </button>
             </div>
             <p className="text-center text-[9px] text-slate-600">{game.openBetsCount} open · ${parseFloat(game.totalBetPool || '0').toFixed(2)} pool</p>
@@ -1502,9 +1502,9 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
             <div className="flex items-center gap-3 shrink-0">
               <ReactionBar streamId={paywallStreamId} token={token} isAuthenticated={isAuthenticated} />
               {isAdmin && <div className="flex items-center gap-1.5 text-slate-400 text-sm"><Users className="h-4 w-4 text-teal-500" /><span className="font-mono text-white">{stream?.viewerCount ?? 0}</span><span className="text-slate-500">watching</span></div>}
-              <button onClick={() => setSidebarOpen((v) => !v)} title={sidebarOpen ? 'Hide panel' : 'Show chat & bets'}
+              <button onClick={() => setSidebarOpen((v) => !v)} title={sidebarOpen ? 'Hide panel' : 'Show chat'}
                 className="hidden lg:flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white transition-colors">
-                {sidebarOpen ? <><PanelRightClose className="h-3.5 w-3.5" /> Hide panel</> : <><PanelRightOpen className="h-3.5 w-3.5" /> Chat &amp; Bets</>}
+                {sidebarOpen ? <><PanelRightClose className="h-3.5 w-3.5" /> Hide panel</> : <><PanelRightOpen className="h-3.5 w-3.5" /> Chat &amp; Activity</>}
               </button>
             </div>
           </div>

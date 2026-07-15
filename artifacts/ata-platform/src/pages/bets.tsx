@@ -32,7 +32,7 @@ function pickLabel(bet: any): string {
 // ── Component ─────────────────────────────────────────────────────────────
 
 export default function Bets() {
-  useEffect(() => { document.title = 'My Bets — ATA Sports Live'; }, []);
+  useEffect(() => { document.title = 'My Predictions — ATA Sports Live'; }, []);
   const [filter, setFilter] = useState('all');
 
   const { data: betsData, isLoading } = useListMyBets({
@@ -57,14 +57,14 @@ export default function Bets() {
         <div className="relative flex items-start justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-widest mb-2">
-              <Trophy className="h-3 w-3" /> Betting History
+              <Trophy className="h-3 w-3" /> Prediction History
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">My Bets</h1>
-            <p className="text-slate-400 text-sm mt-0.5">Track all your wagers and results.</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">My Predictions</h1>
+            <p className="text-slate-400 text-sm mt-0.5">Track all your predictions and results.</p>
           </div>
           <Link href="/games">
             <div className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs px-3.5 py-2 transition-all active:scale-95 cursor-pointer">
-              <Swords className="h-3.5 w-3.5" /> Place Bet
+              <Swords className="h-3.5 w-3.5" /> Predict
             </div>
           </Link>
         </div>
@@ -122,9 +122,9 @@ export default function Bets() {
           <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
             <Trophy className="h-7 w-7 text-amber-500/50" />
           </div>
-          <p className="text-white font-semibold mb-1">No bets found</p>
+          <p className="text-white font-semibold mb-1">No predictions found</p>
           <p className="text-slate-500 text-sm mb-5">
-            {filter === 'all' ? "You haven't placed any bets yet." : `No ${filter} bets to show.`}
+            {filter === 'all' ? "You haven't made any predictions yet." : `No ${filter} predictions to show.`}
           </p>
           <Link href="/games">
             <Button className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold rounded-xl">

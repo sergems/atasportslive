@@ -5,7 +5,7 @@ export default function RefundPolicy() {
   useSEO({
     title: 'Refund Policy',
     path: '/refund-policy',
-    description: 'ATA Sports Live refund and cancellation policy. Understand when and how wallet credits, stream access fees, and bets are eligible for refund.',
+    description: 'ATA Sports Live refund and cancellation policy. Understand when and how wallet credits, stream access fees, and prediction stakes are eligible for refund.',
   });
   return (
     <div className="max-w-3xl mx-auto py-10">
@@ -28,9 +28,9 @@ export default function RefundPolicy() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white mb-2">3. Bets and Wagering</h2>
+          <h2 className="text-lg font-semibold text-white mb-2">3. Predictions and Stakes</h2>
           <p>
-            Matched bets are binding and cannot be cancelled or refunded once confirmed. If an event is cancelled or postponed before completion, all stakes will be refunded to the original wallet balance. Brokerage fees are non-refundable.
+            Matched predictions are binding and cannot be cancelled or refunded once confirmed. If an event is cancelled or postponed before completion, all stakes will be refunded to the original wallet balance. Brokerage fees are non-refundable.
           </p>
         </section>
 

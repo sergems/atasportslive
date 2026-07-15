@@ -286,7 +286,7 @@ function DefaultHero() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-amber-500">African Sports</span>
         </h1>
         <p className="mt-4 sm:mt-6 max-w-2xl text-sm sm:text-xl text-slate-300 drop-shadow">
-          Watch live grassroots Pool and Boxing matches. Bet peer-to-peer in real-time. High stakes, zero clutter.
+          Watch live grassroots Pool and Boxing matches from across Africa. High definition streams, zero clutter.
         </p>
         <div className="mt-5 sm:mt-8 flex flex-col items-center">
           <Link href="/live">
@@ -306,9 +306,9 @@ function DefaultHero() {
 
 export default function Home() {
   useSEO({
-    title: "Africa's Premier Sports Streaming & P2P Betting",
+    title: "Africa's Premier Live Sports Streaming Platform",
     path: '/',
-    description: "Watch live Pool and Boxing from across Africa. Bet peer-to-peer in real-time — Africa's #1 sports exchange. Stream from $1.50/day.",
+    description: "Watch live Pool and Boxing from across Africa. Africa's #1 live sports streaming platform. Stream from $1.50/day.",
     jsonLd: [STRUCTURED_DATA.website, STRUCTURED_DATA.organization, STRUCTURED_DATA.sportsOrg, STRUCTURED_DATA.faq],
   });
 
@@ -533,9 +533,9 @@ export default function Home() {
                           <div className="text-[10px] text-slate-500 uppercase tracking-wider">Pool</div>
                           <div className="font-mono font-bold text-xl text-amber-400">${(game.totalBetPool || 0).toFixed(2)}</div>
                           {(game.openBetsCount ?? 0) > 0 && (
-                            <div className="text-[10px] text-teal-400 font-medium">{game.openBetsCount} open bets</div>
+                            <div className="text-[10px] text-teal-400 font-medium">{game.openBetsCount} open</div>
                           )}
-                          <div className="mt-1 text-[10px] font-semibold text-slate-700 group-hover:text-amber-400 transition-colors">Bet Now →</div>
+                          <div className="mt-1 text-[10px] font-semibold text-slate-700 group-hover:text-amber-400 transition-colors">Predict →</div>
                         </div>
                       </div>
                     </CardContent>

@@ -1,7 +1,7 @@
 {
   "name": "ATA Sports Live",
   "short_name": "ATA Sports",
-  "description": "Africa's premier live sports streaming and P2P betting exchange. Watch Pool and Boxing from $1.50/day.",
+  "description": "Africa's premier live sports streaming platform. Watch Pool and Boxing from $1.50/day.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

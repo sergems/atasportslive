@@ -81,7 +81,7 @@ function GameCard({ game, competitionName, showResult, locked }: { game: Game; c
         {/* Lock badge for started events */}
         {locked && (
           <div className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded bg-slate-800/90 border border-slate-700 px-1.5 py-0.5 text-[10px] font-bold text-slate-400">
-            <Lock className="h-2.5 w-2.5" /> BETTING CLOSED
+            <Lock className="h-2.5 w-2.5" /> CLOSED
           </div>
         )}
 
@@ -162,12 +162,12 @@ export default function Games() {
   const [sport, setSport] = useState<string>('all');
 
   useSEO({
-    title: 'Betting Markets & Live Games',
+    title: 'Live Games & Predictions',
     path: '/games',
-    description: 'Place and match P2P bets on live Pool and Boxing matches across Africa. Real odds, instant matching, 10% brokerage on winnings only.',
+    description: 'Make predictions on live Pool and Boxing matches across Africa. Real odds, instant matching, 10% brokerage on winnings only.',
     jsonLd: makeBreadcrumb([
       { name: 'Home', url: SITE_URL },
-      { name: 'Betting Markets', url: `${SITE_URL}/games` },
+      { name: 'Live Games', url: `${SITE_URL}/games` },
     ]),
   });
 
@@ -200,7 +200,7 @@ export default function Games() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">Games</h1>
-          <p className="text-slate-400 text-sm mt-0.5">P2P betting exchange · African sports</p>
+          <p className="text-slate-400 text-sm mt-0.5">Live predictions · African sports</p>
         </div>
         <Select value={sport} onValueChange={setSport}>
           <SelectTrigger className="w-[130px] bg-slate-900 border-slate-800 text-white text-sm h-8">
@@ -228,7 +228,7 @@ export default function Games() {
           }`}
         >
           <TrendingUp className="h-4 w-4" />
-          Betting Exchange
+          Predictions
           {bettingGames.length > 0 && (
             <span className="rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold px-1.5 py-0.5 min-w-[18px] text-center">
               {bettingGames.length}
@@ -288,7 +288,7 @@ export default function Games() {
           : (
             <div className="col-span-full py-16 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl text-sm">
               {tab === 'betting'
-                ? 'No upcoming games available for betting.'
+                ? 'No upcoming games available for predictions.'
                 : tab === 'awaiting'
                 ? 'No events are currently awaiting settlement.'
                 : 'No results yet.'}

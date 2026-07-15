@@ -5,7 +5,7 @@ export default function PrivacyPolicy() {
   useSEO({
     title: 'Privacy Policy',
     path: '/privacy-policy',
-    description: "ATA Sports Live privacy policy. How we collect, use, and protect your personal data on Africa's premier sports streaming and P2P betting platform.",
+    description: "ATA Sports Live privacy policy. How we collect, use, and protect your personal data on Africa's premier live sports streaming platform.",
   });
   return (
     <div className="max-w-3xl mx-auto py-10">
@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
           <ul className="list-disc pl-5 space-y-1 mt-2">
             <li>Full name, email address, and phone number</li>
             <li>Payment method identifiers (MTN MoMo, Airtel Money, BTC wallet addresses)</li>
-            <li>Usage data, including pages visited, streams watched, and bets placed</li>
+            <li>Usage data, including pages visited and streams watched</li>
             <li>Device information and IP address for security purposes</li>
           </ul>
         </section>
@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-lg font-semibold text-white mb-2">2. How We Use Your Information</h2>
           <p>Your information is used to:</p>
           <ul className="list-disc pl-5 space-y-1 mt-2">
-            <li>Process deposits, withdrawals, and betting transactions</li>
+            <li>Process deposits, withdrawals, and transactions</li>
             <li>Provide access to live streams and event content</li>
             <li>Send account and transaction notifications</li>
             <li>Comply with legal and regulatory obligations in Uganda</li>

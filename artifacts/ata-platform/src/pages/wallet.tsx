@@ -530,15 +530,15 @@ export default function Wallet() {
           <Lock className="h-4 w-4 text-amber-400 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm text-amber-300 font-semibold">
-              {activeBetsCount} active bet{activeBetsCount !== 1 ? 's' : ''} locking <span className="font-mono">${lockedAmount.toFixed(2)}</span>
+              {activeBetsCount} active prediction{activeBetsCount !== 1 ? 's' : ''} locking <span className="font-mono">${lockedAmount.toFixed(2)}</span>
             </p>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Funds are released when bets are settled, cancelled, or won.
+              Funds are released when predictions are settled, cancelled, or won.
             </p>
           </div>
           <Link href="/bets" className="shrink-0">
             <Button size="sm" variant="outline" className="h-7 text-xs border-amber-500/40 text-amber-400 hover:bg-amber-500/10 gap-1">
-              <Ticket className="h-3 w-3" /> View Bets
+              <Ticket className="h-3 w-3" /> View Predictions
             </Button>
           </Link>
         </div>
@@ -1169,7 +1169,7 @@ export default function Wallet() {
                 {[
                   'Bonus funds cannot be withdrawn.',
                   'Bonus funds cannot be transferred.',
-                  'Bonus funds cannot be used for betting.',
+                  'Bonus funds cannot be used for predictions.',
                   'Bonus funds may only be used to purchase ATA Sports livestream access.',
                   'ATA may revoke bonuses obtained through abuse or fraud.',
                 ].map((t, i) => (

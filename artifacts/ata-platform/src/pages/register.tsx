@@ -105,7 +105,7 @@ export default function Register() {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold tracking-tight text-white">Create an account</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Join the ultimate sports streaming & betting platform
+            Join Africa's ultimate live sports streaming platform
           </CardDescription>
           {effectiveReferralCode && (
             <div className="flex items-center justify-center gap-1.5 mt-1 rounded-lg bg-teal-500/10 border border-teal-500/20 px-3 py-1.5">

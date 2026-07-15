@@ -85,7 +85,7 @@ export default function Notifications() {
               </Button>
             )}
           </div>
-          <p className="text-slate-500 text-xs mt-0.5">Real-time alerts for your bets, deposits, and activity.</p>
+          <p className="text-slate-500 text-xs mt-0.5">Real-time alerts for your predictions, deposits, and activity.</p>
         </CardHeader>
 
         {/* Body */}
@@ -109,7 +109,7 @@ export default function Notifications() {
                 <Bell className="h-6 w-6 text-slate-600" />
               </div>
               <p className="text-slate-300 font-medium">You're all caught up</p>
-              <p className="text-slate-500 text-sm mt-1">Alerts for bets, deposits, and streams will appear here.</p>
+              <p className="text-slate-500 text-sm mt-1">Alerts for predictions, deposits, and streams will appear here.</p>
             </div>
           ) : (
             <ScrollArea className="h-[560px]">

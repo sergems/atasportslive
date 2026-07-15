@@ -5,7 +5,7 @@ export default function Terms() {
   useSEO({
     title: 'Terms and Conditions',
     path: '/terms',
-    description: "Read the Terms and Conditions for using ATA Sports Live — Africa's premier live sports streaming and P2P betting exchange. Governing rules for streaming, betting, wallets, and payments.",
+    description: "Read the Terms and Conditions for using ATA Sports Live — Africa's premier live sports streaming platform. Governing rules for streaming, predictions, wallets, and payments.",
   });
   return (
     <div className="max-w-3xl mx-auto py-10">
@@ -23,7 +23,7 @@ export default function Terms() {
         <section>
           <h2 className="text-lg font-semibold text-white mb-2">2. Eligibility</h2>
           <p>
-            You must be at least 18 years of age to use this platform. By registering, you confirm that you are of legal age and are permitted to participate in sports betting and streaming services in your jurisdiction.
+            You must be at least 18 years of age to use this platform. By registering, you confirm that you are of legal age and are permitted to use sports streaming and prediction services in your jurisdiction.
           </p>
         </section>
 
@@ -43,9 +43,9 @@ export default function Terms() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white mb-2">5. P2P Betting Exchange</h2>
+          <h2 className="text-lg font-semibold text-white mb-2">5. P2P Predictions Exchange</h2>
           <p>
-            ATA Sports Live operates as a peer-to-peer betting exchange. We facilitate matching of bets between users and charge a 10% brokerage fee on winnings. We do not act as a bookmaker. All bets are binding once matched. Users accept all associated financial risk.
+            ATA Sports Live operates a peer-to-peer predictions exchange. We facilitate matching of predictions between users and charge a 10% brokerage fee on winnings. We do not act as a bookmaker. All predictions are binding once matched. Users accept all associated financial risk.
           </p>
         </section>
 
@@ -62,7 +62,7 @@ export default function Terms() {
           <ul className="list-disc pl-5 space-y-1 mt-2">
             <li>Creating multiple accounts to exploit promotions or avoid restrictions</li>
             <li>Using the platform for money laundering or fraud</li>
-            <li>Attempting to manipulate match outcomes or betting markets</li>
+            <li>Attempting to manipulate match outcomes or prediction markets</li>
             <li>Sharing account credentials or stream access with other users</li>
           </ul>
         </section>
