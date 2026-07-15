@@ -4,7 +4,7 @@ export const SITE_NAME = "ATA Sports Live";
 export const SITE_URL = "https://atasportslive.com";
 export const DEFAULT_OG_IMAGE = "https://atasportslive.com/opengraph.jpg";
 export const DEFAULT_DESCRIPTION =
-  "Watch live Pool and Boxing matches from across Africa. Bet peer-to-peer in real-time on Africa's #1 sports betting exchange. Stream from $1.50/day.";
+  "Watch live Pool and Boxing matches from across Africa. Make peer-to-peer predictions in real-time on Africa's #1 sports predictions exchange. Stream from $1.50/day.";
 
 interface SEOOptions {
   title: string;
@@ -267,7 +267,7 @@ export const STRUCTURED_DATA = {
       height: 512,
     },
     description:
-      "Africa's premier live sports streaming and P2P betting exchange. Watch Pool and Boxing matches and bet peer-to-peer.",
+      "Africa's premier live sports streaming and P2P predictions exchange. Watch Pool and Boxing matches and make peer-to-peer predictions.",
     address: {
       "@type": "PostalAddress",
       streetAddress: "Nsambya",
@@ -314,7 +314,7 @@ export const STRUCTURED_DATA = {
     url: SITE_URL,
     sport: ["Pool", "Boxing"],
     description:
-      "Live Pool and Boxing streaming with peer-to-peer betting exchange across Africa.",
+      "Live Pool and Boxing streaming with peer-to-peer predictions exchange across Africa.",
     location: {
       "@type": "Place",
       name: "Kampala, Uganda",
@@ -340,10 +340,10 @@ export const STRUCTURED_DATA = {
       },
       {
         "@type": "Question",
-        name: "How does P2P betting work on ATA Sports Live?",
+        name: "How does P2P predictions work on ATA Sports Live?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "You place a bet at your desired odds. When another user matches your bet, the bet is locked in. The winner receives the total stake minus a 10% brokerage fee.",
+          text: "You place a prediction at your desired odds. When another user matches your prediction, it is locked in. The winner receives the total stake minus a 10% brokerage fee.",
         },
       },
       {
@@ -356,10 +356,10 @@ export const STRUCTURED_DATA = {
       },
       {
         "@type": "Question",
-        name: "What sports can I watch and bet on?",
+        name: "What sports can I watch and make predictions on?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "You can watch and bet on Pool (billiards) and Boxing matches streamed live from across Africa.",
+          text: "You can watch and make predictions on Pool (billiards) and Boxing matches streamed live from across Africa.",
         },
       },
       {
