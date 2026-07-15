@@ -121,7 +121,7 @@ export function Navbar() {
     { href: '/upcoming', label: 'Upcoming', pulse: false, ch1: false },
     { href: '/highlights', label: 'Highlights', pulse: false, ch1: false },
     { href: '/fixtures', label: 'Fixtures', pulse: false, ch1: false },
-    ...(isAuthenticated ? [{ href: '/games', label: 'Bets', pulse: false, ch1: false }] : []),
+    ...(isAuthenticated ? [{ href: '/games', label: 'Predictions', pulse: false, ch1: false }] : []),
   ];
 
   return (
