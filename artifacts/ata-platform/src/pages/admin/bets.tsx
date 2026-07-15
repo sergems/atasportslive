@@ -66,7 +66,7 @@ function displayName(user: User | undefined): string {
 }
 
 export default function AdminBets() {
-  useEffect(() => { document.title = 'Bet Management - Admin'; }, []);
+  useEffect(() => { document.title = 'Prediction Management - Admin'; }, []);
 
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('pending');

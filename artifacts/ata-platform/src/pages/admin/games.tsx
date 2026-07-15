@@ -344,7 +344,7 @@ function PastGamesSection({ pastTopLevel, ctx }: { pastTopLevel: any[]; ctx: any
 }
 
 export default function AdminGames() {
-  useEffect(() => { document.title = 'Bets - Admin'; }, []);
+  useEffect(() => { document.title = 'Predictions - Admin'; }, []);
 
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
