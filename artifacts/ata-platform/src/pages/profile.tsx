@@ -472,8 +472,20 @@ export default function Profile() {
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={uploadingAvatar} />
                 </label>
               </div>
-              <div>
-                <p className="text-white text-sm font-medium">{u.fullName} {u.surname ?? ''}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-white text-sm font-medium">{u.fullName} {u.surname ?? ''}</p>
+                  {u.referralCode && (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider border ${
+                      u.isInfluencer
+                        ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                        : 'bg-teal-500/15 text-teal-400 border-teal-500/30'
+                    }`}>
+                      {u.isInfluencer && <Star className="h-2.5 w-2.5" />}
+                      {u.referralCode}
+                    </span>
+                  )}
+                </div>
                 <p className="text-slate-500 text-xs">{u.email}</p>
                 <p className="text-slate-600 text-[10px] mt-1">Profile photo is optional</p>
               </div>
@@ -595,6 +607,46 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        {/* ── Influencer Dashboard ───────────────────────────────── */}
+        {(user as any).isInfluencer && (
+          <InfluencerDashboard
+            referralCode={user.referralCode}
+            referralCodeCustomized={(user as any).referralCodeCustomized ?? false}
+            onCodeUpdated={(code) => setUser({ ...user, referralCode: code, referralCodeCustomized: true } as any)}
+          />
+        )}
+
+        {/* ── Refer & Earn (regular users only) ─────────────────── */}
+        {user.referralCode && !(user as any).isInfluencer && (
+          <Card className="bg-card/50 backdrop-blur-sm border-teal-500/20">
+            <CardHeader>
+              <CardTitle className="text-white text-lg flex items-center gap-2">
+                <Gift className="h-4 w-4 text-teal-400" /> Refer &amp; Earn
+              </CardTitle>
+              <CardDescription>
+                Share your link — earn <span className="text-teal-400 font-semibold">5% bonus</span> into your bonus wallet every time a referred user buys their first stream.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900 border border-slate-700 px-3 py-2">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Your code</p>
+                  <p className="font-mono text-lg font-bold text-teal-400 tracking-widest">{user.referralCode}</p>
+                </div>
+                <Button size="sm" variant="outline" className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10 h-8 gap-1.5 shrink-0" onClick={handleCopyReferral}>
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? 'Copied!' : 'Copy Link'}
+                </Button>
+              </div>
+              <div className="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Your referral link</p>
+                <p className="text-xs text-slate-400 font-mono break-all">{SITE_ORIGIN}/register?ref={user.referralCode}</p>
+              </div>
+              <p className="text-xs text-slate-500">Bonus is credited once the referred user makes their first paid stream purchase. Bonus expires after 90 days.</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* ── Personal Info ──────────────────────────────────────── */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
           <CardHeader>
@@ -714,46 +766,6 @@ export default function Profile() {
             )}
           </CardContent>
         </Card>
-
-        {/* ── Influencer Dashboard ───────────────────────────────── */}
-        {(user as any).isInfluencer && (
-          <InfluencerDashboard
-            referralCode={user.referralCode}
-            referralCodeCustomized={(user as any).referralCodeCustomized ?? false}
-            onCodeUpdated={(code) => setUser({ ...user, referralCode: code, referralCodeCustomized: true } as any)}
-          />
-        )}
-
-        {/* ── Refer & Earn (regular users only) ─────────────────── */}
-        {user.referralCode && !(user as any).isInfluencer && (
-          <Card className="bg-card/50 backdrop-blur-sm border-teal-500/20">
-            <CardHeader>
-              <CardTitle className="text-white text-lg flex items-center gap-2">
-                <Gift className="h-4 w-4 text-teal-400" /> Refer &amp; Earn
-              </CardTitle>
-              <CardDescription>
-                Share your link — earn <span className="text-teal-400 font-semibold">5% bonus</span> into your bonus wallet every time a referred user buys their first stream.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900 border border-slate-700 px-3 py-2">
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Your code</p>
-                  <p className="font-mono text-lg font-bold text-teal-400 tracking-widest">{user.referralCode}</p>
-                </div>
-                <Button size="sm" variant="outline" className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10 h-8 gap-1.5 shrink-0" onClick={handleCopyReferral}>
-                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copied ? 'Copied!' : 'Copy Link'}
-                </Button>
-              </div>
-              <div className="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Your referral link</p>
-                <p className="text-xs text-slate-400 font-mono break-all">{SITE_ORIGIN}/register?ref={user.referralCode}</p>
-              </div>
-              <p className="text-xs text-slate-500">Bonus is credited once the referred user makes their first paid stream purchase. Bonus expires after 90 days.</p>
-            </CardContent>
-          </Card>
-        )}
 
         {/* ── Sign-In Methods ────────────────────────────────────── */}
         <Card className="bg-card/50 backdrop-blur-sm border-primary/20">

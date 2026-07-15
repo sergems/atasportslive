@@ -510,6 +510,102 @@ router.patch("/password", authMiddleware, async (req: AuthRequest, res): Promise
   res.json({ message: "Password updated" });
 });
 
+// ── Forgot password ───────────────────────────────────────────────────────────
+// Generates a one-time reset token and emails the user a link.
+// Always returns 200 to avoid email enumeration.
+router.post("/forgot-password", async (req, res): Promise<void> => {
+  const { email } = req.body as { email?: string };
+  if (!email?.trim()) {
+    res.status(400).json({ error: "Email is required" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.trim().toLowerCase())).limit(1);
+
+  if (user && user.status !== "suspended") {
+    const nonce = crypto.randomUUID();
+    const expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    await db.update(usersTable)
+      .set({ setPasswordNonce: nonce, setPasswordNonceExpiry: expiry })
+      .where(eq(usersTable.id, user.id));
+
+    // Send email — fails silently if SMTP not configured
+    const { sendMail } = await import("../lib/mailer.js");
+    const resetLink = `https://atasportslive.com/reset-password?token=${nonce}&email=${encodeURIComponent(user.email)}`;
+    const name = user.fullName?.split(" ")[0] || "there";
+    await sendMail({
+      to: user.email,
+      subject: "Reset your ATA Sports Live password",
+      html: `
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0;padding:0;background:#0f1623;font-family:system-ui,-apple-system,sans-serif;color:#e2e8f0}.wrap{max-width:560px;margin:0 auto;padding:24px 16px}.card{background:#1e293b;border-radius:12px;padding:28px 24px;border:1px solid #334155}.logo{font-size:20px;font-weight:800;color:#14b8a6;letter-spacing:-0.5px;margin-bottom:24px}.logo span{color:#f59e0b}h2{margin:0 0 12px;font-size:20px;color:#f8fafc}p{margin:0 0 14px;font-size:14px;line-height:1.6;color:#94a3b8}.cta{display:inline-block;margin-top:8px;padding:12px 24px;background:#14b8a6;color:#022c22;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none}.note{font-size:12px;color:#475569;margin-top:16px}.footer{margin-top:24px;text-align:center;font-size:11px;color:#475569}</style>
+</head><body><div class="wrap"><div class="card">
+<div class="logo">ATA <span>Sports</span> Live</div>
+<h2>Reset your password</h2>
+<p>Hi ${name},</p>
+<p>We received a request to reset the password for your ATA Sports Live account. Click the button below to choose a new password. This link expires in <strong style="color:#f8fafc">30 minutes</strong>.</p>
+<a class="cta" href="${resetLink}">Reset Password →</a>
+<p class="note">If you didn't request this, you can safely ignore this email — your password won't change.</p>
+</div><div class="footer">ATA Sports Live &mdash; Nsambya, Kampala, Uganda<br>This is an automated message, please do not reply.</div></div></body></html>`,
+      text: `Reset your ATA Sports Live password\n\nHi ${name},\n\nClick this link to reset your password (expires in 30 minutes):\n${resetLink}\n\nIf you didn't request this, ignore this email.`,
+    });
+  }
+
+  // Always return the same response to prevent email enumeration
+  res.json({ message: "If that email address is registered, you'll receive reset instructions shortly." });
+});
+
+// ── Reset password (from email link) ─────────────────────────────────────────
+router.post("/reset-password", async (req, res): Promise<void> => {
+  const { email, token, newPassword } = req.body as { email?: string; token?: string; newPassword?: string };
+  if (!email || !token || !newPassword) {
+    res.status(400).json({ error: "email, token, and newPassword are required" });
+    return;
+  }
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email.trim().toLowerCase())).limit(1);
+  if (!user) {
+    res.status(400).json({ error: "Invalid or expired reset link — please request a new one" });
+    return;
+  }
+  if (user.status === "suspended") {
+    res.status(403).json({ error: "Account suspended" });
+    return;
+  }
+
+  const now = new Date();
+  if (
+    !user.setPasswordNonce ||
+    user.setPasswordNonce !== token ||
+    !user.setPasswordNonceExpiry ||
+    user.setPasswordNonceExpiry < now
+  ) {
+    res.status(400).json({ error: "Invalid or expired reset link — please request a new one" });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const sv = generateSessionToken();
+  const tokens = generateTokens(user.id, user.role, sv);
+  await db.update(usersTable)
+    .set({
+      passwordHash,
+      mustSetPassword: false,
+      setPasswordNonce: null,
+      setPasswordNonceExpiry: null,
+      refreshToken: tokens.refreshToken,
+      sessionToken: sv,
+    })
+    .where(eq(usersTable.id, user.id));
+
+  const [freshUser] = await db.select().from(usersTable).where(eq(usersTable.id, user.id)).limit(1);
+  res.json({ ...tokens, user: userPayload(freshUser) });
+});
+
 router.get("/me", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
   let [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.userId!)).limit(1);
   if (!user) {

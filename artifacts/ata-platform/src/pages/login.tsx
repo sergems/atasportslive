@@ -20,11 +20,123 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertCircle, Mail, AtSign, ShieldCheck, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Mail, AtSign, ShieldCheck, CheckCircle2, Eye, EyeOff, KeyRound, ArrowLeft, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { GoogleLogin } from '@react-oauth/google';
 
 type LoginTab = 'email' | 'username';
+
+// ── Forgot-password dialog ─────────────────────────────────────────────────────
+
+type ForgotStep = 'email' | 'sent';
+
+function ForgotPasswordDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [step, setStep]       = useState<ForgotStep>('email');
+  const [email, setEmail]     = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) { setStep('email'); setEmail(''); setError(null); }
+  }, [open]);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email.trim()) { setError('Please enter your email address'); return; }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Something went wrong');
+      setStep('sent');
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
+      <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-sm border-primary/20">
+        <DialogHeader className="text-center items-center">
+          <div className="flex items-center justify-center h-14 w-14 rounded-2xl bg-teal-500/15 border border-teal-500/30 mb-1">
+            {step === 'sent'
+              ? <Send className="h-7 w-7 text-teal-400" />
+              : <KeyRound className="h-7 w-7 text-teal-400" />
+            }
+          </div>
+          <DialogTitle className="text-xl font-bold text-white">
+            {step === 'sent' ? 'Check your email' : 'Forgot your password?'}
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm leading-relaxed text-center">
+            {step === 'sent'
+              ? <>We sent a reset link to <span className="text-white font-medium">{email}</span>. Check your inbox and follow the link to set a new password.</>
+              : "Enter your email and we'll send you a reset link."
+            }
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === 'email' ? (
+          <form onSubmit={handleSend} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm text-white font-medium">Email address</label>
+              <Input
+                type="email"
+                placeholder="email@example.com"
+                autoComplete="email"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setError(null); }}
+                className={`bg-background/50 border-input text-white ${error ? 'border-red-500/60' : ''}`}
+                autoFocus
+              />
+            </div>
+
+            {error && (
+              <div className="flex items-start gap-2.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-3">
+                <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
+                <p className="text-sm text-red-300 leading-snug">{error}</p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold"
+              disabled={loading}
+            >
+              {loading ? 'Sending…' : 'Send Reset Link'}
+            </Button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full text-center text-sm text-slate-400 hover:text-white transition-colors pt-1"
+            >
+              ← Back to sign in
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-teal-500/10 border border-teal-500/20 px-4 py-3 text-sm text-teal-300 text-center">
+              The link expires in 30 minutes. If you don't see the email, check your spam folder.
+            </div>
+            <Button
+              className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold"
+              onClick={onClose}
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ── Set-password dialog ────────────────────────────────────────────────────────
 
@@ -226,6 +338,7 @@ export default function Login() {
   const [activeTab, setActiveTab]           = useState<LoginTab>('email');
   const [setPasswordChallenge, setSetPasswordChallenge] = useState<{ email: string; nonce: string } | null>(null);
   const [showPassword, setShowPassword]     = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -317,6 +430,8 @@ export default function Login() {
 
   return (
     <>
+      <ForgotPasswordDialog open={showForgotPassword} onClose={() => setShowForgotPassword(false)} />
+
       {/* Inline set-password dialog — shown when a migrated user attempts to log in */}
       {setPasswordChallenge && (
         <SetPasswordDialog
@@ -446,6 +561,16 @@ export default function Login() {
                     </FormItem>
                   )}
                 />
+
+                <div className="flex justify-end -mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
 
                 {loginError && (
                   <div className="flex items-start gap-2.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-3">

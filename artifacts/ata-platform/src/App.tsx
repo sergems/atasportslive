@@ -50,6 +50,7 @@ import { FinanceLayout } from "@/components/layout/FinanceLayout";
 import Subscriptions from "@/pages/subscriptions";
 import Profile from "@/pages/profile";
 import SetPassword from "@/pages/set-password";
+import ResetPassword from "@/pages/reset-password";
 import NotFound from "@/pages/not-found";
 import RefundPolicy from "@/pages/refund-policy";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -142,6 +143,7 @@ function Router() {
         <Route path="/privacy-policy" component={PrivacyPolicy} />
         <Route path="/refund-policy" component={RefundPolicy} />
         <Route path="/set-password" component={SetPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
 
         {/* ── Authenticated user routes ──────────────────────────────────── */}
         <Route path="/games">
