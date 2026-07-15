@@ -55,6 +55,14 @@ function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
           <div className="px-4 py-3 border-b border-slate-800">
             <p className="text-sm font-semibold text-white truncate">{user?.fullName || user?.username}</p>
             <p className="text-xs text-teal-400 capitalize mt-0.5">{user?.role}</p>
+            {(user as any)?.referralCode && (
+              <div className="mt-1.5 flex items-center gap-1">
+                <span className="text-xs text-slate-500">Ref:</span>
+                <span className={`font-mono text-xs font-bold tracking-wider px-1.5 py-0.5 rounded ${(user as any)?.isInfluencer ? 'bg-amber-900/40 text-amber-400' : 'bg-teal-900/40 text-teal-400'}`}>
+                  {(user as any).referralCode}
+                </span>
+              </div>
+            )}
           </div>
           {items.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} onClick={() => setOpen(false)}>
