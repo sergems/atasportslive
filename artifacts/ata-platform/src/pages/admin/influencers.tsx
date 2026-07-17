@@ -113,7 +113,7 @@ function RateEditor({ influencer, onSaved }: { influencer: Influencer; onSaved: 
     mutationFn: async (rate: number) => {
       const res = await fetch(`/api/admin/users/${influencer.id}/super-influencer-rate`, {
         method: 'PATCH',
-        headers: authHeaders(),
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ rate }),
       });
       const d = await res.json();
