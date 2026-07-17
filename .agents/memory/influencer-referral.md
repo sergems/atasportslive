@@ -19,11 +19,21 @@ description: Architecture and key decisions for the influencer commission featur
 - Influencer-facing `/api/influencers/my-referrals` intentionally excludes referral `email` (PII exposure risk)
 - Admin endpoints DO include email since admins already have access
 
+## Super Influencer Extension
+- `isSuperInfluencer` boolean + `superInfluencerCommissionRate` NUMERIC(5,2) columns added to `users`
+- Super Influencers get a `SINF`-prefixed referral code; demoting reverts to `INF`-prefix (stays regular influencer)
+- Promoting to Super also sets `isInfluencer = true` automatically
+- Commission logic in `subscriptions.ts`: if referrer `isSuperInfluencer` AND `superInfluencerCommissionRate` is set → use personal rate; else fall back to global `influencer_commission_rate` setting
+- Crown (👑) button in admin users table toggles super influencer status; star button is disabled while user is super influencer
+- Rate editor is inline on the influencers list — click the rate text to edit per-super-influencer percentage
+
 ## API Routes
 - `GET /api/influencers/my-referrals` — influencer's referral list + stats
 - `GET /api/influencers/my-commission-history` — paginated commission history
 - `PATCH /api/admin/users/:id/set-influencer` — toggle influencer status
-- `GET /api/admin/influencers` — all influencers with stats
+- `PATCH /api/admin/users/:id/set-super-influencer` — toggle super influencer status
+- `PATCH /api/admin/users/:id/super-influencer-rate` — set personalised commission rate (super influencers only)
+- `GET /api/admin/influencers` — all influencers with stats (includes isSuperInfluencer + rate)
 - `GET /api/admin/influencers/:id/referrals` — referrals for one influencer
 
 ## One-Time Code Customization

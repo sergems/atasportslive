@@ -11,7 +11,7 @@ import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
   CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet, KeyRound,
   History, TrendingUp, TrendingDown, ArrowLeftRight, AlertCircle, ChevronLeft, ChevronRight,
-  Check, XCircle, RefreshCw, Loader2, Star, ShieldOff
+  Check, XCircle, RefreshCw, Loader2, Star, ShieldOff, Crown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -681,8 +681,10 @@ export default function AdminUsers() {
   const [resetPasswordFor, setResetPasswordFor] = useState<number | null>(null);
   const [txHistoryFor, setTxHistoryFor] = useState<number | null>(null);
   const [influencerPending, setInfluencerPending] = useState<number | null>(null);
-  // Local override map for influencer status (userId → isInfluencer) after toggle
+  const [superInfluencerPending, setSuperInfluencerPending] = useState<number | null>(null);
+  // Local override maps after toggle
   const [influencerOverrides, setInfluencerOverrides] = useState<Record<number, boolean>>({});
+  const [superInfluencerOverrides, setSuperInfluencerOverrides] = useState<Record<number, boolean>>({});
 
   // Standard list (all users or search)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -758,6 +760,28 @@ export default function AdminUsers() {
       toast.error(err.message || 'Failed to update influencer status');
     } finally {
       setInfluencerPending(null);
+    }
+  };
+
+  const handleSuperInfluencerToggle = async (id: number, currentIsSuperInfluencer: boolean) => {
+    const next = !currentIsSuperInfluencer;
+    setSuperInfluencerPending(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/set-super-influencer`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ isSuperInfluencer: next }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Failed');
+      setSuperInfluencerOverrides(prev => ({ ...prev, [id]: next }));
+      if (next) setInfluencerOverrides(prev => ({ ...prev, [id]: true }));
+      toast.success(next ? 'User is now a Super Influencer' : 'Super Influencer status removed');
+      invalidate();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update Super Influencer status');
+    } finally {
+      setSuperInfluencerPending(null);
     }
   };
 
@@ -903,18 +927,34 @@ export default function AdminUsers() {
                           const isInf = influencerOverrides[user.id] !== undefined
                             ? influencerOverrides[user.id]
                             : (user as any).isInfluencer ?? false;
+                          const isSuperInf = superInfluencerOverrides[user.id] !== undefined
+                            ? superInfluencerOverrides[user.id]
+                            : (user as any).isSuperInfluencer ?? false;
                           return (
-                            <Button
-                              size="sm" variant="ghost"
-                              onClick={() => handleInfluencerToggle(user.id, isInf)}
-                              disabled={influencerPending === user.id}
-                              className={`h-5 w-6 p-0 rounded-sm ${isInf ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
-                              title={isInf ? 'Remove Influencer Status' : 'Make Influencer'}
-                            >
-                              {influencerPending === user.id
-                                ? <Loader2 className="h-3 w-3 animate-spin" />
-                                : <Star className="h-3 w-3" />}
-                            </Button>
+                            <>
+                              <Button
+                                size="sm" variant="ghost"
+                                onClick={() => handleInfluencerToggle(user.id, isInf)}
+                                disabled={influencerPending === user.id || isSuperInf}
+                                className={`h-5 w-6 p-0 rounded-sm ${isInf ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
+                                title={isSuperInf ? 'Super Influencer (demote from Super first)' : isInf ? 'Remove Influencer Status' : 'Make Influencer'}
+                              >
+                                {influencerPending === user.id
+                                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                                  : <Star className="h-3 w-3" />}
+                              </Button>
+                              <Button
+                                size="sm" variant="ghost"
+                                onClick={() => handleSuperInfluencerToggle(user.id, isSuperInf)}
+                                disabled={superInfluencerPending === user.id}
+                                className={`h-5 w-6 p-0 rounded-sm ${isSuperInf ? 'bg-purple-500/20 text-purple-400' : 'text-slate-400 hover:text-purple-400 hover:bg-slate-800'}`}
+                                title={isSuperInf ? 'Remove Super Influencer Status' : 'Make Super Influencer'}
+                              >
+                                {superInfluencerPending === user.id
+                                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                                  : <Crown className="h-3 w-3" />}
+                              </Button>
+                            </>
                           );
                         })()}
                         {user.status === 'active' ? (

@@ -120,15 +120,26 @@ router.post("/purchase", authMiddleware, async (req: AuthRequest, res): Promise<
       .limit(1);
     if (buyer?.referredBy) {
       const [referrer] = await db
-        .select({ id: usersTable.id, isInfluencer: usersTable.isInfluencer })
+        .select({
+          id: usersTable.id,
+          isInfluencer: usersTable.isInfluencer,
+          isSuperInfluencer: usersTable.isSuperInfluencer,
+          superInfluencerCommissionRate: usersTable.superInfluencerCommissionRate,
+        })
         .from(usersTable)
         .where(eq(usersTable.id, buyer.referredBy))
         .limit(1);
-      if (referrer?.isInfluencer) {
-        const rateRows = await db.execute(
-          sql`SELECT value FROM settings WHERE key = 'influencer_commission_rate'`
-        );
-        commissionRatePct = parseFloat((rateRows.rows[0] as any)?.value ?? "30");
+      if (referrer?.isInfluencer || referrer?.isSuperInfluencer) {
+        if (referrer.isSuperInfluencer && referrer.superInfluencerCommissionRate != null) {
+          // Use this super influencer's personalised rate
+          commissionRatePct = parseFloat(String(referrer.superInfluencerCommissionRate));
+        } else {
+          // Fall back to global influencer commission rate
+          const rateRows = await db.execute(
+            sql`SELECT value FROM settings WHERE key = 'influencer_commission_rate'`
+          );
+          commissionRatePct = parseFloat((rateRows.rows[0] as any)?.value ?? "30");
+        }
         commissionAmount = Math.round(price * (commissionRatePct / 100) * 100) / 100;
         if (commissionAmount > 0) influencerReferrerId = referrer.id;
       }

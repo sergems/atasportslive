@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, pgEnum, boolean, integer, uuid } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, pgEnum, boolean, integer, uuid, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -31,6 +31,8 @@ export const usersTable = pgTable("users", {
   country: text("country"),
   ficaCompleted: boolean("fica_completed").notNull().default(false),
   isInfluencer: boolean("is_influencer").notNull().default(false),
+  isSuperInfluencer: boolean("is_super_influencer").notNull().default(false),
+  superInfluencerCommissionRate: numeric("super_influencer_commission_rate", { precision: 5, scale: 2 }),
   referralCodeCustomized: boolean("referral_code_customized").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

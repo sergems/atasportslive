@@ -709,6 +709,22 @@ async function createInfluencerCode(): Promise<string> {
   return `INF${Date.now().toString(36).toUpperCase().slice(-6)}`;
 }
 
+async function createSuperInfluencerCode(): Promise<string> {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  for (let attempt = 0; attempt < 15; attempt++) {
+    let suffix = "";
+    for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+    const code = `SINF${suffix}`;
+    const [existing] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.referralCode, code))
+      .limit(1);
+    if (!existing) return code;
+  }
+  return `SINF${Date.now().toString(36).toUpperCase().slice(-6)}`;
+}
+
 // Set or unset influencer status for a user
 router.patch("/users/:id/set-influencer", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const userId = Number(req.params.id);
@@ -746,6 +762,74 @@ router.patch("/users/:id/set-influencer", authMiddleware, requireRole("admin", "
   res.json({ ok: true, isInfluencer, referralCode: newReferralCode });
 });
 
+// Set or unset super influencer status for a user
+router.patch("/users/:id/set-super-influencer", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    res.status(400).json({ error: "Invalid userId" });
+    return;
+  }
+
+  const { isSuperInfluencer } = req.body as { isSuperInfluencer: boolean };
+  if (typeof isSuperInfluencer !== "boolean") {
+    res.status(400).json({ error: "isSuperInfluencer (boolean) required" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+  let newReferralCode = user.referralCode;
+
+  if (isSuperInfluencer && !user.isSuperInfluencer) {
+    // Promote to Super Influencer: assign SINF- prefixed code
+    newReferralCode = await createSuperInfluencerCode();
+  } else if (!isSuperInfluencer && user.isSuperInfluencer) {
+    // Demote: downgrade to a regular INF- code (keeps influencer status)
+    newReferralCode = await createInfluencerCode();
+  }
+
+  await db.update(usersTable)
+    .set({
+      isSuperInfluencer,
+      isInfluencer: isSuperInfluencer ? true : user.isInfluencer,
+      referralCode: newReferralCode,
+      ...(isSuperInfluencer ? {} : { superInfluencerCommissionRate: null }),
+    })
+    .where(eq(usersTable.id, userId));
+
+  res.json({ ok: true, isSuperInfluencer, referralCode: newReferralCode });
+});
+
+// Set the personalised commission rate for a super influencer
+router.patch("/users/:id/super-influencer-rate", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    res.status(400).json({ error: "Invalid userId" });
+    return;
+  }
+
+  const { rate } = req.body as { rate: number };
+  if (typeof rate !== "number" || rate < 0 || rate > 100) {
+    res.status(400).json({ error: "rate must be a number between 0 and 100" });
+    return;
+  }
+
+  const [user] = await db
+    .select({ id: usersTable.id, isSuperInfluencer: usersTable.isSuperInfluencer })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  if (!user.isSuperInfluencer) { res.status(400).json({ error: "User is not a Super Influencer" }); return; }
+
+  await db.update(usersTable)
+    .set({ superInfluencerCommissionRate: rate.toFixed(2) })
+    .where(eq(usersTable.id, userId));
+
+  res.json({ ok: true, rate });
+});
+
 // List all influencers with referral counts and total commissions paid out
 router.get("/influencers", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   const influencers = await db
@@ -757,6 +841,8 @@ router.get("/influencers", authMiddleware, requireRole("admin", "manager"), asyn
       referralCode: usersTable.referralCode,
       createdAt: usersTable.createdAt,
       status: usersTable.status,
+      isSuperInfluencer: usersTable.isSuperInfluencer,
+      superInfluencerCommissionRate: usersTable.superInfluencerCommissionRate,
     })
     .from(usersTable)
     .where(eq(usersTable.isInfluencer, true))
@@ -784,6 +870,9 @@ router.get("/influencers", authMiddleware, requireRole("admin", "manager"), asyn
         ...inf,
         referralCount: Number(refCount?.referralCount ?? 0),
         totalCommissionEarned: parseFloat(String(commRow?.totalCommission ?? 0)) || 0,
+        superInfluencerCommissionRate: inf.superInfluencerCommissionRate
+          ? parseFloat(String(inf.superInfluencerCommissionRate))
+          : null,
       };
     })
   );
