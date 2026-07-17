@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BpewM2666n44ATUjKn6uh0IrhcInaId7ilOTPe07ZjSuCqrleWLgBAoyEjEgRp8
+\restrict FikELD2RmwngiyJjTMW03l30jUarLDlBYaxYEOS29CCS8cfDCBxTDg7Ve4KgJpz
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -1187,6 +1187,7 @@ ALTER TABLE ONLY public.wallets ALTER COLUMN id SET DEFAULT nextval('public.wall
 
 COPY public.announcements (id, title, content, is_active, priority, created_at, updated_at) FROM stdin;
 1	Welcome to ATA Sports 	Stream live Pool & Boxing matches. New events added weekly! Now more then ever, we bring you the games	f	10	2026-06-15 19:17:47.184937+00	2026-06-30 09:11:10.26+00
+2	UGANDA BOXING CHAMPIONS LEAGUE	The next livestream will be on Saturday 18th July 2026 | 3:30PM at only 5,600 UGX/- or $1.5	t	0	2026-07-16 12:20:14.436551+00	2026-07-17 13:51:20.947+00
 \.
 
 
@@ -1204,6 +1205,8 @@ COPY public.audit_logs (id, user_id, action, entity_type, entity_id, details, ip
 
 COPY public.bets (id, ticket_id, user_id, game_id, outcome, stake, potential_return, status, matched_bet_id, settled_at, created_at, updated_at) FROM stdin;
 7	TKT-7556700A	4	18	player_a_wins	3.00	0.00	pending	\N	\N	2026-07-09 11:41:26.045568+00	2026-07-09 11:41:26.045568+00
+8	TKT-47EEAB40	30	17	player_b_wins	1.00	0.00	pending	\N	\N	2026-07-15 12:35:20.175913+00	2026-07-15 12:35:20.175913+00
+9	TKT-B2B0432B	30	17	player_a_wins	1.00	0.00	pending	\N	\N	2026-07-15 13:05:59.804692+00	2026-07-15 13:05:59.804692+00
 \.
 
 
@@ -1221,7 +1224,7 @@ COPY public.bonus_transactions (id, user_id, promotion_id, type, amount, balance
 
 COPY public.games (id, sport, player_a, player_b, event_date, event_time, status, result, total_bet_pool, open_bets_count, matched_bets_count, created_at, updated_at, event_end_date, event_end_time, city, country, type, parent_id, player_a_country, player_b_country) FROM stdin;
 18	pool	CHRIS MELLING - Magician	TOM COUSINS - Top Cat	2026-09-11	19:00	upcoming	\N	0.00	1	0	2026-07-09 10:53:10.121323+00	2026-07-09 11:48:35.668+00	2026-09-12	23:00	Coalville	United Kingdom	single	\N	GB	GB
-17	boxing	RASKARA PAUL	MUSULUBE STEPHAN	2026-07-18	00:00	upcoming	\N	0.00	1	0	2026-07-06 17:40:42.492468+00	2026-07-09 12:52:28.01+00	2026-07-06	01:30	Lugogo Arena	Uganda	single	\N	UG	UG
+17	boxing	RASKARA PAUL	MUSULUBE STEPHAN	2026-07-18	00:00	upcoming	\N	0.00	3	0	2026-07-06 17:40:42.492468+00	2026-07-15 13:05:59.808+00	2026-07-06	01:30	Lugogo Arena	Uganda	single	\N	UG	UG
 \.
 
 
@@ -1230,8 +1233,8 @@ COPY public.games (id, sport, player_a, player_b, event_date, event_time, status
 --
 
 COPY public.hero_slides (id, title, subtitle, button_text, button_url, image_url, sort_order, is_active, created_at, updated_at) FROM stdin;
-1	The Nerve Center of African Sports	Watch live grassroots Pool and Boxing matches. Bet peer-to-peer in real-time. High stakes, zero clutter.	Join the movement	/register	/uploads/thumb-1783103200250-cafrk5.png	0	t	2026-06-25 20:10:13.755801	2026-07-03 18:26:48.304
-2	Africa’s home of sport	Join Africa’s largest sports streaming community and watch the continent’s best talent live in HD.	Subcribe just from 1.5$ / 24H	/register	/uploads/thumb-1783103222014-t72dsa.png	0	t	2026-06-25 20:12:23.612147	2026-07-03 18:27:06.155
+2	Africa’s home of sport	Join Africa’s largest sports streaming community and watch the continent’s best talent live in HD.	Subcribe just from 1.5$ / 24H	/register	/uploads/thumb-1783103222014-t72dsa.png	1	t	2026-06-25 20:12:23.612147	2026-07-16 08:45:01.492
+1	The Nerve Center of African Sports	Watch live grassroots Pool and Boxing matches. Bet peer-to-peer in real-time. High stakes, zero clutter.	Join the movement	/register	/uploads/thumb-1783103200250-cafrk5.png	2	t	2026-06-25 20:10:13.755801	2026-07-16 08:45:13.545
 \.
 
 
@@ -1253,6 +1256,13 @@ COPY public.highlights (id, title, description, youtube_url, is_published, creat
 --
 
 COPY public.notifications (id, user_id, type, title, message, read, created_at) FROM stdin;
+1	5100	deposit_received	Wallet Credited	Your wallet has been credited $1.50 by admin.	f	2026-07-13 16:15:48.397048+00
+2	30	deposit_received	Deposit Confirmed	3.00 has been added to your wallet via Pesapal.	f	2026-07-15 12:23:22.665631+00
+3	30	deposit_received	Deposit Confirmed	1.50 has been added to your wallet via Pesapal.	f	2026-07-15 12:33:28.334818+00
+4	30	deposit_received	Deposit Confirmed	1.50 has been added to your wallet via Pesapal.	f	2026-07-15 13:04:13.917345+00
+5	3906	deposit_received	Deposit Confirmed	2.00 has been added to your wallet via Pesapal.	f	2026-07-16 07:34:30.66484+00
+6	30	deposit_received	Deposit Confirmed	1.50 has been added to your wallet via Pesapal.	f	2026-07-16 12:50:40.745639+00
+7	30	withdrawal_approved	Withdrawal Approved	Your withdrawal of $3.00 has been approved and is being processed by our finance team.	f	2026-07-17 11:11:17.985864+00
 \.
 
 
@@ -1261,6 +1271,8 @@ COPY public.notifications (id, user_id, type, title, message, read, created_at) 
 --
 
 COPY public.platform_subscriptions (id, user_id, subscription_type, granted_at, expires_at, amount, transaction_id, created_at) FROM stdin;
+1	30	daily	2026-07-15 12:33:57.496+00	2026-07-16 12:33:57.496+00	1.70	SUB-E94D881B	2026-07-15 12:33:57.496694+00
+2	30	daily	2026-07-16 12:51:28.764+00	2026-07-17 12:51:28.764+00	1.70	SUB-B5936CB9	2026-07-16 12:51:28.765418+00
 \.
 
 
@@ -1285,12 +1297,6 @@ COPY public.promotions (id, name, code, type, bonus_type, percentage, fixed_amou
 --
 
 COPY public.settings (key, value, updated_at) FROM stdin;
-ad_slot_left_1_image	/uploads/thumb-1782478664500-w6yu2o.jpeg	2026-06-26 12:58:01.772977+00
-ad_slot_left_1_link		2026-06-26 12:58:01.780518+00
-ad_slot_left_1_enabled	true	2026-06-26 12:58:01.784311+00
-ad_slot_right_1_image	/uploads/thumb-1782478752461-relvs9.jpg	2026-06-26 12:59:14.807831+00
-ad_slot_right_1_link		2026-06-26 12:59:14.814291+00
-ad_slot_right_1_enabled	true	2026-06-26 12:59:14.817444+00
 ad_slot_right_2_image	/uploads/thumb-1782478766328-nfaxwt.jpg	2026-06-26 12:59:27.890218+00
 ad_slot_right_2_link		2026-06-26 12:59:27.895406+00
 ad_slot_right_2_enabled	true	2026-06-26 12:59:27.898422+00
@@ -1309,62 +1315,83 @@ smtp_pass	Hy6z~0r=H!O&fDB[	2026-07-02 13:57:08.693627+00
 smtp_secure	true	2026-07-02 13:57:08.693627+00
 smtp_from	ATA Sports Live <noreply@atasportslive.com>	2026-07-02 13:57:08.693627+00
 pesapal_ipn_id	88631a5a-4264-401b-80b0-da301b593121	2026-07-03 14:40:42.588776+00
-price_daily	1.70	2026-07-03 19:21:35.180672+00
-price_weekly	7.00	2026-07-03 19:21:35.180672+00
-price_monthly	20.00	2026-07-03 19:21:35.180672+00
-price_yearly	99.00	2026-07-03 19:21:35.180672+00
 pawapay_enabled	false	2026-07-03 19:32:56.856564+00
 pawapay_api_token	eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI0MTIzIiwibWF2IjoiMSIsImV4cCI6MjA5ODQ2MDM5NywiaWF0IjoxNzgyODQxMTk3LCJwbSI6IkRBRixQQUYiLCJqdGkiOiI5MTY5YmZmYy1iOTc4LTRjNzMtOGZjOS1jNzk0YjRjZTZmYTAifQ.XnFyW4kS5w5R4xrtBQY18kgDDGBCwiP_EImdVen0XzTgw_950h1-MsmLxJkPWdbrcCmec3D9jDUEK0vRDKuAoQ	2026-07-03 19:32:56.864302+00
 pawapay_environment	sandbox	2026-07-03 19:32:56.870497+00
 pawapay_currency	UGX	2026-07-03 19:32:56.87614+00
 pawapay_exchange_rate	3700	2026-07-03 19:32:56.886232+00
 liveStreamUrl		2026-07-05 00:06:23.305169+00
-mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-06 19:04:13.826689+00
-mux_is_free	false	2026-07-06 19:04:13.905082+00
-mux_price	1.70	2026-07-06 19:04:13.912353+00
-mux_title	ATA Live Streaming	2026-07-06 19:04:13.916215+00
-mux_stream_db_id	30	2026-07-06 19:04:14.193117+00
-ch2_mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-06 19:00:38.372547+00
-ch2_mux_is_free	false	2026-07-06 19:00:38.389197+00
-ch2_mux_price	1.50	2026-07-06 19:00:38.392254+00
-ch2_mux_title	ATA	2026-07-06 19:00:38.395718+00
-ch2_mux_thumbnail_url	/uploads/thumb-1783364347699-12geb6.jpeg	2026-07-06 19:00:38.398524+00
-ch2_mux_player_a	JUJU	2026-07-06 19:00:38.402698+00
-ch2_mux_player_b	GAPA	2026-07-06 19:00:38.40569+00
-ch2_mux_player_a_country	CD	2026-07-06 19:00:38.408802+00
-ch2_mux_player_b_country	RW	2026-07-06 19:00:38.414395+00
-ch2_mux_stream_db_id	29	2026-07-06 19:00:38.671997+00
-mux_thumbnail_url		2026-07-06 19:04:13.920237+00
-mux_player_a		2026-07-06 19:04:13.923975+00
-mux_player_b		2026-07-06 19:04:13.927293+00
-mux_player_a_country		2026-07-06 19:04:13.930578+00
-mux_player_b_country		2026-07-06 19:04:13.936297+00
-influencer_commission_rate	30	2026-07-06 20:46:16.102589+00
-yt_player_a		2026-07-10 09:35:44.292866+00
-yt_player_b		2026-07-10 09:35:44.294968+00
-yt_player_a_country		2026-07-10 09:35:44.29705+00
-yt_player_b_country		2026-07-10 09:35:44.299534+00
-yt_stream_db_id	35	2026-07-10 09:35:44.567349+00
-ch2_mux_is_live	false	2026-07-10 09:34:24.893626+00
-ch2_yt_video_id	fATvFkfY1lk	2026-07-10 09:35:52.354393+00
-ch2_yt_is_live	false	2026-07-10 09:35:52.35772+00
-ch2_yt_is_free	false	2026-07-10 09:35:52.360574+00
-ch2_yt_price	1.50	2026-07-10 09:35:52.362855+00
-ch2_yt_title	REMATCH | UKASHA MATOVU VS ISAAC KASASA (MAIN EVENT) UBCL EVENT 4	2026-07-10 09:35:52.365632+00
-ch2_yt_thumbnail_url	/uploads/thumb-1783364473470-kx1kwu.jpeg	2026-07-10 09:35:52.368892+00
-mux_is_live	false	2026-07-10 09:34:33.769961+00
-ch2_yt_player_a	Charles	2026-07-10 09:35:52.372461+00
-ch2_yt_player_b	Boboza	2026-07-10 09:35:52.374794+00
-ch2_yt_player_a_country	CD	2026-07-10 09:35:52.377001+00
-ch2_yt_player_b_country	TZ	2026-07-10 09:35:52.379666+00
-ch2_page_enabled	true	2026-07-10 09:35:52.383019+00
-ch2_yt_stream_db_id	36	2026-07-10 09:35:52.639367+00
-yt_video_id	uADviPgb4pg	2026-07-10 09:35:44.276359+00
-yt_is_live	false	2026-07-10 09:35:44.280055+00
-yt_is_free	false	2026-07-10 09:35:44.282991+00
-yt_price	1.50	2026-07-10 09:35:44.284953+00
-yt_title	2026 BetVictor Championship League Snooker	2026-07-10 09:35:44.287252+00
-yt_thumbnail_url		2026-07-10 09:35:44.290159+00
+price_monthly	20.00	2026-07-17 00:00:26.048125+00
+ch3_yt_is_free	false	2026-07-17 09:34:50.790328+00
+mux_player_a_country		2026-07-14 07:55:42.765265+00
+price_yearly	99.00	2026-07-17 00:00:26.048828+00
+ad_slot_left_1_link	#	2026-07-17 12:34:58.962652+00
+ad_slot_right_1_enabled	false	2026-07-17 12:35:00.456588+00
+mux_is_live	false	2026-07-16 12:26:11.820039+00
+ch2_yt_price	1.50	2026-07-17 09:34:01.061938+00
+mux_player_b_country		2026-07-14 07:55:42.765919+00
+mux_stream_db_id	43	2026-07-14 07:55:43.130878+00
+ch2_yt_player_a_country	US	2026-07-17 09:34:01.064724+00
+mux_is_free	false	2026-07-14 07:55:42.760562+00
+ch3_mux_is_live	false	2026-07-16 12:30:02.883854+00
+mux_price	1.70	2026-07-14 07:55:42.761338+00
+mux_title	ATA Live Streaming	2026-07-14 07:55:42.762136+00
+ch2_yt_player_b_country	GB	2026-07-17 09:34:01.065276+00
+ch2_mux_is_free	false	2026-07-14 07:54:50.578797+00
+ch2_mux_price	1.50	2026-07-14 07:54:50.579335+00
+ch3_yt_player_b	ZHENG	2026-07-17 09:34:50.793009+00
+yt_player_a_country	UG	2026-07-17 09:33:52.671805+00
+yt_player_b_country	UG	2026-07-17 09:33:52.672262+00
+ch3_yt_player_a_country	GB	2026-07-17 09:34:50.793439+00
+ch3_yt_price	1.50	2026-07-17 09:34:50.791007+00
+ch3_yt_player_b_country	CN	2026-07-17 09:34:50.793975+00
+ch2_mux_title	ATA	2026-07-14 07:54:50.580046+00
+ch2_yt_title	REPLAY: RASKARA PAUL VS HASSAN HABIB	2026-07-17 09:34:01.062544+00
+ch2_mux_thumbnail_url	/uploads/thumb-1784015679328-iozc1b.png	2026-07-14 07:54:50.58057+00
+yt_stream_db_id	39	2026-07-17 09:33:53.030152+00
+ch3_page_enabled	false	2026-07-17 09:34:50.794375+00
+influencer_commission_rate	10	2026-07-17 00:01:38.894368+00
+referral_bonus_pct	10	2026-07-17 00:02:07.249294+00
+ch2_yt_video_id	yH-24ZAvd7M	2026-07-17 09:34:01.059115+00
+ch2_mux_player_b	GAPA	2026-07-14 07:54:50.581565+00
+ch2_yt_is_live	false	2026-07-17 09:34:01.060468+00
+mux_thumbnail_url	/uploads/thumb-1784015740834-qkir4v.png	2026-07-14 07:55:42.762905+00
+ch2_yt_thumbnail_url	/uploads/thumb-1784015705087-umcjsw.png	2026-07-17 09:34:01.063106+00
+ch2_yt_player_a	HUSTLE	2026-07-17 09:34:01.063642+00
+yt_video_id	fATvFkfY1lk	2026-07-17 09:33:52.665731+00
+ch2_mux_player_a	JUJU	2026-07-14 07:54:50.581063+00
+ch3_yt_title	SF | 2026 JOY Heyball Masters Zhengzhou Station	2026-07-17 09:34:50.791511+00
+ch3_yt_stream_db_id	41	2026-07-17 09:34:51.15128+00
+price_daily	1.50	2026-07-17 00:00:26.04549+00
+mux_player_a		2026-07-14 07:55:42.763644+00
+price_weekly	7.00	2026-07-17 00:00:26.04753+00
+ch2_yt_player_b	FURY	2026-07-17 09:34:01.064182+00
+ch2_page_enabled	false	2026-07-17 09:34:01.065892+00
+ch3_yt_thumbnail_url	/uploads/thumb-1783944614342-ciqpdk.png	2026-07-17 09:34:50.792175+00
+ch2_mux_is_live	false	2026-07-16 12:28:24.713877+00
+ch2_yt_stream_db_id	40	2026-07-17 09:34:01.429717+00
+ch3_yt_video_id	MDHxCNZOxpA	2026-07-17 09:34:50.788226+00
+yt_price	1.50	2026-07-17 09:33:52.668611+00
+ch2_mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-14 07:54:50.576679+00
+ch2_mux_player_a_country	CD	2026-07-14 07:54:50.582254+00
+ch2_mux_player_b_country	RW	2026-07-14 07:54:50.582738+00
+mux_player_b		2026-07-14 07:55:42.7645+00
+ch2_mux_stream_db_id	44	2026-07-14 07:54:50.928572+00
+ch3_yt_player_a	CHU BINGUIE	2026-07-17 09:34:50.792597+00
+yt_is_live	false	2026-07-17 09:33:52.667277+00
+ch3_yt_is_live	false	2026-07-17 09:34:50.78969+00
+yt_title	REPLAY: UKASHA MATOVU VS ISAAC KASASA (MAIN EVENT)	2026-07-17 09:33:52.669235+00
+mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-14 07:55:42.758371+00
+yt_thumbnail_url	/uploads/thumb-1784015933224-pdmflg.png	2026-07-17 09:33:52.669936+00
+yt_is_free	false	2026-07-17 09:33:52.667901+00
+yt_player_a	UKASHALEE	2026-07-17 09:33:52.670624+00
+yt_player_b	KASASA	2026-07-17 09:33:52.671115+00
+ch2_yt_is_free	false	2026-07-17 09:34:01.061209+00
+ads_hide_on_mobile	true	2026-07-17 12:34:54.281535+00
+ad_slot_left_1_image	/uploads/thumb-1784291638734-l1vex8.jpg	2026-07-17 12:34:58.961724+00
+ad_slot_left_1_enabled	false	2026-07-17 12:34:58.963305+00
+ad_slot_right_1_image	/uploads/thumb-1784291648284-wg66e2.png	2026-07-17 12:35:00.454971+00
+ad_slot_right_1_link	#	2026-07-17 12:35:00.45591+00
 \.
 
 
@@ -1389,18 +1416,32 @@ COPY public.stream_comments (id, stream_id, user_id, username, content, created_
 --
 
 COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stream_key, status, start_time, end_time, viewer_count, access_price, created_at, updated_at, city, country, player_a, player_b, player_a_country, player_b_country, type, parent_id) FROM stdin;
-20	HEYBALL CHAMPION OF CHAMPIONS	Sanctioned WPA Sanctioned Category Men Women WPA Ranking Points WPA Heyball Ranking Description Arrival Day: 21 July 2026 Athletes’ Meeting & 22 July 2026, 16:30 (Mandatory)  Opening Ceremony: 22 July 2026, 19:00 (Mandatory) Tournament Start & Conclude: 23 July to 26 July 2026 Medal Ceremony: 26 July 2026, between 19:00 and 20:00 Departure Day: 27 July 2026	pool	\N	\N	\N	upcoming	2026-07-23 10:00:00+00	2026-07-26 12:00:00+00	0	0.00	2026-07-06 09:51:52.781332+00	2026-07-06 09:51:52.781332+00	Kuala Lumpur	Malaysia	\N	\N	\N	\N	competition	\N
-21	European Championships Heyball - Single	\N	pool	\N	\N	\N	upcoming	2026-08-03 10:00:00+00	2026-08-04 12:56:00+00	0	0.00	2026-07-06 09:58:59.703495+00	2026-07-06 09:58:59.703495+00	Kielce	Poland	\N	\N	\N	\N	competition	\N
-37	Live Darts | Series 14 Week 11	\N	other	\N	\N	__ch3_yt_default__	upcoming	2026-07-09 12:37:10.176364+00	2026-07-09 18:25:57.034+00	0	1.50	2026-07-09 12:37:10.176364+00	2026-07-09 18:27:30.010404+00	\N	\N	\N	\N	\N	\N	single	\N
-28	UGANDA BOXING CHAMPIONSHP LEAGUE	\N	boxing	\N	\N	\N	upcoming	2026-07-18 00:00:00+00	2026-07-06 01:30:00+00	0	1.50	2026-07-06 17:40:42.16567+00	2026-07-06 17:40:42.16567+00	Lugogo Arena	Uganda	RASKARA PAUL	MUSULUBE STEPHAN	UG	UG	single	27
-34	CUEXTV - BATTLE FOR LEGACY	A £50,000 battle race to 31. 	pool	\N	\N	\N	upcoming	2026-09-11 19:00:00+00	2026-09-12 23:00:00+00	0	5.00	2026-07-09 10:53:09.678062+00	2026-07-09 10:53:09.678062+00	Coalville	United Kingdom	CHRIS MELLING - Magician	TOM COUSINS - Top Cat	UK	WH	single	\N
 32	BILLIARDS CAFE CLASSIC OPEN	\N	pool	/uploads/thumb-1783628922488-mkmp00.jpg	\N	\N	upcoming	2026-11-26 12:00:00+00	2026-11-29 03:00:00+00	0	1.50	2026-07-09 10:46:03.854465+00	2026-07-09 20:28:42.886+00	Lusaka 	Zambia	\N	\N	\N	\N	competition	\N
 26	GENESIS JUNIORS POOL CHAMPIONSHIPS	\N	pool	/uploads/thumb-1783628959651-q182cc.jpg	\N	\N	upcoming	2026-09-04 12:00:00+00	2026-09-05 03:00:00+00	0	1.50	2026-07-06 14:20:45.691523+00	2026-07-09 20:29:20.047+00	The Olive School - Namugongo	Uganda	\N	\N	\N	\N	competition	\N
-33	NYENDO MASAKA GRAND OPEN CHAMPIONSHIPS	\N	pool	/uploads/thumb-1783628983611-kvyf9k.jpg	\N	\N	upcoming	2026-08-01 23:00:00+00	2026-08-02 03:00:00+00	0	1.50	2026-07-09 10:49:17.793099+00	2026-07-09 20:29:44.048+00	Masaka	Uganda	\N	\N	\N	\N	competition	\N
-27	UGANDA BOXING CHAMP LEAGUE SEASON 5 	\N	boxing	/uploads/thumb-1783629010871-mfwqhe.jpg	\N	\N	upcoming	2026-07-18 21:00:00+00	2026-07-18 07:30:00+00	0	1.50	2026-07-06 17:38:03.006088+00	2026-07-09 20:30:11.265+00	Lugogo Arena	Uganda	\N	\N	\N	\N	competition	\N
-19	BLACK POWER 64 MEN GRAND OPEN CHAMPIONSHIP	Players inser own coins	pool	/uploads/thumb-1783629041111-7c07jy.jpg	\N	\N	upcoming	2026-07-17 13:00:00+00	2026-07-18 15:00:00+00	0	1.50	2026-07-06 08:44:13.207235+00	2026-07-09 20:30:41.507+00	Black Power - Kasangati (Opposite Shell)	Uganda	\N	\N	\N	\N	competition	\N
-35	2026 BetVictor Championship League Snooker	\N	other	\N	\N	__yt_default__	upcoming	2026-07-09 12:25:22.216413+00	2026-07-09 18:25:58.397+00	0	1.50	2026-07-09 12:25:22.216413+00	2026-07-10 09:50:31.376646+00	\N	\N	\N	\N	\N	\N	single	\N
-36	REMATCH | UKASHA MATOVU VS ISAAC KASASA (MAIN EVENT) UBCL EVENT 4	\N	other	\N	\N	__ch2_yt_default__	upcoming	2026-07-09 12:32:14.128153+00	2026-07-09 18:25:59.547+00	0	1.50	2026-07-09 12:32:14.128153+00	2026-07-10 09:50:46.21423+00	\N	\N	\N	\N	\N	\N	single	\N
+21	European Championships Heyball - Single	\N	pool	/uploads/thumb-1783763029234-fk1nma.jpg	\N	\N	upcoming	2026-08-03 15:00:00+00	2026-08-04 17:56:00+00	0	1.50	2026-07-06 09:58:59.703495+00	2026-07-11 09:43:49.512+00	Kielce	Poland	\N	\N	\N	\N	competition	\N
+28	UBCL MAIN FIGHT OF THE NIGHT | 22nd FIGHT 12:00AM | WELTER 67KGS ELT	\N	boxing	/uploads/thumb-1783762970368-dsxqed.jpg	\N	\N	upcoming	2026-07-18 21:00:00+00	2026-07-18 21:30:00+00	0	1.50	2026-07-06 17:40:42.16567+00	2026-07-17 13:14:51.376+00	Lugogo Arena	Uganda	RASKARA PAUL	MUSULUBE STEPHAN	UG	UG	single	27
+33	NYENDO MASAKA GRAND OPEN CHAMPIONSHIPS	\N	pool	/uploads/thumb-1783763136625-lsj4as.jpg	\N	\N	upcoming	2026-08-02 01:00:00+00	2026-08-02 05:00:00+00	0	1.50	2026-07-09 10:49:17.793099+00	2026-07-11 09:45:36.909+00	Masaka	Uganda	\N	\N	\N	\N	competition	\N
+27	UGANDA BOXING CHAMP LEAGUE SEASON 5	\N	boxing	/uploads/thumb-1783763064343-b9u56z.jpg	\N	\N	upcoming	2026-07-18 11:00:00+00	2026-07-19 01:00:00+00	0	1.50	2026-07-06 17:38:03.006088+00	2026-07-17 13:24:59.475+00	Lugogo Arena	Uganda	\N	\N	\N	\N	competition	\N
+43	ATA Live Streaming	\N	other	\N	\N	__mux_default__	upcoming	2026-07-14 07:53:41.538856+00	\N	0	1.70	2026-07-14 07:53:41.538856+00	2026-07-16 12:26:11.820039+00	\N	\N	\N	\N	\N	\N	single	\N
+38	WPA HEYBALL WORLD CHAMPIONSHIPS	\N	pool	/uploads/thumb-1783718526583-52y9pt.jpg	\N	\N	upcoming	2026-08-12 07:00:00+00	2026-08-15 23:30:00+00	0	0.00	2026-07-10 21:22:06.987464+00	2026-07-10 21:22:06.987464+00	Pune 	India	\N	\N	\N	\N	competition	\N
+52	ADRIKO JIMMY VS MAKANGA MOSES | 12th FIGHT 7:PM | FLY 51KGS ELT	\N	boxing	/uploads/thumb-1784279554448-mtkc01.png	\N	\N	upcoming	2026-07-18 16:00:00+00	2026-07-18 16:30:00+00	0	1.50	2026-07-17 09:12:34.820013+00	2026-07-17 13:36:58.096+00	Lugogo Arena	Uganda	ADRIKO JIMMY	MAKANGA MOSES	UG	UG	single	27
+42	GRAND MCHANA 2026	\N	pool	/uploads/thumb-1783725840376-wjy2ut.jpg	\N	\N	upcoming	2026-12-07 08:00:00+00	2026-12-13 00:00:00+00	0	0.00	2026-07-10 23:24:00.688364+00	2026-07-10 23:24:00.688364+00	Nairobi 	Kenya	\N	\N	\N	\N	competition	\N
+34	CUEXTV - BATTLE FOR LEGACY	A £50,000 battle race to 31. 	pool	/uploads/thumb-1783725959547-h0trcg.jpg	\N	\N	upcoming	2026-09-11 22:00:00+00	2026-09-13 02:00:00+00	0	5.00	2026-07-09 10:53:09.678062+00	2026-07-10 23:25:59.869+00	Coalville	United Kingdom	CHRIS MELLING - Magician	TOM COUSINS - Top Cat	UK	WH	single	\N
+44	ATA	\N	other	\N	\N	__ch2_mux_default__	upcoming	2026-07-14 07:54:50.928572+00	\N	0	1.50	2026-07-14 07:54:50.928572+00	2026-07-16 12:28:24.713877+00	\N	\N	\N	\N	\N	\N	single	\N
+48	WASSWA JONATHAN VS KASASA ISAAC | 20th FIGHT 11:00PM | L/MIDDLE 71KGS ELT	\N	boxing	/uploads/thumb-1784278364104-7z2evf.png	\N	\N	upcoming	2026-07-18 20:00:00+00	2026-07-18 20:30:00+00	0	1.50	2026-07-17 08:52:44.49397+00	2026-07-17 13:32:24.881+00	Lugogo Arena	Uganda	WASSWA JONATHAN	KASASA ISAAC	UG	UG	single	27
+47	KAKANDE BRUNO VS ROCH NELSON | 21th  FIGHT 11:30PM | MINIMUM 48KGS ELT	\N	boxing	/uploads/thumb-1784277585070-o9a5qj.png	\N	\N	upcoming	2026-07-18 20:30:00+00	2026-07-18 21:00:00+00	0	1.50	2026-07-17 08:27:17.365595+00	2026-07-17 13:28:42.437+00	Lugogo Arena	Uganda	KAKANDE BRUNO	 ROCH NELSON	UG	UG	single	27
+54	KATABALWA RODNEY VS NYUTE ELIJAH | 10th FIGHT 6:00PM | FEATHER 57KGS ELT	\N	boxing	/uploads/thumb-1784279963809-k9074h.png	\N	\N	upcoming	2026-07-18 15:00:00+00	2026-07-18 15:30:00+00	0	1.50	2026-07-17 09:19:24.200016+00	2026-07-17 13:33:14.856+00	Lugogo Arena	Uganda	KATABALWA RODNEY	 NYUTE ELIJAH	UG	UG	single	27
+51	SSERUNKUMA MUHAMED VS ALUMA GODWIN | 14th FIGHT 8:00PM | MINIMUM 48KGS ELT	\N	boxing	/uploads/thumb-1784279328499-mzwja0.png	\N	\N	upcoming	2026-07-18 17:00:00+00	2026-07-18 17:30:00+00	0	1.50	2026-07-17 09:08:48.873133+00	2026-07-17 13:37:45.352+00	Lugogo Arena	Uganda	S MUHAMED	ALUMA GODWIN	UG	UG	single	27
+49	AMOKO INNOCENT VS MULEME DENIS  | 18th FIGHT 10:00PM | BANTAM 54KGS ELT	\N	boxing	/uploads/thumb-1784278687662-bonnfw.png	\N	\N	upcoming	2026-07-18 19:00:00+00	2026-07-18 19:30:00+00	0	1.50	2026-07-17 08:58:08.031662+00	2026-07-17 13:35:03.987+00	Lugogo Arena	Uganda	AMOKO INNOCENT	 MULEME DENIS	UG	UG	single	27
+39	REPLAY: UKASHA MATOVU VS ISAAC KASASA (MAIN EVENT)	\N	other	\N	\N	__yt_default__	upcoming	2026-07-10 21:46:08.846049+00	2026-07-17 09:33:27.386+00	0	1.50	2026-07-10 21:46:08.846049+00	2026-07-17 09:33:53.030152+00	\N	\N	\N	\N	\N	\N	single	\N
+40	REPLAY: RASKARA PAUL VS HASSAN HABIB	\N	other	\N	\N	__ch2_yt_default__	upcoming	2026-07-10 21:48:43.296841+00	2026-07-17 09:33:20.266+00	0	1.50	2026-07-10 21:48:43.296841+00	2026-07-17 09:34:01.429717+00	\N	\N	\N	\N	\N	\N	single	\N
+41	SF | 2026 JOY Heyball Masters Zhengzhou Station	\N	other	\N	\N	__ch3_yt_default__	upcoming	2026-07-10 22:15:27.987966+00	\N	0	1.50	2026-07-10 22:15:27.987966+00	2026-07-17 09:34:51.15128+00	\N	\N	\N	\N	\N	\N	single	\N
+53	EDEMA YUSUF VS KALEMBA REAGAN | 11th FIGHT 6:30PM | L/WEIGHT 60KGS ELT	\N	boxing	/uploads/thumb-1784279758318-nmcvis.png	\N	\N	upcoming	2026-07-18 15:30:00+00	2026-07-18 16:00:00+00	0	1.50	2026-07-17 09:15:58.696635+00	2026-07-17 13:36:00.389+00	Lugogo Arena	Uganda	EDEMA YUSUF	KALEMBA REAGAN	UG	UG	single	27
+50	NABAKIIBI TRACY VS MARIAM SULTAN | 15th FIGHT 8:30PM | L/HEAVY 80KGS ELT	\N	boxing	/uploads/thumb-1784279035030-h8ho7a.png	\N	\N	upcoming	2026-07-18 17:30:00+00	2026-07-18 18:00:00+00	0	1.50	2026-07-17 09:03:55.392978+00	2026-07-17 13:39:00.432+00	Lugogo Arena	Uganda	NABAKIIBI TRACY	 MARIAM SULTAN	UG	UG	single	27
+45	ELGON OPEN POOL CHAMPIONSHIPS	\N	pool	/uploads/thumb-1784156725862-v1bil8.jpg	\N	\N	upcoming	2026-08-08 08:00:00+00	2026-08-09 00:04:00+00	0	0.00	2026-07-15 23:05:26.32611+00	2026-07-15 23:05:26.32611+00	Mbale	Uganda	\N	\N	\N	\N	competition	\N
+19	BLACK POWER 64 MEN GRAND OPEN CHAMPIONSHIP	Players inser own coins	pool	/uploads/thumb-1783762899247-bo1mhh.jpg	\N	\N	upcoming	2026-07-17 15:00:00+00	2026-07-18 17:00:00+00	0	1.50	2026-07-06 08:44:13.207235+00	2026-07-11 09:41:39.523+00	Black Power - Kasangati (Opposite Shell)	Uganda	\N	\N	\N	\N	competition	\N
+46	MONEY BAG PRO DIVISION POOL CHAMPIONSHIPS	\N	pool	/uploads/thumb-1784156915864-upfii4.jpg	\N	\N	upcoming	2026-07-24 08:00:00+00	2026-07-26 00:07:00+00	0	0.00	2026-07-15 23:08:36.51296+00	2026-07-15 23:08:36.51296+00	Hotel Half London - Mityana	Uganda	\N	\N	\N	\N	competition	\N
+20	HEYBALL CHAMPION OF CHAMPIONS	Sanctioned WPA Sanctioned Category Men Women WPA Ranking Points WPA Heyball Ranking Description Arrival Day: 21 July 2026 Athletes’ Meeting & 22 July 2026, 16:30 (Mandatory)  Opening Ceremony: 22 July 2026, 19:00 (Mandatory) Tournament Start & Conclude: 23 July to 26 July 2026 Medal Ceremony: 26 July 2026, between 19:00 and 20:00 Departure Day: 27 July 2026	pool	/uploads/thumb-1783763015702-whwxgs.jpg	\N	\N	upcoming	2026-07-23 15:00:00+00	2026-07-26 17:00:00+00	0	1.50	2026-07-06 09:51:52.781332+00	2026-07-11 09:43:35.993+00	Kuala Lumpur	Malaysia	\N	\N	\N	\N	competition	\N
 \.
 
 
@@ -1468,6 +1509,23 @@ COPY public.transactions (id, transaction_id, user_id, type, amount, status, pay
 101	BET-AA842D6C	1	bet_stake	0.50	completed	internal	\N	Bet stake on game #17	\N	2026-07-09 12:52:28.003722+00	2026-07-09 12:52:28.003722+00
 102	ADJ-AD24B666	1	bet_stake	0.50	completed	internal	\N	Bet #8 removed — sub-minimum $0.50 stake refunded	\N	2026-07-09 19:42:20.139402+00	2026-07-09 19:42:20.139402+00
 103	DEP-625265E7	8	deposit	5.00	completed	pesapal	66e82b9c-b413-4a77-a584-da2a325ec5dd	Pesapal deposit of USD 5	{"orderTrackingId":"66e82b9c-b413-4a77-a584-da2a325ec5dd"}	2026-07-09 20:35:37.191229+00	2026-07-09 20:36:42.015+00
+104	ADJ-D2D8AFC6	5100	deposit	1.50	completed	internal	\N	Welcome bonus for Boxers	\N	2026-07-13 16:15:48.395211+00	2026-07-13 16:15:48.395211+00
+105	DEP-BED576E9	5104	deposit	1.00	pending	pesapal	81f2e51c-4e38-4e4d-88f3-da259bd5ee0c	Pesapal deposit of USD 1	{"orderTrackingId":"81f2e51c-4e38-4e4d-88f3-da259bd5ee0c"}	2026-07-13 21:28:58.650131+00	2026-07-13 21:29:00.066+00
+106	DEP-6DD1E9A2	4	deposit	1.50	pending	pesapal	e1660744-415f-44bb-b732-da24889492d8	Pesapal deposit of USD 1.5	{"orderTrackingId":"e1660744-415f-44bb-b732-da24889492d8"}	2026-07-15 07:48:57.086334+00	2026-07-15 07:48:58.456+00
+107	DEP-D51406FC	5033	deposit	1.50	pending	pesapal	1ec4ce5d-17f5-4aab-a673-da24a9d98deb	Pesapal deposit of USD 1.5	{"orderTrackingId":"1ec4ce5d-17f5-4aab-a673-da24a9d98deb"}	2026-07-15 08:10:59.743844+00	2026-07-15 08:11:00.866+00
+108	DEP-9B1A6A96	4	deposit	1.50	pending	pesapal	f99dd871-9994-4841-aede-da24cd15b6cc	Pesapal deposit of USD 1.5	{"orderTrackingId":"f99dd871-9994-4841-aede-da24cd15b6cc"}	2026-07-15 08:11:36.425365+00	2026-07-15 08:11:37.243+00
+109	DEP-EADCB484	5033	deposit	2.00	pending	pesapal	f04fbef6-3959-42ed-97c4-da24b9ea1035	Pesapal deposit of USD 2	{"orderTrackingId":"f04fbef6-3959-42ed-97c4-da24b9ea1035"}	2026-07-15 08:12:06.816282+00	2026-07-15 08:12:08.048+00
+110	DEP-F7D92731	5033	deposit	2.00	pending	pesapal	cbd9e003-15cd-4292-a26a-da244c0d5d5f	Pesapal deposit of USD 2	{"orderTrackingId":"cbd9e003-15cd-4292-a26a-da244c0d5d5f"}	2026-07-15 08:49:13.937319+00	2026-07-15 08:49:15.104+00
+111	DEP-A6BE2171	30	deposit	3.00	completed	pesapal	8711e6c0-9254-4c2e-8115-da24c858b399	Pesapal deposit of USD 3	{"orderTrackingId":"8711e6c0-9254-4c2e-8115-da24c858b399"}	2026-07-15 12:22:40.412385+00	2026-07-15 12:23:22.657+00
+118	DEP-5A07ECE7	30	deposit	1.50	completed	pesapal	278aa441-2e6b-47de-819a-da230e8daec2	Pesapal deposit of USD 1.5	{"orderTrackingId":"278aa441-2e6b-47de-819a-da230e8daec2"}	2026-07-16 12:49:45.568233+00	2026-07-16 12:50:40.737+00
+112	DEP-883F59D5	30	deposit	1.50	completed	pesapal	88335a76-4b43-4472-84ab-da24d93fe80c	Pesapal deposit of USD 1.5	{"orderTrackingId":"88335a76-4b43-4472-84ab-da24d93fe80c"}	2026-07-15 12:32:15.909318+00	2026-07-15 12:33:28.327+00
+113	SUB-E94D881B	30	stream_access	1.70	completed	internal	\N	24-hour platform subscription	\N	2026-07-15 12:33:57.496694+00	2026-07-15 12:33:57.496694+00
+114	BET-E7917A51	30	bet_stake	1.00	completed	internal	\N	Bet stake on game #17	\N	2026-07-15 12:35:20.175913+00	2026-07-15 12:35:20.175913+00
+119	SUB-B5936CB9	30	stream_access	1.70	completed	internal	\N	24-hour platform subscription	\N	2026-07-16 12:51:28.765418+00	2026-07-16 12:51:28.765418+00
+115	DEP-6F033488	30	deposit	1.50	completed	pesapal	0791f924-7e84-4f4d-a6c0-da24b225ab08	Pesapal deposit of USD 1.5	{"orderTrackingId":"0791f924-7e84-4f4d-a6c0-da24b225ab08"}	2026-07-15 13:03:25.770801+00	2026-07-15 13:04:13.91+00
+116	BET-F6B499B5	30	bet_stake	1.00	completed	internal	\N	Bet stake on game #17	\N	2026-07-15 13:05:59.804692+00	2026-07-15 13:05:59.804692+00
+117	DEP-8AB5A5E4	3906	deposit	2.00	completed	pesapal	9039678d-81e2-4999-8a6a-da2321503503	Pesapal deposit of USD 2	{"orderTrackingId":"9039678d-81e2-4999-8a6a-da2321503503"}	2026-07-16 07:33:53.871623+00	2026-07-16 07:34:30.655+00
+120	WIT-9B4663F1	30	withdrawal	3.00	approved	mtn_momo	0788663317	Withdrawal via mtn_momo to 0788663317	\N	2026-07-17 11:10:16.996318+00	2026-07-17 11:11:17.983+00
 \.
 
 
@@ -2055,7 +2113,6 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 587	tinasheolekantse98@gmail.com	MUST_SET_PASSWORD	Tinashe Olekantse	26774278296	user	active	\N	\N	2026-06-26 13:40:10.670187+00	2026-06-26 13:40:10.670187+00	\N	\N	\N	t	\N	\N	024BA02A	\N	tinashe_olekantse_587	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 588	shafickizito001@gmail.com	MUST_SET_PASSWORD	Shafic Kizito	0703886651	user	active	\N	\N	2026-06-26 13:40:10.674646+00	2026-06-26 13:40:10.674646+00	\N	\N	\N	t	\N	\N	024CEA3E	\N	shafic_kizito_588	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 589	akoyograce@gmail.com	MUST_SET_PASSWORD	Grace Akoyo	0789137379	user	active	\N	\N	2026-06-26 13:40:10.679368+00	2026-06-26 13:40:10.679368+00	\N	\N	\N	t	\N	\N	024DFDB2	\N	grace_akoyo_589	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-590	srubanga@gmail.com	MUST_SET_PASSWORD	Rubangakene Simon	0777365696	user	active	\N	\N	2026-06-26 13:40:10.683787+00	2026-06-26 13:40:10.683787+00	\N	\N	\N	t	\N	\N	024E1F58	\N	rubangakene_simon_590	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 591	edmondbatema@gmail.com	MUST_SET_PASSWORD	Edmond Batema	0781588124	user	active	\N	\N	2026-06-26 13:40:10.687828+00	2026-06-26 13:40:10.687828+00	\N	\N	\N	t	\N	\N	024F4C8C	\N	edmond_batema_591	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 592	www.charahnorest@gmail.com	MUST_SET_PASSWORD	Norest Chara	0778430615	user	active	\N	\N	2026-06-26 13:40:10.692132+00	2026-06-26 13:40:10.692132+00	\N	\N	\N	t	\N	\N	02502DB5	\N	norest_chara_592	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 593	ham.kas2009@gmail.com	MUST_SET_PASSWORD	Ham ham.kas2009@gmail.com	971582415577	user	active	\N	\N	2026-06-26 13:40:10.696351+00	2026-06-26 13:40:10.696351+00	\N	\N	\N	t	\N	\N	0251A2A6	\N	ham_ham_kas2009_gmail_com_593	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -2137,7 +2194,6 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 671	abdulshivon256@gmail.com	MUST_SET_PASSWORD	Abdul Shivon	0705961887	user	active	\N	\N	2026-06-26 13:40:11.035084+00	2026-06-26 13:40:11.035084+00	\N	\N	\N	t	\N	\N	029FBEF7	\N	abdul_shivon_671	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 672	kaongasunday85@gmail.com	MUST_SET_PASSWORD	Sunday Kaonga	0977117022	user	active	\N	\N	2026-06-26 13:40:11.039561+00	2026-06-26 13:40:11.039561+00	\N	\N	\N	t	\N	\N	02A05986	\N	sunday_kaonga_672	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 673	nsengimo2@gmail.com	MUST_SET_PASSWORD	Nsengiyumva Moses	0788499860	user	active	\N	\N	2026-06-26 13:40:11.04502+00	2026-06-26 13:40:11.04502+00	\N	\N	\N	t	\N	\N	02A16CD6	\N	nsengiyumva_moses_673	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-674	pattom40@gmail.com	MUST_SET_PASSWORD	Patrick Omwony	0774658432	user	active	\N	\N	2026-06-26 13:40:11.050167+00	2026-06-26 13:40:11.050167+00	\N	\N	\N	t	\N	\N	02A273E7	\N	patrick_omwony_674	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 675	properchando@gmail.com	MUST_SET_PASSWORD	Proper Chando	0771843614	user	active	\N	\N	2026-06-26 13:40:11.054308+00	2026-06-26 13:40:11.054308+00	\N	\N	\N	t	\N	\N	02A370CF	\N	proper_chando_675	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 676	kadibingirumpatsea@gmail.com	MUST_SET_PASSWORD	Bishop Ghost	243970835400	user	active	\N	\N	2026-06-26 13:40:11.058537+00	2026-06-26 13:40:11.058537+00	\N	\N	\N	t	\N	\N	02A436BB	\N	bishop_ghost_676	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 677	nyashamadziwa75@gmail.com	MUST_SET_PASSWORD	Nyasha Madziwa	0785150122	user	active	\N	\N	2026-06-26 13:40:11.062816+00	2026-06-26 13:40:11.062816+00	\N	\N	\N	t	\N	\N	02A570D4	\N	nyasha_madziwa_677	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -2459,7 +2515,6 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 993	juniorsserugendo@gmail.com	MUST_SET_PASSWORD	Sserugendo Junior	0772075659	user	active	\N	\N	2026-06-26 13:40:12.456409+00	2026-06-26 13:40:12.456409+00	\N	\N	\N	t	\N	\N	03E13241	\N	sserugendo_junior_993	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 994	daveykamunya@gmail.com	MUST_SET_PASSWORD	Davey Kamunya	0708292989	user	active	\N	\N	2026-06-26 13:40:12.460262+00	2026-06-26 13:40:12.460262+00	\N	\N	\N	t	\N	\N	03E28356	\N	davey_kamunya_994	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 995	muzapharm@yahoo.com	MUST_SET_PASSWORD	Mukalazi Muzaphar	0763168472	user	active	\N	\N	2026-06-26 13:40:12.464742+00	2026-06-26 13:40:12.464742+00	\N	\N	\N	t	\N	\N	03E3FDDB	\N	mukalazi_muzaphar_995	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-996	mrmancomedy@gmail.com	MUST_SET_PASSWORD	Mamy Maombi	0749019134	user	active	\N	\N	2026-06-26 13:40:12.468254+00	2026-06-26 13:40:12.468254+00	\N	\N	\N	t	\N	\N	03E4502F	\N	mamy_maombi_996	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 997	wilfredjunior94@gmail.com	MUST_SET_PASSWORD	Wilfred Junior	0754439422	user	active	\N	\N	2026-06-26 13:40:12.472504+00	2026-06-26 13:40:12.472504+00	\N	\N	\N	t	\N	\N	03E5CA80	\N	wilfred_junior_997	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 998	gwenaclarahru@gmail.com	MUST_SET_PASSWORD	Clarah rumbidzai Gwena	0778650281	user	active	\N	\N	2026-06-26 13:40:12.476926+00	2026-06-26 13:40:12.476926+00	\N	\N	\N	t	\N	\N	03E69F8D	\N	clarah_rumbidzai_gwena_998	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 999	chikashawellington3@gmail.com	MUST_SET_PASSWORD	wellington chikasha	263774424495	user	active	\N	\N	2026-06-26 13:40:12.480939+00	2026-06-26 13:40:12.480939+00	\N	\N	\N	t	\N	\N	03E79D00	\N	wellington_chikasha_999	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -4042,7 +4097,6 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 2582	sembiros@gmail.com	MUST_SET_PASSWORD	Sembiro Steven	0704638405	user	active	\N	\N	2026-06-26 13:40:20.890742+00	2026-06-26 13:40:20.890742+00	\N	\N	\N	t	\N	\N	0A16EF99	\N	sembiro_steven_2582	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2583	talentmuswaka24@gmail.com	MUST_SET_PASSWORD	Talent Muswaka	97477820774	user	active	\N	\N	2026-06-26 13:40:20.895934+00	2026-06-26 13:40:20.895934+00	\N	\N	\N	t	\N	\N	0A1740E4	\N	talent_muswaka_2583	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2584	prosperivan999@gmail.com	MUST_SET_PASSWORD	Ssuuna Isaac	0775338955	user	active	\N	\N	2026-06-26 13:40:20.900846+00	2026-06-26 13:40:20.900846+00	\N	\N	\N	t	\N	\N	0A181CA9	\N	ssuuna_isaac_2584	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-2585	www.orachvincent37@gmail.com	MUST_SET_PASSWORD	Orach Vincent	0775086741	user	active	\N	\N	2026-06-26 13:40:20.905115+00	2026-06-26 13:40:20.905115+00	\N	\N	\N	t	\N	\N	0A1998B8	\N	orach_vincent_2585	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2586	mwesigwa78@yahoo.co.uk	MUST_SET_PASSWORD	Rogers Mwesigwa	256776009088	user	active	\N	\N	2026-06-26 13:40:20.909062+00	2026-06-26 13:40:20.909062+00	\N	\N	\N	t	\N	\N	0A1A77CC	\N	rogers_mwesigwa_2586	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2587	kutesakwebosco@gmail.com	MUST_SET_PASSWORD	Kutesakwe Bosco	0706578928	user	active	\N	\N	2026-06-26 13:40:20.913156+00	2026-06-26 13:40:20.913156+00	\N	\N	\N	t	\N	\N	0A1BBFF4	\N	kutesakwe_bosco_2587	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2588	moncef.regragui21@gmail.com	MUST_SET_PASSWORD	Tanger Regragui	0639074910	user	active	\N	\N	2026-06-26 13:40:20.91842+00	2026-06-26 13:40:20.91842+00	\N	\N	\N	t	\N	\N	0A1C21E0	\N	tanger_regragui_2588	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -4433,7 +4487,6 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 2978	tafaramushayanyama04@gmail.com	MUST_SET_PASSWORD	Tafara Mushayanyama	263781259875	user	active	\N	\N	2026-06-26 13:40:22.888949+00	2026-06-26 13:40:22.888949+00	\N	\N	\N	t	\N	\N	0BA27258	\N	tafara_mushayanyama_2978	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2979	charlesngigi45@gmail.com	MUST_SET_PASSWORD	Charles Kibe	0716805134	user	active	\N	\N	2026-06-26 13:40:22.894128+00	2026-06-26 13:40:22.894128+00	\N	\N	\N	t	\N	\N	0BA38C2A	\N	charles_kibe_2979	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2980	ashburndhliwayo@gmail.com	MUST_SET_PASSWORD	Morebrains Dhliwayo	263775655452	user	active	\N	\N	2026-06-26 13:40:22.899211+00	2026-06-26 13:40:22.899211+00	\N	\N	\N	t	\N	\N	0BA458CC	\N	morebrains_dhliwayo_2980	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-2981	taquemist@gmail.com	MUST_SET_PASSWORD	Takudzwa Mhute	0772051547	user	active	\N	\N	2026-06-26 13:40:22.904344+00	2026-06-26 13:40:22.904344+00	\N	\N	\N	t	\N	\N	0BA5CED8	\N	takudzwa_mhute_2981	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2982	tnyaku99@gmail.com	MUST_SET_PASSWORD	Tapiwanashe Nyaku	0787703352	user	active	\N	\N	2026-06-26 13:40:22.908905+00	2026-06-26 13:40:22.908905+00	\N	\N	\N	t	\N	\N	0BA6C8B8	\N	tapiwanashe_nyaku_2982	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2983	biggiejava@gmail.com	MUST_SET_PASSWORD	Bigman Java	0774265364	user	active	\N	\N	2026-06-26 13:40:22.913749+00	2026-06-26 13:40:22.913749+00	\N	\N	\N	t	\N	\N	0BA7EE0A	\N	bigman_java_2983	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2984	msimba029@gmail.com	MUST_SET_PASSWORD	Simba Mapfumo	0694761132	user	active	\N	\N	2026-06-26 13:40:23.020794+00	2026-06-26 13:40:23.020794+00	\N	\N	\N	t	\N	\N	0BA803C5	\N	simba_mapfumo_2984	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -6475,8 +6528,7 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5031	johm@try.co.za	$2b$10$9YzCt9Xc6KYJMh63h6yZaePOORc17dl8mHqBm3uQsIzREGscYfAPG	Alex	+27748448457	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzEsInJvbGUiOiJ1c2VyIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODI4MDk5ODYsImV4cCI6MTc4NTQwMTk4Nn0.yJFBFZwZw743At1p7hYMTlw7hdXeVZ7Mfq7dQIOSDJ0	2026-06-30 08:59:46.506546+00	2026-06-30 08:59:46.92+00	\N	\N	\N	f	\N	\N	13A75054	\N	alex_5031	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5035	wanjalaabraham23@gmail.com		Wanjala Barasa Abraham	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocKBv5lXXncXqVS7n2evyO_GFd9KxgFb5C7gpfYYM7RBGwTfz75w=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzUsInJvbGUiOiJ1c2VyIiwic3YiOiJlM2FjM2M2My1mMWFkLTRlMzMtYTlhZC02MDY0ZDhlYWExNWIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA3NTExNywiZXhwIjoxNzg1NjY3MTE3fQ.2PaKdS9R2gRseaDcl9lsrwWwDHag_qwanNheVxwELBc	2026-07-03 10:38:37.327768+00	2026-07-03 10:38:37.332+00	\N	\N	\N	f	e3ac3c63-f1ad-4e33-a9ad-6064d8eaa15b	109505428379682903043	LAXUZDGT	\N	wanjala_barasa_abraham_5035	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5036	alextukundane17@gmail.com	$2b$10$Pdz2yko1ktjFWZkCKkTlnu4IN7V/JyAtGmTqrj8KJcc7Ig574ORRC	Alex Tukundane 	+256778563737	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzYsInJvbGUiOiJ1c2VyIiwic3YiOiI5MTlhMTYxNC01NTY5LTRmMDYtOGMzZC01NTE0Yjg4OGQyYzMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA4MzIzNiwiZXhwIjoxNzg1Njc1MjM2fQ.aNTiBWy_MMbCKGk-Jb6AbGLmmi9MiHUNbRv0kmlWDwM	2026-07-03 12:53:56.030116+00	2026-07-03 12:53:56.033+00	\N	\N	\N	f	919a1614-5569-4f06-8c3d-5514b888d2c3	\N	C6XXF2CL	\N	alex_tukundane__5036	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-5034	alphagaming.47ag@gmail.com		Alpha GM	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocLJAZYdI-0rdyMV4oK2sU03ng6zIKxC9v8QNNTE0LwQa0-s5aM=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzQsInJvbGUiOiJ1c2VyIiwic3YiOiJjYTFkY2FlNC05MTE1LTQ4ODEtYjdhOS01ZWFhNmRkZjRhMzciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE4ODUyOSwiZXhwIjoxNzg1NzgwNTI5fQ.6Ery7ORQ0lpFxWUSK6RAaljiSTnjvT1cCx1jY2BpqjM	2026-07-03 07:57:16.022982+00	2026-07-04 18:08:49.764+00	\N	\N	\N	f	ca1dcae4-9115-4881-b7a9-5eaa6ddf4a37	100767775268980736498	MWQRL9BM	\N	alpha_gm_5034	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-5033	markgrart@gmail.com		Mark Grart	\N	content_editor	active	https://lh3.googleusercontent.com/a/ACg8ocIIYyhaTRxymKbSrgDMnn16srRj9Prnly2TtBb_3d6Kt3O6-A=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzMsInJvbGUiOiJ1c2VyIiwic3YiOiI5YzBhZmRkYy02Y2YwLTRlN2QtODAxMS01OTEzMjM2NGI2MDgiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzAzMDQ5NCwiZXhwIjoxNzg1NjIyNDk0fQ.tFCKMLZFWIoI6Y3cmceZNx0ufI-pLq7VVhFC9bUer-M	2026-07-02 22:14:54.657208+00	2026-07-04 12:55:41.148+00	\N	\N	\N	f	9c0afddc-6cf0-4e7d-8011-59132364b608	106970712051832989828	LRZB52HK	\N	mark_grart_5033	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+590	srubanga@gmail.com	MUST_SET_PASSWORD	Rubangakene Simon	0777365696	user	active	\N	\N	2026-06-26 13:40:10.683787+00	2026-07-10 12:01:55.563+00	\N	\N	\N	t	\N	\N	024E1F58	\N	rubangakene_simon_590	0	\N	\N	\N	\N	\N	f	f	f	d7ec575f-47b4-4e25-8889-2de06bf71432	2026-07-10 12:16:55.563+00	f	\N
 5039	ben.s5804@gmail.com		BENON SSESANGA	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocIWcr74ZTLq6Nhf3zsY8qA2GHMHsxyMGdDt2975im-o-fg-cNcKxw=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzksInJvbGUiOiJ1c2VyIiwic3YiOiJjOTcyZjBiNi05MmQ2LTRjMTItOWI2NC1lNjA3NjMzOTIzNDQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzA5MjMzOCwiZXhwIjoxNzg1Njg0MzM4fQ.iuz8b2qXzhaKbcEogG7gn5ZV0MWT9RrF70feggN_ZEs	2026-07-03 15:25:38.993379+00	2026-07-03 15:25:38.997+00	\N	\N	\N	f	c972f0b6-92d6-4c12-9b64-e60763392344	100433739963395625257	DK3XTWQ3	\N	benon_ssesanga_5039	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5041	kusaladenisbabu@gmail.com	$2b$10$8N7.dY11VHli8E5YZETrmeTIyxGD0rKp6zJdMtZfee9ppOiD2/UnW	Kusala Denis babu	+256770555770	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDEsInJvbGUiOiJ1c2VyIiwic3YiOiJiYmQxNWZjYy00OWYxLTQ0MzMtYTA3OS0yYTUyZTZlZjdmN2YiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE0NzcxNCwiZXhwIjoxNzg1NzM5NzE0fQ.WcIe60zpK4AFdbJwQS-3ww2ohffNu6mZKbI1FFzQt1U	2026-07-04 06:48:34.912425+00	2026-07-04 06:48:34.917+00	\N	\N	\N	f	bbd15fcc-49f1-4433-a079-2a52e6ef7f7f	\N	WUYSZBHE	\N	hightawah	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5044	jimmygoldenmanyen@gmail.com	$2b$10$RGbC5As8RqGKPjzfYt7Aw.Z.WkRv9HY/Uz1Q1Kb1QfKmUrVr7gagG	Jimmy golden manyen	+256784193619	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDQsInJvbGUiOiJ1c2VyIiwic3YiOiJiZTgzMGU5Mi1mNTEzLTRiMGYtYWY1OS1kMmNjMThmNjc2YzAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE1Nzc4MCwiZXhwIjoxNzg1NzQ5NzgwfQ.d9_rckodJylkMlTROu_iX0Mm1seLz-ZjLrjg4IXZ-zA	2026-07-04 09:36:20.891142+00	2026-07-04 09:36:20.897+00	\N	\N	\N	f	be830e92-f513-4b0f-af59-d2cc18f676c0	\N	LPJS668U	30	jimmygoldenmanyen	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -6490,15 +6542,13 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5068	kazibwep80@gmail.com		phillip kazibwe	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocLfQ_t_3tP410e16qvJOTrIA9b_l3s6CrvPazp-NKXCE_HJA5wv=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNjgsInJvbGUiOiJ1c2VyIiwic3YiOiJkYzEzMGU1OS1kODBlLTRhNWMtYTFhNC0yZDY4N2JhOTM4N2YiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE4NDU2NiwiZXhwIjoxNzg1Nzc2NTY2fQ.Nqgz6FsPoUshZTY53QvCOxzaRzngqqqOz0hIi0Frpy8	2026-07-04 17:02:46.371405+00	2026-07-04 17:02:46.376+00	\N	\N	\N	f	dc130e59-d80e-4a5c-a1a4-2d687ba9387f	115401485746460507024	R49K72XM	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5040	rtnkytbweb@gmail.com		rtnkytb ytb	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocKMAJUxFHD3aJcyD5kMthU7RbSSjFqbX4luMHUHlNW9rTL7sQ=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDAsInJvbGUiOiJ1c2VyIiwic3YiOiI3YTg5MmE0ZC05ZmZjLTQyY2ItYmM2Ny0zNjhhMzc0NGRiYTYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzEyNjQzNywiZXhwIjoxNzg1NzE4NDM3fQ.n0aWCtoKydx9MeLI5jJ6_57s71CpGUboKeH1xhGooyY	2026-07-04 00:53:57.957933+00	2026-07-04 00:53:57.962+00	\N	\N	\N	f	7a892a4d-9ffc-42cb-bc67-368a3744dba6	102719535961053881024	CJP4CKKS	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5051	otoolimamos@gmail.com	$2b$10$ZjZtQWWNJZmGsOTUuUF/AOpiNLDKeNd2OLpaYw0Q3j1dOqQ47KtZW	otolim Amos	+256700259008	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNTEsInJvbGUiOiJ1c2VyIiwic3YiOiI3NGU4ZGI5Yi1kMjM0LTQxZjAtYjdlOS0xOTQ5YmM5ZGNmYWYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE2ODgwMSwiZXhwIjoxNzg1NzYwODAxfQ.0yQsZfC6yjO2-9IYq-eOE1ePP2xp11_pgh3D2UR5lw8	2026-07-04 12:40:01.117732+00	2026-07-04 12:40:01.121+00	\N	\N	\N	f	74e8db9b-d234-41f0-b7e9-1949bc9dcfaf	\N	USJLZBHX	\N	otto1896	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5097	georgewilliamkilama@googlemail.com	$2b$10$7vHq6KiyoB3gFdf9.c6jIecinO8WAZKLwJIkL5eMiIg72SNi.hdgi	George William Kilama 	0777327045	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTcsInJvbGUiOiJ1c2VyIiwic3YiOiI2ZjFhZGE1ZS1hNTkzLTRhMmYtOWU4Mi0zMzI3MDM3Y2IzZjAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzc2MjE5MiwiZXhwIjoxNzg2MzU0MTkyfQ.ZOUeDpVSAVvk9kboN6N6MdvEJg9vY4R5xz-k1X55QWE	2026-07-11 09:29:52.190144+00	2026-07-11 09:29:52.196+00	\N	\N	\N	f	6f1ada5e-a593-4a2f-9e82-3327037cb3f0	\N	EUN6L6CH	\N	laparish1976	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 4955	kinyuadanson35@gmail.com	MUST_SET_PASSWORD	Danson Kinyua	711935902	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ5NTUsInJvbGUiOiJ1c2VyIiwic3YiOiIzM2Y3OTQ1ZC0xZTZjLTRhZjUtOWFlZS1mZTA2ZjM0MmU2M2IiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE2NTQwNywiZXhwIjoxNzg1NzU3NDA3fQ.L_JkczF1jitqhzZGr0xgCeMmNhUFp7fMYCj9stPznjw	2026-06-26 13:40:33.082161+00	2026-07-04 11:43:27.575+00	\N	\N	\N	t	33f7945d-1e6c-4af5-9aee-fe06f342e63b	105652862178248142116	135BA316	\N	danson_kinyua_4955	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5049	jhoshuahonapa@gmail.com	$2b$10$UO3boJJuCWraUxXEVpyTLuLwzjHzQnxAmNm1naiL9.dFvoWlDbyGa	Jhoshuah Onapa	0773643411	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDksInJvbGUiOiJ1c2VyIiwic3YiOiJhM2NjNzJjNi0yMjEyLTQ4N2ItYjAwNy01Njg0YTdlMTY4NWQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE2NzE5OCwiZXhwIjoxNzg1NzU5MTk4fQ.e-GGWnxd3z87EV1kRJpcLbBtP4MKJEMrMTGPAVwgIx8	2026-07-04 12:13:18.020038+00	2026-07-04 12:13:18.024+00	\N	\N	\N	f	a3cc72c6-2212-487b-b007-5684a7e1685d	\N	2HLC647S	30	jhoshuah	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 214	johnsonmandelaa@gmail.com	MUST_SET_PASSWORD	Angufi Johnson mandela	0701186129	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIxNCwicm9sZSI6InVzZXIiLCJzdiI6IjgxYTcyNWNjLTQxNjItNDE3Zi1hODc2LWYxNWI3MTBiZTMyZCIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzMTU3OTk4LCJleHAiOjE3ODU3NDk5OTh9.UTw-4Jhuma_1zJsPOQAnr9Qm2sXHGkmwRuEI1sf8r4I	2026-06-26 13:40:09.061496+00	2026-07-04 09:39:58.511+00	\N	\N	\N	t	81a725cc-4162-417f-a876-f15b710be32d	115172871445688599051	00D66F34	\N	angufi_johnson_mandela_214	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-5046	wicksonzaga6@gmail.com	$2b$10$gZy0azf.2rOcBBWKQAFn9uF8ATuJvoOGZiYTTLoSDrC1cNhIpRYzG	Wickson zaga	+256 743 641 305	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDYsInJvbGUiOiJ1c2VyIiwic3YiOiI2NDdjZDI5YS0zYmNkLTQ2MGItYjAxNS05NDUyNDQ4NjBjMWUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE1OTEzNSwiZXhwIjoxNzg1NzUxMTM1fQ.HPzUsFhQ0NApVFX_fAEypb-qXCig28duBX4Ng8dRvp4	2026-07-04 09:58:55.174463+00	2026-07-04 09:58:55.177+00	\N	\N	\N	f	647cd29a-3bcd-460b-b015-945244860c1e	\N	FGVZWXRC	30	wicksonzaga6gmailcom	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 1664	marsgith@gmail.com	MUST_SET_PASSWORD	Jesee Mwaura	0715418860	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE2NjQsInJvbGUiOiJ1c2VyIiwic3YiOiJjNmY2MmViNi00ODllLTQ1ZmEtODcwNS05OWMwM2ZjZWM4ZmYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE2MDI3MiwiZXhwIjoxNzg1NzUyMjcyfQ.Vo8lHQnIcoLb3OK77rKRijPSwdPBFpAfti_4Ye-lcCw	2026-06-26 13:40:15.903714+00	2026-07-04 10:17:52.741+00	\N	\N	\N	t	c6f62eb6-489e-45fa-8705-99c03fcec8ff	107805091378320877616	06807E5C	\N	jesee_mwaura_1664	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-1033	pamandrua@gmail.com	$2b$10$zZAbS4WgsF87IIBLFlv2B.rAGKCPhgY7TS0g4gE.mDNc8Lu3VUDB2	Phiona Amandrua	07727045189	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMzMsInJvbGUiOiJ1c2VyIiwic3YiOiI5OTllZjAyMS02MDhiLTRkYTktODMzNi03OWNhZTY2NTJlMDgiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE2MjAwNiwiZXhwIjoxNzg1NzU0MDA2fQ.W0S8RFTyZ5RFp2XF2WQ_yInz689bJvLrB8H7CK0Dz0U	2026-06-26 13:40:12.653601+00	2026-07-04 10:46:46.183+00	\N	\N	\N	f	999ef021-608b-4da9-8336-79cae6652e08	\N	04094BB2	\N	phiona_amandrua_1033	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 1660	pyiga31@yahoo.com	$2b$10$cDyXS0f6iwSsMCX1gFK1SusQbfxaq.6T26vxPs2yODnRMaBPjikMW	Yiga Patrick	0776059212	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE2NjAsInJvbGUiOiJ1c2VyIiwic3YiOiJhNzJiNTViMy02ZDkxLTQyYjgtYWE3MC1kYzFlYzI4YzQ2NDAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE2MjQ4NiwiZXhwIjoxNzg1NzU0NDg2fQ.DoBUT3CWOpDqHQXHoRfYnmD5Sxg37LQA_-6v892Hhz4	2026-06-26 13:40:15.885269+00	2026-07-04 10:54:46.419+00	\N	\N	\N	f	a72b55b3-6d91-42b8-aa70-dc1ec28c4640	\N	067CD299	\N	yiga_patrick_1660	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5048	kigulabonny2@gmail.com	$2b$10$AXpy.EcePSs9F342vEDNa.fSD0h8FlnpnL0t3ZCfrn9v7sg88Rg0u	Kigula Bonny	+27813812458	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDgsInJvbGUiOiJ1c2VyIiwic3YiOiIxZjYxYmZiOC03OTI4LTRmYTktYmM1NC00M2VlY2ZiOTQ4ZGIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE2MjgzMywiZXhwIjoxNzg1NzU0ODMzfQ.dedqWhNbW5vTTcSn8nYVrrW4gc77Co_JoAv5QfLxDs4	2026-07-04 11:00:33.307626+00	2026-07-04 11:00:33.31+00	\N	\N	\N	f	1f61bfb8-7928-4fa9-bc54-43eecfb948db	\N	LF62SDX3	\N	bonny	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-5083	rogers@atasportslive.com	$2b$10$c9BpUPgMly/pLCCfreXR/e8eBfHIb9GzlXiyb4akx.6AAJnTPYA1C	Rojah	0752314095	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODMsInJvbGUiOiJ1c2VyIiwic3YiOiJhZmJhNDYxOS1hMjFiLTRlNGEtODgwMy1kMDNjNmVjNzQ4YTIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzQxODI0NSwiZXhwIjoxNzg2MDEwMjQ1fQ.SpfcjvENsbX0NKTvwmmFv4JWpH0Tjvu4rP9_o5512RI	2026-07-07 09:57:25.342796+00	2026-07-07 09:57:25.347+00	\N	\N	\N	f	afba4619-a21b-4e4a-8803-d03c6ec748a2	\N	SXVJTY7F	\N	rojahata	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 282	agumaedson1997@gmail.com	$2b$10$lmg5yUHwtfqg3aL7RR4e4.8iVE8FecCJ0Eqs2jhBo1MmWOlRFTFv6	Aguma Edson	0703797349	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI4Miwicm9sZSI6InVzZXIiLCJzdiI6IjgzYWJiODdjLTI2MjktNGVkMi1hMGNmLWQ3YzE1YWM2YTIwZiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzMTY5NDcwLCJleHAiOjE3ODU3NjE0NzB9.CSUMkKrfgW3FJsTMxy3aV6R_ZiIEIeFaNSh63E6TF0o	2026-06-26 13:40:09.346347+00	2026-07-04 12:51:10.35+00	\N	\N	\N	f	83abb87c-2629-4ed2-a0cf-d7c15ac6a20f	\N	011A7636	\N	aguma_edson_282	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5050	kayxbanqx@gmail.com	$2b$10$jdq1PpKIX2RlxBQCunCyJeC2pXGirutK9NUp.n0yE/50gF/1lQo6G	Kayz banqx	0701177992	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNTAsInJvbGUiOiJ1c2VyIiwic3YiOiJhMzFkNTRmYS04ZGQwLTRkNWUtYjJjZC1hZmIyNmM5ODQ0MzgiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE2ODMwNSwiZXhwIjoxNzg1NzYwMzA1fQ.WKTFfZOSOA2FZn97vizFJ72JYJTuGyJxuUoEJrZuSIA	2026-07-04 12:31:45.760888+00	2026-07-04 12:31:45.765+00	\N	\N	\N	f	a31d54fa-8dd0-4d5e-b2cd-afb26c984438	\N	L9JHE46V	30	abbas	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5052	wizzmb38@gmail.com	$2b$10$Y24q3DTlTysThWT2qyKk6OqEeHShHd89pGFZcHao3DD1Xkiwni0ki	Bumba umar	0707041966	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNTIsInJvbGUiOiJ1c2VyIiwic3YiOiI2MDYyOGFjNS1mNTgwLTRiNjAtYmEyNy1hZWFiYjM2ZGI3ZjIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE3MDAxNiwiZXhwIjoxNzg1NzYyMDE2fQ.TtyWqWhSX-jEYnOuY8iTeAkydwB-93-8CnGNvvwf4r4	2026-07-04 13:00:16.938231+00	2026-07-04 13:00:16.941+00	\N	\N	\N	f	60628ac5-f580-4b60-ba27-aeabb36db7f2	\N	WAERKJDK	\N	wizzmb	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -6506,11 +6556,12 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 23	kyekyejose@gmail.com	MUST_SET_PASSWORD	kyeune jose	0703985371	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIzLCJyb2xlIjoidXNlciIsInN2IjoiMGVlMDkyYzItY2RlZS00OTI0LWE1ZTktMjg0MmY0NWU5OGU0IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMxNzA3NDksImV4cCI6MTc4NTc2Mjc0OX0.MaAfVOMeo9P5p4Cs-hEWRDADCwgxU--9VWoi6WPHU40	2026-06-26 13:40:08.249633+00	2026-07-04 13:12:29.047+00	\N	\N	\N	t	0ee092c2-cdee-4924-a5e9-2842f45e98e4	106911051162654451095	0017F4A9	\N	kyeune_jose_23	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 399	sebuyuludenix@gmail.com	MUST_SET_PASSWORD	Denis Monroe	0706746746	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM5OSwicm9sZSI6InVzZXIiLCJzdiI6IjYyMGRlMjMzLThjZDUtNGE5ZC1iYzM5LTAwNGQxOWQ4Y2FjZiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzMTcwOTExLCJleHAiOjE3ODU3NjI5MTF9.kIom1nD3_iZzy0dypiPxEO410k4406-HdrvxvLke-Xk	2026-06-26 13:40:09.852202+00	2026-07-04 13:15:11.694+00	\N	\N	\N	t	620de233-8cd5-4a9d-bc39-004d19d8cacf	117979626528136217378	018FE9B0	\N	denis_monroe_399	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5054	rgnkasoma@gmail.com		Jaazy Phone's	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocLcFf6EIPuE4f8H2tMAocPw7Mf4p31NEJBI6wXVUAIDIKAm_H9gng=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNTQsInJvbGUiOiJ1c2VyIiwic3YiOiI5M2VjYzA0Yi02NzVlLTQ4NzctOWQzMC1kNjQzY2Y4NjRhZTciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzI0NDk3NiwiZXhwIjoxNzg1ODM2OTc2fQ.HDxDOEFljcOtTAtlU6coU7rJEPiNs1bpPPIcOZWehcc	2026-07-04 13:16:20.050765+00	2026-07-05 09:49:36.803+00	\N	\N	\N	f	93ecc04b-675e-4877-9d30-d643cf864ae7	107339395875001134366	VSF6ZXP3	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5046	wicksonzaga6@gmail.com	$2b$10$gZy0azf.2rOcBBWKQAFn9uF8ATuJvoOGZiYTTLoSDrC1cNhIpRYzG	Wickson zaga	+256 743 641 305	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDYsInJvbGUiOiJ1c2VyIiwic3YiOiIxNjFkNTFmMy0zMGViLTRlNTYtYmU1MC04MjFlNjE2OGYzMDkiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk1MDg3MCwiZXhwIjoxNzg2NTQyODcwfQ.fpWz__WL15Xc-RsGjxk6guqL_n5OMWQPukYo0pnp1NY	2026-07-04 09:58:55.174463+00	2026-07-13 13:54:30.728+00	\N	\N	\N	f	161d51f3-30eb-4e56-be50-821e6168f309	\N	FGVZWXRC	30	wicksonzaga6gmailcom	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+1033	pamandrua@gmail.com	$2b$10$zZAbS4WgsF87IIBLFlv2B.rAGKCPhgY7TS0g4gE.mDNc8Lu3VUDB2	Phiona Amandrua	07727045189	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEwMzMsInJvbGUiOiJ1c2VyIiwic3YiOiJmYzhjNWQyZS0zNTk5LTRiMjAtOWMwZi01NDNkMGNlNGUwMTUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDAyNzM3MCwiZXhwIjoxNzg2NjE5MzcwfQ.IGVoG4Rhsyd24COh9D-s3CYZNZpHjNcHgnvvqDd2DP0	2026-06-26 13:40:12.653601+00	2026-07-14 11:09:30.64+00	\N	\N	\N	f	fc8c5d2e-3599-4b20-9c0f-543d0ce4e015	101411417487874262008	04094BB2	\N	phiona_amandrua_1033	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5055	kaabyanicholas@gmail.com		KAABYA NICHOLAS	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocKjuqTKcyjH0lZTOsc7YmAx6GBuCKdVDXA9wa_RsVVJiDwfgg=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNTUsInJvbGUiOiJ1c2VyIiwic3YiOiI4MzhjZjA4ZS1mNjI0LTQxMTYtODI5Yy0zNzc3MTBiZjk0M2IiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE3MTE3OCwiZXhwIjoxNzg1NzYzMTc4fQ.HnMqDb3ulE3-Od3vvP25I_X1VcNOWDt0Now_t73XHf8	2026-07-04 13:19:38.845868+00	2026-07-04 13:19:38.85+00	\N	\N	\N	f	838cf08e-f624-4116-829c-377710bf943b	112074709930091550822	9BH97L94	30	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 308	ibrafilo22@gmail.com	MUST_SET_PASSWORD	Filo Ibra	971551436700	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMwOCwicm9sZSI6InVzZXIiLCJzdiI6IjEyYWRkNDBlLWY4YzUtNDA4Zi05YTQxLWI5MmZjNTAwODY0MCIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzMTcxMjA4LCJleHAiOjE3ODU3NjMyMDh9.YgGfQFVClKx26VXpBKEeaufX84GsKmcHofC5L4YcLd8	2026-06-26 13:40:09.452722+00	2026-07-04 13:20:08.868+00	\N	\N	\N	t	12add40e-f8c5-408f-9a41-b92fc5008640	103763012950947496238	01344AE0	\N	filo_ibra_308	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 2466	twine04@gmail.com	MUST_SET_PASSWORD	Muwada Twine	0703804274	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI0NjYsInJvbGUiOiJ1c2VyIiwic3YiOiJmY2Q1ZGNkMS0xOWUyLTQwZjgtOTFkYy1mMDM4NzcwYjg5NDciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE3MTI3MiwiZXhwIjoxNzg1NzYzMjcyfQ.xhNr_9Cg4U3Pq-df1hLhWWpyEK9SJ25Da981pHlZBoQ	2026-06-26 13:40:20.178221+00	2026-07-04 13:21:12.086+00	\N	\N	\N	t	fcd5dcd1-19e2-40f8-91dc-f038770b8947	102043873032720346294	09A2DF20	\N	muwada_twine_2466	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5057	kaabyanic@gmail.com	$2b$10$5AOa.RtpvoJ7geGvxgB3xuaBAbRRrLPq0zwDgCprws4plCPzlbyda	KAABYA NICHOLAS	0779381866	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNTcsInJvbGUiOiJ1c2VyIiwic3YiOiI4MTJhYWNmNi0wNDMwLTQ1NzMtOTk0OS00YzYxYzliZjQ3YjAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE3MjcyMiwiZXhwIjoxNzg1NzY0NzIyfQ.fn61w7rdBGTXTlKcuVCJ7VZrUGYgtc7ueLnisyXD1RQ	2026-07-04 13:45:22.077844+00	2026-07-04 13:45:22.082+00	\N	\N	\N	f	812aacf6-0430-4573-9949-4c61c9bf47b0	\N	3Z2EBRA4	\N	nico	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-54	majwegapeter25@gmail.com	$2b$10$SM60uiNS6lmO3002DiGPQ.8cihX/.C.S0WcD/P4lcPDDeb.m0S6mG	Peter Majwega	0709894044	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU0LCJyb2xlIjoidXNlciIsInN2IjoiZWRlMDYzODUtNjE5Ny00YWIxLThiMjgtMDI2ZGEyZGIyYmFkIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODMxNzMyMDUsImV4cCI6MTc4NTc2NTIwNX0.zU4919SNu3-8OadhFgaModARYJOIIT-1O1tTSEKChK8	2026-06-26 13:40:08.381503+00	2026-07-04 13:53:25.793+00	\N	\N	\N	f	ede06385-6197-4ab1-8b28-026da2db2bad	\N	003682C2	\N	peter_majwega_54	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 251	waira.arnold4.6@gmail.com	$2b$10$9EVbKow6e1UDmBIB5YHn5ur9xmBs7UZ5pq6hIlmBUNeA3ccN0Tb7a	Wairagala Arnold	0770649296	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI1MSwicm9sZSI6InVzZXIiLCJzdiI6ImZmNzVkZDcwLTI1ZWEtNGU2Mi1hNGM4LTk1NzEyNDI5YTczNiIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzMTczNjMyLCJleHAiOjE3ODU3NjU2MzJ9.0od4xNoK2tfOj_IHIFplv2EPccESEDSZca0e-_iWLk8	2026-06-26 13:40:09.218467+00	2026-07-04 14:00:32.801+00	\N	\N	\N	f	ff75dd70-25ea-4e62-a4c8-95712429a736	\N	00FB5D96	\N	wairagala_arnold_251	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5058	dondadda2562@gmail.com		Don Dada	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocI7RoH7o3nfC_v4tPItRVle2PnPRbYqhD-6sFSd4myfUfl3ZA=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNTgsInJvbGUiOiJ1c2VyIiwic3YiOiJkMWM3MDdmZS0yNTdhLTQ0ZWMtYTA5Yi0yYzcyZDBmNjRkYjYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE3NDcxOCwiZXhwIjoxNzg1NzY2NzE4fQ.ZGuhLjpOdvyL01F6jfvwg7mGGBMDn6MHAaX0qurEyUY	2026-07-04 14:18:38.905919+00	2026-07-04 14:18:38.91+00	\N	\N	\N	f	d1c707fe-257a-44ec-a09b-2c72d0f64db6	118310998674411640157	39L8TASU	30	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5059	coachdenis49@gmail.com	$2b$10$HlIaTgEq/vc8H/xh4vE8hOvp6CoA5FT6ZRqsL6sO6hWRH5h9RMora	Okitdenis 	+256765275078	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNTksInJvbGUiOiJ1c2VyIiwic3YiOiI2YmJmYTcxOC0yNGE3LTQyOTQtYWVlYi02MzAzNTgwM2E1NzIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE3NTU0OCwiZXhwIjoxNzg1NzY3NTQ4fQ.6oc1HnN3j9kKk8ax1r2FC6qXo0lX1d8-sKoKPg8u2bU	2026-07-04 14:32:28.950139+00	2026-07-04 14:32:28.953+00	\N	\N	\N	f	6bbfa718-24a7-4294-aeeb-63035803a572	\N	LZYHYSXC	30	praise94	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -6537,22 +6588,19 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5077	katoshamil@gmail.com	$2b$10$blUAqSRz5xm9h.rlD0UAru9bRPplfG5QXA7BTIIpLQHKZsErmFI5W	Kato shamil	0749788531	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzcsInJvbGUiOiJ1c2VyIiwic3YiOiJkYTljNGQzZC0xMWZiLTQxYmYtOTEyNi04ZTBkNGE3MTE4MTkiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzE5Nzc4MywiZXhwIjoxNzg1Nzg5NzgzfQ.IVJ7SgeNRBGWWKTi5yNJhqEiDzB4XW2QmS-zHI2neJs	2026-07-04 20:43:03.099328+00	2026-07-04 20:43:03.103+00	\N	\N	\N	f	da9c4d3d-11fb-41bf-9126-8e0d4a711819	\N	62QSZ4BJ	30	katoshamil	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5078	samsonongodia10@gmail.com	$2b$10$TlM94Vylza8FpyYiIdgRduNVpUPunEOthPMRyJ5XnMgOynJfL8SEK	Samson Ongodia 	0786739875	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzgsInJvbGUiOiJ1c2VyIiwic3YiOiJhNjY2NjkxMS04ZWY5LTRjNWYtYjQxYy00MTYzMWEzODdjZTUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzIwMDI2NSwiZXhwIjoxNzg1NzkyMjY1fQ.tlE2xJHb65XTd8aM9l8YLYV12RDWdl079l2-UJi6fbo	2026-07-04 21:24:25.279206+00	2026-07-04 21:24:25.283+00	\N	\N	\N	f	a6666911-8ef9-4c5f-b41c-41631a387ce5	\N	BGPULRYF	30	coachsam	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5079	molamucalvin3@gmail.com	$2b$10$56YwaPT4fiRJGha3w62uXOmpbrJMc/lCrvuqGA/9ZS90w3UfucL8i	Calvin Molamu	+26774417490	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNzksInJvbGUiOiJ1c2VyIiwic3YiOiIxN2UyM2JhOS1lOTNhLTRmYTgtYTNiMi0xMjkzNTk4YjU4NjAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzIyODY5MCwiZXhwIjoxNzg1ODIwNjkwfQ.xRALc4xugkk1g4BccpWhjG7mzwCSyEprsw-JayxPEWw	2026-07-05 05:18:10.769233+00	2026-07-05 05:18:10.773+00	\N	\N	\N	f	17e23ba9-e93a-4fa8-a3b2-1293598b5860	\N	SKF5L64F	\N	carlos	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-5082	akapasco4@gmail.com	$2b$10$zwyaxgrBISg7J/S940B9Rump4xnrLHmgn.2Rnyu4Y899ohwTNzTUG	Junior Aka	0704540030	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODIsInJvbGUiOiJ1c2VyIiwic3YiOiI0YjkwZmZiMC1hYjVmLTRiMWEtODJhYS1lYjJjZDMwZDBmMWUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzQxMTc5OSwiZXhwIjoxNzg2MDAzNzk5fQ.1LTkvrGenP4jdI3rDEjwdpKjnVxY886s8CW6j3lbVN4	2026-07-07 08:09:59.345782+00	2026-07-07 09:49:53.333+00	\N	\N	\N	f	4b90ffb0-ab5f-4b1a-82aa-eb2cd30d0f1e	\N	MS53LA72	\N	pasco256	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5085	walterayok8@gmail.com		Walter Ayok	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocKW18IpIcMg5_uaCZ43tmRAL4iFo3qUrrYRKkW0PJPZGNRgwCg=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODUsInJvbGUiOiJ1c2VyIiwic3YiOiI4NGFhZGJmOC1iYzM5LTQzNTQtYmU1NC1jZjgzZGRmOTg5N2YiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzQzMjgwNywiZXhwIjoxNzg2MDI0ODA3fQ.uOG-8cQ-QjUJM7XodisIVDL7qwU0_nwA7TbbFkszFdg	2026-07-07 14:00:07.446733+00	2026-07-07 14:00:07.451+00	\N	\N	\N	f	84aadbf8-bc39-4354-be54-cf83ddf9897f	110614592025883463148	HPSQYVCU	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5087	sebbiadam@gmail.com	$2b$10$qn968UJok/0o.FEOJpT0He.qsMOQZLucLU.EuonSqPl9AIunY3eFm	Adam Sebbi 	+256772464855	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODcsInJvbGUiOiJ1c2VyIiwic3YiOiJmNDI3YjA0ZC1lMDU5LTQ0ZTYtYTkyNS0xNzk5Yzc1OTRmMDMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzQ0MzIyNCwiZXhwIjoxNzg2MDM1MjI0fQ.IlqM2QR-4vlp-jSj60ulUcaQU_mzfMXCHTNoovt3g-I	2026-07-07 16:53:44.016505+00	2026-07-07 16:53:44.021+00	\N	\N	\N	f	f427b04d-e059-44e6-a925-1799c7594f03	\N	P4UU4DBN	\N	adamsebbi	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5084	kenojuka93@gmail.com	$2b$10$ZbT2Xu18SXG4yFuPKk8Ph.aNz.tytQNPPcLjGVO.ElqghWa10TtBO	KENNETH OJUKA	+256789213811	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODQsInJvbGUiOiJ1c2VyIiwic3YiOiIxZmM0YmJiZS1lMWFjLTQ4NWYtYTc5NS1jNDhkNmZjMWJiNzkiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzQxODk1MywiZXhwIjoxNzg2MDEwOTUzfQ.e0AJtf2SDuwJAdF3OJwdKCXFNldOnjEU0XpgI14Lywg	2026-07-07 10:09:13.407786+00	2026-07-07 10:09:13.411+00	\N	\N	\N	f	1fc4bbbe-e1ac-485f-a795-c48d6fc1bb79	\N	PMCUSXFJ	\N	kenojuka93gmailcom	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 35	rockyisotopes@gmail.com	$2b$10$gDVwAfWhMJpcNjy.jF4y1eTJC81jxAt5L7i8l1zmiDvCDicjB1.16	Detective Richard	0759874040	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM1LCJyb2xlIjoidXNlciIsInN2IjoiYjMyODU5NmQtODBhYi00NjRmLWE2NWYtNTA4NTczYTJlMDk4IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM0MzkyOTksImV4cCI6MTc4NjAzMTI5OX0.ce-bQ7i73fPCixIXVLQ-S6u_Whdh6HGMXN2IsFTOWBk	2026-06-26 13:40:08.302907+00	2026-07-07 15:48:19.817+00	\N	\N	\N	f	b328596d-80ab-464f-a65f-508573a2e098	\N	0023809A	\N	detective_richard_35	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5086	ata20@equityrdc.com	$2b$10$O2eXTBeOn9YKsi780l5o3u46MdYAZ6hmaN9yHEpB29e6V6.XSjNam	Mazambi kamota	+243917447478	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODYsInJvbGUiOiJ1c2VyIiwic3YiOiI2NzY5NTYzYi0yYjI3LTRiNTktYmU3NC0zZDAzZjcxODE0ODAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzQ0MTQ1OSwiZXhwIjoxNzg2MDMzNDU5fQ.eDsNt-DJ-PAqJfnyTjUoPJauMretF63xYIioxmvdb7o	2026-07-07 16:24:19.582525+00	2026-07-07 16:24:19.59+00	\N	\N	\N	f	6769563b-2b27-4b59-be74-3d03f7181480	\N	FXPBQP3G	2	mazmabi	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-5088	matovun50@gmail.com	$2b$10$tNCw0XueYGV8rDEdtUGxmOryD6zP8fBUiN85KdRXljPF2a8vvD4Lq	Matovu Najib	0700754256	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODgsInJvbGUiOiJ1c2VyIiwic3YiOiI5MjVlNTg2ZS1mYjlhLTRkODItOWQ3Yy1hMjVjZTRiMDVmM2YiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzQ1NjY2NCwiZXhwIjoxNzg2MDQ4NjY0fQ.VVowEnGaSWhsPAmSXTaSfPu6Yh-ee3fXmKpYP1gxO2U	2026-07-07 20:37:44.33353+00	2026-07-07 21:46:37.222+00	\N	\N	\N	f	925e586e-fb9a-4d82-9d7c-a25ce4b05f3f	\N	INF2LNAYH	\N	najib	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
-4347	rojahphinellah@gmail.com	$2b$10$QHrHvNHDV49.tS1oxAmyc.sFaCYx3pg5cLwo415Wu794ba8oe1l92	Ssemanda Rogers	256752314095	content_editor	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQzNDcsInJvbGUiOiJjb250ZW50X2VkaXRvciIsInN2IjoiM2Q2NmJiM2UtNWZiYi00M2M2LTgxNzUtMTk1Yzk3ZDdiYjJmIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MDg5MDQsImV4cCI6MTc4NjIwMDkwNH0.ldTWUHPJg12nvIRYgS4KLPKFALsGI-YMkJdPO5TO71A	2026-06-26 13:40:29.768124+00	2026-07-09 14:55:04.282+00	\N	\N	\N	f	3d66bb3e-5fbb-43c6-8175-195c97d7bb2f	\N	10FB49F2	\N	ssemanda_rogers_4347	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 82	hussenmchepa1@gmail.com	$2b$10$VSLsR.O/kljehS93TifK7uzEoBZ1JsQQB4qUPIc9vODnCBYCPG0Ji	Hussein Mchepa	0981170377	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgyLCJyb2xlIjoidXNlciIsInN2IjoiMzM3NjJmNDQtMzgyMS00NmRiLWJiNzctY2YyNDg1ZWU5N2UxIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MDM5MDQsImV4cCI6MTc4NjE5NTkwNH0.3EaafyuY8XX5xr_VEjAlK-x4cmc33ORSae5GyTjfZNA	2026-06-26 13:40:08.500334+00	2026-07-09 13:31:44.902+00	\N	\N	\N	f	33762f44-3821-46db-bb77-cf2485ee97e1	\N	005294A4	\N	hussein_mchepa_82	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5089	brianahanz@gmail.com		Briana Hanz	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocInhaHjCUtgI_ji-8i6DNYgIZY6o5PvDtWMct7Fuq9OTMNgHg=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODksInJvbGUiOiJ1c2VyIiwic3YiOiJmYmRiNzZkNy02YjM3LTRlZWQtOTdjYS0zZTMwZjM4NTQ3YmQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzU4NzEwNiwiZXhwIjoxNzg2MTc5MTA2fQ.4Uh0pVl-bmIjHtMoueVLUo5ZV7p392tJcDl-kf1txco	2026-07-09 08:51:46.441849+00	2026-07-09 08:51:46.446+00	\N	\N	\N	f	fbdb76d7-6b37-4eed-97ca-3e30f38547bd	109363649613229764814	W8E36RY2	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5043	anwenhanz@gmail.com		Anwen Hanz	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocL7Kqqiu6-YoZ9B_iPzaxK7ToZz1qkMu5e2VuDdNipSJzNahg=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwNDMsInJvbGUiOiJ1c2VyIiwic3YiOiI4MzY4MWU0NC1iY2IzLTRkMGMtOTViMC01MzVjOTQyODU0MDAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzU4NzE0MSwiZXhwIjoxNzg2MTc5MTQxfQ.-PKrGAAWwdxRUnbYSs4RR67upRlBrD29vbpOvSXibqk	2026-07-04 08:51:57.484666+00	2026-07-09 08:52:21.287+00	\N	\N	\N	f	83681e44-bcb3-4d0c-95b0-535c94285400	104417085438478477431	HXSEWPZE	\N	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5090	matovus901@gmail.com	$2b$10$wGzL49EmmvY9Gcl7iM6vMu8t3BdCLwLZP628eIZLB/lfvwcaqCgcq	Matovu Sula	+254114593145	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTAsInJvbGUiOiJ1c2VyIiwic3YiOiIyNjgzOGZmYi1mZmM0LTRjMzQtYWRlMy02NTMxNTA1MjE5MTEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwNDcxMiwiZXhwIjoxNzg2MTk2NzEyfQ.liY3tUloeGSZynnMeoT0Hyw5bfB5Cj7UmUQwM-UNth0	2026-07-09 13:45:12.017287+00	2026-07-09 13:45:12.022+00	\N	\N	\N	f	26838ffb-ffc4-4c34-ade3-653150521911	\N	AXTGCBAM	189	matovus901gmailcom	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5091	sirmichaels08@gmail.com	$2b$10$LyF6UkHiS7SZL2oasLkf3.PZj0r9j.7rlz6rUHOxpjGu9JEEyMLsS	Michael	+263783941600	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTEsInJvbGUiOiJ1c2VyIiwic3YiOiI1MGFmYTAzNy1hMGYxLTQ2N2YtYWRkZi0yYmU4N2EyN2I5NmEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwNzIwNCwiZXhwIjoxNzg2MTk5MjA0fQ.AiRM_kuHXsMFHs7GRBysPnoyOEiizsqL1JTQBu_y--8	2026-07-09 14:26:44.465372+00	2026-07-09 14:26:44.469+00	\N	\N	\N	f	50afa037-a0f1-467f-addf-2be87a27b96a	\N	JVQUGPZX	189	michaels	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 189	jtyawe@gmail.com	$2b$10$Y0oKG8eFxV7XFj.Qxen8pegdzxKz0axS630mM//UpghGUL/ET/mR6	Turyamureeba John	701183514	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE4OSwicm9sZSI6InVzZXIiLCJzdiI6IjBiM2VmMTZlLTEzNWItNDBiYS04OTg2LTBlMmQzOTc1ZjdjMSIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzNjAxMzM1LCJleHAiOjE3ODYxOTMzMzV9.3Lb8_VQBG8nzpyTW6enL_cxiYikqadlyl9PZBxopmLY	2026-06-26 13:40:08.954747+00	2026-07-09 12:48:55.52+00	\N	\N	\N	f	0b3ef16e-135b-40ba-8986-0e2d3975f7c1	\N	00BDAD75	\N	turyamureeba_john_189	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-5037	joel@atasportslive.com	$2b$10$tQTF1DryHccaMWtR5OPazuTUOyCHV/oxlwxQWtwrrGeWz3zVNPfd2	Joel	+256759275456	manager	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzcsInJvbGUiOiJtYW5hZ2VyIiwic3YiOiIxMGU4MWFiOC1jYjU0LTQzOTItOTcxOS03NjIyY2YzNWVlMjUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwMjA5MSwiZXhwIjoxNzg2MTk0MDkxfQ.9hOKXDJsjxCGx2-vWpV3H3eqV1kmNS-8terbh4W_DW0	2026-07-03 13:03:20.271758+00	2026-07-09 13:01:31.493+00	\N	\N	\N	f	10e81ab8-cb54-4392-9719-7622cf35ee25	\N	TLYU44WP	\N	joel_5037	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-3906	shamony78@gmail.com	$2b$10$IE9KJuSxtlGZy8mVUXtsLOdrGsCv0fesvAdEYtYkdcIcwrhrrzcQi	Sharon Oyenyboth	0759409563	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM5MDYsInJvbGUiOiJ1c2VyIiwic3YiOiJlZmNkMDMxZC0wYjY5LTRjNTEtOWMxOC1iOTY2MDA3YjE3NjEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwMzIzMywiZXhwIjoxNzg2MTk1MjMzfQ.kfk2LDfUgoafS6ODzG9cbRtBu9TFwJrdUOewhcTYV6I	2026-06-26 13:40:27.54384+00	2026-07-09 13:20:33.032+00	\N	\N	\N	f	efcd031d-0b69-4c51-9c18-b966007b1761	\N	0F42F786	\N	sharon_oyenyboth_3906	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5082	akapasco4@gmail.com	$2b$10$zwyaxgrBISg7J/S940B9Rump4xnrLHmgn.2Rnyu4Y899ohwTNzTUG	Junior Aka	0704540030	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODIsInJvbGUiOiJ1c2VyIiwic3YiOiJmZWE3MTQzMC03NzJhLTQxMWItODk4My0zMDA2NTgxZThhZDIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI3Mjg4MSwiZXhwIjoxNzg2ODY0ODgxfQ.x-jXoUhIBZ09y4wxp765GVxtcJzh6VaATaRW-NSpC4I	2026-07-07 08:09:59.345782+00	2026-07-17 07:21:21.897+00	\N	\N	\N	f	fea71430-772a-411b-8983-3006581e8ad2	\N	MS53LA72	\N	pasco256	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5088	matovun50@gmail.com	$2b$10$tNCw0XueYGV8rDEdtUGxmOryD6zP8fBUiN85KdRXljPF2a8vvD4Lq	Matovu Najib	0700754256	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODgsInJvbGUiOiJ1c2VyIiwic3YiOiJhZDQ4ZWZmNi0zNjAzLTQzYmQtYjYxZi03M2I1NTg3ZjA0NDEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI0MTk3MiwiZXhwIjoxNzg2ODMzOTcyfQ.dA1WF3fS_BMWE-7uTKXB7qLImPKSyJsAk9jwSpg2PfI	2026-07-07 20:37:44.33353+00	2026-07-16 22:46:12.151+00	\N	\N	\N	f	ad48eff6-3603-43bd-b61f-73b5587f0441	\N	NAJIB	\N	najib	0	\N	\N	\N	\N	\N	f	t	t	\N	\N	f	\N
 346	isaacmatambanadzo2@gmail.com	MUST_SET_PASSWORD	Isaac Matambanadzo	0778239313	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM0Niwicm9sZSI6InVzZXIiLCJzdiI6IjFiNTJkNDk5LTE2YjAtNGNjNy04ZWMxLTI3ZDZmNGZkZTQzOCIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzNjA3NTQyLCJleHAiOjE3ODYxOTk1NDJ9.MVImO2ChO234xE5mysAo8yFr33rXtEj2xWehP37BfKs	2026-06-26 13:40:09.62511+00	2026-07-09 14:32:22.249+00	\N	\N	\N	t	1b52d499-16b0-4cc7-8ec1-27d6f4fde438	105246754867118339581	015A8FF2	\N	isaac_matambanadzo_346	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 527	massofproperties@gmail.com	MUST_SET_PASSWORD	Jayden Massof	263772334140	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyNywicm9sZSI6InVzZXIiLCJzdiI6ImYwNjAxZmMzLWExZGUtNGM4ZS05ZDEyLWJlM2RlZGM1NmQ5NSIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzgzNjA3NTgzLCJleHAiOjE3ODYxOTk1ODN9.ipdJnXF_mK1IUkL88LhH97jzXRdaKj4_5DhCCI1wn_Q	2026-06-26 13:40:10.395248+00	2026-07-09 14:33:03.589+00	\N	\N	\N	t	f0601fc3-a1de-4c8e-9d12-be3dedc56d95	118135385389012920788	020F9A0E	\N	jayden_massof_527	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5092	kalsidiehard@gmail.com	$2b$10$N8wTryOiA.34PZfOARvNBu3rCZlHiVFJdFEyZKtp2sut221A4kT8W	KALSI	0709066907	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTIsInJvbGUiOiJ1c2VyIiwic3YiOiIwYTYwNmU0NS1lNGNjLTRlYTMtODgxZC1iMTZkODdmOTY3ZWMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwODg3NywiZXhwIjoxNzg2MjAwODc3fQ.j07G6fLndzdIWbuyXMGQEIH2s8LwtrDX-Golo6MIYNc	2026-07-09 14:54:37.713374+00	2026-07-09 14:54:37.716+00	\N	\N	\N	f	0a606e45-e4cc-4ea3-881d-b16d87f967ec	\N	2NTXHZES	\N	cptnkevin	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
@@ -6560,15 +6608,51 @@ COPY public.users (id, email, password_hash, full_name, phone, role, status, ava
 5093	lawrencestar011@gmail.com	$2b$10$6..hmaxV9vAsUx60wvZyX.IPh5I95xkUtI/T.ni/c6bYhFYIRFv5a	Lawrence Makaranga	+27786627457	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTMsInJvbGUiOiJ1c2VyIiwic3YiOiI4MTdjZTMwOC1kM2RlLTQzZGQtYjc4MS05OGU5Y2FjMTNhYWYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYwOTA4OSwiZXhwIjoxNzg2MjAxMDg5fQ.gGlGt3NEHJ-DurB2r53uoEZ0Y4QAUfookDIL2TXj0rs	2026-07-09 14:58:09.189118+00	2026-07-09 14:58:09.192+00	\N	\N	\N	f	817ce308-d3de-43dd-b781-98e9cac13aaf	\N	BJHX5QB5	189	tanylaw	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 3209	fungaimuronzi@gmail.com	$2b$10$EBc8REt9PF4ZV/KqpqKkiuAL5cWn/cTEAogZo6ECKjG5ypOfmC1SW	Fungai Muronzi	0777450031	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMyMDksInJvbGUiOiJ1c2VyIiwic3YiOiJiMjA3Y2FmNC1jYjQ4LTQ1YmYtOTI4Zi0zMTg3NjJiZDVmMTIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYxMzg3NywiZXhwIjoxNzg2MjA1ODc3fQ.KBPIxjp_U_FwwRJ0zKkz0pwJEvBWkQJtdjOt23Kzjkg	2026-06-26 13:40:24.155457+00	2026-07-09 16:17:57.781+00	\N	\N	\N	f	b207caf4-cb48-45bf-928f-318762bd5f12	\N	0C89DEF7	\N	fungai_muronzi_3209	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5094	kayanjaibrahim11@gmail.com	$2b$10$05KMYS9I5PFMqNNZyZjMruCY2Pc7wj1888UyR/1kak6YfXv.4e3Ni	Kayanja Ibrahim 	+256708995764	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTQsInJvbGUiOiJ1c2VyIiwic3YiOiJlZWRkYzdlNi00YTI4LTRjYmYtODkzOC0wNDQzZjlkNGUwY2EiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYxNTE0MiwiZXhwIjoxNzg2MjA3MTQyfQ.xbW2ja48vEqJ0uNMESb8s6IJX9as1jF1dhqGSCy8V20	2026-07-09 16:39:02.168573+00	2026-07-09 16:39:02.173+00	\N	\N	\N	f	eeddc7e6-4a28-4cbf-8938-0443f9d4e0ca	\N	DVF9W9KS	\N	ibrahk11	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-30	oklapla@gmail.com	$2b$10$swBcLuxKsPuNDSZCfTJKhO4En5e4DZ9N.rJPrB.IF35Zp5a/phMp.	Okello Paul Opio	0788663317	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMwLCJyb2xlIjoidXNlciIsInN2IjoiNDc1ZDJiMWUtMzExYi00MWJmLWJhZWQtYjU1NTg3MmY5MTdjIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2Mjg4NjgsImV4cCI6MTc4NjIyMDg2OH0.HfPQe1a9MkreOZ5ISOclwlUIV-XzFF3ReqAvyYJ9GUY	2026-06-26 13:40:08.281778+00	2026-07-09 20:27:48.859+00	\N	\N	\N	f	475d2b1e-311b-41bf-baed-b555872f917c	109770360982858249491	INFXALZQA	\N	okello_paul_opio_30	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
-7	bienfakeem@gmail.com	$2b$10$ezhYQ8Rf9yqfQ4xiLI86v.8jJiyDhR9291FjVG9yX4KWaHsc4Ki0i	Akeem Bienfait	\N	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInJvbGUiOiJhZG1pbiIsInN2IjoiYTg3MTMwYzItNmE2NC00MTY3LTk4MTgtZGJkYWM5YTlkZjc1IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MjkxMTUsImV4cCI6MTc4NjIyMTExNX0.MhemGYhBOKjdB4cNDTdfrJi90MYofw4wRJ8XXq4sk9k	2026-06-26 13:40:08.16307+00	2026-07-09 20:31:55.643+00	\N	\N	\N	f	a87130c2-6a64-4167-9818-dbdac9a9df75	\N	00073C05	\N	akeem_bienfait_7	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-4	info@atasportslive.com	$2b$10$w2Gh90kVsqKUV/4/D6QEFetoo9cEAl7CKaHhgvxQl.jN0QEjSDqfi	ata.admin	\N	admin	active	/uploads/thumb-1783156361427-lpobeg.jpg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsInJvbGUiOiJhZG1pbiIsInN2IjoiYWMzYTcxNDUtOGI0OS00Mjk1LWExMTctZDFlZjhhYTdmZjNhIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MzcyODgsImV4cCI6MTc4NjIyOTI4OH0.TqkPReV6Ye68Nb8FRyK2GH8ISv4he-HxVhEYkfX9Q1o	2026-06-26 13:40:07.824468+00	2026-07-09 22:48:08.914+00	\N	\N	\N	f	ac3a7145-8b49-4295-a117-d1ef8aa7ff3a	\N	INF4CL8BD	\N	ata_manager	1	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
-8	kasozibruno8@gmail.com	$2b$10$Xu3lHd.l7AlYjZ9Efl49muIh9m.KUuK.x39J0yuDtY/sywAi6zTPy	akeem kiggundu	\N	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInJvbGUiOiJ1c2VyIiwic3YiOiJkNTY4NTNlYi1lY2U0LTQ5ODktYTVmYy0yZWE3MjVmODMwYmEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYyOTIxOSwiZXhwIjoxNzg2MjIxMjE5fQ.Bz4zh1sVow6R4AVAKFOvEW9CVMWRar1bfipyzJSGRb8	2026-06-26 13:40:08.170082+00	2026-07-09 20:33:39.441+00	\N	\N	\N	f	d56853eb-ece4-4989-a5fc-2ea725f830ba	\N	00081697	\N	akeem_kiggundu_8	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 5095	joshua.muhwezi2020@gmail.com	$2b$10$fmKE1wnRpfTv5kCHEbgH7udk4IaR3xb1SEn/o14.bUztcffsXbqoG	Joshua M N	+256783299588	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTUsInJvbGUiOiJ1c2VyIiwic3YiOiI4ZTI1ZTk1MC04MGM3LTRlM2QtOWFmYy1kMDk3NzdlOGRjZjYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYzMjM0NywiZXhwIjoxNzg2MjI0MzQ3fQ.dLVt1h90c_MBazArxbCwJk87mDBnI9W8bOPSjm01hhI	2026-07-09 21:25:47.678672+00	2026-07-09 21:25:47.683+00	\N	\N	\N	f	8e25e950-80c7-4e3d-9afc-d09777e8dcf6	\N	56VP23UU	\N	scorpionsdiehard	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
 45	trinitymugumya22@gmail.com	$2b$10$avZ6LQOxLw07HTV45hPLYu1lfLjhZiMqeEcjF3pDU1lbvzZQt4SKa	Mugumya Trinity	752330274	user	active	/uploads/thumb-1783632514058-etu7es.jpg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQ1LCJyb2xlIjoidXNlciIsInN2IjoiMjAzMzRlYzQtNzVjZi00OWFmLWEwZjMtZjY3YjQzNmRmM2QzIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODM2MTM2MzEsImV4cCI6MTc4NjIwNTYzMX0.hvIrzvAdhFRgwsqMQ_PlkpRoqAp4kZ_vCnaGYNHUdDc	2026-06-26 13:40:08.345232+00	2026-07-09 21:28:34.059+00	\N	\N	\N	f	20334ec4-75cf-49af-a0f3-f67b436df3d3	\N	002D1650	\N	mugumya_trinity_45	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-2918	joelcena.47@gmail.com	MUST_SET_PASSWORD	Joel Cena	256782404628	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI5MTgsInJvbGUiOiJ1c2VyIiwic3YiOiJjYjhiNDZiMS04MjliLTQxYmMtOWI0MS00MGIzZjFkOWI0N2EiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzY2OTUxMCwiZXhwIjoxNzg2MjYxNTEwfQ.vV4_ENMp3Iz6Sf6bxVAQ9RirEkScX0l5EJWXZLfw4xg	2026-06-26 13:40:22.597797+00	2026-07-10 07:45:10.01+00	\N	\N	\N	t	cb8b46b1-829b-41bc-9b41-40b3f1d9b47a	106481511856544130295	0B66A8B7	\N	joel_cena_2918	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
-1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiYjhlZTZjMGItZjVlOS00Njg3LTk2MWItYTYyMjg5OGYxZGZlIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODQyOTg3NTYsImV4cCI6MTc4Njg5MDc1Nn0.N2lTfbpLgos1-QRoJAi2xGh4gIF11abU3KmQycW6Cyo	2026-06-15 16:31:06.226579+00	2026-07-17 14:32:36.757+00	\N	\N	\N	f	b8ee6c0b-f5e9-4687-961b-a622898f1dfe	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t	f	f	\N	\N	f	\N
-2	demo@ata.ug	$2b$10$/riYlLq42rc5f5OkOQexcuwyh2MsRm2BdWIMjFfIwOWRAudcddz6K	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiJiNDY2ODI4Yy02M2UzLTQ0ODItOGU5Zi0zYzg5ZjkzYjVmMjUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzUzNDU4NiwiZXhwIjoxNzg2MTI2NTg2fQ.645Yo2RsYmv4VoOAgrjeQsgekiJ7FpcGZHPFP_TsqM4	2026-06-15 16:31:06.605107+00	2026-07-17 14:36:50.127+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	b466828c-63e3-4482-8e9f-3c89f93b5f25	\N	SINFLJVTNM	\N	mrmancomedy	1	\N	\N	\N	\N	\N	f	t	t	\N	\N	t	30.00
+2918	joelcena.47@gmail.com	MUST_SET_PASSWORD	Joel Cena	256782404628	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI5MTgsInJvbGUiOiJ1c2VyIiwic3YiOiI0MGIyYWQ5Ni02Zjg5LTQzZjktYTY4Ni02NTU3ZDRkMGMwYWQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIwNzQzNywiZXhwIjoxNzg2Nzk5NDM3fQ.85O91A-fxNYzbtJw2CM5_ohKdpRBL4rXVn4w7cpl5pE	2026-06-26 13:40:22.597797+00	2026-07-16 13:10:37.117+00	\N	\N	\N	t	40b2ad96-6f89-43f9-a686-6557d4d0c0ad	106481511856544130295	0B66A8B7	\N	joel_cena_2918	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+7	bienfakeem@gmail.com	$2b$10$ezhYQ8Rf9yqfQ4xiLI86v.8jJiyDhR9291FjVG9yX4KWaHsc4Ki0i	Akeem Bienfait	\N	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInJvbGUiOiJhZG1pbiIsInN2IjoiN2UwMmVlYWQtNDAxZS00ZDZkLWJmYTYtNzJlYWU0YzA1ZjFjIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODQwMTg2MDUsImV4cCI6MTc4NjYxMDYwNX0.FQ3xQqmglxtpu2KCGsf3bm2My8fYeB97YVfi6rxq1jQ	2026-06-26 13:40:08.16307+00	2026-07-14 08:43:25.844+00	\N	\N	\N	f	7e02eead-401e-4d6d-bfa6-72eae4c05f1c	\N	00073C05	\N	akeem_bienfait_7	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+4	info@atasportslive.com	$2b$10$w2Gh90kVsqKUV/4/D6QEFetoo9cEAl7CKaHhgvxQl.jN0QEjSDqfi	ata.admin	\N	admin	active	/uploads/thumb-1783156361427-lpobeg.jpg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQsInJvbGUiOiJhZG1pbiIsInN2IjoiODI5OWNlZjgtODViNi00YWE2LTk4YmQtMzc3MDZmYzEzMjc2IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODQyODY3OTgsImV4cCI6MTc4Njg3ODc5OH0.jdI4T90ixD2kXlAPsyeOa5fbm6OXQ0vJv_cCyM4d7pk	2026-06-26 13:40:07.824468+00	2026-07-17 11:13:18.35+00	\N	\N	\N	f	8299cef8-85b6-4aa6-98bd-37706fc13276	\N	INF4CL8BD	\N	ata_manager	1	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+8	kasozibruno8@gmail.com	$2b$10$Xu3lHd.l7AlYjZ9Efl49muIh9m.KUuK.x39J0yuDtY/sywAi6zTPy	akeem kiggundu	\N	admin	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgsInJvbGUiOiJ1c2VyIiwic3YiOiJkNTY4NTNlYi1lY2U0LTQ5ODktYTVmYy0yZWE3MjVmODMwYmEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzYyOTIxOSwiZXhwIjoxNzg2MjIxMjE5fQ.Bz4zh1sVow6R4AVAKFOvEW9CVMWRar1bfipyzJSGRb8	2026-06-26 13:40:08.170082+00	2026-07-14 11:31:12.611+00	\N	\N	\N	f	d56853eb-ece4-4989-a5fc-2ea725f830ba	\N	INFRRAKFP	\N	akeem_kiggundu_8	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+3906	shamony78@gmail.com	$2b$10$IE9KJuSxtlGZy8mVUXtsLOdrGsCv0fesvAdEYtYkdcIcwrhrrzcQi	Sharon Oyenyboth	0759409563	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjM5MDYsInJvbGUiOiJ1c2VyIiwic3YiOiJhMjU3ZGQ2Ni1mNjRmLTQ3NTUtYjBiMC0xOTJjNzI4MTIxN2MiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIzNjcwMywiZXhwIjoxNzg2ODI4NzAzfQ.xmUWTmmVeFu0zb9CwonPKNbteps5AwC0nmV4fLE_B_s	2026-06-26 13:40:27.54384+00	2026-07-16 21:18:23.614+00	\N	\N	\N	f	a257dd66-f64f-4755-b0b0-192c7281217c	\N	INFEZ37N7	\N	sharon_oyenyboth_3906	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+5102	kayigaliam@gmail.com	$2b$10$0nae9v4JwyzA7CkImqqiA.fe6Ii9Lhg.3CXBjA7pUjlEj05hiqoFC	Ssesanga Benon 	+256700492520	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDIsInJvbGUiOiJ1c2VyIiwic3YiOiJlOTI4ZDZkZS1mZjBmLTQ2MzYtYmMzYy0xZGEzNzdlZjJmZmMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk2MzQyOSwiZXhwIjoxNzg2NTU1NDI5fQ.b_gTheZ5WoBAHjjpzZwOm6ew-NFXnfhFWOVA0NwMtRs	2026-07-13 17:23:49.637517+00	2026-07-13 17:23:49.643+00	\N	\N	\N	f	e928d6de-ff0f-4636-bc3c-1da377ef2ffc	\N	WLAA6SEB	\N	ssesanga	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5099	Khasimujunior@gmail.com	$2b$10$kN5dNnz4oOwSgKzUwPBxR.D8hITn9izNdw49t1C1VQGESIzpXplte	Khasimujunior	256757220413	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTksInJvbGUiOiJ1c2VyIiwic3YiOiIwYTYxMmRhMi0wNmFhLTRiZDItODIyYS0wNjNmY2RjZjdlMzgiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk0NzY5OSwiZXhwIjoxNzg2NTM5Njk5fQ.pHwHusSezc-DPPyYR93XPpAtjGPGlmd0PIPY4JKNt5k	2026-07-13 13:01:39.666326+00	2026-07-13 13:01:39.671+00	\N	\N	\N	f	0a612da2-06aa-4bd2-822a-063fcdcf7e38	\N	DVMVWQPN	\N	khasimujunior	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5101	lawrence93@gmail.com	$2b$10$Mn5OKAexn0HV6/PxeU00quyHToUg4YvJEcMkefGKY0C6cAS3nN89a	Lawrence ssengonge 	+256751398493	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDEsInJvbGUiOiJ1c2VyIiwic3YiOiI1MThlNGQxNy1jZWIxLTQ4YjUtYTZhMS1jNzI2NmQ2ZDAxNzYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk2MTg0MiwiZXhwIjoxNzg2NTUzODQyfQ.cEKllEhfdnyyWIiRBSvRnnX8BiHwGAfwox63stJEBNA	2026-07-13 16:57:22.885176+00	2026-07-13 16:57:22.891+00	\N	\N	\N	f	518e4d17-ceb1-48b5-a6a1-c7266d6d0176	\N	CSVQE2E7	30	lawrence	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5098	alumagodwinjr@gmail.com	$2b$10$VxoYLTq/dzuqlCEtQNo0buM4qp6x6.UQirPQ8ghlcSZxYjf1NOFXe	Aluma Godwin 	0741405286	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTgsInJvbGUiOiJ1c2VyIiwic3YiOiIyNGNlZjcwNC01ZDFiLTQ2OTQtODgxYS00MWUzYjVmZDNhZTIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk0NzQwMSwiZXhwIjoxNzg2NTM5NDAxfQ.AdW5_byah9p1oKREkvy3ARp57hxzR_e0vVpTXkQsFzg	2026-07-13 12:56:41.589691+00	2026-07-13 12:56:41.594+00	\N	\N	\N	f	24cef704-5d1b-4694-881a-41e3b5fd3ae2	\N	HF426K84	\N	dechamp	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5100	maddyjustin87@gmail.com	$2b$10$8MGA0eY0zmv8782dBmvQoec/HQjS9orqENBlSsJIwGaw3m8GTMYIm	Lord Maddy 	256748724868	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDAsInJvbGUiOiJ1c2VyIiwic3YiOiIzZWEwMGRhZi03M2M5LTQ2YzYtYTQ4ZC05N2MzNmQyMWVjMjIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk0OTMyNCwiZXhwIjoxNzg2NTQxMzI0fQ.Qn1BM1HGml5RSBhGaYJHBe9H2woOLPghY6ZZeD-R9zE	2026-07-13 13:28:44.245827+00	2026-07-13 16:15:15.089+00	\N	\N	\N	f	3ea00daf-73c9-46c6-a48d-97c36d21ec22	\N	INFC3B3MH	\N	lordmaddy	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+4347	rojahphinellah@gmail.com	$2b$10$QHrHvNHDV49.tS1oxAmyc.sFaCYx3pg5cLwo415Wu794ba8oe1l92	Ssemanda Rogers	256752314095	content_editor	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjQzNDcsInJvbGUiOiJjb250ZW50X2VkaXRvciIsInN2IjoiZTc1M2EzYjQtMzkyZS00YzZhLWIyOGYtZGNkNmY3ZDBkODUwIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODQwMTkxNDgsImV4cCI6MTc4NjYxMTE0OH0.mc8Am9h11CdrgK51RmhdcF4IpqRs9p08YpMWbkTZLNI	2026-06-26 13:40:29.768124+00	2026-07-14 08:52:28.52+00	\N	\N	\N	f	e753a3b4-392e-4c6a-b28f-dcd6f7d0d850	\N	10FB49F2	\N	ssemanda_rogers_4347	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5103	denisola81@gmail.com	$2b$10$KQQ6V1eCjJwMTpETLZ0SMuids72JxyHtJcusE6Dzs6SgxYt.ay4CG	Olara Denis Michael 	+256775133382	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDMsInJvbGUiOiJ1c2VyIiwic3YiOiI0MGZhMWI1My1jODAwLTQ0ZWEtOTZmYi1hMWU3MTY1ODViZjgiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk2Nzc0MSwiZXhwIjoxNzg2NTU5NzQxfQ.0k0j4u0E_6rQAs59rPdCu2Ct93A5t1UY7ZidjiQ9pOo	2026-07-13 18:35:41.113729+00	2026-07-13 18:35:41.118+00	\N	\N	\N	f	40fa1b53-c800-44ea-96fb-a1e716585bf8	\N	YXMA36MV	30	denisola81gmailcom	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5105	jonaherma70@gmail.com	$2b$10$QZk84vaTyAPRj6YV.bp9yO7OzfeaCR9TnPKoo3MrfL/VCgO5rBJAi	Jona Herma	+256749687743	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDUsInJvbGUiOiJ1c2VyIiwic3YiOiI0OGNkZjI5YS0zNmJiLTRkZDUtYTZkZi1mMjRkOGVmY2EwNjQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk4MjQ4OCwiZXhwIjoxNzg2NTc0NDg4fQ.0aYX4E5P47Dhe1R-Hinb7uBpTFYfRsnLgl72S5TnA60	2026-07-13 22:41:28.840272+00	2026-07-13 22:41:28.845+00	\N	\N	\N	f	48cdf29a-36bb-4dd5-a6df-f24d8efca064	\N	FL8J7DCB	\N	jonaherma	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5083	rogers@atasportslive.com	$2b$10$c9BpUPgMly/pLCCfreXR/e8eBfHIb9GzlXiyb4akx.6AAJnTPYA1C	Rojah	0752314095	manager	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwODMsInJvbGUiOiJtYW5hZ2VyIiwic3YiOiI4YmU0NjJhNC1jOTRiLTRkOTYtODUwNy1jMmNlZjRkMWM0ZDUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDAyODAxMCwiZXhwIjoxNzg2NjIwMDEwfQ.vKEap8ILiplkmqkg13EKenZdtBjw_GW4CB3orJGCLX4	2026-07-07 09:57:25.342796+00	2026-07-14 11:28:09.558+00	\N	\N	\N	f	8be462a4-c94b-4d96-8507-c2cef4d1c4d5	\N	INFCTX4KV	\N	rojahata	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+5096	Emmaryan065@gmail.com	$2b$10$ozMiGW1cBW3rcr01pmquTOiLzWverdwDzhvSiCcbzvcSFLfva8p22	Emma Ryan	0755097070	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwOTYsInJvbGUiOiJ1c2VyIiwic3YiOiIzMGVkNzdlYS03MjFmLTQxOGQtOTk2NS1jOWNjMmI3MDZjNzQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIxMjY5NSwiZXhwIjoxNzg2ODA0Njk1fQ.XSj3lgYnxAhCR5P9jJjRTb5o2AEtXsgYWtzqYnaLuFQ	2026-07-10 21:17:04.804635+00	2026-07-16 14:38:15.805+00	\N	\N	\N	f	30ed77ea-721f-418d-9965-c9cc2b706c74	\N	INFWSNWJL	\N	emmaryan	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+5110	iconicsellers7@gmail.com	$2b$10$GDJMswzojirrGJvHrDPjiu6/P4BguKLbGGE/A0aZa3aWGqeRiS1gi	Joshua 	+256755804810	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTAsInJvbGUiOiJ1c2VyIiwic3YiOiI3OTNkNjk4ZS0yZDlmLTQyMGYtODVlMC03N2FmZDgwMmM4NTMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDEyNjY0OSwiZXhwIjoxNzg2NzE4NjQ5fQ.mvHBnkfg-p0jQ2MZCwOji0TBWr3yBLaVOuZijpWeux0	2026-07-15 14:44:09.686069+00	2026-07-15 14:44:09.691+00	\N	\N	\N	f	793d698e-2d9f-420f-85e0-77afd802c853	\N	J9LJ7RWD	5088	josh	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5111	iikojudith@gmail.com		Judith Iiko	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocJYsswuB8p6JHzITRRvwGi4okG9HMeb0c4M4Oc0FWe7UinuQw=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTEsInJvbGUiOiJ1c2VyIiwic3YiOiI3Nzc5YzQ1OC1mMzU0LTQ1ODktODY1OC0zMGU3M2QyOTUyNDUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDE0NjAwMiwiZXhwIjoxNzg2NzM4MDAyfQ.NO_9HkOor1wTjuMDbb5egJDl9GMTBtUh-D2QOTqQSVA	2026-07-15 20:06:42.626225+00	2026-07-15 20:06:42.632+00	\N	\N	\N	f	7779c458-f354-4589-8658-30e73d295245	112464499974103702063	GE38RHLL	3906	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5112	pawapay@atasportslive.com	$2b$10$KBYpeIEE467orBhsSCI0Vua6eVRvkqu1lkdXJOkM3lN05RbZ0Ypqu	Pawapay Test	+243997018145	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTIsInJvbGUiOiJ1c2VyIiwic3YiOiI4OTNlZGY5Mi02MTNhLTQ5NTctYTUxNy1jMGYyM2RlMjQwNjAiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIwMTYyMywiZXhwIjoxNzg2NzkzNjIzfQ.NyJDKFMK__YB31SpZ1r2PJuL0dkWy5E5VNPyIckdibI	2026-07-16 11:33:43.836253+00	2026-07-16 11:33:43.841+00	\N	\N	\N	f	893edf92-613a-4957-a517-c0f23de24060	\N	4L3KT6EX	\N	pawapay	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5113	abbasrudolf223@gmail.com	$2b$10$ti5iAPzSIddhCX4tVsluRew5Y1t8pRv/JTsSPuw1cPofhAUU1cFRS	RUDOLF ABBAS	0772513356	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTMsInJvbGUiOiJ1c2VyIiwic3YiOiI5YjdhYzhhNS0yNmVhLTQ3MzMtOGY3Zi1kODYxMDEzMjIzMzEiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIxNDgzNCwiZXhwIjoxNzg2ODA2ODM0fQ._PZ_PIHwCah1nFHPDhL-6qXpOe2rSwxOky_C1X90t3M	2026-07-16 15:13:54.428574+00	2026-07-16 15:13:54.432+00	\N	\N	\N	f	9b7ac8a5-26ea-4733-8f7f-d86101322331	\N	QEBQDKKK	\N	raas02	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+2981	taquemist@gmail.com	MUST_SET_PASSWORD	Takudzwa Mhute	0772051547	user	active	\N	\N	2026-06-26 13:40:22.904344+00	2026-07-17 01:07:33.115+00	\N	\N	\N	t	\N	\N	0BA5CED8	\N	takudzwa_mhute_2981	0	\N	\N	\N	\N	\N	f	f	f	cb7b9ea0-9b02-43be-8920-6a7698f60eed	2026-07-17 01:37:33.115+00	f	\N
+5120	aabigaba40@gmail.com	$2b$10$oSOSjtXCtu6uyil4tsVuQOfsBg/IfJ8F.LRdPE4vCyJwudzhZVgly	Junior 	0774674043	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMjAsInJvbGUiOiJ1c2VyIiwic3YiOiI1OWNhY2M5NC0xYzUwLTRkYTAtYjY2ZS1kZGRiNDQyNWYyZjciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI3NzEzMywiZXhwIjoxNzg2ODY5MTMzfQ.Ang2pMmCSqBzWZSLPwnV2QpgSuTV8yjXt5NwnGJoULU	2026-07-17 08:32:13.526358+00	2026-07-17 08:32:13.531+00	\N	\N	\N	f	59cacc94-1c50-4da0-b66e-dddb4425f2f7	\N	Z3CBTZM5	5106	pliers	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+996	mrmancomedy@gmail.com	$2b$10$eAQugLKrs3jPTUq.v7V5leBXdrnuYxCQ/n3HEvocJ7MJMzmwXD3JO	Mamy	+2439719145123	manager	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjk5Niwicm9sZSI6Im1hbmFnZXIiLCJzdiI6ImNkODk2NGYzLWNhNzQtNDJlMS1iZDQ3LTc3YWQwZWZlZjc4ZSIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzg0MDQ3MzkzLCJleHAiOjE3ODY2MzkzOTN9.ofDK2lbMmytxBins_epvsicHmQe9J6rijn62MK26x44	2026-06-26 13:40:12.468254+00	2026-07-14 16:43:13.456+00	\N	\N	\N	f	cd8964f3-ca74-42e1-bd47-77ad0efef78e	\N	03E4502F	\N	mamy_maombi	1	Maombi	1994-06-13	military_id	ML350	Zambia	t	f	f	\N	\N	f	\N
+5104	mchuzmix223@gmail.com	$2b$10$mWJ8EJQuUFpJgknFfA.g4eOwNK7ACI9donktID.enDXBp7eGJq0Iu	Mchuzi	0772033699	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDQsInJvbGUiOiJ1c2VyIiwic3YiOiI1MjE3MjFiMS02NDJhLTQ3ZWYtOTczYy0xZjI2MTc5NDNhYmQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4Mzk3ODA2NSwiZXhwIjoxNzg2NTcwMDY1fQ.8b9uS2Zf5MbF7GIBREtnry6ib4HiMXMm2Z0ExVaXL5Y	2026-07-13 21:27:45.01609+00	2026-07-13 21:27:45.021+00	\N	\N	\N	f	521721b1-642a-47ef-973c-1f2617943abd	\N	6A2SQHLG	\N	mchuzi	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+2585	www.orachvincent37@gmail.com	MUST_SET_PASSWORD	Orach Vincent	0775086741	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI1ODUsInJvbGUiOiJ1c2VyIiwic3YiOiIxNmVjZjk3ZS1hOGIyLTRkNzItODhmZS01MjE5OWM4NWY1MzIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDAyMzk3MywiZXhwIjoxNzg2NjE1OTczfQ.inIhYr481O0NH6G9gPRSDZibUUfQNup51CyAuggkQYY	2026-06-26 13:40:20.905115+00	2026-07-14 10:12:53.753+00	\N	\N	\N	t	16ecf97e-a8b2-4d72-88fe-52199c85f532	105626356227053712820	0A1998B8	\N	orach_vincent_2585	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+674	pattom40@gmail.com	$2b$10$z4dLLiN0fFqeqx1LAO2MfuHDiTVtQXRD47kTs4MTApZXy9pfD9BbG	Patrick Omwony	0774658432	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjY3NCwicm9sZSI6InVzZXIiLCJzdiI6IjlkNjQ3YTlhLWVhYjEtNDc4Yi04ZWI0LWI5MzFjM2M1NjM4ZSIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzg0MDI4NTMyLCJleHAiOjE3ODY2MjA1MzJ9.Xl5NaXAnxe5w0IPXfwMcj-Q7fU6nrVTlzT5tm5hdwRw	2026-06-26 13:40:11.050167+00	2026-07-14 11:28:52.435+00	\N	\N	\N	f	9d647a9a-eab1-478b-8eb4-b931c3c5638e	\N	02A273E7	\N	patrick_omwony_674	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5107	eliotwaokello557@gmail.com		OKELLO ELIOT OTWAO	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocKimQZfkHt4eM55OTwPAdxgH96c7owqmukV5YsVBtg3GEpfmlOP=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDcsInJvbGUiOiJ1c2VyIiwic3YiOiJlMTg1NDFjZS1mNzdlLTRhOGUtYTM0Yi0yZDBhODkyNTkzNmIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDAyOTE4OSwiZXhwIjoxNzg2NjIxMTg5fQ.dEEQI2j-WjV9iLNtsRjb_Rfs5sL2-1QjTMEw87WSwqI	2026-07-14 11:39:49.643607+00	2026-07-14 11:41:23.371+00	\N	\N	\N	f	e18541ce-f77e-4a8e-a34b-2d0a8925936b	100942786230282846114	INFNQSYA8	\N	\N	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+5033	markgrart@gmail.com		Mark Grart	+256752966502	content_editor	active	https://lh3.googleusercontent.com/a/ACg8ocIIYyhaTRxymKbSrgDMnn16srRj9Prnly2TtBb_3d6Kt3O6-A=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzMsInJvbGUiOiJjb250ZW50X2VkaXRvciIsInN2IjoiNWIxOTRjZmMtMmQ4ZS00NGI5LTlhMmUtZjQxYjJmN2YzZjllIiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODQwOTg4MTAsImV4cCI6MTc4NjY5MDgxMH0.TSPZNhy5HNfuy5BMtWa2nN0ch9zjOnl5nUo1o7Gdz14	2026-07-02 22:14:54.657208+00	2026-07-15 07:09:11.477+00	\N	\N	\N	f	5b194cfc-2d8e-44b9-9a2e-f41b2f7f3f9e	106970712051832989828	INFDHSBVQ	\N	mark_grart_5033	0	Grart	2000-10-30	national_id	CM990821OAR82A	Uganda	t	t	f	\N	\N	f	\N
+5106	gracelindaapolot@gmail.com	$2b$10$fxRBb1zR23GLyoV7ft/b6Oojkt1jXu2c5BLzk5dZuQl6H5rPKLe52	Apolot Linda Grace	0788203164	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDYsInJvbGUiOiJ1c2VyIiwic3YiOiI2MDFkY2VlNC1lYmVlLTQ1MGMtODI1Zi1mNDYyOWM4ZmI2ZDgiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI4MTY0NiwiZXhwIjoxNzg2ODczNjQ2fQ.EcRYo0vb-PcBIc0sdnYZI0n5-mvxZDus2grAx1QmYL0	2026-07-14 11:06:19.564134+00	2026-07-17 09:47:26.355+00	\N	\N	\N	f	601dcee4-ebee-450c-825f-f4629c8fb6d8	\N	INFZ6WKZZ	\N	apolot_linda	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+5108	musamulopa2@gmail.com	$2b$10$TINAk6khMJTjL0OdcUQSpeqcEz2jsmQXnGX4Fq.mHZpt7/Q.9psSu	Mansa Musa	+256747514399	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDgsInJvbGUiOiJ1c2VyIiwic3YiOiJkNjk2NWU2OC1hZWJkLTQ5M2UtYTRlMC0wYjdkZDAzMmFhMDYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDA5OTczNSwiZXhwIjoxNzg2NjkxNzM1fQ.W0zHkHro-yVpCEupF1vdqJWUVrHr5VNwfb_T5tkVgAQ	2026-07-15 07:15:35.758157+00	2026-07-15 07:15:35.763+00	\N	\N	\N	f	d6965e68-aebd-493e-a4e0-0b7dd032aa06	\N	FPTB42TV	\N	mansa	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5109	kyobyaimran@gmail.com	$2b$10$tY.T9NDto760ZvpP/DLh9O.hi3iKFfPL0..9yZMiO2cqDsnjmu/dy	Richer Everyday	0703262646	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMDksInJvbGUiOiJ1c2VyIiwic3YiOiIzODEwNGM4My05NjdlLTRmZmQtYTE2OC1jYWY1YTVlZjRmZmYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDExMTk0NSwiZXhwIjoxNzg2NzAzOTQ1fQ.kxxxcupTnLRjF2s-0j50DOfw2r0JHXavSI_AfJZ8En4	2026-07-15 10:39:05.978775+00	2026-07-15 10:39:05.984+00	\N	\N	\N	f	38104c83-967e-4ffd-a168-caf5a5ef4fff	\N	LC4T7M73	5107	richereverday	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5037	joel@atasportslive.com	$2b$10$tQTF1DryHccaMWtR5OPazuTUOyCHV/oxlwxQWtwrrGeWz3zVNPfd2	Joel	+256759275456	manager	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzcsInJvbGUiOiJtYW5hZ2VyIiwic3YiOiJjNzU4NzU4Zi0zMGM1LTRjZGYtYjQ3ZS1lNzk0ZmRmZGUzZWIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI3MjgwOSwiZXhwIjoxNzg2ODY0ODA5fQ.6XhylyX5Em9rnmsXFzpwUeS7afibk1Vd_-Zv8Z2sjKM	2026-07-03 13:03:20.271758+00	2026-07-17 07:20:09.255+00	\N	\N	\N	f	c758758f-30c5-4cdf-b47e-e794fdfde3eb	\N	INFYS7RMR	\N	joel_5037	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+30	oklapla@gmail.com	$2b$10$swBcLuxKsPuNDSZCfTJKhO4En5e4DZ9N.rJPrB.IF35Zp5a/phMp.	Paul	0788663317	manager	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMwLCJyb2xlIjoibWFuYWdlciIsInN2IjoiNjljOGY3MDAtOWQxMC00N2ZjLTg3MzktNmUyNmJjMjgzNmI0IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODQyODY3MjgsImV4cCI6MTc4Njg3ODcyOH0.buwFnXwW1Ms0Dl-KPnUdCBjp8zxxA18XFIhIWhDPZ9Y	2026-06-26 13:40:08.281778+00	2026-07-17 11:12:08.946+00	mtn_momo	0788663317	2026-07-17 11:09:57.981735+00	f	69c8f700-9d10-47fc-8739-6e26bc2836b4	109770360982858249491	INFXALZQA	\N	okello_paul_opio_30	0	Okello	1993-02-06	national_id	CM93085102QWKA	Uganda	t	t	f	\N	\N	f	\N
+5114	juukojepsonz14@gmail.com		Juuko Godfrey	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocIr3L74gw8G8Lo0wrNMxEMz9SQynlMPs-juj6FylQVZKiTA-UCd=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTQsInJvbGUiOiJ1c2VyIiwic3YiOiJkYzgzYjkxZS1mMDcwLTQ1MzMtOGUxZS1jYzM0NWI3OWI5NTQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIyMjQ3OSwiZXhwIjoxNzg2ODE0NDc5fQ.K2eDMtHAhHEs8QCvN6tNMzE4O2im3dSxQ9QTrV1qwr8	2026-07-16 17:21:19.22615+00	2026-07-16 17:21:19.23+00	\N	\N	\N	f	dc83b91e-f070-4533-8e1e-cc345b79b954	111030660563483044744	5F85PSSM	3906	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5115	shakirahmukite@gmail.com		Shakirah Mukite	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocIB5AJ6q4bSsTmMlA2ewRbDPl0zOV_n9eL7G_8ViPTUxH3mBvY=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTUsInJvbGUiOiJ1c2VyIiwic3YiOiJlMzdjOTE1ZC03NWJlLTQzYTctOWZlYy00NjhhYzliN2VhYzQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIyMjc3MSwiZXhwIjoxNzg2ODE0NzcxfQ.0_bCuxHt6M3Zih6KYSfrmVZWVk45bPrjppI7DYJ-q1E	2026-07-16 17:26:11.986543+00	2026-07-16 17:26:11.992+00	\N	\N	\N	f	e37c915d-75be-43a7-9fec-468ac9b7eac4	108493602551824930753	G5GLUE6X	3906	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5116	mugashakenneth5@gmail.com	$2b$10$zqI/EvOvpd.CnSQ5M/FsFOr/eerJ6phYaebH6Slk63xyfIozWoJBq	Mugasha kenneth	+256749228387	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTYsInJvbGUiOiJ1c2VyIiwic3YiOiJiNjM2MzE3ZC04NGFiLTQ0MDUtYTcwYi1lZmFmMDQxYTY3M2YiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIyNDc1OSwiZXhwIjoxNzg2ODE2NzU5fQ.GnSAKufSwUxQh5es2HI0bhwG3yFtgonkj_no9nwqIIc	2026-07-16 17:59:19.602596+00	2026-07-16 17:59:19.609+00	\N	\N	\N	f	b636317d-84ab-4405-a70b-efaf041a673f	\N	XY3K6ZUL	\N	keno	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+54	majwegapeter25@gmail.com	$2b$10$SM60uiNS6lmO3002DiGPQ.8cihX/.C.S0WcD/P4lcPDDeb.m0S6mG	Peter Majwega	0709894044	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU0LCJyb2xlIjoidXNlciIsInN2IjoiZDMwNmZiMTItOGExYy00OTM2LThlMmMtOWIwNzk3OTA1MmI3IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODQyNDE4NDcsImV4cCI6MTc4NjgzMzg0N30.S8snO0ZSgwOaC62M1ZQv5odSY4PNmsqny9_UGKTP-_o	2026-06-26 13:40:08.381503+00	2026-07-16 22:44:07.123+00	\N	\N	\N	f	d306fb12-8a1c-4936-8e2c-9b07979052b7	\N	003682C2	\N	peter_majwega_54	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5117	alexmulyanti@gmail.com	$2b$10$pHigNt70kLkPWGDt1.IxAO4WzdCjp5iN0oPmvKIYH2RhpDOoaWdOy	AJ	+256700361664	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTcsInJvbGUiOiJ1c2VyIiwic3YiOiJlNTAwZGI0NS05ZTdkLTRmNTctODMxOC1mNzM4ZTQwOWRhNWMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDIzNjQ3OCwiZXhwIjoxNzg2ODI4NDc4fQ.cgzn-TCdz_m8bVRrJjTjfSNDmiAlIDM4goomtAHOQco	2026-07-16 21:14:38.703529+00	2026-07-16 23:56:37.561+00	\N	\N	\N	f	e500db45-9e7d-4f57-8318-f738e409da5c	\N	INFUXJZPD	\N	alexander	0	\N	\N	\N	\N	\N	f	t	f	\N	\N	f	\N
+5118	b@naguru.com	$2b$10$hBfv8sq8lRDPR40z76B4aOnc9yNO6XnOttIh32dWIfukqfCiNb1Di	Kivumbi Badru	0789468889	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTgsInJvbGUiOiJ1c2VyIiwic3YiOiIxNTU5YWJiNC1lN2EzLTQ5NTItYjZlMi1lYzU1ZTNmNGM2OWYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI3MTY2NiwiZXhwIjoxNzg2ODYzNjY2fQ.elmj1awSobQhHpTOhKLp4BuARIyS-_aFqUL39k1toBs	2026-07-17 07:01:06.621489+00	2026-07-17 07:01:06.625+00	\N	\N	\N	f	1559abb4-e7a3-4952-b6e2-ec55e3f4c69f	\N	X8EFZK29	\N	badru74	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5119	mawacharleswani918@gmail.com		Mawa Charles	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocLZyki29Ht9ahYYg538puIc5oxTkYj5Y7idmHFSPy4dKGrUKHh5=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMTksInJvbGUiOiJ1c2VyIiwic3YiOiI2NWMzODJlMC04OGI5LTRmZDUtYTlhNS02ZWU2MjE5OWIwYjMiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI3MjkxMSwiZXhwIjoxNzg2ODY0OTExfQ.dYbyS7hZ0LsNGtFz9CwADDsy2wMdxs-RBr9Uhs8z3xQ	2026-07-17 07:21:51.324424+00	2026-07-17 07:21:51.378+00	\N	\N	\N	f	65c382e0-88b9-4fd5-a9a5-6ee62199b0b3	100441060920206225922	7E2VD8B5	5106	\N	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5034	alphagaming.47ag@gmail.com		Alpha GM	\N	user	active	https://lh3.googleusercontent.com/a/ACg8ocLJAZYdI-0rdyMV4oK2sU03ng6zIKxC9v8QNNTE0LwQa0-s5aM=s96-c	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUwMzQsInJvbGUiOiJ1c2VyIiwic3YiOiIwNjUzYmE4Ny0yZDkyLTQ4MGItOTg5ZC03NDQyYjA1YzFmYmYiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI3NTg1OSwiZXhwIjoxNzg2ODY3ODU5fQ.Ap03EKIHs5JKvzSNqJs9h7ap5RUmQuHHUWGljCbuHoE	2026-07-03 07:57:16.022982+00	2026-07-17 08:10:59.606+00	\N	\N	\N	f	0653ba87-2d92-480b-989d-7442b05c1fbf	100767775268980736498	MWQRL9BM	\N	alpha_gm_5034	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+5121	edwinkyeyune20@gmail.com	$2b$10$7paFrK8sLXKe52JVIPA2EOLn4cLwnjApLFZQrB1.0dHN.yOiEWM2O	Edwin Kyeyune 	0751801822	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUxMjEsInJvbGUiOiJ1c2VyIiwic3YiOiJjNzVkNzEwNi1lNzBiLTQ4ZTUtYTQ1OS01NzYyYjNkZTg4MmUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4NDI5MDkzNiwiZXhwIjoxNzg2ODgyOTM2fQ.ubuJfwshurQYSstWGTRdNWlfAOTjDpZYmbHpunhPLiA	2026-07-17 12:22:16.613353+00	2026-07-17 12:22:16.618+00	\N	\N	\N	f	c75d7106-e70b-48e5-a459-5762b3de882e	\N	89LMTBQJ	5106	edwinkyeyune	0	\N	\N	\N	\N	\N	f	f	f	\N	\N	f	\N
+1	admin@ata.ug	$2b$10$WX52lSTwDL3CRAsV0oWPWe2FlPPUtgLrbdxnezotou.Qi49cnzYLq	Serge	+27749019134	admin	active	/uploads/thumb-1783124371737-y64k4q.jpeg	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJhZG1pbiIsInN2IjoiN2VlODk4YmMtNDBmMy00OGIwLWFiY2UtYTkyZGJmYTcwM2I4IiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3ODQzMDEyNzEsImV4cCI6MTc4Njg5MzI3MX0.SrIli4vX3mrw8bnQYiCmt8slCPm7-a4PDFLpiLjZd1g	2026-06-15 16:31:06.226579+00	2026-07-17 15:14:31.515+00	\N	\N	\N	f	7ee898bc-40f3-48b0-abce-a92dbfa703b8	\N	00016EFF	\N	sergebarman	1	Mugisho	1980-04-16	military_id	ML0031110	DR Congo	t	f	f	\N	\N	f	\N
+2	demo@ata.ug	$2b$10$/riYlLq42rc5f5OkOQexcuwyh2MsRm2BdWIMjFfIwOWRAudcddz6K	Demo User	0771234567	user	active	\N	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInJvbGUiOiJ1c2VyIiwic3YiOiJiNDY2ODI4Yy02M2UzLTQ0ODItOGU5Zi0zYzg5ZjkzYjVmMjUiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc4MzUzNDU4NiwiZXhwIjoxNzg2MTI2NTg2fQ.645Yo2RsYmv4VoOAgrjeQsgekiJ7FpcGZHPFP_TsqM4	2026-06-15 16:31:06.605107+00	2026-07-17 15:15:26.946+00	airtel_money	0751999888	2026-06-25 22:26:39.158694+00	f	b466828c-63e3-4482-8e9f-3c89f93b5f25	\N	SINF7L5QNT	\N	mrmancomedy	1	\N	\N	\N	\N	\N	f	t	t	\N	\N	t	25.00
 \.
 
 
@@ -10483,7 +10567,6 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 3902	3903	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:27.529926+00	2026-06-26 13:40:27.529926+00	0.00
 3903	3904	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:27.535117+00	2026-06-26 13:40:27.535117+00	0.00
 3904	3905	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:27.539367+00	2026-06-26 13:40:27.539367+00	0.00
-3905	3906	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:27.54384+00	2026-06-26 13:40:27.54384+00	0.00
 3906	3907	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:27.548206+00	2026-06-26 13:40:27.548206+00	0.00
 3907	3908	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:27.552217+00	2026-06-26 13:40:27.552217+00	0.00
 3908	3909	0.00	0.00	0.00	0.00	USD	2026-06-26 13:40:27.556116+00	2026-06-26 13:40:27.556116+00	0.00
@@ -11637,7 +11720,6 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 5067	5059	0.00	0.00	0.00	0.00	USD	2026-07-04 14:32:28.952548+00	2026-07-04 14:32:28.952548+00	0.00
 5040	5038	1.50	1.50	0.00	1.50	USD	2026-07-03 15:17:46.068329+00	2026-07-04 14:38:37.509+00	0.00
 5069	5061	0.00	0.00	0.00	0.00	USD	2026-07-04 15:05:24.276409+00	2026-07-04 15:05:24.276409+00	0.00
-29	30	0.30	0.30	0.00	0.30	USD	2026-06-26 13:40:08.281778+00	2026-07-04 15:39:21.498+00	0.00
 5071	5062	0.00	0.00	0.00	0.00	USD	2026-07-04 16:13:18.293336+00	2026-07-04 16:13:18.293336+00	0.00
 5073	5064	0.00	0.00	0.00	0.00	USD	2026-07-04 16:17:27.671663+00	2026-07-04 16:17:27.671663+00	0.00
 5074	5065	0.00	0.00	0.00	0.00	USD	2026-07-04 16:21:50.220394+00	2026-07-04 16:21:50.220394+00	0.00
@@ -11677,6 +11759,34 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 1	1	0.00	0.50	0.00	0.50	USD	2026-06-15 16:31:06.51595+00	2026-07-09 12:52:28.003+00	0.00
 7	8	5.00	5.00	0.00	5.00	USD	2026-06-26 13:40:08.170082+00	2026-07-09 20:36:42.02+00	0.00
 5113	5095	0.00	0.00	0.00	0.00	USD	2026-07-09 21:25:47.681392+00	2026-07-09 21:25:47.681392+00	0.00
+5114	5096	0.00	0.00	0.00	0.00	USD	2026-07-10 21:17:04.808489+00	2026-07-10 21:17:04.808489+00	0.00
+5115	5097	0.00	0.00	0.00	0.00	USD	2026-07-11 09:29:52.192671+00	2026-07-11 09:29:52.192671+00	0.00
+5116	5098	0.00	0.00	0.00	0.00	USD	2026-07-13 12:56:41.592169+00	2026-07-13 12:56:41.592169+00	0.00
+5117	5099	0.00	0.00	0.00	0.00	USD	2026-07-13 13:01:39.669021+00	2026-07-13 13:01:39.669021+00	0.00
+5118	5100	1.50	1.50	0.00	1.50	USD	2026-07-13 13:28:44.248388+00	2026-07-13 16:15:48.392+00	0.00
+5120	5101	0.00	0.00	0.00	0.00	USD	2026-07-13 16:57:22.889785+00	2026-07-13 16:57:22.889785+00	0.00
+5121	5102	0.00	0.00	0.00	0.00	USD	2026-07-13 17:23:49.640459+00	2026-07-13 17:23:49.640459+00	0.00
+5122	5103	0.00	0.00	0.00	0.00	USD	2026-07-13 18:35:41.116969+00	2026-07-13 18:35:41.116969+00	0.00
+5123	5104	0.00	0.00	0.00	0.00	USD	2026-07-13 21:27:45.018725+00	2026-07-13 21:27:45.018725+00	0.00
+5124	5105	0.00	0.00	0.00	0.00	USD	2026-07-13 22:41:28.843351+00	2026-07-13 22:41:28.843351+00	0.00
+5125	5106	0.00	0.00	0.00	0.00	USD	2026-07-14 11:06:19.566371+00	2026-07-14 11:06:19.566371+00	0.00
+5127	5107	0.00	0.00	0.00	0.00	USD	2026-07-14 11:39:49.646131+00	2026-07-14 11:39:49.646131+00	0.00
+5128	5108	0.00	0.00	0.00	0.00	USD	2026-07-15 07:15:35.761559+00	2026-07-15 07:15:35.761559+00	0.00
+5129	5109	0.00	0.00	0.00	0.00	USD	2026-07-15 10:39:05.982451+00	2026-07-15 10:39:05.982451+00	0.00
+5136	5116	0.00	0.00	0.00	0.00	USD	2026-07-16 17:59:19.606875+00	2026-07-16 17:59:19.606875+00	0.00
+5137	5117	0.00	0.00	0.00	0.00	USD	2026-07-16 21:14:38.706131+00	2026-07-16 21:14:38.706131+00	0.00
+5138	5118	0.00	0.00	0.00	0.00	USD	2026-07-17 07:01:06.623593+00	2026-07-17 07:01:06.623593+00	0.00
+5139	5119	0.00	0.00	0.00	0.00	USD	2026-07-17 07:21:51.376161+00	2026-07-17 07:21:51.376161+00	0.00
+5140	5120	0.00	0.00	0.00	0.00	USD	2026-07-17 08:32:13.529992+00	2026-07-17 08:32:13.529992+00	0.00
+29	30	2.40	-0.60	5.00	1.40	USD	2026-06-26 13:40:08.281778+00	2026-07-17 11:10:16.996+00	0.00
+5130	5110	0.00	0.00	0.00	0.00	USD	2026-07-15 14:44:09.689565+00	2026-07-15 14:44:09.689565+00	0.00
+5131	5111	0.00	0.00	0.00	0.00	USD	2026-07-15 20:06:42.629969+00	2026-07-15 20:06:42.629969+00	0.00
+3905	3906	2.00	2.00	0.00	2.00	USD	2026-06-26 13:40:27.54384+00	2026-07-16 07:34:30.661+00	0.00
+5132	5112	0.00	0.00	0.00	0.00	USD	2026-07-16 11:33:43.839438+00	2026-07-16 11:33:43.839438+00	0.00
+5141	5121	0.00	0.00	0.00	0.00	USD	2026-07-17 12:22:16.616483+00	2026-07-17 12:22:16.616483+00	0.00
+5133	5113	0.00	0.00	0.00	0.00	USD	2026-07-16 15:13:54.430786+00	2026-07-16 15:13:54.430786+00	0.00
+5134	5114	0.00	0.00	0.00	0.00	USD	2026-07-16 17:21:19.228585+00	2026-07-16 17:21:19.228585+00	0.00
+5135	5115	0.00	0.00	0.00	0.00	USD	2026-07-16 17:26:11.990513+00	2026-07-16 17:26:11.990513+00	0.00
 \.
 
 
@@ -11684,7 +11794,7 @@ COPY public.wallets (id, user_id, balance, available_balance, pending_balance, w
 -- Name: announcements_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.announcements_id_seq', 1, true);
+SELECT pg_catalog.setval('public.announcements_id_seq', 2, true);
 
 
 --
@@ -11698,7 +11808,7 @@ SELECT pg_catalog.setval('public.audit_logs_id_seq', 1, false);
 -- Name: bets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.bets_id_seq', 7, true);
+SELECT pg_catalog.setval('public.bets_id_seq', 9, true);
 
 
 --
@@ -11719,7 +11829,7 @@ SELECT pg_catalog.setval('public.games_id_seq', 18, true);
 -- Name: hero_slides_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.hero_slides_id_seq', 2, true);
+SELECT pg_catalog.setval('public.hero_slides_id_seq', 3, true);
 
 
 --
@@ -11733,14 +11843,14 @@ SELECT pg_catalog.setval('public.highlights_id_seq', 5, true);
 -- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.notifications_id_seq', 1, false);
+SELECT pg_catalog.setval('public.notifications_id_seq', 7, true);
 
 
 --
 -- Name: platform_subscriptions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.platform_subscriptions_id_seq', 1, false);
+SELECT pg_catalog.setval('public.platform_subscriptions_id_seq', 2, true);
 
 
 --
@@ -11768,28 +11878,28 @@ SELECT pg_catalog.setval('public.stream_access_id_seq', 1, false);
 -- Name: stream_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.stream_comments_id_seq', 1, false);
+SELECT pg_catalog.setval('public.stream_comments_id_seq', 8, true);
 
 
 --
 -- Name: streams_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.streams_id_seq', 37, true);
+SELECT pg_catalog.setval('public.streams_id_seq', 54, true);
 
 
 --
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 103, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 120, true);
 
 
 --
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 5095, true);
+SELECT pg_catalog.setval('public.users_id_seq', 5121, true);
 
 
 --
@@ -11803,7 +11913,7 @@ SELECT pg_catalog.setval('public.vouchers_id_seq', 1, false);
 -- Name: wallets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.wallets_id_seq', 5113, true);
+SELECT pg_catalog.setval('public.wallets_id_seq', 5141, true);
 
 
 --
@@ -12232,5 +12342,5 @@ GRANT CREATE ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BpewM2666n44ATUjKn6uh0IrhcInaId7ilOTPe07ZjSuCqrleWLgBAoyEjEgRp8
+\unrestrict FikELD2RmwngiyJjTMW03l30jUarLDlBYaxYEOS29CCS8cfDCBxTDg7Ve4KgJpz
 
