@@ -1476,13 +1476,13 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
         <NoLiveBroadcast channelLabel={meta.label} />
       ) : canWatch ? (
         <div className="space-y-3">
-          <div className="flex flex-col lg:flex-row gap-3 lg:items-stretch">
-            <div className="relative flex-1 min-w-0 aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
+          <div className={`grid grid-cols-1 gap-3 ${sidebarOpen ? 'lg:grid-cols-[1fr_260px]' : ''}`}>
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
               {playerEl}
               <FloatingReactionsLayer reactions={floatingReactions} />
             </div>
             {sidebarOpen && (
-              <div className="lg:self-stretch lg:flex lg:flex-col lg:overflow-hidden">{sidebar}</div>
+              <div className="h-[340px] lg:h-full flex flex-col overflow-hidden">{sidebar}</div>
             )}
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
