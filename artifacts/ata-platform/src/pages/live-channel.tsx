@@ -1016,7 +1016,6 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
   useEffect(() => { onReactionRef.current = onReaction; }, [onReaction]);
   const onViewerCountRef = useRef(onViewerCount);
   useEffect(() => { onViewerCountRef.current = onViewerCount; }, [onViewerCount]);
-  const hoveredRef = useRef(false);
 
   useEffect(() => {
     if (!showEmojis) return;
@@ -1083,7 +1082,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
         el.scrollTop = el.scrollHeight;
         newMessageRef.current = false;
         lastTs = ts;
-      } else if (!hoveredRef.current) {
+      } else {
         const delta = lastTs == null ? 0 : ts - lastTs;
         el.scrollTop += (SPEED * delta) / 1000;
         // Loop back to top when we've scrolled to the bottom
@@ -1123,7 +1122,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
         <span className="text-sm font-semibold text-white">Live Chat</span>
         <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
       </div>
-      <div ref={messagesRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0 max-h-[218px] lg:max-h-[380px]" onMouseEnter={() => { hoveredRef.current = true; }} onMouseLeave={() => { hoveredRef.current = false; }}>
+      <div ref={messagesRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0 max-h-[218px] lg:max-h-[380px]">
         {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
         {comments.map((c) => (
           <div key={c.id} className="flex gap-2 items-start">
