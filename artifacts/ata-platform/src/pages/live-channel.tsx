@@ -1085,13 +1085,13 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
   };
 
   return (
-    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden flex-1 min-h-0">
+    <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-900 overflow-hidden h-full min-h-0">
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800 shrink-0">
         <MessageSquare className="h-4 w-4 text-teal-400" />
         <span className="text-sm font-semibold text-white">Live Chat</span>
         <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
       </div>
-      <div ref={messagesRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0 max-h-[218px] lg:max-h-[380px]">
+      <div ref={messagesRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
         {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
         {comments.map((c) => (
           <div key={c.id} className="flex gap-2 items-start">
@@ -1487,7 +1487,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   const sidebar = (
     <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 h-full min-h-0">
       {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? s[`${prefix}mux_sport`]} />}
-      <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-[460px] flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} onViewerCount={isAdmin ? setLiveViewerCount : undefined} />
       </div>
     </div>
@@ -1547,7 +1547,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
               <h1 className="text-lg font-bold text-white">{stream?.title ?? paywallTitle}</h1>
             </div>
           </div>
-          <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0">
+          <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0 h-[400px]">
             <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} onViewerCount={isAdmin ? setLiveViewerCount : undefined} />
           </div>
         </div>
