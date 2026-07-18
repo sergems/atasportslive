@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { db, streamsTable, streamAccessTable, walletsTable, transactionsTable, gamesTable, bonusTransactionsTable, usersTable } from "@workspace/db";
 import { eq, desc, sql, and, gt, ne, or, gte, isNull } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
-import { notify } from "../lib/notify";
+import { notify, wsStreamClients } from "../lib/notify";
 
 const router = Router();
 
@@ -388,6 +388,14 @@ router.post("/:id/access", authMiddleware, async (req: AuthRequest, res): Promis
   }
 
   res.json({ hasAccess: true, expiresAt, secondsRemaining: Math.floor(DURATIONS_MS[subType] / 1000), subscriptionType: subType });
+});
+
+// Live viewer count — reads directly from the in-memory WS connection map.
+// Only admins/managers can see this; regular viewers are not exposed to each other's counts.
+router.get("/:id/viewers", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const streamId = Number(req.params.id);
+  const count = wsStreamClients.get(streamId)?.size ?? 0;
+  res.json({ count });
 });
 
 router.get("/:id/access/check", authMiddleware, async (req: AuthRequest, res): Promise<void> => {

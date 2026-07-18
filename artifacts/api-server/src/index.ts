@@ -3,7 +3,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import jwt from "jsonwebtoken";
 import app from "./app";
 import { logger } from "./lib/logger";
-import { wsClients, wsStreamClients } from "./lib/notify";
+import { wsClients, wsStreamClients, broadcastToStream } from "./lib/notify";
 import { startBonusCron } from "./lib/bonusCron";
 import { startGameCron } from "./lib/gameCron";
 import { startCommentCron } from "./lib/commentCron";
@@ -57,6 +57,8 @@ wss.on("connection", (ws: WebSocket, req) => {
     if (!wsStreamClients.has(streamId)) wsStreamClients.set(streamId, new Set());
     wsStreamClients.get(streamId)!.add(ws);
     logger.info({ streamId }, "Client joined stream room");
+    // Broadcast updated viewer count to everyone in this stream room
+    broadcastToStream(streamId, { type: "viewer_count", count: wsStreamClients.get(streamId)!.size });
   }
 
   ws.on("close", () => {
@@ -66,6 +68,9 @@ wss.on("connection", (ws: WebSocket, req) => {
     }
     if (streamId > 0) {
       wsStreamClients.get(streamId)?.delete(ws);
+      // Broadcast updated viewer count after this client leaves
+      const remaining = wsStreamClients.get(streamId)?.size ?? 0;
+      broadcastToStream(streamId, { type: "viewer_count", count: remaining });
     }
   });
 

@@ -999,9 +999,10 @@ interface LiveComment { id: number; userId: number; username: string; content: s
 const COMMENT_TTL_MS = 6 * 60 * 60 * 1000;
 const QUICK_EMOJIS = ['😂','❤️','🔥','👏','💪','🎯','🥊','🏆','😮','👍','😅','🤣','😁','💯','🙌','👀','😱','🤩','🎉','💥','⚡','🥳','😤','👊','🏅','🎊','🤝','💰','😎','🫡'];
 
-function CommentSection({ streamId, token, userId, isAuthenticated, onReaction }: {
+function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, onViewerCount }: {
   streamId: number | undefined; token: string | null; userId: number | undefined;
   isAuthenticated: boolean; onReaction?: (emoji: string) => void;
+  onViewerCount?: (count: number) => void;
 }) {
   const [comments, setComments] = useState<LiveComment[]>([]);
   const [input, setInput] = useState('');
@@ -1013,6 +1014,8 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction }
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
   const onReactionRef = useRef(onReaction);
   useEffect(() => { onReactionRef.current = onReaction; }, [onReaction]);
+  const onViewerCountRef = useRef(onViewerCount);
+  useEffect(() => { onViewerCountRef.current = onViewerCount; }, [onViewerCount]);
 
   useEffect(() => {
     if (!showEmojis) return;
@@ -1047,6 +1050,8 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction }
             setComments((prev) => prev.some((c) => c.id === data.comment.id) ? prev : [...prev, data.comment]);
           } else if (data.type === 'stream_reaction' && data.emoji) {
             onReactionRef.current?.(data.emoji);
+          } else if (data.type === 'viewer_count' && typeof data.count === 'number') {
+            onViewerCountRef.current?.(data.count);
           }
         } catch {}
       };
@@ -1331,6 +1336,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
+  const [liveViewerCount, setLiveViewerCount] = useState(0);
   const handleReaction = useCallback((emoji: string) => {
     const id = `${Date.now()}-${Math.random()}`;
     const x = 8 + Math.random() * 60;
@@ -1404,15 +1410,28 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
     activeFeed === 'yt'  && !ytIsFree  ? ytStreamDbId  :
     undefined;
 
-  // chatStreamId is separate from paywallStreamId — chat should always work
-  // regardless of whether the stream has a paywall.  Free streams still need
-  // a DB stream row to anchor comments; we fall through to any configured ID
-  // even when activeFeed is null (the fallback MuxPlayer is playing).
+  // chatStreamId is separate from paywallStreamId — chat always works regardless of paywall.
   const chatStreamId: number | undefined =
-    activeFeed === 'db'  ? stream!.id :
+    activeFeed === 'db'  ? stream?.id :
     activeFeed === 'mux' ? muxStreamDbId :
     activeFeed === 'yt'  ? ytStreamDbId  :
     muxStreamDbId ?? ytStreamDbId;
+
+  // ── Live viewer count polling (admin fallback + initial load) ────────────
+  // Primary source: WebSocket `viewer_count` pushed on every connect/disconnect.
+  // This REST poll gives the initial count before the first WS event fires.
+  useQuery<{ count: number }>({
+    queryKey: ['stream-viewers', chatStreamId],
+    queryFn: async () => {
+      const r = await fetch(`/api/streams/${chatStreamId}/viewers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return r.json();
+    },
+    enabled: isAdmin && !!chatStreamId,
+    refetchInterval: 10_000,
+    select: (d) => { setLiveViewerCount(d.count); return d; },
+  });
 
   const paywallPrice = activeFeed === 'db' ? stream!.accessPrice : activeFeed === 'yt' ? ytPrice : muxPrice;
   const paywallTitle = activeFeed === 'db' ? stream!.title : activeFeed === 'yt' ? ytTitle : muxTitle;
@@ -1463,7 +1482,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
     <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 h-full min-h-0">
       {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? s[`${prefix}mux_sport`]} />}
       <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-none flex flex-col overflow-hidden">
-        <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} />
+        <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} onViewerCount={isAdmin ? setLiveViewerCount : undefined} />
       </div>
     </div>
   );
@@ -1501,7 +1520,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <ReactionBar streamId={paywallStreamId} token={token} isAuthenticated={isAuthenticated} />
-              {isAdmin && <div className="flex items-center gap-1.5 text-slate-400 text-sm"><Users className="h-4 w-4 text-teal-500" /><span className="font-mono text-white">{stream?.viewerCount ?? 0}</span><span className="text-slate-500">watching</span></div>}
+              {isAdmin && <div className="flex items-center gap-1.5 text-slate-400 text-sm"><Users className="h-4 w-4 text-teal-500" /><span className="font-mono text-white">{liveViewerCount}</span><span className="text-slate-500">watching</span></div>}
               <button onClick={() => setSidebarOpen((v) => !v)} title={sidebarOpen ? 'Hide panel' : 'Show chat'}
                 className="hidden lg:flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 text-xs text-slate-300 hover:text-white transition-colors">
                 {sidebarOpen ? <><PanelRightClose className="h-3.5 w-3.5" /> Hide panel</> : <><PanelRightOpen className="h-3.5 w-3.5" /> Chat &amp; Activity</>}
@@ -1523,7 +1542,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
             </div>
           </div>
           <div className="w-full lg:w-[340px] xl:w-[380px] shrink-0">
-            <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} />
+            <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} onViewerCount={isAdmin ? setLiveViewerCount : undefined} />
           </div>
         </div>
       ) : (
