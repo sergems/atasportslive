@@ -1420,7 +1420,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   // ── Live viewer count polling (admin fallback + initial load) ────────────
   // Primary source: WebSocket `viewer_count` pushed on every connect/disconnect.
   // This REST poll gives the initial count before the first WS event fires.
-  useQuery<{ count: number }>({
+  const { data: viewersData } = useQuery<{ count: number }>({
     queryKey: ['stream-viewers', chatStreamId],
     queryFn: async () => {
       const r = await fetch(`/api/streams/${chatStreamId}/viewers`, {
@@ -1430,8 +1430,14 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
     },
     enabled: isAdmin && !!chatStreamId,
     refetchInterval: 10_000,
-    select: (d) => { setLiveViewerCount(d.count); return d; },
   });
+  // Sync viewer count from poll — must be in useEffect, NOT in select, because
+  // select runs during render and calling setState there causes infinite re-renders.
+  useEffect(() => {
+    if (viewersData?.count !== undefined) {
+      setLiveViewerCount(viewersData.count);
+    }
+  }, [viewersData]);
 
   const paywallPrice = activeFeed === 'db' ? stream!.accessPrice : activeFeed === 'yt' ? ytPrice : muxPrice;
   const paywallTitle = activeFeed === 'db' ? stream!.title : activeFeed === 'yt' ? ytTitle : muxTitle;
