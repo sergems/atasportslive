@@ -1075,9 +1075,10 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
       if (inner && outer) {
         const delta = lastTs == null ? 0 : ts - lastTs;
         marqueeOffsetRef.current += (SPEED * delta) / 1000;
-        // Loop back once all content has scrolled past
-        if (marqueeOffsetRef.current >= inner.offsetHeight) {
-          marqueeOffsetRef.current = 0;
+        // Loop back after the first copy scrolls past — second copy fills seamlessly
+        const half = inner.offsetHeight / 2;
+        if (half > 0 && marqueeOffsetRef.current >= half) {
+          marqueeOffsetRef.current -= half;
         }
         inner.style.transform = `translateY(-${marqueeOffsetRef.current}px)`;
       }
@@ -1114,17 +1115,32 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
         <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
       </div>
       <div ref={messagesRef} className="flex-1 overflow-hidden px-3 py-2 min-h-0 max-h-[218px] lg:max-h-[380px] relative">
-        <div ref={marqueeInnerRef} className="space-y-2">
-        {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
-        {comments.map((c) => (
-          <div key={c.id} className="flex gap-2 items-start">
-            <div className="h-6 w-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-teal-400 mt-0.5">{c.username[0]?.toUpperCase() ?? '?'}</div>
-            <div className="min-w-0 flex-1">
-              <span className="text-teal-400 text-[11px] font-semibold mr-1.5">{c.username}</span>
-              <span className="text-slate-300 text-[13px] break-words">{c.content}</span>
-            </div>
+        <div ref={marqueeInnerRef}>
+          {/* First copy */}
+          <div className="space-y-2">
+            {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
+            {comments.map((c) => (
+              <div key={`a-${c.id}`} className="flex gap-2 items-start">
+                <div className="h-6 w-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-teal-400 mt-0.5">{c.username[0]?.toUpperCase() ?? '?'}</div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-teal-400 text-[11px] font-semibold mr-1.5">{c.username}</span>
+                  <span className="text-slate-300 text-[13px] break-words">{c.content}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+          {/* Second copy for seamless loop */}
+          <div className="space-y-2 mt-2">
+            {comments.map((c) => (
+              <div key={`b-${c.id}`} className="flex gap-2 items-start">
+                <div className="h-6 w-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-teal-400 mt-0.5">{c.username[0]?.toUpperCase() ?? '?'}</div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-teal-400 text-[11px] font-semibold mr-1.5">{c.username}</span>
+                  <span className="text-slate-300 text-[13px] break-words">{c.content}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <div className="shrink-0 border-t border-slate-800 px-2 py-2">
