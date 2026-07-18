@@ -1009,6 +1009,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
   const [posting, setPosting] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const marqueeInnerRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const emojiPanelRef = useRef<HTMLDivElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
@@ -1061,34 +1062,24 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
     return () => { destroyed = true; clearTimeout(reconnect); wsRef.current?.close(); };
   }, [streamId, token]);
 
-  // Auto-scroll: drift downward (content moves up) at 50 px/s.
-  // Loop back to top when the bottom is reached.
-  // Pause while the user hovers so they can read.
-  // When a new message arrives, jump to bottom then let the loop continue.
-  const newMessageRef = useRef(false);
+  // Marquee: move inner div upward via transform so the outer clip hides the
+  // scrollbar entirely. Loop seamlessly when all content has scrolled through.
+  const marqueeOffsetRef = useRef(0);
   useEffect(() => {
-    newMessageRef.current = true;
-  }, [comments.length]);
-
-  useEffect(() => {
-    const el = messagesRef.current;
-    if (!el) return;
-    el.scrollTop = 0;
     let lastTs: number | null = null;
     let rafId: number;
     const SPEED = 50; // px per second
     const tick = (ts: number) => {
-      if (newMessageRef.current) {
-        el.scrollTop = el.scrollHeight;
-        newMessageRef.current = false;
-        lastTs = ts;
-      } else {
+      const inner = marqueeInnerRef.current;
+      const outer = messagesRef.current;
+      if (inner && outer) {
         const delta = lastTs == null ? 0 : ts - lastTs;
-        el.scrollTop += (SPEED * delta) / 1000;
-        // Loop back to top when we've scrolled to the bottom
-        if (el.scrollTop >= el.scrollHeight - el.clientHeight - 1) {
-          el.scrollTop = 0;
+        marqueeOffsetRef.current += (SPEED * delta) / 1000;
+        // Loop back once all content has scrolled past
+        if (marqueeOffsetRef.current >= inner.offsetHeight) {
+          marqueeOffsetRef.current = 0;
         }
+        inner.style.transform = `translateY(-${marqueeOffsetRef.current}px)`;
       }
       lastTs = ts;
       rafId = requestAnimationFrame(tick);
@@ -1122,7 +1113,8 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
         <span className="text-sm font-semibold text-white">Live Chat</span>
         <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
       </div>
-      <div ref={messagesRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0 max-h-[218px] lg:max-h-[380px]">
+      <div ref={messagesRef} className="flex-1 overflow-hidden px-3 py-2 min-h-0 max-h-[218px] lg:max-h-[380px] relative">
+        <div ref={marqueeInnerRef} className="space-y-2">
         {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
         {comments.map((c) => (
           <div key={c.id} className="flex gap-2 items-start">
@@ -1133,6 +1125,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
             </div>
           </div>
         ))}
+        </div>
       </div>
       <div className="shrink-0 border-t border-slate-800 px-2 py-2">
         {isAuthenticated ? (
