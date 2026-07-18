@@ -1068,7 +1068,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
   useEffect(() => {
     let lastTs: number | null = null;
     let rafId: number;
-    const SPEED = 50; // px per second
+    const SPEED = 150; // px per second
     const tick = (ts: number) => {
       const inner = marqueeInnerRef.current;
       const outer = messagesRef.current;
