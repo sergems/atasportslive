@@ -1091,7 +1091,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
         <span className="text-sm font-semibold text-white">Live Chat</span>
         <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
       </div>
-      <div ref={messagesRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0">
+      <div ref={messagesRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-2 min-h-0 max-h-[280px] lg:max-h-[460px]">
         {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
         {comments.map((c) => (
           <div key={c.id} className="flex gap-2 items-start">
@@ -1487,7 +1487,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   const sidebar = (
     <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 h-full min-h-0">
       {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? s[`${prefix}mux_sport`]} />}
-      <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-none flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-[460px] flex flex-col overflow-hidden">
         <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} onViewerCount={isAdmin ? setLiveViewerCount : undefined} />
       </div>
     </div>
