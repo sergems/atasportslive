@@ -1062,23 +1062,34 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
     return () => { destroyed = true; clearTimeout(reconnect); wsRef.current?.close(); };
   }, [streamId, token]);
 
-  // Jump to bottom whenever a new message arrives
+  // Auto-scroll: drift downward (content moves up) at 50 px/s.
+  // Loop back to top when the bottom is reached.
+  // Pause while the user hovers so they can read.
+  // When a new message arrives, jump to bottom then let the loop continue.
+  const newMessageRef = useRef(false);
   useEffect(() => {
-    const el = messagesRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    newMessageRef.current = true;
   }, [comments.length]);
 
-  // Continuously drift upward at ~25 px/s; pause while the user hovers
   useEffect(() => {
     const el = messagesRef.current;
     if (!el) return;
+    el.scrollTop = 0;
     let lastTs: number | null = null;
     let rafId: number;
-    const SPEED = 25; // px per second
+    const SPEED = 50; // px per second
     const tick = (ts: number) => {
-      if (!hoveredRef.current) {
+      if (newMessageRef.current) {
+        el.scrollTop = el.scrollHeight;
+        newMessageRef.current = false;
+        lastTs = ts;
+      } else if (!hoveredRef.current) {
         const delta = lastTs == null ? 0 : ts - lastTs;
         el.scrollTop += (SPEED * delta) / 1000;
+        // Loop back to top when we've scrolled to the bottom
+        if (el.scrollTop >= el.scrollHeight - el.clientHeight - 1) {
+          el.scrollTop = 0;
+        }
       }
       lastTs = ts;
       rafId = requestAnimationFrame(tick);
