@@ -187,8 +187,9 @@ export default function Games() {
 
   const singleMatches = allGames.filter((g) => !containerTypes.has(g.type ?? ''));
   const bettingGames = singleMatches.filter((g) => g.status === 'upcoming' && !gameHasStarted(g));
+  const todayStr = new Date().toISOString().split('T')[0];
   const awaitingGames = singleMatches.filter(
-    (g) => (g.status === 'upcoming' || g.status === 'live') && gameHasStarted(g),
+    (g) => (g.status === 'upcoming' || g.status === 'live') && gameHasStarted(g) && g.eventDate >= todayStr,
   );
   const resultGames = singleMatches.filter((g) => g.status === 'completed');
 
