@@ -56,8 +56,12 @@ router.get("/", async (req, res): Promise<void> => {
   // admins can still see/manage them. Otherwise always exclude them.
   const virtualClause = includeAll ? undefined : notVirtual;
 
+  const now = new Date();
   const statusClause = status
-    ? eq(streamsTable.status, status as any)
+    ? status === 'upcoming'
+      // upcoming listings: only show streams that haven't started yet
+      ? and(eq(streamsTable.status, 'upcoming' as any), gte(streamsTable.startTime, now))
+      : eq(streamsTable.status, status as any)
     : includeAll
     ? undefined
     : ne(streamsTable.status, 'ended' as any);
