@@ -36,6 +36,14 @@ const PUBLIC_SETTING_KEYS = new Set([
   "ch3_yt_player_a", "ch3_yt_player_b", "ch3_yt_player_a_country", "ch3_yt_player_b_country",
   // ── Subscription pricing ─────────────────────────────────────────────────
   "price_daily", "price_weekly", "price_monthly", "price_yearly",
+  // ── Ad slots (displayed to all visitors on /upcoming and /fixtures) ───────
+  "ads_hide_on_mobile",
+  "ad_slot_left_1_image",  "ad_slot_left_1_link",  "ad_slot_left_1_enabled",
+  "ad_slot_left_2_image",  "ad_slot_left_2_link",  "ad_slot_left_2_enabled",
+  "ad_slot_left_3_image",  "ad_slot_left_3_link",  "ad_slot_left_3_enabled",
+  "ad_slot_right_1_image", "ad_slot_right_1_link", "ad_slot_right_1_enabled",
+  "ad_slot_right_2_image", "ad_slot_right_2_link", "ad_slot_right_2_enabled",
+  "ad_slot_right_3_image", "ad_slot_right_3_link", "ad_slot_right_3_enabled",
 ]);
 
 // Public settings — only non-sensitive keys, no auth required

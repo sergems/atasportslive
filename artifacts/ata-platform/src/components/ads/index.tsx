@@ -23,7 +23,7 @@ export interface AdSlotsResult {
 export function useAdSlots(): AdSlotsResult {
   const { data: settings } = useQuery<Record<string, string>>({
     queryKey: ['ad-slots'],
-    queryFn: () => fetch('/api/settings').then((r) => r.json()),
+    queryFn: () => fetch('/api/settings/public').then((r) => r.json()),
     staleTime: 60000,
     refetchInterval: 120000,
   });
