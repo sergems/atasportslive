@@ -27,10 +27,17 @@ interface AdSlotState {
   enabled: boolean;
 }
 
-function useSettings() {
+function useSettings(token: string | null) {
   return useQuery<Record<string, string>>({
-    queryKey: ['settings'],
-    queryFn: () => fetch('/api/settings').then((r) => r.json()),
+    queryKey: ['settings', token],
+    queryFn: () =>
+      fetch('/api/settings', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).then((r) => {
+        if (!r.ok) throw new Error('Failed to load settings');
+        return r.json();
+      }),
+    enabled: !!token,
   });
 }
 
@@ -178,7 +185,7 @@ export default function AdminAds() {
 
   const token = useAuthStore((s) => s.token);
   const qc = useQueryClient();
-  const { data: settings, isLoading } = useSettings();
+  const { data: settings, isLoading } = useSettings(token);
 
   const emptySlot = (): AdSlotState => ({ image: '', link: '', enabled: true });
 

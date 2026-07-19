@@ -52,11 +52,28 @@ router.get("/", async (req, res): Promise<void> => {
 });
 
 router.get("/upcoming", async (req, res): Promise<void> => {
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  // Current time as HH:MM so we can exclude same-day events that have already started
+  const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+
   const games = await db
     .select()
     .from(gamesTable)
-    .where(and(eq(gamesTable.status, "upcoming"), gte(gamesTable.eventDate, today)))
+    .where(
+      and(
+        eq(gamesTable.status, "upcoming"),
+        or(
+          // Future dates always show
+          sql`${gamesTable.eventDate} > ${today}`,
+          // Today only if the event time hasn't passed yet
+          and(
+            sql`${gamesTable.eventDate} = ${today}`,
+            sql`${gamesTable.eventTime} > ${currentTime}`
+          )
+        )
+      )
+    )
     .orderBy(gamesTable.eventDate)
     .limit(10);
   res.json(games.map(toGame));

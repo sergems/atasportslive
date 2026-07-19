@@ -79,7 +79,6 @@ router.get("/", async (req, res): Promise<void> => {
 
 router.get("/upcoming", async (req, res): Promise<void> => {
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const streams = await db
     .select()
@@ -91,7 +90,7 @@ router.get("/upcoming", async (req, res): Promise<void> => {
           eq(streamsTable.status, "live" as any),
           and(
             eq(streamsTable.status, "upcoming" as any),
-            gte(streamsTable.startTime, todayStart)
+            gte(streamsTable.startTime, now)
           )
         )
       )
