@@ -17,11 +17,16 @@ async function getSmtpSettings(): Promise<Record<string, string>> {
 async function createTransporter() {
   const s = await getSmtpSettings();
   if (!s.smtp_host || !s.smtp_user || !s.smtp_pass) return null;
+  const port = Number(s.smtp_port) || 587;
   return nodemailer.createTransport({
     host: s.smtp_host,
-    port: Number(s.smtp_port) || 587,
-    secure: s.smtp_secure === "true",
+    port,
+    // Port 465 requires implicit TLS even if the legacy checkbox was not saved.
+    secure: s.smtp_secure === "true" || port === 465,
     auth: { user: s.smtp_user, pass: s.smtp_pass },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
     tls: { rejectUnauthorized: false },
   });
 }

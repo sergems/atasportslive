@@ -541,7 +541,7 @@ router.post("/forgot-password", async (req, res): Promise<void> => {
   const { sendMail } = await import("../lib/mailer.js");
   const resetLink = `https://atasportslive.com/reset-password?token=${nonce}&email=${encodeURIComponent(user.email)}`;
   const name = user.fullName?.split(" ")[0] || "there";
-  await sendMail({
+  const sent = await sendMail({
     to: user.email,
     subject: "Reset your ATA Sports Live password",
     html: `
@@ -557,6 +557,11 @@ router.post("/forgot-password", async (req, res): Promise<void> => {
 </div><div class="footer">ATA Sports Live &mdash; Nsambya, Kampala, Uganda<br>This is an automated message, please do not reply.</div></div></body></html>`,
     text: `Reset your ATA Sports Live password\n\nHi ${name},\n\nClick this link to reset your password (expires in 30 minutes):\n${resetLink}\n\nIf you didn't request this, ignore this email.`,
   });
+
+  if (!sent) {
+    res.status(502).json({ error: "Unable to send the password reset email. Please try again later." });
+    return;
+  }
 
   res.json({ message: "Password reset instructions sent to that email address" });
 });
