@@ -18,10 +18,18 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
-function useSettings() {
+function useSettings(token: string | null) {
   return useQuery<Record<string, string>>({
     queryKey: ['settings'],
-    queryFn: () => fetch('/api/settings').then((r) => r.json()),
+    enabled: !!token,
+    queryFn: async () => {
+      const r = await fetch('/api/settings', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || 'Failed to load settings');
+      return data;
+    },
   });
 }
 
@@ -31,7 +39,7 @@ export default function AdminSettings() {
   const { isAdmin } = useAuth();
   const token = useAuthStore((s) => s.token);
   const qc = useQueryClient();
-  const { data: settings, isLoading } = useSettings();
+  const { data: settings, isLoading } = useSettings(token);
 
   // Subscription prices
   const [priceDaily,   setPriceDaily]   = useState('1.70');
