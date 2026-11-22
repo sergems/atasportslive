@@ -653,6 +653,22 @@ export const GetRevenueBreakdownPeriod = {
 
 export type GetRecentActivityParams = {
 limit?: number;
+offset?: number;
+/**
+ * Filter by user email, full name or username (case-insensitive)
+ */
+search?: string;
+};
+
+export type GetRecentActivityCountParams = {
+/**
+ * Filter by user email, full name or username (case-insensitive)
+ */
+search?: string;
+};
+
+export type GetRecentActivityCount200 = {
+  total: number;
 };
 
 export type GetStreamingReportParams = {

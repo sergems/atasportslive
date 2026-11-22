@@ -31,6 +31,8 @@ export * from './gameStatus';
 export * from './gameUpdate';
 export * from './getBettingReportParams';
 export * from './getBettingReportPeriod';
+export * from './getRecentActivityCount200';
+export * from './getRecentActivityCountParams';
 export * from './getRecentActivityParams';
 export * from './getRevenueBreakdownParams';
 export * from './getRevenueBreakdownPeriod';

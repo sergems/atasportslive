@@ -539,7 +539,9 @@ router.post("/forgot-password", async (req, res): Promise<void> => {
 
   // Send email — fails silently if SMTP not configured
   const { sendMail } = await import("../lib/mailer.js");
-  const resetLink = `https://atasportslive.com/reset-password?token=${nonce}&email=${encodeURIComponent(user.email)}`;
+  // APP_BASE_URL points at the frontend users actually visit (defaults to production).
+  const appBase = (process.env.APP_BASE_URL || (process.env.NODE_ENV === "production" ? "https://atasportslive.com" : "http://localhost:5000")).replace(/\/+$/, "");
+  const resetLink = `${appBase}/reset-password?token=${nonce}&email=${encodeURIComponent(user.email)}`;
   const name = user.fullName?.split(" ")[0] || "there";
   const sent = await sendMail({
     to: user.email,

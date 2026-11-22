@@ -1031,6 +1031,16 @@ paths:
           schema:
             type: integer
             default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: search
+          in: query
+          description: Filter by user email, full name or username (case-insensitive)
+          schema:
+            type: string
       responses:
         "200":
           description: Recent activity
@@ -1040,6 +1050,29 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ActivityItem"
+
+  /admin/activity/count:
+    get:
+      operationId: getRecentActivityCount
+      tags: [admin]
+      summary: Count recent platform activity entries
+      parameters:
+        - name: search
+          in: query
+          description: Filter by user email, full name or username (case-insensitive)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Total activity count
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [total]
+                properties:
+                  total:
+                    type: integer
 
   /admin/pending-withdrawals:
     get:

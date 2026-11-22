@@ -120,7 +120,7 @@ export default function Dashboard() {
               <Skeleton className="h-7 w-24 bg-slate-800 rounded-lg mt-0.5" />
             ) : (
               <div className="text-2xl font-bold font-mono text-teal-400 leading-tight">
-                ${wallet?.balance?.toFixed(2) ?? '0.00'}
+                ${wallet?.availableBalance?.toFixed(2) ?? '0.00'}
               </div>
             )}
             {!loadingWallet && (wallet?.bonusBalance ?? 0) > 0 && (

@@ -117,8 +117,10 @@ export function Navbar() {
     { href: '/live', label: 'Livestream', exact: true, pulse: ch1Live, ch1: true },
     ...(ch2Live ? [{ href: '/live-2', label: 'Livestream 2', exact: true, pulse: true, ch1: false }] : []),
     ...(ch3Live ? [{ href: '/live-3', label: 'Livestream 3', exact: true, pulse: true, ch1: false }] : []),
-    { href: '/streams', label: 'Events', pulse: false, ch1: false },
-    { href: '/upcoming', label: 'Upcoming', pulse: false, ch1: false },
+    ...(!isAuthenticated ? [
+      { href: '/streams', label: 'Events', pulse: false, ch1: false },
+      { href: '/upcoming', label: 'Upcoming', pulse: false, ch1: false },
+    ] : []),
     { href: '/highlights', label: 'Highlights', pulse: false, ch1: false },
     { href: '/fixtures', label: 'Fixtures', pulse: false, ch1: false },
     ...(isAuthenticated ? [{ href: '/games', label: 'Predictions', pulse: false, ch1: false }] : []),
@@ -182,22 +184,20 @@ export function Navbar() {
           {isAuthenticated ? (
             <>
               <Link href="/wallet">
-                <div className="hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-md bg-slate-900 border border-slate-800 hover:border-teal-500/30 transition-colors cursor-pointer">
-                  <Wallet className="h-4 w-4 text-teal-500 shrink-0" />
-                  <span className="font-mono text-sm font-semibold text-white">
-                    ${(wallet?.balance ?? 0).toFixed(2)}
+                <div className="flex items-center gap-1.5 md:gap-2.5 px-2 md:px-3 py-1.5 rounded-md bg-slate-900 border border-slate-800 hover:border-teal-500/30 transition-colors cursor-pointer" title="Cash wallet and bonus wallet">
+                  <span className="flex items-center gap-1">
+                    <Wallet className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-400 shrink-0" />
+                    <span className="font-mono text-xs md:text-sm font-semibold text-green-400">
+                      ${(wallet?.availableBalance ?? 0).toFixed(2)}
+                    </span>
                   </span>
-                  {(wallet?.bonusBalance ?? 0) > 0 && (
-                    <>
-                      <span className="w-px h-3.5 bg-slate-700" />
-                      <span className="flex items-center gap-1">
-                        <Gift className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
-                        <span className="font-mono text-sm font-semibold text-yellow-400">
-                          ${(wallet?.bonusBalance ?? 0).toFixed(2)}
-                        </span>
-                      </span>
-                    </>
-                  )}
+                  <span className="w-px h-3.5 bg-slate-700" />
+                  <span className="flex items-center gap-1">
+                    <Gift className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
+                    <span className="font-mono text-xs md:text-sm font-semibold text-yellow-400">
+                      ${(wallet?.bonusBalance ?? 0).toFixed(2)}
+                    </span>
+                  </span>
                 </div>
               </Link>
               <Link href="/notifications">

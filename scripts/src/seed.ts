@@ -68,11 +68,11 @@ async function seed() {
       description: "Top pool players from Kampala face off in the quarter final round.",
       sport: "pool",
       thumbnailUrl: "https://images.unsplash.com/photo-1615672968435-75e0c291cd6e?w=800&q=80",
-      status: "live",
+      status: "upcoming",
       hlsUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
       startTime: yesterday,
       accessPrice: "1.50",
-      viewerCount: 142,
+      viewerCount: 0,
     },
     {
       title: "Lugogo Boxing Night - Main Event",

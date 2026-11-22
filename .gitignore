@@ -47,3 +47,10 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Local secrets (generated during dev; keep out of version control)
+/.env
+/.env.local
+
+# Production database dumps (contain PII — never commit)
+/backups/

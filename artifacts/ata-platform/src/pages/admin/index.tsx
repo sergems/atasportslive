@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useGetAdminStats, useGetRecentActivity, useSettleGame, getListGamesQueryKey } from '@workspace/api-client-react';
+import { useGetAdminStats, useGetRecentActivity, useGetRecentActivityCount, useSettleGame, getListGamesQueryKey } from '@workspace/api-client-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import {
   Users, Wallet, TrendingUp, Radio, Trophy, ArrowUpRight, Clock,
-  ChevronRight, CheckCircle2, ShieldCheck, Gavel, Hourglass, AlertTriangle,
+  ChevronRight, CheckCircle2, ShieldCheck, Gavel, Hourglass, AlertTriangle, Search, X,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { toast } from 'sonner';
+
+const ACTIVITY_PAGE_SIZE = 10;
 
 function useWithdrawalPipeline() {
   const token = useAuthStore.getState().token;
@@ -165,7 +167,25 @@ export default function AdminDashboard() {
 
   const qc = useQueryClient();
   const { data: stats, isLoading } = useGetAdminStats();
-  const { data: activity } = useGetRecentActivity({ limit: 10 });
+  const [activityPageRaw, setActivityPageRaw] = useState(0);
+  const [searchInput, setSearchInput] = useState('');
+  const [activitySearch, setActivitySearch] = useState('');
+  // Debounce typing so we don't fire a query on every keystroke.
+  useEffect(() => {
+    const timer = window.setTimeout(() => setActivitySearch(searchInput.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
+  // Any new search starts back at the first page.
+  useEffect(() => { setActivityPageRaw(0); }, [activitySearch]);
+  const { data: activityCount } = useGetRecentActivityCount({ search: activitySearch || undefined });
+  const totalActivityPages = Math.max(1, Math.ceil((activityCount?.total ?? 0) / ACTIVITY_PAGE_SIZE));
+  const activityPage = Math.min(activityPageRaw, totalActivityPages - 1);
+  const activityWindowStart = Math.max(0, Math.min(activityPage - 2, totalActivityPages - 5));
+  const { data: activity } = useGetRecentActivity({
+    limit: ACTIVITY_PAGE_SIZE,
+    offset: activityPage * ACTIVITY_PAGE_SIZE,
+    search: activitySearch || undefined,
+  });
   const { data: pipeline, isLoading: pipelineLoading } = useWithdrawalPipeline();
   const { data: settlementGames = [], isLoading: settlementLoading } = useSettlementDue();
 
@@ -320,11 +340,36 @@ export default function AdminDashboard() {
       {/* Recent Activity */}
       <Card className="bg-slate-900 border-slate-800">
         <CardHeader className="py-2.5 px-3 border-b border-slate-800">
-          <CardTitle className="text-white text-xs uppercase tracking-wider">Recent Activity</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="text-white text-xs uppercase tracking-wider shrink-0">Recent Activity</CardTitle>
+            <div className="relative w-full max-w-[260px]">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search email, name or username"
+                aria-label="Search activity by user"
+                className="h-7 w-full rounded border border-slate-700 bg-slate-800 pl-7 pr-7 text-[11px] text-white placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-teal-500/50"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {!activity || activity.length === 0 ? (
-            <p className="text-slate-500 text-xs py-4 px-3">No recent activity.</p>
+            <p className="text-slate-500 text-xs py-4 px-3">
+              {activitySearch ? `No activity found for "${activitySearch}".` : 'No recent activity.'}
+            </p>
           ) : (
             <div className="divide-y divide-slate-800">
               {activity.map((item: any) => (
@@ -348,6 +393,43 @@ export default function AdminDashboard() {
               ))}
             </div>
           )}
+          <div className="flex items-center justify-between gap-2 border-t border-slate-800 px-3 py-2">
+            <span className="text-[10px] text-slate-500">
+              Page {activityPage + 1} of {totalActivityPages} · {activityCount?.total ?? 0} {activitySearch ? 'results' : 'activities'}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={activityPage === 0}
+                onClick={() => setActivityPageRaw((p) => Math.max(0, p - 1))}
+                className="h-6 rounded border border-slate-700 bg-slate-800 px-2 text-[10px] text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Prev
+              </button>
+              {Array.from({ length: Math.min(5, totalActivityPages) }, (_, i) => activityWindowStart + i).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setActivityPageRaw(page)}
+                  className={`h-6 min-w-6 rounded border px-1.5 text-[10px] font-medium transition-colors ${
+                    page === activityPage
+                      ? 'border-teal-500 bg-teal-500 text-slate-950'
+                      : 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                  }`}
+                >
+                  {page + 1}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={activityPage >= totalActivityPages - 1}
+                onClick={() => setActivityPageRaw((p) => p + 1)}
+                className="h-6 rounded border border-slate-700 bg-slate-800 px-2 text-[10px] text-slate-300 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

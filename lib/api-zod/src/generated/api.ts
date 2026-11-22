@@ -1215,9 +1215,12 @@ export const GetRevenueBreakdownResponse = zod.object({
  * @summary Get recent platform activity
  */
 export const getRecentActivityQueryLimitDefault = 20;
+export const getRecentActivityQueryOffsetDefault = 0;
 
 export const GetRecentActivityQueryParams = zod.object({
-  "limit": zod.coerce.number().default(getRecentActivityQueryLimitDefault)
+  "limit": zod.coerce.number().default(getRecentActivityQueryLimitDefault),
+  "offset": zod.coerce.number().default(getRecentActivityQueryOffsetDefault),
+  "search": zod.coerce.string().optional().describe('Filter by user email, full name or username (case-insensitive)')
 })
 
 export const GetRecentActivityResponseItem = zod.object({
@@ -1230,6 +1233,18 @@ export const GetRecentActivityResponseItem = zod.object({
   "createdAt": zod.string()
 })
 export const GetRecentActivityResponse = zod.array(GetRecentActivityResponseItem)
+
+
+/**
+ * @summary Count recent platform activity entries
+ */
+export const GetRecentActivityCountQueryParams = zod.object({
+  "search": zod.coerce.string().optional().describe('Filter by user email, full name or username (case-insensitive)')
+})
+
+export const GetRecentActivityCountResponse = zod.object({
+  "total": zod.number()
+})
 
 
 /**

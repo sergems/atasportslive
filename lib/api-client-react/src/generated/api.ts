@@ -35,6 +35,8 @@ import type {
   GameListResponse,
   GameUpdate,
   GetBettingReportParams,
+  GetRecentActivityCount200,
+  GetRecentActivityCountParams,
   GetRecentActivityParams,
   GetRevenueBreakdownParams,
   GetStreamingReportParams,
@@ -3755,6 +3757,90 @@ export function useGetRecentActivity<TData = Awaited<ReturnType<typeof getRecent
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetRecentActivityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetRecentActivityCountUrl = (params?: GetRecentActivityCountParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/activity/count?${stringifiedParams}` : `/api/admin/activity/count`
+}
+
+/**
+ * @summary Count recent platform activity entries
+ */
+export const getRecentActivityCount = async (params?: GetRecentActivityCountParams, options?: RequestInit): Promise<GetRecentActivityCount200> => {
+
+  return customFetch<GetRecentActivityCount200>(getGetRecentActivityCountUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRecentActivityCountQueryKey = (params?: GetRecentActivityCountParams,) => {
+    return [
+    `/api/admin/activity/count`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetRecentActivityCountQueryOptions = <TData = Awaited<ReturnType<typeof getRecentActivityCount>>, TError = ErrorType<unknown>>(params?: GetRecentActivityCountParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRecentActivityCount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRecentActivityCountQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecentActivityCount>>> = ({ signal }) => getRecentActivityCount(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRecentActivityCount>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRecentActivityCountQueryResult = NonNullable<Awaited<ReturnType<typeof getRecentActivityCount>>>
+export type GetRecentActivityCountQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Count recent platform activity entries
+ */
+
+export function useGetRecentActivityCount<TData = Awaited<ReturnType<typeof getRecentActivityCount>>, TError = ErrorType<unknown>>(
+ params?: GetRecentActivityCountParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRecentActivityCount>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRecentActivityCountQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

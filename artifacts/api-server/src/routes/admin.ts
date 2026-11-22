@@ -9,7 +9,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
-import { eq, sql, desc, and, gte, isNotNull } from "drizzle-orm";
+import { eq, sql, desc, and, gte, isNotNull, ilike, or } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify, wsClients } from "../lib/notify";
 
@@ -97,14 +97,33 @@ router.get("/revenue", authMiddleware, requireRole("admin"), async (req: AuthReq
   res.json({ period, data });
 });
 
+// Shared filter for the activity list/count endpoints — match on user email,
+// full name or username (case-insensitive partial match).
+const buildActivityUserFilter = (search: string) => search
+  ? or(
+      ilike(usersTable.email, `%${search}%`),
+      ilike(usersTable.fullName, `%${search}%`),
+      ilike(usersTable.username, `%${search}%`),
+    )
+  : undefined;
+
+const getActivitySearch = (req: { query: unknown }) =>
+  typeof req.query === "object" && req.query !== null && "search" in req.query && typeof req.query.search === "string"
+    ? req.query.search.trim()
+    : "";
+
 router.get("/activity", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const limit = Number(req.query.limit) || 20;
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+  const userFilter = buildActivityUserFilter(getActivitySearch(req));
   const txs = await db
     .select({ tx: transactionsTable, user: usersTable })
     .from(transactionsTable)
     .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
+    .where(userFilter)
     .orderBy(desc(transactionsTable.createdAt))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 
   res.json(txs.map(({ tx, user }: any) => ({
     id: tx.id,
@@ -115,6 +134,16 @@ router.get("/activity", authMiddleware, requireRole("admin", "manager", "content
     amount: parseFloat(tx.amount as string),
     createdAt: tx.createdAt,
   })));
+});
+
+router.get("/activity/count", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
+  const userFilter = buildActivityUserFilter(getActivitySearch(req));
+  const [{ total }] = await db
+    .select({ total: sql<number>`count(*)` })
+    .from(transactionsTable)
+    .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
+    .where(userFilter);
+  res.json({ total: Number(total) });
 });
 
 router.get("/pending-withdrawals", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
@@ -385,6 +414,26 @@ router.post("/notify-pending", authMiddleware, requireRole("admin", "manager"), 
   res.json({ sent, failed, errors: errors.slice(0, 10) });
 });
 
+// Bonus Promotions: fixed-value, streaming-only credits that always expire.
+// They are credited to the Bonus Wallet (never cash), so the existing wallet
+// rules already prevent betting and withdrawals with them.
+const BONUS_PROMO_TERMS =
+  "Bonus funds are non-withdrawable and non-transferable. They are credited to your Bonus Wallet, " +
+  "expire on the validity date shown, and may only be used to purchase ATA Sports livestream access. " +
+  "Bonus funds cannot be used for predictions, betting or cash withdrawals.";
+
+function getBonusPromoFields(fixedAmount: unknown, bonusExpiryDays: unknown) {
+  const amount = Number(fixedAmount);
+  const expiry = Number(bonusExpiryDays);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("fixedAmount greater than 0 is required for bonus promotions");
+  }
+  if (!Number.isFinite(expiry) || expiry <= 0) {
+    throw new Error("bonusExpiryDays greater than 0 is required for bonus promotions");
+  }
+  return { fixedAmount: amount.toFixed(2), bonusExpiryDays: expiry };
+}
+
 // ── Promotions Admin CRUD ─────────────────────────────────────────────────────
 
 router.get("/promotions/stats", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
@@ -418,22 +467,87 @@ router.get("/promotions", authMiddleware, requireRole("admin", "manager"), async
 });
 
 router.post("/promotions", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
-  const { name, code, type, bonusType, percentage, fixedAmount, minDeposit, maxBonus, maxUses, startDate, endDate, status, description, termsConditions, bonusExpiryDays } = req.body;
-  if (!name) { res.status(400).json({ error: "name is required" }); return; }
-  if (bonusType === "percentage" && !percentage) { res.status(400).json({ error: "percentage required for percentage bonus" }); return; }
-  if (bonusType === "fixed" && !fixedAmount) { res.status(400).json({ error: "fixedAmount required for fixed bonus" }); return; }
+  const b = { ...req.body };
+  if (!b.name) { res.status(400).json({ error: "name is required" }); return; }
+  if (b.bonusType === "percentage" && !b.percentage && b.type !== "bonus") { res.status(400).json({ error: "percentage required for percentage bonus" }); return; }
+  if (b.bonusType === "fixed" && !b.fixedAmount) { res.status(400).json({ error: "fixedAmount required for fixed bonus" }); return; }
+
+  if (b.type === "bonus") {
+    try {
+      const fields = getBonusPromoFields(b.fixedAmount, b.bonusExpiryDays);
+      b.bonusType = "fixed";
+      b.fixedAmount = fields.fixedAmount;
+      b.bonusExpiryDays = fields.bonusExpiryDays;
+      b.minDeposit = 0;
+      if (b.maxUses === undefined || b.maxUses === null) b.maxUses = 1;
+      if (!b.termsConditions) b.termsConditions = BONUS_PROMO_TERMS;
+    } catch (e: any) {
+      res.status(400).json({ error: e.message });
+      return;
+    }
+  }
 
   const [promo] = await db.insert(promotionsTable).values({
-    name, code: code?.trim().toUpperCase() || null, type: type || "automatic",
-    bonusType: bonusType || "percentage",
-    percentage: percentage?.toString() || null, fixedAmount: fixedAmount?.toString() || null,
-    minDeposit: (minDeposit || 0).toString(), maxBonus: maxBonus?.toString() || null,
-    maxUses: maxUses || null, startDate: startDate ? new Date(startDate) : null,
-    endDate: endDate ? new Date(endDate) : null, status: status || "draft",
-    description: description || null, termsConditions: termsConditions || null,
-    bonusExpiryDays: bonusExpiryDays || null, createdBy: req.userId!,
+    name: b.name, code: b.code?.trim().toUpperCase() || null, type: b.type || "automatic",
+    bonusType: b.bonusType || "percentage",
+    percentage: b.percentage?.toString() || null, fixedAmount: b.fixedAmount?.toString() || null,
+    minDeposit: (b.minDeposit || 0).toString(), maxBonus: b.maxBonus?.toString() || null,
+    maxUses: b.maxUses || null, startDate: b.startDate ? new Date(b.startDate) : null,
+    endDate: b.endDate ? new Date(b.endDate) : null, status: b.status || "draft",
+    description: b.description || null, termsConditions: b.termsConditions || null,
+    bonusExpiryDays: b.bonusExpiryDays || null, createdBy: req.userId!,
   }).returning();
   res.status(201).json(promo);
+});
+
+// Generate multiple single-use Bonus Promotion codes at once.
+router.post("/promotions/bulk", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const { name, fixedAmount, quantity, bonusExpiryDays, startDate, endDate, prefix, description, termsConditions } = req.body;
+  if (!name || !String(name).trim()) { res.status(400).json({ error: "name is required" }); return; }
+
+  let fields: { fixedAmount: string; bonusExpiryDays: number };
+  try {
+    fields = getBonusPromoFields(fixedAmount, bonusExpiryDays);
+  } catch (e: any) {
+    res.status(400).json({ error: e.message });
+    return;
+  }
+
+  const count = Math.min(Math.max(1, Math.floor(Number(quantity) || 1)), 100);
+  const codePrefix = String(prefix || "BONUS").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12) || "BONUS";
+  const created: Array<{ id: number; code: string | null; fixedAmount: number; bonusExpiryDays: number | null; endDate: Date | null; status: string }> = [];
+
+  for (let i = 0; i < count; i++) {
+    let code = "";
+    for (let attempt = 0; attempt < 20; attempt++) {
+      code = `${codePrefix}-${randomBytes(5).toString("hex").toUpperCase()}`;
+      const [exists] = await db.select({ id: promotionsTable.id }).from(promotionsTable).where(eq(promotionsTable.code, code)).limit(1);
+      if (!exists) break;
+      if (attempt === 19) { res.status(500).json({ error: "Could not generate a unique code" }); return; }
+    }
+    const [promo] = await db.insert(promotionsTable).values({
+      name: `${String(name).trim()} #${i + 1}`,
+      code,
+      type: "bonus",
+      bonusType: "fixed",
+      fixedAmount: fields.fixedAmount,
+      minDeposit: "0",
+      maxUses: 1,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
+      status: "active",
+      description: description || null,
+      termsConditions: termsConditions || BONUS_PROMO_TERMS,
+      bonusExpiryDays: fields.bonusExpiryDays,
+      createdBy: req.userId!,
+    }).returning();
+    created.push({
+      id: promo.id, code: promo.code, fixedAmount: parseFloat(promo.fixedAmount as string),
+      bonusExpiryDays: promo.bonusExpiryDays, endDate: promo.endDate, status: promo.status,
+    });
+  }
+
+  res.status(201).json({ count: created.length, promotions: created });
 });
 
 router.patch("/promotions/:id", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
@@ -456,6 +570,26 @@ router.patch("/promotions/:id", authMiddleware, requireRole("admin", "manager"),
   if (termsConditions !== undefined) updates.termsConditions = termsConditions || null;
   if (bonusExpiryDays !== undefined) updates.bonusExpiryDays = bonusExpiryDays || null;
   updates.updatedAt = new Date();
+
+  const [existing] = await db.select().from(promotionsTable).where(eq(promotionsTable.id, id)).limit(1);
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if ((type !== undefined ? type : existing.type) === "bonus") {
+    try {
+      const fields = getBonusPromoFields(
+        fixedAmount !== undefined ? fixedAmount : existing.fixedAmount,
+        bonusExpiryDays !== undefined ? bonusExpiryDays : existing.bonusExpiryDays,
+      );
+      updates.bonusType = "fixed";
+      updates.fixedAmount = fields.fixedAmount;
+      updates.bonusExpiryDays = fields.bonusExpiryDays;
+      updates.minDeposit = "0";
+      if (updates.maxUses === undefined && existing.maxUses === null) updates.maxUses = 1;
+      if (!updates.termsConditions && !existing.termsConditions) updates.termsConditions = BONUS_PROMO_TERMS;
+    } catch (e: any) {
+      res.status(400).json({ error: e.message });
+      return;
+    }
+  }
 
   const [updated] = await db.update(promotionsTable).set(updates).where(eq(promotionsTable.id, id)).returning();
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }

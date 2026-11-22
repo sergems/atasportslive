@@ -198,7 +198,7 @@ export default function Wallet() {
   const [pawapayWithdrawProvider, setPawapayWithdrawProvider] = useState('MTN_MOMO_UGA');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [promoCode, setPromoCode] = useState('');
-  const [promoValidation, setPromoValidation] = useState<{ valid: boolean; estimatedBonus?: number; promotionId?: number; termsConditions?: string; name?: string; reason?: string } | null>(null);
+  const [promoValidation, setPromoValidation] = useState<{ valid: boolean; estimatedBonus?: number; promotionId?: number; termsConditions?: string; name?: string; reason?: string; isBonus?: boolean; type?: string; bonusExpiryDays?: number | null } | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [pendingBonus, setPendingBonus] = useState<{ promotionId: number; name: string; estimatedBonus: number; termsConditions: string | null; depositTransactionId: string } | null>(null);
@@ -253,7 +253,7 @@ export default function Wallet() {
         })
           .then(r => r.json())
           .then(d => {
-            if (d.message) toast.success('Promo Applied!', { description: d.message });
+            if (d.message) toast.success('Promo Applied!', { description: d.message, position: 'top-right' });
             queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
             invalidate();
           })
@@ -384,11 +384,42 @@ export default function Wallet() {
         setPromoValidation({
           valid: true, estimatedBonus: data.estimatedBonus,
           promotionId: data.promotion?.id, termsConditions: data.promotion?.termsConditions,
-          name: data.promotion?.name,
+          name: data.promotion?.name, isBonus: data.isBonus,
+          type: data.promotion?.type, bonusExpiryDays: data.promotion?.bonusExpiryDays,
         });
       } else {
         setPromoValidation({ valid: false, reason: data.reason });
       }
+    },
+    onError: () => setPromoValidation({ valid: false, reason: 'Validation failed. Try again.' }),
+  });
+
+  // Standalone bonus codes: validate and accept terms immediately — no real-money deposit.
+  const validateBonusMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/promotions/validate-code', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ code: promoCode.trim().toUpperCase(), depositAmount: 0 }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (!data.valid) {
+        setPromoValidation({ valid: false, reason: data.reason });
+        return;
+      }
+      if (!data.isBonus) {
+        setPromoValidation({ valid: false, reason: 'This is a deposit-based promotion — use the promo field in a deposit method.' });
+        return;
+      }
+      setPromoValidation({
+        valid: true, estimatedBonus: data.estimatedBonus,
+        promotionId: data.promotion?.id, termsConditions: data.promotion?.termsConditions,
+        name: data.promotion?.name, isBonus: true,
+        type: data.promotion?.type, bonusExpiryDays: data.promotion?.bonusExpiryDays,
+      });
+      setShowTermsModal(true);
     },
     onError: () => setPromoValidation({ valid: false, reason: 'Validation failed. Try again.' }),
   });
@@ -407,7 +438,7 @@ export default function Wallet() {
     onSuccess: (data) => {
       invalidate();
       queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
-      toast.success('Promo Code Applied!', { description: data.message });
+      toast.success('Promo Code Applied!', { description: data.message, position: 'top-right' });
       setPromoCode(''); setPromoValidation(null); setShowTermsModal(false); setTermsAccepted(false);
     },
     onError: (err: any) => toast.error(err.message),
@@ -427,7 +458,7 @@ export default function Wallet() {
     onSuccess: (data) => {
       invalidate();
       queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
-      toast.success('Bonus Claimed!', { description: data.message });
+      toast.success('Bonus Claimed!', { description: data.message, position: 'top-right' });
       setPendingBonus(null); setShowTermsModal(false); setTermsAccepted(false);
     },
     onError: (err: any) => toast.error(err.message),
@@ -502,13 +533,13 @@ export default function Wallet() {
       {/* Balance Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
         {[
-          { label: 'Total Balance',  value: (wallet?.balance || 0) + (wallet?.bonusBalance || 0), color: 'text-teal-400' },
-          { label: 'Cash Balance',   value: wallet?.availableBalance,    color: 'text-white' },
-          { label: 'Bonus Balance',  value: wallet?.bonusBalance,        color: 'text-yellow-400', icon: Gift },
-          { label: 'Pending',        value: wallet?.pendingBalance,      color: 'text-amber-400' },
-          { label: 'Withdrawable',   value: wallet?.withdrawableBalance, color: 'text-green-400' },
+          { label: 'Wallet',                value: wallet?.availableBalance,    color: 'text-green-400', icon: WalletIcon },
+          { label: 'Bonus Wallet',      value: wallet?.bonusBalance,        color: 'text-yellow-400', icon: Gift },
+          { label: 'Total Balance',     value: (wallet?.availableBalance || 0) + (wallet?.bonusBalance || 0), color: 'text-teal-400' },
+          { label: 'Pending',           value: wallet?.pendingBalance,      color: 'text-amber-400' },
+          { label: 'Withdrawable',      value: wallet?.withdrawableBalance, color: 'text-white' },
         ].map(({ label, value, color, icon: Icon }) => (
-          <Card key={label} className={`bg-slate-900 border-primary/20 ${label === 'Bonus Balance' && (wallet?.bonusBalance || 0) > 0 ? 'border-yellow-500/40 bg-yellow-950/10' : ''}`}>
+          <Card key={label} className={`bg-slate-900 border-primary/20 ${label === 'Bonus Wallet' ? 'border-yellow-500/40 bg-yellow-950/10' : ''} ${label === 'Wallet' ? 'border-green-500/40' : ''}`}>
             <CardContent className="pt-3 pb-3 px-3 sm:pt-5 sm:pb-3 sm:px-4">
               {loadingWallet
                 ? <Skeleton className="h-6 sm:h-7 w-20 bg-slate-800" />
@@ -518,11 +549,52 @@ export default function Wallet() {
                   </div>
               }
               <div className="text-slate-400 text-[10px] sm:text-xs mt-0.5 sm:mt-1">{label}</div>
-              {label === 'Bonus Balance' && <div className="text-[9px] text-yellow-600 mt-0.5">Streaming only · 90d expiry</div>}
+              {label === 'Bonus Wallet' && <div className="text-[9px] text-yellow-600 mt-0.5">Streaming only</div>}
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Standalone Bonus Code — loads straight into the Bonus Wallet */}
+      <Card className="bg-yellow-950/10 border-yellow-500/30">
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-sm text-yellow-400 flex items-center gap-2">
+            <Gift className="h-4 w-4" /> Redeem a Bonus Code
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4 space-y-2">
+          <p className="text-xs text-slate-400">
+            Redeem your Bonus Code into your Bonus Wallet — no deposit needed.
+            Usable for livestreams only; not withdrawable or usable for predictions.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g. BONUS-A1B2C3" maxLength={30}
+              value={promoCode}
+              onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoValidation(null); }}
+              className="bg-slate-800 border-slate-700 text-white font-mono uppercase h-9 text-sm tracking-wider flex-1"
+            />
+            <Button
+              onClick={() => validateBonusMutation.mutate()}
+              disabled={!promoCode.trim() || validateBonusMutation.isPending}
+              className="bg-yellow-500 hover:bg-yellow-400 text-slate-950 h-9 px-3 text-xs font-bold shrink-0"
+            >
+              {validateBonusMutation.isPending ? '…' : 'Apply Bonus'}
+            </Button>
+          </div>
+          {promoValidation?.valid && promoValidation.isBonus && (
+            <div className="flex items-center gap-1.5 rounded-md bg-yellow-500/10 border border-yellow-500/30 px-2.5 py-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
+              <span className="text-xs text-yellow-300">
+                {promoValidation.name} — ${promoValidation.estimatedBonus?.toFixed(2)} will be added to your Bonus Wallet{promoValidation.bonusExpiryDays ? `, valid ${promoValidation.bonusExpiryDays} days` : ''}. Accept terms to load it.
+              </span>
+            </div>
+          )}
+          {promoValidation && !promoValidation.valid && (
+            <div className="text-xs text-red-300">{promoValidation.reason}</div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Active bets locking funds */}
       {activeBetsCount > 0 && (
@@ -670,7 +742,7 @@ export default function Wallet() {
                       {promoValidation?.valid && (
                         <div className="flex items-center gap-1.5 rounded-md bg-purple-500/10 border border-purple-500/30 px-2.5 py-1.5">
                           <CheckCircle2 className="h-3.5 w-3.5 text-purple-400 shrink-0" />
-                          <span className="text-xs text-purple-300 font-semibold">{promoValidation.name} — deposit will credit your bonus wallet</span>
+                          <span className="text-xs text-purple-300 font-semibold">{promoValidation.name} — {promoValidation.isBonus ? `$${promoValidation.estimatedBonus?.toFixed(2)} will be loaded into your Bonus Wallet with no deposit` : 'deposit will credit your bonus wallet'}</span>
                         </div>
                       )}
                     </div>
@@ -756,7 +828,7 @@ export default function Wallet() {
                   {promoValidation?.valid && (
                     <div className="flex items-center gap-1.5 rounded-md bg-purple-500/10 border border-purple-500/30 px-2.5 py-1.5">
                       <CheckCircle2 className="h-3.5 w-3.5 text-purple-400 shrink-0" />
-                      <span className="text-xs text-purple-300 font-semibold">{promoValidation.name} — deposit will credit your bonus wallet</span>
+                      <span className="text-xs text-purple-300 font-semibold">{promoValidation.name} — {promoValidation.isBonus ? `$${promoValidation.estimatedBonus?.toFixed(2)} will be loaded into your Bonus Wallet with no deposit` : 'deposit will credit your bonus wallet'}</span>
                     </div>
                   )}
                 </div>

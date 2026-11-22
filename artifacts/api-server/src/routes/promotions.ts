@@ -107,6 +107,8 @@ router.get("/active", async (_req, res): Promise<void> => {
     .where(
       and(
         eq(promotionsTable.status, "active"),
+        // Bonus promotions are distributed privately as codes — don't list them publicly.
+        sql`${promotionsTable.type} <> 'bonus'`,
         or(isNull(promotionsTable.startDate), lte(promotionsTable.startDate, now)),
         or(isNull(promotionsTable.endDate), gte(promotionsTable.endDate, now))
       )
@@ -146,17 +148,20 @@ router.post("/validate-code", authMiddleware, async (req: AuthRequest, res): Pro
     res.status(400).json({ valid: false, reason: "This promotion has reached its usage limit" }); return;
   }
   const minDep = parseFloat(promo.minDeposit as string);
-  if (depositAmount && Number(depositAmount) < minDep) {
+  if (promo.type !== "bonus" && depositAmount && Number(depositAmount) < minDep) {
     res.status(200).json({ valid: false, reason: `Minimum deposit of ${minDep.toFixed(2)} required` }); return;
   }
 
   const bonusAmount = calcBonus(promo, Number(depositAmount) || minDep);
+  const isBonus = promo.type === "bonus";
   res.json({
     valid: true,
+    isBonus,
     promotion: {
-      id: promo.id, name: promo.name, bonusType: promo.bonusType,
+      id: promo.id, name: promo.name, type: promo.type, bonusType: promo.bonusType,
       percentage: promo.percentage ? parseFloat(promo.percentage as string) : null,
       fixedAmount: promo.fixedAmount ? parseFloat(promo.fixedAmount as string) : null,
+      bonusExpiryDays: promo.bonusExpiryDays,
       termsConditions: promo.termsConditions,
     },
     estimatedBonus: bonusAmount,
@@ -217,14 +222,16 @@ router.post("/apply-code", authMiddleware, async (req: AuthRequest, res): Promis
   ).limit(1);
   if (alreadyClaimed) { res.status(400).json({ error: "You have already claimed this promo code" }); return; }
 
+  // Bonus promotions load straight into the Bonus Wallet — no real-money deposit.
+  const isBonus = promo.type === "bonus";
   let depositAmount = 0;
-  if (depositTransactionId) {
+  if (!isBonus && depositTransactionId) {
     const [tx] = await db.select().from(transactionsTable).where(
       and(eq(transactionsTable.transactionId, depositTransactionId), eq(transactionsTable.userId, req.userId!))
     ).limit(1);
     if (tx) depositAmount = parseFloat(tx.amount as string);
   }
-  if (depositAmount < parseFloat(promo.minDeposit as string)) {
+  if (!isBonus && depositAmount < parseFloat(promo.minDeposit as string)) {
     res.status(400).json({ error: `Minimum deposit of $${parseFloat(promo.minDeposit as string).toFixed(2)} required` }); return;
   }
 

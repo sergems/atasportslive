@@ -997,6 +997,9 @@ function StreamGate({ title, description, sport, thumbnailUrl, prices, selectedS
 interface LiveComment { id: number; userId: number; username: string; content: string; createdAt: string; }
 
 const COMMENT_TTL_MS = 6 * 60 * 60 * 1000;
+const COMMENTS_PER_PAGE = 10;
+const COMMENT_PAGE_HOLD_MS = 10_000; // each batch stays on screen for 10 seconds
+const COMMENT_FADE_MS = 500;         // fade out/in when swapping batches
 const QUICK_EMOJIS = ['😂','❤️','🔥','👏','💪','🎯','🥊','🏆','😮','👍','😅','🤣','😁','💯','🙌','👀','😱','🤩','🎉','💥','⚡','🥳','😤','👊','🏅','🎊','🤝','💰','😎','🫡'];
 
 function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, onViewerCount }: {
@@ -1008,8 +1011,8 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
   const [input, setInput] = useState('');
   const [posting, setPosting] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
-  const messagesRef = useRef<HTMLDivElement>(null);
-  const marqueeInnerRef = useRef<HTMLDivElement>(null);
+  const [commentPage, setCommentPage] = useState(0);
+  const [commentsFading, setCommentsFading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const emojiPanelRef = useRef<HTMLDivElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
@@ -1062,32 +1065,29 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
     return () => { destroyed = true; clearTimeout(reconnect); wsRef.current?.close(); };
   }, [streamId, token]);
 
-  // Marquee: move inner div upward via transform so the outer clip hides the
-  // scrollbar entirely. Loop seamlessly when all content has scrolled through.
-  const marqueeOffsetRef = useRef(0);
+  // Page through the comment queue: show up to 10 at a time, hold for 10s,
+  // then fade out and show the next batch. Loop back to the start at the end.
+  const totalCommentPages = Math.max(1, Math.ceil(comments.length / COMMENTS_PER_PAGE));
+  const currentCommentPage = commentPage % totalCommentPages;
+  const visibleComments = comments.slice(
+    currentCommentPage * COMMENTS_PER_PAGE,
+    (currentCommentPage + 1) * COMMENTS_PER_PAGE,
+  );
+
   useEffect(() => {
-    let lastTs: number | null = null;
-    let rafId: number;
-    const SPEED = 150; // px per second
-    const tick = (ts: number) => {
-      const inner = marqueeInnerRef.current;
-      const outer = messagesRef.current;
-      if (inner && outer) {
-        const delta = lastTs == null ? 0 : ts - lastTs;
-        marqueeOffsetRef.current += (SPEED * delta) / 1000;
-        // Loop back after the first copy scrolls past — second copy fills seamlessly
-        const half = inner.offsetHeight / 2;
-        if (half > 0 && marqueeOffsetRef.current >= half) {
-          marqueeOffsetRef.current -= half;
-        }
-        inner.style.transform = `translateY(-${marqueeOffsetRef.current}px)`;
-      }
-      lastTs = ts;
-      rafId = requestAnimationFrame(tick);
-    };
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, []);
+    if (totalCommentPages <= 1) return;
+    const timer = window.setTimeout(() => setCommentsFading(true), COMMENT_PAGE_HOLD_MS);
+    return () => window.clearTimeout(timer);
+  }, [currentCommentPage, totalCommentPages]);
+
+  useEffect(() => {
+    if (!commentsFading) return;
+    const timer = window.setTimeout(() => {
+      setCommentPage((p) => (p + 1) % totalCommentPages);
+      setCommentsFading(false);
+    }, COMMENT_FADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [commentsFading, totalCommentPages]);
 
   const postComment = async () => {
     if (!input.trim() || !streamId || posting) return;
@@ -1114,33 +1114,18 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
         <span className="text-sm font-semibold text-white">Live Chat</span>
         <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
       </div>
-      <div ref={messagesRef} className="flex-1 overflow-hidden px-3 py-2 min-h-0 max-h-[218px] lg:max-h-[380px] relative">
-        <div ref={marqueeInnerRef}>
-          {/* First copy */}
-          <div className="space-y-2">
-            {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
-            {comments.map((c) => (
-              <div key={`a-${c.id}`} className="flex gap-2 items-start">
-                <div className="h-6 w-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-teal-400 mt-0.5">{c.username[0]?.toUpperCase() ?? '?'}</div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-teal-400 text-[11px] font-semibold mr-1.5">{c.username}</span>
-                  <span className="text-slate-300 text-[13px] break-words">{c.content}</span>
-                </div>
+      <div className="flex-1 overflow-hidden px-3 py-2 min-h-0 max-h-[218px] lg:max-h-[380px] relative">
+        <div className={`space-y-1 lg:space-y-1.5 transition-opacity duration-500 ease-in-out ${commentsFading ? 'opacity-0' : 'opacity-100'}`}>
+          {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
+          {visibleComments.map((c) => (
+            <div key={c.id} className="flex gap-2 items-start">
+              <div className="h-4 w-4 lg:h-6 lg:w-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0 text-[9px] lg:text-[10px] font-bold text-teal-400 mt-0.5">{c.username[0]?.toUpperCase() ?? '?'}</div>
+              <div className="min-w-0 flex-1">
+                <span className="text-teal-400 text-[10px] lg:text-[11px] font-semibold mr-1.5">{c.username}</span>
+                <span className="text-slate-300 text-[12px] lg:text-[13px] break-words">{c.content}</span>
               </div>
-            ))}
-          </div>
-          {/* Second copy for seamless loop */}
-          <div className="space-y-2 mt-2">
-            {comments.map((c) => (
-              <div key={`b-${c.id}`} className="flex gap-2 items-start">
-                <div className="h-6 w-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0 text-[10px] font-bold text-teal-400 mt-0.5">{c.username[0]?.toUpperCase() ?? '?'}</div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-teal-400 text-[11px] font-semibold mr-1.5">{c.username}</span>
-                  <span className="text-slate-300 text-[13px] break-words">{c.content}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
       <div className="shrink-0 border-t border-slate-800 px-2 py-2">
@@ -1385,7 +1370,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   }, []);
 
   // ── DB stream (channel 1 only) ──────────────────────────────────────────
-  const { data: stream, isLoading: loadingStream } = useQuery<Stream | null>({
+  const { data: liveStreamRow, isLoading: loadingStream } = useQuery<Stream | null>({
     queryKey: ['streams', 'live', 'current', channel],
     queryFn: async () => {
       if (channel !== 1) return null;
@@ -1415,6 +1400,12 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   const ytTitle      = s[`${prefix}yt_title`] || 'ATA Live Stream';
   const ytStreamDbId = s[`${prefix}yt_stream_db_id`] ? Number(s[`${prefix}yt_stream_db_id`]) : undefined;
 
+  // Only the stream linked from Livestream Settings (synced by sync-mux/sync-yt)
+  // may drive this channel. A stray row that merely has status="live" must not
+  // make the channel appear live or become the active feed.
+  const liveDbStreamId = muxIsLive ? muxStreamDbId : ytIsLive ? ytStreamDbId : undefined;
+  const stream = liveStreamRow && liveDbStreamId && liveStreamRow.id === liveDbStreamId ? liveStreamRow : null;
+
   const subPrices = {
     daily:   parseFloat(s.price_daily   ?? '1.70'),
     weekly:  parseFloat(s.price_weekly  ?? '7.00'),
@@ -1441,8 +1432,9 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   });
 
   // ── Feed resolution ─────────────────────────────────────────────────────
-  const isAnythingLive = channel === 1 ? (!!stream || muxIsLive || ytIsLive) : (muxIsLive || ytIsLive);
-  const activeFeed: 'db' | 'mux' | 'yt' | null = (channel === 1 && stream) ? 'db' : muxIsLive ? 'mux' : ytIsLive ? 'yt' : null;
+  // LIVE is driven exclusively by the admin's Livestream Settings toggles.
+  const isAnythingLive = muxIsLive || ytIsLive;
+  const activeFeed: 'db' | 'mux' | 'yt' | null = stream ? 'db' : muxIsLive ? 'mux' : ytIsLive ? 'yt' : null;
 
   const paywallStreamId: number | undefined =
     activeFeed === 'db'  ? stream!.id :

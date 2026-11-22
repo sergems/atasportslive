@@ -8,4 +8,9 @@
 
 export type GetRecentActivityParams = {
 limit?: number;
+offset?: number;
+/**
+ * Filter by user email, full name or username (case-insensitive)
+ */
+search?: string;
 };
