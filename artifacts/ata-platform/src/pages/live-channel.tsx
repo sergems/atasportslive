@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { useSEO, makeBreadcrumb, SITE_URL } from '@/lib/seo';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, Swords, PanelRightClose, PanelRightOpen, Volume2, Volume1, VolumeX, Play, Pause, Maximize, Minimize } from 'lucide-react';
+import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, ChevronUp, Swords, PanelRightClose, PanelRightOpen, Volume2, Volume1, VolumeX, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
 import { useAuthStore } from '@/lib/auth-store';
@@ -317,6 +317,9 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const lastVolumeRef = useRef(100);
   // once the user manually pauses, stop the autoplay-recovery nudges from fighting them
   const userPausedRef = useRef(false);
+  // last known YouTube playback info — used to resume VODs and jump to the live edge
+  const latestInfoRef = useRef<{ currentTime: number; duration: number; isLive: boolean } | null>(null);
+  const restoredRef = useRef(false);
 
   function send(func: string, args: unknown[] = []) {
     iframeRef.current?.contentWindow?.postMessage(
@@ -335,6 +338,19 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
 
   useEffect(() => {
     let initialised = false;
+    restoredRef.current = false;
+    latestInfoRef.current = null;
+    const storageKey = `ata_yt_pos_${videoId}`;
+    let lastSave = 0;
+    const readSavedTime = (): number => {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        return raw ? Number(JSON.parse(raw).time) || 0 : 0;
+      } catch { return 0; }
+    };
+    const saveTime = (time: number) => {
+      try { localStorage.setItem(storageKey, JSON.stringify({ time, savedAt: Date.now() })); } catch {}
+    };
     // reset UI state whenever the video changes so we don't act on stale
     // readiness assumptions from the previous video
     setReady(false);
@@ -399,25 +415,66 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
         if (data?.event === 'onReady') { init(); commandPlay(); }
-        if (data?.event === 'infoDelivery' && typeof data?.info?.playerState === 'number') {
-          playerState = data.info.playerState;
-          if (playerState === 1) {
-            init();
-            // Video is actually playing — remove the cover bars immediately
-            // instead of waiting for the 7-second timer to expire.
-            setJustSwitched(false);
+        if (data?.event === 'infoDelivery' && data?.info) {
+          const info = data.info;
+          const t = Number(info.currentTime) || 0;
+          const d = Number(info.duration) || 0;
+          // YouTube flags real live broadcasts; a growing duration also means
+          // the "video" is actually a live stream being reported in real time.
+          const explicitLive = info.isLive === true || info.videoData?.isLive === true;
+          const prev = latestInfoRef.current;
+          const growing = !!prev && d > prev.duration + 2;
+          const live = explicitLive || growing;
+          latestInfoRef.current = { currentTime: t, duration: d, isLive: live };
+
+          // Remember where the viewer was for ordinary videos, so returning to
+          // the page resumes instead of starting over.
+          if (!live && t > 0 && Date.now() - lastSave > 5000) {
+            lastSave = Date.now();
+            saveTime(t);
           }
-          setIsPlaying(playerState === 1 || playerState === 3);
-          // 2 = paused, 5 = cued — both mean autoplay didn't take; nudge it again
-          // (only auto-nudge before the user has taken manual control)
-          if ((playerState === 2 || playerState === 5) && !userPausedRef.current) commandPlay();
+
+          // One-time decision on the first real playback info we receive.
+          if (!restoredRef.current && (typeof info.isLive === 'boolean' || d > 0)) {
+            restoredRef.current = true;
+            if (live) {
+              // Genuine live broadcast → go straight to the live edge.
+              send('seekTo', [d || 999999, true]);
+              try { localStorage.removeItem(storageKey); } catch {}
+            } else {
+              // Recorded link marked as live in admin → resume saved progress.
+              const saved = readSavedTime();
+              if (saved > 5 && d > 0 && saved < d - 5) send('seekTo', [saved, true]);
+            }
+          }
+
+          if (typeof info.playerState === 'number') {
+            playerState = info.playerState;
+            if (playerState === 1) {
+              init();
+              // Video is actually playing — remove the cover bars immediately
+              // instead of waiting for the 7-second timer to expire.
+              setJustSwitched(false);
+            }
+            setIsPlaying(playerState === 1 || playerState === 3);
+            // 2 = paused, 5 = cued — both mean autoplay didn't take; nudge it again
+            // (only auto-nudge before the user has taken manual control)
+            if ((playerState === 2 || playerState === 5) && !userPausedRef.current) commandPlay();
+          }
         }
       } catch {}
     }
 
+    const persist = () => {
+      const info = latestInfoRef.current;
+      if (info && !info.isLive && info.currentTime > 0) saveTime(info.currentTime);
+    };
+    window.addEventListener('pagehide', persist);
     window.addEventListener('message', onMessage);
     const fallback = setTimeout(init, 1500);
     return () => {
+      persist();
+      window.removeEventListener('pagehide', persist);
       window.removeEventListener('message', onMessage);
       clearTimeout(fallback);
       clearTimeout(switchCoverTimer);
@@ -997,9 +1054,8 @@ function StreamGate({ title, description, sport, thumbnailUrl, prices, selectedS
 interface LiveComment { id: number; userId: number; username: string; content: string; createdAt: string; }
 
 const COMMENT_TTL_MS = 6 * 60 * 60 * 1000;
-const COMMENTS_PER_PAGE = 10;
-const COMMENT_PAGE_HOLD_MS = 10_000; // each batch stays on screen for 10 seconds
-const COMMENT_FADE_MS = 500;         // fade out/in when swapping batches
+const MAX_VISIBLE_COMMENTS = 200;    // keep chat history bounded while users scroll
+const SCROLL_TOP_PX = 48;            // "near top" tolerance for auto-follow
 const QUICK_EMOJIS = ['😂','❤️','🔥','👏','💪','🎯','🥊','🏆','😮','👍','😅','🤣','😁','💯','🙌','👀','😱','🤩','🎉','💥','⚡','🥳','😤','👊','🏅','🎊','🤝','💰','😎','🫡'];
 
 function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, onViewerCount }: {
@@ -1011,8 +1067,9 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
   const [input, setInput] = useState('');
   const [posting, setPosting] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
-  const [commentPage, setCommentPage] = useState(0);
-  const [commentsFading, setCommentsFading] = useState(false);
+  const [isPinnedToTop, setIsPinnedToTop] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const emojiPanelRef = useRef<HTMLDivElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
@@ -1032,7 +1089,7 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
 
   useEffect(() => {
     if (!streamId) return;
-    fetch(`/api/streams/${streamId}/comments`).then((r) => r.json()).then((data) => setComments(data.comments || [])).catch(() => {});
+    fetch(`/api/streams/${streamId}/comments`).then((r) => r.json()).then((data) => setComments((data.comments || []).slice(-MAX_VISIBLE_COMMENTS))).catch(() => {});
   }, [streamId]);
 
   useEffect(() => {
@@ -1051,7 +1108,11 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
           if (data.type === 'stream_comment' && data.comment) {
             const age = Date.now() - new Date(data.comment.createdAt).getTime();
             if (age > COMMENT_TTL_MS) return;
-            setComments((prev) => prev.some((c) => c.id === data.comment.id) ? prev : [...prev, data.comment]);
+            setComments((prev) => {
+              if (prev.some((c) => c.id === data.comment.id)) return prev;
+              const next = [...prev, data.comment];
+              return next.length > MAX_VISIBLE_COMMENTS ? next.slice(-MAX_VISIBLE_COMMENTS) : next;
+            });
           } else if (data.type === 'stream_reaction' && data.emoji) {
             onReactionRef.current?.(data.emoji);
           } else if (data.type === 'viewer_count' && typeof data.count === 'number') {
@@ -1065,29 +1126,34 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
     return () => { destroyed = true; clearTimeout(reconnect); wsRef.current?.close(); };
   }, [streamId, token]);
 
-  // Page through the comment queue: show up to 10 at a time, hold for 10s,
-  // then fade out and show the next batch. Loop back to the start at the end.
-  const totalCommentPages = Math.max(1, Math.ceil(comments.length / COMMENTS_PER_PAGE));
-  const currentCommentPage = commentPage % totalCommentPages;
-  const visibleComments = comments.slice(
-    currentCommentPage * COMMENTS_PER_PAGE,
-    (currentCommentPage + 1) * COMMENTS_PER_PAGE,
-  );
+  // Newest comments first. Follow new messages only while the viewer is at the
+  // top; scrolling down pauses auto-follow and shows a "Jump to recent" button.
+  const visibleComments = [...comments].reverse();
+  const latestCommentId = comments[comments.length - 1]?.id;
+
+  const scrollToRecent = () => {
+    const el = messagesRef.current;
+    if (el) el.scrollTop = 0;
+    setIsPinnedToTop(true);
+    setUnreadCount(0);
+  };
+
+  const handleScroll = () => {
+    const el = messagesRef.current;
+    if (!el) return;
+    const atTop = el.scrollTop <= SCROLL_TOP_PX;
+    setIsPinnedToTop(atTop);
+    if (atTop) setUnreadCount(0);
+  };
 
   useEffect(() => {
-    if (totalCommentPages <= 1) return;
-    const timer = window.setTimeout(() => setCommentsFading(true), COMMENT_PAGE_HOLD_MS);
-    return () => window.clearTimeout(timer);
-  }, [currentCommentPage, totalCommentPages]);
-
-  useEffect(() => {
-    if (!commentsFading) return;
-    const timer = window.setTimeout(() => {
-      setCommentPage((p) => (p + 1) % totalCommentPages);
-      setCommentsFading(false);
-    }, COMMENT_FADE_MS);
-    return () => window.clearTimeout(timer);
-  }, [commentsFading, totalCommentPages]);
+    if (isPinnedToTop) {
+      const el = messagesRef.current;
+      if (el) el.scrollTop = 0;
+    } else {
+      setUnreadCount((n) => n + 1);
+    }
+  }, [latestCommentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const postComment = async () => {
     if (!input.trim() || !streamId || posting) return;
@@ -1114,8 +1180,17 @@ function CommentSection({ streamId, token, userId, isAuthenticated, onReaction, 
         <span className="text-sm font-semibold text-white">Live Chat</span>
         <span className="ml-auto text-[10px] text-slate-600 font-mono">{comments.length} msgs</span>
       </div>
-      <div className="flex-1 overflow-hidden px-3 py-2 min-h-0 max-h-[218px] lg:max-h-[380px] relative">
-        <div className={`space-y-1 lg:space-y-1.5 transition-opacity duration-500 ease-in-out ${commentsFading ? 'opacity-0' : 'opacity-100'}`}>
+      <div ref={messagesRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-2 min-h-0 max-h-[218px] lg:max-h-[380px] relative scrollbar-thin scrollbar-thumb-slate-700">
+        {!isPinnedToTop && (
+          <div className="sticky top-0 z-10 flex justify-center pb-2">
+            <button type="button" onClick={scrollToRecent}
+              className="flex items-center gap-1 rounded-full border border-teal-500/40 bg-slate-800/95 px-3 py-1 text-[11px] font-semibold text-teal-300 shadow-lg hover:bg-slate-700">
+              <ChevronUp className="h-3.5 w-3.5" />
+              Jump to recent{unreadCount > 0 ? ` (${unreadCount})` : ''}
+            </button>
+          </div>
+        )}
+        <div className="space-y-1 lg:space-y-1.5">
           {comments.length === 0 && <p className="text-center text-slate-600 text-xs mt-10">No messages yet. Be the first!</p>}
           {visibleComments.map((c) => (
             <div key={c.id} className="flex gap-2 items-start">
