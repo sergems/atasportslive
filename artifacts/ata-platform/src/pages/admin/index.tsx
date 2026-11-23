@@ -168,7 +168,7 @@ export default function AdminDashboard() {
   const qc = useQueryClient();
   const { data: stats, isLoading } = useGetAdminStats();
   const [activityPageRaw, setActivityPageRaw] = useState(0);
-  const [activityTab, setActivityTab] = useState<'all' | 'failed_deposits'>('all');
+  const [activityTab, setActivityTab] = useState<'all' | 'pending_deposits' | 'failed_deposits'>('all');
   const [searchInput, setSearchInput] = useState('');
   const [activitySearch, setActivitySearch] = useState('');
   // Debounce typing so we don't fire a query on every keystroke.
@@ -180,7 +180,9 @@ export default function AdminDashboard() {
   useEffect(() => { setActivityPageRaw(0); }, [activitySearch, activityTab]);
   const activityFilters = activityTab === 'failed_deposits'
     ? { status: 'failed', type: 'deposit' }
-    : {};
+    : activityTab === 'pending_deposits'
+      ? { status: 'pending', type: 'deposit' }
+      : {};
   const { data: activityCount } = useGetRecentActivityCount({
     search: activitySearch || undefined,
     ...activityFilters,
@@ -353,6 +355,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-1 shrink-0">
               {([
                 ['all', 'All'],
+                ['pending_deposits', 'Pending Deposits'],
                 ['failed_deposits', 'Failed Deposits'],
               ] as const).map(([key, label]) => (
                 <button
@@ -412,6 +415,11 @@ export default function AdminDashboard() {
                         {item.status === 'failed' && (
                           <span className="shrink-0 rounded border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-red-400">
                             Failed
+                          </span>
+                        )}
+                        {item.status === 'pending' && (
+                          <span className="shrink-0 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-400">
+                            Pending
                           </span>
                         )}
                       </div>
