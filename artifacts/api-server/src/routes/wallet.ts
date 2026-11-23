@@ -424,7 +424,7 @@ router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"
   const id = Number(req.params.id);
   const { note } = req.body as { note?: string };
   const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
-  if (!tx || tx.type !== "withdrawal" || tx.status !== "pending") {
+  if (!tx || tx.type !== "withdrawal" || !["pending", "approved"].includes(tx.status)) {
     res.status(400).json({ error: "Invalid withdrawal" });
     return;
   }
@@ -452,6 +452,15 @@ router.patch("/admin/reject-withdrawal/:id", authMiddleware, requireRole("admin"
       }),
     }).catch((err) => logger.warn({ err }, "email send failed"));
   }
+  // If it had already reached finance, tell them to drop it from the queue.
+  if (tx.status === "approved") {
+    const financeUsers = await db.select().from(usersTable).where(sql`role IN ('manager', 'finance')`);
+    for (const fu of financeUsers) {
+      await notify(fu.id, "general", "Payment cancelled by admin",
+        `Withdrawal #${tx.id} ($${parseFloat(tx.amount as string).toFixed(2)}) was recalled from the finance queue.`);
+    }
+  }
+
   const [updated] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
   res.json(toTxResponse(updated));
 });

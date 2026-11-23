@@ -30,7 +30,11 @@ function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
 
   const firstName = user?.fullName?.split(' ')[0] || user?.username || '';
 
-  const items = [
+  const isFinance = user?.role === 'finance';
+  const items = isFinance ? [
+    { href: '/finance/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/profile', label: 'Profile Settings', icon: Settings },
+  ] : [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/subscriptions', label: 'Subscription', icon: CreditCard },
     { href: '/bets', label: 'My Predictions', icon: Trophy },
@@ -105,7 +109,7 @@ export function Navbar() {
 
   const { data: wallet } = useGetWallet({
     query: {
-      enabled: isAuthenticated,
+      enabled: isAuthenticated && !isFinanceOnly,
       queryKey: ['wallet'],
       refetchInterval: 15000,
     }
@@ -169,10 +173,25 @@ export function Navbar() {
               E-Shop
             </a>
           )}
-          {canAccessFinance && (
+          {isFinanceOnly ? (
+            <>
+              <Link
+                href="/finance/dashboard"
+                className={`transition-colors hover:text-teal-400 ${location === '/finance/dashboard' ? 'text-teal-400' : 'text-slate-400'}`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/finance/withdrawals"
+                className={`transition-colors hover:text-teal-400 ${location === '/finance/withdrawals' ? 'text-teal-400' : 'text-slate-400'}`}
+              >
+                Payment Queue
+              </Link>
+            </>
+          ) : canAccessFinance && (
             <Link
               href="/finance/dashboard"
-              className={`transition-colors hover:text-teal-400 ${location.startsWith('/finance') ? 'text-teal-400' : 'text-slate-400'}`}
+              className="transition-colors hover:text-teal-400 text-slate-400"
             >
               Finance
             </Link>
@@ -194,7 +213,7 @@ export function Navbar() {
         <div className="flex items-center space-x-2 shrink-0">
           {isAuthenticated ? (
             <>
-              <Link href="/wallet">
+              {!isFinanceOnly && <Link href="/wallet">
                 <div className="flex items-center gap-1.5 md:gap-2.5 px-2 md:px-3 py-1.5 rounded-md bg-slate-900 border border-slate-800 hover:border-teal-500/30 transition-colors cursor-pointer" title="Cash wallet and bonus wallet">
                   <span className="flex items-center gap-1">
                     <Wallet className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-400 shrink-0" />
@@ -210,7 +229,7 @@ export function Navbar() {
                     </span>
                   </span>
                 </div>
-              </Link>
+              </Link>}
               <Link href="/notifications">
                 <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-white">
                   <Bell className="h-5 w-5" />

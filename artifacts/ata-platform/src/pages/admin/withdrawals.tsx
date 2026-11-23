@@ -97,6 +97,29 @@ function WaitingBadge({ createdAt }: { createdAt: string }) {
   );
 }
 
+/** Super-admin recall of a withdrawal already sent to finance. */
+function RecallButton({ tx, onDone }: { tx: any; onDone: () => void }) {
+  const mut = useMutation({
+    mutationFn: (reason: string) => rejectWithdrawal(tx.id, reason),
+    onSuccess: () => { toast.success('Recalled from finance — funds returned to user.'); onDone(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  return (
+    <button
+      type="button"
+      disabled={mut.isPending}
+      onClick={() => {
+        const reason = window.prompt('Reason for recalling this payment from finance:', 'Submitted to finance in error');
+        if (reason === null) return;
+        mut.mutate(reason);
+      }}
+      className="h-7 rounded border border-red-500/40 bg-red-500/10 px-2.5 text-[11px] font-semibold text-red-400 hover:bg-red-500/20 disabled:opacity-50 transition-colors"
+    >
+      {mut.isPending ? '…' : 'Reject & recall'}
+    </button>
+  );
+}
+
 function PendingCard({ tx, onDone }: { tx: any; onDone: () => void }) {
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState('');
@@ -384,6 +407,7 @@ export default function AdminWithdrawals() {
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-white font-mono font-bold">${Number(tx.amount).toFixed(2)}</div>
                       <Badge className="border text-xs bg-blue-500/15 text-blue-400 border-blue-500/30">At Finance</Badge>
+                      <RecallButton tx={tx} onDone={invalidate} />
                     </div>
                   </div>
                 );
