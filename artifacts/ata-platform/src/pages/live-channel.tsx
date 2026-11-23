@@ -1025,7 +1025,7 @@ function StreamGate({ title, description, sport, thumbnailUrl, prices, selectedS
             <Button onClick={onPurchase} disabled={isPurchasing || !paywallStreamId}
               className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-base gap-2">
               {isPurchasing ? <span className="flex items-center gap-2"><span className="h-4 w-4 rounded-full border-2 border-slate-950/30 border-t-slate-950 animate-spin" />Processing…</span>
-                : <><Wallet className="h-5 w-5" />Pay ${selectedPrice.toFixed(2)} · {selectedOption.duration}</>}
+                : <><Wallet className="h-5 w-5" />Subscribe to Watch</>}
             </Button>
             <p className="text-slate-500 text-xs flex items-center justify-center gap-1.5">
               <Lock className="h-3 w-3" />Funds deducted from your wallet · {selectedOption.duration} access
