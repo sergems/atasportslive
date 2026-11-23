@@ -3,7 +3,7 @@ import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { AuthProvider, hasFinanceAccess, useAuth } from "@/lib/auth";
 import { GoogleAuthProvider } from "@/lib/google-auth";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { AdminLayout } from "@/components/layout/AdminLayout";
@@ -63,7 +63,7 @@ import AppTerms from "@/pages/app-terms";
 // Role sets used by route guards
 const CE_ROLES  = ['admin', 'manager', 'content_editor']; // content editor and above
 const MGR_ROLES = ['admin', 'manager'];                   // manager and above
-const FIN_ROLES = ['admin', 'manager', 'finance'];        // finance and above
+const FIN_ROLES = ['finance'];                             // finance role only (plus the named admin below)
 const ADM_ROLES = ['admin'];                              // admin only
 
 /**
@@ -101,22 +101,27 @@ const queryClient = new QueryClient({
 function ProtectedRoute({
   component: Component,
   allowedRoles,
+  allowFinanceAccess,
 }: {
   component: React.ComponentType;
   allowedRoles?: string[];
+  allowFinanceAccess?: boolean;
 }) {
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
 
+  const roleAllowed = !allowedRoles || (!!user && allowedRoles.includes(user.role));
+  const allowed = roleAllowed || (!!allowFinanceAccess && hasFinanceAccess(user));
+
   useEffect(() => {
     if (!isAuthenticated) { setLocation("/login"); return; }
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    if (user && !allowed) {
       setLocation(user.role === "finance" ? "/finance/dashboard" : "/dashboard");
     }
-  }, [isAuthenticated, user?.role, setLocation]);
+  }, [isAuthenticated, user, allowed, setLocation]);
 
   if (!isAuthenticated) return null;
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) return null;
+  if (user && !allowed) return null;
   return <Component />;
 }
 
@@ -244,15 +249,15 @@ function Router() {
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminLivestreamSettings /></AdminLayout>} />}
         </Route>
 
-        {/* ── Finance routes (finance + manager + admin) ─────────────── */}
+        {/* ── Finance routes (finance role + the one explicitly allowed admin) ── */}
         <Route path="/finance">
-          {() => <ProtectedRoute allowedRoles={FIN_ROLES} component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
+          {() => <ProtectedRoute allowedRoles={FIN_ROLES} allowFinanceAccess component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
         </Route>
         <Route path="/finance/dashboard">
-          {() => <ProtectedRoute allowedRoles={FIN_ROLES} component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
+          {() => <ProtectedRoute allowedRoles={FIN_ROLES} allowFinanceAccess component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
         </Route>
         <Route path="/finance/withdrawals">
-          {() => <ProtectedRoute allowedRoles={FIN_ROLES} component={() => <FinanceLayout><FinanceWithdrawals /></FinanceLayout>} />}
+          {() => <ProtectedRoute allowedRoles={FIN_ROLES} allowFinanceAccess component={() => <FinanceLayout><FinanceWithdrawals /></FinanceLayout>} />}
         </Route>
 
         <Route component={NotFound} />

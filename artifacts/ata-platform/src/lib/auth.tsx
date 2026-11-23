@@ -15,6 +15,16 @@ export function getRoleLevel(role?: string): number {
   return ROLE_LEVELS[role ?? ''] ?? -1;
 }
 
+/** The one non-finance account that is allowed into the finance portal. */
+export const FINANCE_ADMIN_EMAIL = 'admin@ata.ug';
+
+/** Finance portal access is limited to the finance role and one named admin. */
+export function hasFinanceAccess(user?: { role?: string; email?: string } | null): boolean {
+  if (!user) return false;
+  if (user.role === 'finance') return true;
+  return String(user.email ?? '').trim().toLowerCase() === FINANCE_ADMIN_EMAIL;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any;
@@ -28,7 +38,7 @@ interface AuthContextType {
   canAccessAdmin: boolean;
   /** True for admin and manager — can credit/debit/suspend other users */
   canManageUsers: boolean;
-  /** True for the finance role (and admins/managers who can use the finance portal) */
+  /** True only for the finance role and the one explicitly allowed admin account */
   canAccessFinance: boolean;
   login: (token: string, user: any) => void;
   logout: () => void;
@@ -84,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isContentEditor: role === 'admin' || role === 'manager' || role === 'content_editor',
     canAccessAdmin: ['admin', 'manager', 'content_editor'].includes(role),
     canManageUsers: role === 'admin' || role === 'manager',
-    canAccessFinance: ['admin', 'manager', 'finance'].includes(role),
+    canAccessFinance: hasFinanceAccess(user),
     login,
     logout,
   };
