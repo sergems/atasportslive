@@ -193,7 +193,28 @@ export default function AppLanding() {
       </section>
 
       <footer className="border-t border-slate-800 py-8 text-center text-xs text-slate-600">
-        © {new Date().getFullYear()} ATA Sports Live. All rights reserved.
+        <p>© {new Date().getFullYear()} ATA Sports Live. All rights reserved.</p>
+        <p className="mt-2">
+          Live player mockup photo by{' '}
+          <a
+            href="https://commons.wikimedia.org/wiki/File:Snooker_table_selby.JPG"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-teal-400"
+          >
+            DmitryYakunin
+          </a>
+          , licensed under{' '}
+          <a
+            href="https://creativecommons.org/licenses/by-sa/3.0/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-teal-400"
+          >
+            CC BY-SA 3.0
+          </a>
+          .
+        </p>
       </footer>
     </div>
   );
