@@ -113,6 +113,67 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
 
+  /notifications/token:
+    post:
+      operationId: registerPushToken
+      tags: [notifications]
+      summary: Register an FCM token for this device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+                platform: { type: string, enum: [android, ios] }
+      responses:
+        "200":
+          description: Token registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+    delete:
+      operationId: unregisterPushToken
+      tags: [notifications]
+      summary: Unregister an FCM token (or all tokens for the user)
+      responses:
+        "200":
+          description: Token removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/account:
+    delete:
+      operationId: deleteAccount
+      tags: [auth]
+      summary: Permanently delete the current user's account
+      description: Requires body {"confirmation":"DELETE"}. Anonymises identity and removes personal data; all sessions are revoked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmation]
+              properties:
+                confirmation:
+                  type: string
+                  enum: [DELETE]
+      responses:
+        "200":
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Confirmation required, or account cannot be deleted
+
   /auth/me:
     get:
       operationId: getMe

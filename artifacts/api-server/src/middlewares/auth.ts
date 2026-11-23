@@ -31,30 +31,28 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
     return;
   }
 
-  // If the token carries a session version, verify it matches the DB record.
-  // Tokens without sv (legacy) are still allowed — they'll be replaced on next login.
-  if (payload.sv) {
-    db.select({ sessionToken: usersTable.sessionToken })
-      .from(usersTable)
-      .where(eq(usersTable.id, payload.userId))
-      .limit(1)
-      .then(([user]: any[]) => {
-        if (!user || user.sessionToken !== payload.sv) {
-          res.status(401).json({ error: "Session expired — please log in again" });
-          return;
-        }
-        req.userId = payload.userId;
-        req.userRole = payload.role;
-        next();
-      })
-      .catch(() => {
-        res.status(500).json({ error: "Internal error" });
-      });
-  } else {
-    req.userId = payload.userId;
-    req.userRole = payload.role;
-    next();
+  // Every token must carry a session version matching the DB record. This is
+  // what makes logout and account deletion revoke all sessions immediately.
+  if (!payload.sv) {
+    res.status(401).json({ error: "Session expired — please log in again" });
+    return;
   }
+  db.select({ sessionToken: usersTable.sessionToken })
+    .from(usersTable)
+    .where(eq(usersTable.id, payload.userId))
+    .limit(1)
+    .then(([user]: any[]) => {
+      if (!user || !user.sessionToken || user.sessionToken !== payload.sv) {
+        res.status(401).json({ error: "Session expired — please log in again" });
+        return;
+      }
+      req.userId = payload.userId;
+      req.userRole = payload.role;
+      next();
+    })
+    .catch(() => {
+      res.status(500).json({ error: "Internal error" });
+    });
 }
 
 export function requireRole(...roles: string[]) {

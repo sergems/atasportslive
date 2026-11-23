@@ -1,7 +1,14 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
-import { db, usersTable, walletsTable } from "@workspace/db";
+import { randomUUID } from "crypto";
+import fs from "fs";
+import path from "path";
+import {
+  db, usersTable, walletsTable, streamAccessTable, platformSubscriptionsTable,
+  notificationsTable, bonusTransactionsTable, promotionTermsAcceptanceTable,
+  streamCommentsTable, vouchersTable, promotionsTable, pushTokensTable,
+} from "@workspace/db";
 import { eq, or, sql } from "drizzle-orm";
 import {
   generateTokens,
@@ -280,6 +287,7 @@ router.post("/refresh", async (req, res): Promise<void> => {
 
 router.post("/logout", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
   await db.update(usersTable).set({ refreshToken: null, sessionToken: null }).where(eq(usersTable.id, req.userId!));
+  await db.delete(pushTokensTable).where(eq(pushTokensTable.userId, req.userId!));
   res.json({ message: "Logged out" });
 });
 
@@ -402,6 +410,82 @@ router.delete("/google/link", authMiddleware, async (req: AuthRequest, res): Pro
   }
   await db.update(usersTable).set({ googleId: null }).where(eq(usersTable.id, req.userId!));
   res.json(userPayload({ ...user, googleId: null }));
+});
+
+/** Self-service account deletion. Anonymises identity, removes personal data,
+ *  and keeps only legally-required financial/audit records. */
+router.delete("/account", authMiddleware, async (req: AuthRequest, res): Promise<void> => {
+  const { confirmation } = req.body as { confirmation?: string };
+  if (confirmation !== "DELETE") {
+    res.status(400).json({ error: "Type DELETE to confirm account deletion" });
+    return;
+  }
+
+  const userId = req.userId!;
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  if (user.role === "admin") {
+    res.status(400).json({ error: "Admin accounts cannot be deleted in the app. Contact support." });
+    return;
+  }
+
+  // Remove a locally uploaded avatar (Google pictures are external URLs).
+  if (user.avatarUrl?.startsWith("/uploads/")) {
+    const file = path.join(process.cwd(), "uploads", path.basename(user.avatarUrl));
+    if (fs.existsSync(file)) fs.unlink(file, () => {});
+  }
+
+  await db.transaction(async (tx: any) => {
+    await tx.delete(walletsTable).where(eq(walletsTable.userId, userId));
+    await tx.delete(streamAccessTable).where(eq(streamAccessTable.userId, userId));
+    await tx.delete(platformSubscriptionsTable).where(eq(platformSubscriptionsTable.userId, userId));
+    await tx.delete(notificationsTable).where(eq(notificationsTable.userId, userId));
+    await tx.delete(bonusTransactionsTable).where(eq(bonusTransactionsTable.userId, userId));
+    await tx.delete(promotionTermsAcceptanceTable).where(eq(promotionTermsAcceptanceTable.userId, userId));
+    await tx.delete(streamCommentsTable).where(eq(streamCommentsTable.userId, userId));
+    await tx.delete(pushTokensTable).where(eq(pushTokensTable.userId, userId));
+    await tx.update(vouchersTable).set({ redeemedBy: null }).where(eq(vouchersTable.redeemedBy, userId));
+    await tx.update(vouchersTable).set({ createdBy: null }).where(eq(vouchersTable.createdBy, userId));
+    await tx.update(promotionsTable).set({ createdBy: null }).where(eq(promotionsTable.createdBy, userId));
+    await tx.update(usersTable).set({ referredBy: null }).where(eq(usersTable.referredBy, userId));
+
+    // Keep the row for financial/audit integrity, but strip every identifier
+    // and invalidate all credentials/tokens so nothing can sign in again.
+    await tx.update(usersTable).set({
+      email: `deleted-${randomUUID()}@deleted.local`,
+      fullName: "Deleted user",
+      surname: null,
+      phone: null,
+      username: null,
+      avatarUrl: null,
+      googleId: null,
+      referralCode: null,
+      referralCodeCustomized: false,
+      dateOfBirth: null,
+      idType: null,
+      idNumber: null,
+      country: null,
+      passwordHash: randomUUID(),
+      refreshToken: null,
+      sessionToken: null,
+      setPasswordNonce: null,
+      setPasswordNonceExpiry: null,
+      mustSetPassword: false,
+      status: "suspended",
+    }).where(eq(usersTable.id, userId));
+  });
+
+  const ws = wsClients.get(userId);
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({
+      type: "session_displaced",
+      title: "Account deleted",
+      message: "Your account has been deleted.",
+    }));
+    ws.close();
+  }
+
+  res.json({ ok: true, message: "Account deleted" });
 });
 
 router.patch("/profile", authMiddleware, async (req: AuthRequest, res): Promise<void> => {

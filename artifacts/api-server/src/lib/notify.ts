@@ -1,6 +1,7 @@
 import { db, notificationsTable } from "@workspace/db";
 import type { InferInsertModel } from "drizzle-orm";
 import type { WebSocket } from "ws";
+import { sendPushToUser } from "./push";
 
 export const wsClients = new Map<number, WebSocket>();
 export const wsStreamClients = new Map<number, Set<WebSocket>>();
@@ -31,4 +32,12 @@ export async function notify(
   if (ws && ws.readyState === 1) {
     ws.send(JSON.stringify({ type, title, message, id: notification.id }));
   }
+
+  // Free FCM push to the user's devices (no-op until Firebase is configured).
+  void sendPushToUser(userId, {
+    title,
+    body: message,
+    url: "/(tabs)/more/dashboard",
+    data: { notificationId: String(notification.id), type },
+  });
 }

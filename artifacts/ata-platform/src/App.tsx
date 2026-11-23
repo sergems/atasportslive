@@ -55,6 +55,9 @@ import NotFound from "@/pages/not-found";
 import RefundPolicy from "@/pages/refund-policy";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import Terms from "@/pages/terms";
+import AppLanding from "@/pages/app";
+import AppPrivacy from "@/pages/app-privacy";
+import AppTerms from "@/pages/app-terms";
 
 // Role sets used by route guards
 const CE_ROLES  = ['admin', 'manager', 'content_editor']; // content editor and above
@@ -144,6 +147,11 @@ function Router() {
         <Route path="/refund-policy" component={RefundPolicy} />
         <Route path="/set-password" component={SetPassword} />
         <Route path="/reset-password" component={ResetPassword} />
+
+        {/* ── App-only public pages (not linked in the website menu) ────── */}
+        <Route path="/app" component={AppLanding} />
+        <Route path="/app/privacy" component={AppPrivacy} />
+        <Route path="/app/terms" component={AppTerms} />
 
         {/* ── Authenticated user routes ──────────────────────────────────── */}
         <Route path="/games">

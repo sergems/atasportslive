@@ -51,6 +51,7 @@ Thumbs.db
 # Local secrets (generated during dev; keep out of version control)
 /.env
 /.env.local
+.env.eas-simulator
 
 # Production database dumps (contain PII — never commit)
 /backups/

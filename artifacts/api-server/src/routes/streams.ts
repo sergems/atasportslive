@@ -4,6 +4,7 @@ import { db, streamsTable, streamAccessTable, walletsTable, transactionsTable, g
 import { eq, desc, sql, and, gt, ne, or, gte, isNull } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify, wsStreamClients } from "../lib/notify";
+import { sendPushToAll } from "../lib/push";
 
 const router = Router();
 
@@ -174,8 +175,19 @@ router.patch("/:id", authMiddleware, requireRole("admin", "manager"), async (req
   if (playerACountry !== undefined) updates.playerACountry = playerACountry || null;
   if (playerBCountry !== undefined) updates.playerBCountry = playerBCountry || null;
 
+  const [previous] = await db.select().from(streamsTable).where(eq(streamsTable.id, id)).limit(1);
   const [stream] = await db.update(streamsTable).set(updates).where(eq(streamsTable.id, id)).returning();
   res.json(toStream(stream));
+
+  // Free FCM broadcast when an event actually transitions to live.
+  if (status === "live" && previous?.status !== "live") {
+    void sendPushToAll({
+      title: "Live now",
+      body: `${stream.title} is streaming now — tap to watch`,
+      url: "/(tabs)/live",
+      data: { type: "stream_live", streamId: String(stream.id) },
+    });
+  }
 });
 
 router.delete("/:id", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
