@@ -149,6 +149,8 @@ router.get("/activity", authMiddleware, requireRole("admin", "manager", "content
     userId: tx.userId,
     userFullName: user?.fullName || null,
     amount: parseFloat(tx.amount as string),
+    paymentMethod: tx.paymentMethod,
+    reference: tx.reference,
     createdAt: tx.createdAt,
   })));
 });

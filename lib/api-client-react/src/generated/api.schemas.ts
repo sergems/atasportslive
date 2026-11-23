@@ -559,6 +559,10 @@ export interface ActivityItem {
   userFullName?: string | null;
   /** @nullable */
   amount?: number | null;
+  /** @nullable */
+  paymentMethod?: string | null;
+  /** @nullable */
+  reference?: string | null;
   createdAt: string;
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useGetAdminStats, useGetRecentActivity, useGetRecentActivityCount, useSettleGame, getListGamesQueryKey } from '@workspace/api-client-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,11 +9,51 @@ import { Link } from 'wouter';
 import {
   Users, Wallet, TrendingUp, Radio, Trophy, ArrowUpRight, Clock,
   ChevronRight, CheckCircle2, ShieldCheck, Gavel, Hourglass, AlertTriangle, Search, X,
+  Check, XCircle, RefreshCw, Loader2,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { toast } from 'sonner';
 
 const ACTIVITY_PAGE_SIZE = 10;
+
+/** Confirm / fail / re-check a pending deposit straight from the activity feed. */
+function ActivityDepositActions({ tx, onDone }: { tx: any; onDone: () => void }) {
+  const action = useMutation({
+    mutationFn: async ({ url, method }: { url: string; method: string }) => {
+      const token = useAuthStore.getState().token;
+      const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Action failed');
+      return data;
+    },
+    onSuccess: (_, { url }) => {
+      toast.success(url.includes('confirm') ? 'Deposit confirmed' : url.includes('fail') ? 'Deposit marked as failed' : 'Deposit re-checked');
+      onDone();
+    },
+    onError: (e: any) => toast.error(e.message || 'Action failed'),
+  });
+
+  const btn = (label: string, icon: React.ReactNode, url: string, method: string, style: string) => (
+    <button
+      type="button"
+      title={label}
+      disabled={action.isPending}
+      onClick={() => action.mutate({ url, method })}
+      className={`flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider transition-colors disabled:opacity-40 ${style}`}
+    >
+      {action.isPending ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : icon}
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+
+  return (
+    <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+      {btn('Confirm', <Check className="h-2.5 w-2.5" />, `/api/wallet/admin/deposit/${tx.id}/confirm`, 'PATCH', 'border-teal-500/40 text-teal-400 hover:bg-teal-500/15')}
+      {btn('Fail', <XCircle className="h-2.5 w-2.5" />, `/api/wallet/admin/deposit/${tx.id}/fail`, 'PATCH', 'border-red-500/40 text-red-400 hover:bg-red-500/15')}
+      {(tx.reference || String(tx.description ?? '').includes('pesapal')) && btn('Re-check', <RefreshCw className="h-2.5 w-2.5" />, `/api/wallet/admin/deposit/${tx.id}/recheck`, 'POST', 'border-blue-500/40 text-blue-400 hover:bg-blue-500/15')}
+    </div>
+  );
+}
 
 function useWithdrawalPipeline() {
   const token = useAuthStore.getState().token;
@@ -426,9 +466,14 @@ export default function AdminDashboard() {
                       <div className="text-[9px] text-slate-500 mt-0.5">{new Date(item.createdAt).toLocaleString()}</div>
                     </div>
                   </div>
-                  <span className={`font-mono font-semibold text-[11px] shrink-0 ${TX_COLOR[item.type] || 'text-white'}`}>
-                    {TX_SIGN[item.type] || ''}{item.amount?.toFixed(2)}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`font-mono font-semibold text-[11px] ${TX_COLOR[item.type] || 'text-white'}`}>
+                      {TX_SIGN[item.type] || ''}{item.amount?.toFixed(2)}
+                    </span>
+                    {activityTab === 'pending_deposits' && item.type === 'deposit' && item.status === 'pending' && (
+                      <ActivityDepositActions tx={item} onDone={() => qc.invalidateQueries()} />
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
