@@ -310,7 +310,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
   const [ready, setReady] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
-  // true for a few seconds right after (re)loading a video, while YouTube's
+  // true for 10 seconds right after (re)loading a video, while YouTube's
   // title/channel card is still animating in/out — covered with solid bars
   const [justSwitched, setJustSwitched] = useState(true);
   // remember last non-zero volume so unmuting restores it
@@ -354,12 +354,12 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
     // reset UI state whenever the video changes so we don't act on stale
     // readiness assumptions from the previous video
     setReady(false);
-    // cover the feed with solid bars for a few seconds after switching —
+    // cover the feed with solid bars for 10 seconds after switching —
     // YouTube's title/channel card animates in on load and there's no
     // param that fully suppresses it, so we hide it behind opaque bars
     // instead until it's had time to disappear on its own
     setJustSwitched(true);
-    const switchCoverTimer = setTimeout(() => setJustSwitched(false), 7000);
+    const switchCoverTimer = setTimeout(() => setJustSwitched(false), 10000);
 
     let playerState: number | null = null;
 
@@ -452,9 +452,8 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
             playerState = info.playerState;
             if (playerState === 1) {
               init();
-              // Video is actually playing — remove the cover bars immediately
-              // instead of waiting for the 7-second timer to expire.
-              setJustSwitched(false);
+              // Keep the cover bars up for the full 10 seconds even once
+              // playback starts, so they never cut off early on a fast load.
             }
             setIsPlaying(playerState === 1 || playerState === 3);
             // 2 = paused, 5 = cued — both mean autoplay didn't take; nudge it again
@@ -554,7 +553,7 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
 
       {/* Overlay — pointer-events-none except for the control buttons */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Solid black bars for a few seconds after switching — hides YouTube's
+        {/* Solid black bars for 10 seconds after switching — hides YouTube's
             title/channel card that briefly animates in on load */}
         <div
           className={`absolute top-0 inset-x-0 h-[22%] sm:h-[12.5%] bg-black transition-opacity duration-700 ${
