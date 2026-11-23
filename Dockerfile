@@ -74,7 +74,8 @@ WORKDIR /deps
 # Install only the packages that esbuild externalises at runtime
 RUN npm install --save-exact \
         bcrypt@6.0.0 \
-        nodemailer@9.0.1
+        nodemailer@9.0.1 \
+        firebase-admin@14.5.1
 
 # -----------------------------------------------------------------------------
 # Stage 5 — api: slim production API image
@@ -82,7 +83,7 @@ RUN npm install --save-exact \
 FROM node:24-slim AS api
 WORKDIR /app
 
-# Runtime node_modules (bcrypt compiled binary + nodemailer)
+# Runtime node_modules (bcrypt compiled binary + nodemailer + firebase-admin)
 COPY --from=native-deps /deps/node_modules ./node_modules
 
 # Compiled server bundle + pino worker threads
