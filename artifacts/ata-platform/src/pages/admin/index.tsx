@@ -168,6 +168,7 @@ export default function AdminDashboard() {
   const qc = useQueryClient();
   const { data: stats, isLoading } = useGetAdminStats();
   const [activityPageRaw, setActivityPageRaw] = useState(0);
+  const [activityTab, setActivityTab] = useState<'all' | 'failed_deposits'>('all');
   const [searchInput, setSearchInput] = useState('');
   const [activitySearch, setActivitySearch] = useState('');
   // Debounce typing so we don't fire a query on every keystroke.
@@ -176,8 +177,14 @@ export default function AdminDashboard() {
     return () => window.clearTimeout(timer);
   }, [searchInput]);
   // Any new search starts back at the first page.
-  useEffect(() => { setActivityPageRaw(0); }, [activitySearch]);
-  const { data: activityCount } = useGetRecentActivityCount({ search: activitySearch || undefined });
+  useEffect(() => { setActivityPageRaw(0); }, [activitySearch, activityTab]);
+  const activityFilters = activityTab === 'failed_deposits'
+    ? { status: 'failed', type: 'deposit' }
+    : {};
+  const { data: activityCount } = useGetRecentActivityCount({
+    search: activitySearch || undefined,
+    ...activityFilters,
+  });
   const totalActivityPages = Math.max(1, Math.ceil((activityCount?.total ?? 0) / ACTIVITY_PAGE_SIZE));
   const activityPage = Math.min(activityPageRaw, totalActivityPages - 1);
   const activityWindowStart = Math.max(0, Math.min(activityPage - 2, totalActivityPages - 5));
@@ -185,6 +192,7 @@ export default function AdminDashboard() {
     limit: ACTIVITY_PAGE_SIZE,
     offset: activityPage * ACTIVITY_PAGE_SIZE,
     search: activitySearch || undefined,
+    ...activityFilters,
   });
   const { data: pipeline, isLoading: pipelineLoading } = useWithdrawalPipeline();
   const { data: settlementGames = [], isLoading: settlementLoading } = useSettlementDue();
@@ -342,6 +350,25 @@ export default function AdminDashboard() {
         <CardHeader className="py-2.5 px-3 border-b border-slate-800">
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-white text-xs uppercase tracking-wider shrink-0">Recent Activity</CardTitle>
+            <div className="flex items-center gap-1 shrink-0">
+              {([
+                ['all', 'All'],
+                ['failed_deposits', 'Failed Deposits'],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActivityTab(key)}
+                  className={`h-6 rounded border px-2 text-[10px] font-semibold transition-colors ${
+                    activityTab === key
+                      ? 'border-teal-500 bg-teal-500 text-slate-950'
+                      : 'border-slate-700 bg-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="relative w-full max-w-[260px]">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
               <input
@@ -382,6 +409,11 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-1.5">
                         <span className="text-white text-[11px] font-medium truncate">{item.userFullName || `User #${item.userId}`}</span>
                         <span className="text-slate-400 text-[10px] capitalize truncate">{item.type.replace(/_/g, ' ')}</span>
+                        {item.status === 'failed' && (
+                          <span className="shrink-0 rounded border border-red-500/40 bg-red-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-red-400">
+                            Failed
+                          </span>
+                        )}
                       </div>
                       <div className="text-[9px] text-slate-500 mt-0.5">{new Date(item.createdAt).toLocaleString()}</div>
                     </div>

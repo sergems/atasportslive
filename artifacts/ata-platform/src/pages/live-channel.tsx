@@ -578,8 +578,6 @@ export function YouTubePlayer({ videoId, title }: { videoId: string; title: stri
           {ready && (
             <div
               className="absolute bottom-14 left-3 flex items-center gap-2 pointer-events-auto"
-              onMouseEnter={() => setExpanded(true)}
-              onMouseLeave={() => setExpanded(false)}
               {...controlsHandlers}
             >
               {/* Volume slider */}

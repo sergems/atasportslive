@@ -212,6 +212,11 @@ paths:
           in: query
           schema:
             type: string
+        - name: sortBy
+          in: query
+          description: newest (default) | balance_desc | balance_asc | bonus_desc
+          schema:
+            type: string
       responses:
         "200":
           description: User list
@@ -1102,6 +1107,16 @@ paths:
           description: Filter by user email, full name or username (case-insensitive)
           schema:
             type: string
+        - name: status
+          in: query
+          description: Filter by transaction status (e.g. failed)
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Filter by transaction type (e.g. deposit)
+          schema:
+            type: string
       responses:
         "200":
           description: Recent activity
@@ -1121,6 +1136,16 @@ paths:
         - name: search
           in: query
           description: Filter by user email, full name or username (case-insensitive)
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by transaction status (e.g. failed)
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Filter by transaction type (e.g. deposit)
           schema:
             type: string
       responses:
@@ -1321,6 +1346,10 @@ components:
           description: The user's unique referral code
         createdAt:
           type: string
+        balance:
+          type: ["number", "null"]
+        bonusBalance:
+          type: ["number", "null"]
 
     UserUpdate:
       type: object
@@ -1889,6 +1918,8 @@ components:
         id:
           type: integer
         type:
+          type: string
+        status:
           type: string
         description:
           type: string

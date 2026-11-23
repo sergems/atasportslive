@@ -20,6 +20,7 @@ const TX_META: Record<string, { label: string; sign: '+' | '-'; color: string; i
   stream_access:  { label: 'Stream / Sub',     sign: '-', color: 'text-violet-400', iconBg: 'bg-violet-500/10 border-violet-500/30', icon: PlayCircle },
   brokerage_fee:  { label: 'Brokerage Fee',    sign: '-', color: 'text-slate-400',  iconBg: 'bg-slate-500/10 border-slate-500/30', icon: ShieldCheck },
   voucher_redeem: { label: 'Voucher Redeemed', sign: '+', color: 'text-emerald-400',iconBg: 'bg-emerald-500/10 border-emerald-500/30', icon: Gift },
+  bonus_deposit:  { label: 'Bonus Deposit',   sign: '+', color: 'text-amber-400',  iconBg: 'bg-amber-500/10 border-amber-500/30',   icon: Gift },
   admin_credit:   { label: 'Admin Credit',     sign: '+', color: 'text-teal-400',   iconBg: 'bg-teal-500/10 border-teal-500/30',   icon: CreditCard },
   admin_debit:    { label: 'Admin Debit',      sign: '-', color: 'text-red-400',    iconBg: 'bg-red-500/10 border-red-500/30',     icon: CreditCard },
 };
@@ -32,7 +33,7 @@ const FILTER_OPTIONS = [
   { key: 'bet_win',       label: 'Winnings' },
   { key: 'stream_access', label: 'Streams' },
   { key: 'bet_refund',    label: 'Refunds' },
-  { key: 'voucher_redeem',label: 'Vouchers' },
+  { key: 'bonus_deposit', label: 'Bonus Deposits' },
 ];
 
 const STATUS_STYLE: Record<string, string> = {

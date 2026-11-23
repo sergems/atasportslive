@@ -112,15 +112,31 @@ const getActivitySearch = (req: { query: unknown }) =>
     ? req.query.search.trim()
     : "";
 
+const getActivityParam = (req: { query: unknown }, key: string): string =>
+  typeof req.query === "object" && req.query !== null && key in req.query && typeof (req.query as any)[key] === "string"
+    ? (req.query as any)[key].trim()
+    : "";
+
+/** Shared filter used by both the activity list and its count. */
+const buildActivityFilter = (req: AuthRequest) => {
+  const conditions: any[] = [];
+  const userFilter = buildActivityUserFilter(getActivitySearch(req));
+  if (userFilter) conditions.push(userFilter);
+  const status = getActivityParam(req, "status");
+  const type = getActivityParam(req, "type");
+  if (status) conditions.push(eq(transactionsTable.status, status as any));
+  if (type) conditions.push(eq(transactionsTable.type, type as any));
+  return conditions.length ? and(...conditions) : undefined;
+};
+
 router.get("/activity", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
   const limit = Number(req.query.limit) || 20;
   const offset = Math.max(0, Number(req.query.offset) || 0);
-  const userFilter = buildActivityUserFilter(getActivitySearch(req));
   const txs = await db
     .select({ tx: transactionsTable, user: usersTable })
     .from(transactionsTable)
     .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
-    .where(userFilter)
+    .where(buildActivityFilter(req))
     .orderBy(desc(transactionsTable.createdAt))
     .limit(limit)
     .offset(offset);
@@ -128,6 +144,7 @@ router.get("/activity", authMiddleware, requireRole("admin", "manager", "content
   res.json(txs.map(({ tx, user }: any) => ({
     id: tx.id,
     type: tx.type,
+    status: tx.status,
     description: tx.description || `${tx.type} transaction`,
     userId: tx.userId,
     userFullName: user?.fullName || null,
@@ -137,12 +154,11 @@ router.get("/activity", authMiddleware, requireRole("admin", "manager", "content
 });
 
 router.get("/activity/count", authMiddleware, requireRole("admin", "manager", "content_editor"), async (req: AuthRequest, res): Promise<void> => {
-  const userFilter = buildActivityUserFilter(getActivitySearch(req));
   const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(transactionsTable)
     .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
-    .where(userFilter);
+    .where(buildActivityFilter(req));
   res.json({ total: Number(total) });
 });
 
@@ -316,6 +332,45 @@ router.post("/wallets/:userId/adjust", authMiddleware, requireRole("admin", "man
     `${type === "credit" ? "+" : "-"}$${amt} — ${note || `Admin ${type}`}`);
 
   res.json({ success: true, transaction: tx });
+});
+
+/** Adjust a user's BONUS wallet only (cash balances are never touched). */
+router.post("/wallets/:userId/bonus-adjust", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const userId = Number(req.params.userId);
+  const { type, amount, note } = req.body;
+  if (!["credit", "debit"].includes(type)) { res.status(400).json({ error: "type must be credit or debit" }); return; }
+  if (!amount || Number(amount) <= 0) { res.status(400).json({ error: "Invalid amount" }); return; }
+  const amt = parseFloat(amount);
+
+  const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, userId)).limit(1);
+  if (!wallet) { res.status(404).json({ error: "Wallet not found" }); return; }
+
+  const before = parseFloat(wallet.bonusBalance as string);
+  if (type === "debit" && before < amt) {
+    res.status(400).json({ error: `Insufficient bonus balance ($${before.toFixed(2)})` }); return;
+  }
+  const after = type === "credit" ? before + amt : before - amt;
+
+  await db.update(walletsTable).set({
+    bonusBalance: sql`bonus_balance + ${type === "credit" ? amt : -amt}`,
+    updatedAt: new Date(),
+  }).where(eq(walletsTable.userId, userId));
+
+  const reference = `BADJ-${uuidv4().split("-")[0].toUpperCase()}`;
+  const [entry] = await db.insert(bonusTransactionsTable).values({
+    userId,
+    type: type === "credit" ? "earned" : "revoked",
+    amount: String(amt),
+    balanceBefore: String(before),
+    balanceAfter: String(after),
+    reference,
+    description: note || `Admin ${type} of $${amt.toFixed(2)} to Bonus Wallet`,
+    ...(type === "debit" ? { revokedBy: req.userId!, revokedReason: note || "Admin adjustment" } : {}),
+  }).returning();
+
+  await notify(userId, "general", "Bonus Wallet Updated",
+    `${type === "credit" ? "+" : "-"}$${amt.toFixed(2)} — ${note || `Admin ${type}`}`);
+  res.json({ success: true, balanceAfter: after, entry });
 });
 
 // ── Imported-user activation emails ──────────────────────────────────────────

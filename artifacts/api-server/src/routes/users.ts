@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, usersTable } from "@workspace/db";
-import { eq, ilike, or, sql } from "drizzle-orm";
+import { db, usersTable, walletsTable } from "@workspace/db";
+import { eq, ilike, or, sql, asc, desc } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 
 const router = Router();
@@ -25,7 +25,10 @@ function visibleRoles(callerRole: string): string[] | null {
   return [];
 }
 
-const toPublicUser = (user: typeof usersTable.$inferSelect) => ({
+const toPublicUser = (
+  user: typeof usersTable.$inferSelect,
+  wallet?: { balance: string; bonusBalance: string },
+) => ({
   id: user.id,
   email: user.email,
   fullName: user.fullName,
@@ -35,6 +38,8 @@ const toPublicUser = (user: typeof usersTable.$inferSelect) => ({
   avatarUrl: user.avatarUrl,
   createdAt: user.createdAt,
   ficaCompleted: user.ficaCompleted ?? false,
+  balance: wallet ? parseFloat(wallet.balance) : null,
+  bonusBalance: wallet ? parseFloat(wallet.bonusBalance) : null,
 });
 
 // ── List users ───────────────────────────────────────────────────────────────
@@ -44,6 +49,7 @@ router.get("/", authMiddleware, requireRole("admin", "manager", "content_editor"
   const search     = req.query.search     as string | undefined;
   const roleQs     = req.query.role       as string | undefined;
   const ficaPending = req.query.ficaPending === "true";
+  const sortBy     = (req.query.sortBy as string | undefined) ?? "newest";
   const offset = (page - 1) * limit;
 
   const allowed = visibleRoles(req.userRole ?? "");
@@ -83,12 +89,22 @@ router.get("/", authMiddleware, requireRole("admin", "manager", "content_editor"
   const countQ = db.select({ count: sql<number>`count(*)` }).from(usersTable);
   const [{ count }] = where ? await countQ.where(where) : await countQ;
 
-  const usersQ = db.select().from(usersTable).orderBy(sql`created_at desc`);
-  const users  = where
+  const orderBy = sortBy === "balance_desc" ? desc(walletsTable.balance)
+    : sortBy === "balance_asc" ? asc(walletsTable.balance)
+    : sortBy === "bonus_desc" ? desc(walletsTable.bonusBalance)
+    : sql`${usersTable.createdAt} desc`;
+
+  const usersQ = db.select({ user: usersTable, wallet: walletsTable })
+    .from(usersTable)
+    .leftJoin(walletsTable, eq(walletsTable.userId, usersTable.id))
+    .orderBy(orderBy);
+
+  const rows = where
     ? await usersQ.where(where).limit(limit).offset(offset)
     : await usersQ.limit(limit).offset(offset);
 
-  res.json({ users: users.map(toPublicUser), total: Number(count), page, limit });
+  const users = rows.map((row: any) => toPublicUser(row.user, row.wallet));
+  res.json({ users, total: Number(count), page, limit });
 });
 
 // ── Get single user ──────────────────────────────────────────────────────────

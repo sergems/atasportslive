@@ -65,6 +65,10 @@ export interface User {
      */
   referralCode?: string | null;
   createdAt: string;
+  /** @nullable */
+  balance?: number | null;
+  /** @nullable */
+  bonusBalance?: number | null;
 }
 
 export interface AuthResponse {
@@ -547,6 +551,7 @@ export interface RevenueBreakdown {
 export interface ActivityItem {
   id: number;
   type: string;
+  status?: string;
   description: string;
   /** @nullable */
   userId?: number | null;
@@ -593,6 +598,8 @@ page?: number;
 limit?: number;
 search?: string;
 role?: string;
+/** newest | balance_desc | balance_asc | bonus_desc */
+sortBy?: string;
 };
 
 export type ListTransactionsParams = {
@@ -658,6 +665,10 @@ offset?: number;
  * Filter by user email, full name or username (case-insensitive)
  */
 search?: string;
+/** Filter by transaction status, e.g. failed */
+status?: string;
+/** Filter by transaction type, e.g. deposit */
+type?: string;
 };
 
 export type GetRecentActivityCountParams = {
@@ -665,6 +676,10 @@ export type GetRecentActivityCountParams = {
  * Filter by user email, full name or username (case-insensitive)
  */
 search?: string;
+/** Filter by transaction status, e.g. failed */
+status?: string;
+/** Filter by transaction type, e.g. deposit */
+type?: string;
 };
 
 export type GetRecentActivityCount200 = {

@@ -562,23 +562,35 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
       .returning();
     if (!claimed) return null; // already redeemed — signal to abort response below
 
-    // Step 2: credit wallet
+    // Step 2: credit the BONUS wallet only. Vouchers are treated as bonus
+    // deposits — streaming only, not withdrawable and not usable for predictions.
+    const [currentWallet] = await dbTx.select().from(walletsTable).where(eq(walletsTable.userId, req.userId!)).limit(1);
+    const balanceBefore = Number(currentWallet?.bonusBalance ?? 0);
+    const balanceAfter = balanceBefore + amount;
     await dbTx.update(walletsTable).set({
-      balance: sql`balance + ${amount}`,
-      availableBalance: sql`available_balance + ${amount}`,
-      withdrawableBalance: sql`withdrawable_balance + ${amount}`,
+      bonusBalance: sql`bonus_balance + ${amount}`,
     }).where(eq(walletsTable.userId, req.userId!));
 
-    // Step 3: audit record
+    // Step 3: audit record (cash transaction ledger + bonus ledger)
     const [tx] = await dbTx.insert(transactionsTable).values({
       transactionId: `VCH-${voucher.code}`,
       userId: req.userId!,
-      type: "voucher_redeem",
+      type: "bonus_deposit",
       amount: String(amount),
       status: "completed",
       paymentMethod: "internal",
-      description: `Voucher ${voucher.code} redeemed`,
+      description: `Voucher ${voucher.code} redeemed to Bonus Wallet`,
     }).returning();
+
+    await dbTx.insert(bonusTransactionsTable).values({
+      userId: req.userId!,
+      type: "earned",
+      amount: String(amount),
+      balanceBefore: String(balanceBefore),
+      balanceAfter: String(balanceAfter),
+      reference: `VCH-${voucher.code}`,
+      description: `Voucher ${voucher.code} redeemed`,
+    });
 
     return tx;
   });
@@ -588,7 +600,7 @@ router.post("/redeem-voucher", authMiddleware, async (req: AuthRequest, res): Pr
     return;
   }
 
-  await notify(req.userId!, "deposit_received", "Voucher Redeemed", `${amount.toFixed(2)} has been added to your wallet.`);
+  await notify(req.userId!, "deposit_received", "Voucher Redeemed", `${amount.toFixed(2)} has been added to your Bonus Wallet (streaming only).`);
   res.json({ success: true, amount, transaction: toTxResponse(inserted) });
 });
 

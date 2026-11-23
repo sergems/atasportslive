@@ -384,6 +384,76 @@ function WalletAdjustPanel({ userId, onClose }: { userId: number; onClose: () =>
   );
 }
 
+function BonusAdjustPanel({ userId, onClose }: { userId: number; onClose: () => void }) {
+  const [type, setType] = useState<'credit' | 'debit'>('debit');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/wallets/${userId}/bonus-adjust`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ type, amount: parseFloat(amount), note }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success(`Bonus wallet updated — new balance $${Number(data.balanceAfter).toFixed(2)}`);
+      queryClient.invalidateQueries({ queryKey: ['admin-user-wallet', userId] });
+      queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
+      onClose();
+    },
+    onError: (e: any) => toast.error(e.message || 'Failed'),
+  });
+
+  return (
+    <div className="bg-slate-900 border border-amber-500/40 rounded p-3 mt-2 shadow-lg flex flex-col sm:flex-row gap-2 items-end">
+      <div className="space-y-1 w-full sm:w-24 shrink-0">
+        <Label className="text-slate-400 text-[10px] uppercase tracking-wider">Action</Label>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as any)}
+          className="w-full bg-slate-950 border border-slate-800 rounded px-2 h-7 text-white text-xs font-bold"
+        >
+          <option value="credit">CREDIT</option>
+          <option value="debit">DEBIT</option>
+        </select>
+      </div>
+      <div className="space-y-1 w-full sm:w-32 shrink-0">
+        <Label className="text-slate-400 text-[10px] uppercase tracking-wider">Amount ($)</Label>
+        <Input
+          type="number" min="0.01" step="0.01" value={amount}
+          onChange={(e) => setAmount(e.target.value)} placeholder="0.00"
+          className="bg-slate-950 border-slate-800 text-white font-mono text-xs h-7"
+        />
+      </div>
+      <div className="space-y-1 w-full sm:flex-1">
+        <Label className="text-slate-400 text-[10px] uppercase tracking-wider">Reason (opt)</Label>
+        <Input
+          value={note} onChange={(e) => setNote(e.target.value)}
+          placeholder="e.g. Fraudulent voucher redemption"
+          className="bg-slate-950 border-slate-800 text-white text-xs h-7"
+        />
+      </div>
+      <div className="flex gap-1.5 w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
+        <Button size="sm" variant="ghost" onClick={onClose} className="h-7 px-2 text-xs text-slate-400 hover:text-white">Cancel</Button>
+        <Button
+          size="sm"
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending || !amount || parseFloat(amount) <= 0}
+          className={`h-7 px-3 text-[10px] font-bold uppercase ${type === 'credit' ? 'bg-teal-500 hover:bg-teal-400 text-slate-950' : 'bg-red-500 hover:bg-red-400 text-white'}`}
+        >
+          {mutation.isPending ? '…' : type === 'credit' ? 'Add Bonus' : 'Remove Bonus'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ── UserWalletBadge — always-visible balance strip ──────────────────────────
 
 function UserWalletBadge({ userId }: { userId: number }) {
@@ -426,10 +496,11 @@ const TX_TYPE_LABELS: Record<string, string> = {
   bet_won: 'Bet Won',
   bet_refund: 'Bet Refund',
   voucher_redeem: 'Voucher',
+  bonus_deposit: 'Bonus Deposit',
 };
 
 function txIcon(type: string) {
-  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem')
+  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem' || type === 'bonus_deposit')
     return <TrendingUp className="h-3 w-3 text-teal-400" />;
   if (type === 'withdrawal' || type === 'admin_debit' || type === 'bonus_used' || type === 'bet_placed' || type === 'stream_access' || type === 'brokerage_fee')
     return <TrendingDown className="h-3 w-3 text-red-400" />;
@@ -437,13 +508,13 @@ function txIcon(type: string) {
 }
 
 function txAmountColor(type: string) {
-  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem')
+  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem' || type === 'bonus_deposit')
     return 'text-teal-400';
   return 'text-red-400';
 }
 
 function txAmountPrefix(type: string) {
-  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem')
+  if (type === 'deposit' || type === 'admin_credit' || type === 'bonus_credit' || type === 'bet_won' || type === 'bet_refund' || type === 'voucher_redeem' || type === 'bonus_deposit')
     return '+';
   return '-';
 }
@@ -675,9 +746,11 @@ export default function AdminUsers() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState('newest');
   const [ficaPendingOnly, setFicaPendingOnly] = useState(false);
   const [editingPayoutFor, setEditingPayoutFor] = useState<number | null>(null);
   const [walletAdjustFor, setWalletAdjustFor] = useState<number | null>(null);
+  const [bonusAdjustFor, setBonusAdjustFor] = useState<number | null>(null);
   const [resetPasswordFor, setResetPasswordFor] = useState<number | null>(null);
   const [txHistoryFor, setTxHistoryFor] = useState<number | null>(null);
   const [influencerPending, setInfluencerPending] = useState<number | null>(null);
@@ -689,7 +762,7 @@ export default function AdminUsers() {
   // Standard list (all users or search)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: allData, isLoading: allLoading } = useListUsers(
-    { page, limit: 20, search: search || undefined },
+    { page, limit: 20, search: search || undefined, sortBy },
     { query: { enabled: !ficaPendingOnly } as any }
   );
 
@@ -814,6 +887,18 @@ export default function AdminUsers() {
             )}
           </button>
 
+          <select
+            value={sortBy}
+            onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+            aria-label="Sort users"
+            className="h-8 rounded-md bg-slate-900 border border-slate-700 px-2 text-[11px] text-white shrink-0"
+          >
+            <option value="newest">Newest first</option>
+            <option value="balance_desc">Highest balance</option>
+            <option value="balance_asc">Lowest balance</option>
+            <option value="bonus_desc">Highest bonus</option>
+          </select>
+
           <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
             <Input
@@ -899,11 +984,19 @@ export default function AdminUsers() {
                         </Button>
                         <Button
                           size="sm" variant="ghost"
-                          onClick={() => { setWalletAdjustFor(walletAdjustFor === user.id ? null : user.id); setEditingPayoutFor(null); setResetPasswordFor(null); setTxHistoryFor(null); }}
+                          onClick={() => { setWalletAdjustFor(walletAdjustFor === user.id ? null : user.id); setBonusAdjustFor(null); setEditingPayoutFor(null); setResetPasswordFor(null); setTxHistoryFor(null); }}
                           className={`h-5 w-6 p-0 rounded-sm ${walletAdjustFor === user.id ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
-                          title="Adjust Wallet"
+                          title="Adjust Cash Wallet"
                         >
                           <Wallet className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm" variant="ghost"
+                          onClick={() => { setBonusAdjustFor(bonusAdjustFor === user.id ? null : user.id); setWalletAdjustFor(null); setEditingPayoutFor(null); setResetPasswordFor(null); setTxHistoryFor(null); }}
+                          className={`h-5 w-6 p-0 rounded-sm ${bonusAdjustFor === user.id ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
+                          title="Adjust Bonus Wallet"
+                        >
+                          <Star className="h-3 w-3" />
                         </Button>
                         <Button
                           size="sm" variant="ghost"
@@ -992,6 +1085,9 @@ export default function AdminUsers() {
                   )}
                   {walletAdjustFor === user.id && (
                     <WalletAdjustPanel userId={user.id} onClose={() => setWalletAdjustFor(null)} />
+                  )}
+                  {bonusAdjustFor === user.id && (
+                    <BonusAdjustPanel userId={user.id} onClose={() => setBonusAdjustFor(null)} />
                   )}
                   {editingPayoutFor === user.id && (
                     <PayoutMethodEditor
