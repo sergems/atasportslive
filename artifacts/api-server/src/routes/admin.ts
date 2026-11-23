@@ -200,13 +200,17 @@ router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "manage
 // Global withdrawal history (all users) for admin + finance
 router.get("/withdrawal-history", authMiddleware, requireRole("admin", "manager", "finance"), async (req: AuthRequest, res): Promise<void> => {
   const limit = Math.min(200, Number(req.query.limit) || 50);
+  const requestedStatus = typeof req.query.status === "string" ? req.query.status : "";
+  const statusCondition = ["pending", "approved", "completed", "rejected"].includes(requestedStatus)
+    ? eq(transactionsTable.status, requestedStatus as any)
+    : or(eq(transactionsTable.status, "completed"), eq(transactionsTable.status, "rejected"));
   const txs = await db
     .select({ tx: transactionsTable, user: usersTable })
     .from(transactionsTable)
     .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
     .where(and(
       eq(transactionsTable.type, "withdrawal"),
-      or(eq(transactionsTable.status, "completed"), eq(transactionsTable.status, "rejected")),
+      statusCondition,
       like(transactionsTable.transactionId, "WIT-%"),
     ))
     .orderBy(desc(transactionsTable.createdAt))

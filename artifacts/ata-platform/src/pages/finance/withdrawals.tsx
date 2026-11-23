@@ -33,7 +33,7 @@ async function fetchApproved() {
 }
 
 async function fetchPaidHistory() {
-  const res = await fetch('/api/admin/withdrawal-history?limit=50', { headers: authHeaders() });
+  const res = await fetch('/api/admin/withdrawal-history?limit=50&status=completed', { headers: authHeaders() });
   if (!res.ok) return [] as any[];
   return res.json() as Promise<any[]>;
 }
@@ -143,7 +143,8 @@ export default function FinanceWithdrawals() {
     staleTime: 30_000,
   });
 
-  const paidHistory: any[] = Array.isArray(historyData) ? historyData : [];
+  const paidHistory: any[] = (Array.isArray(historyData) ? historyData : [])
+    .filter((t: any) => t.status === 'completed');
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['finance-approved'] });
