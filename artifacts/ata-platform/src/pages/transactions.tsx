@@ -80,7 +80,7 @@ export default function Transactions() {
         <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
         <div className="relative">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-400">Wallet activity</p>
-          <h1 className="mt-2 text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">Transactions</h1>
+          <h1 className="mt-2 text-2xl font-extrabold leading-[1.05] text-white">Transactions</h1>
           <p className="mt-3 max-w-md text-base leading-relaxed text-slate-400">Your complete wallet history, all in one place.</p>
         </div>
 

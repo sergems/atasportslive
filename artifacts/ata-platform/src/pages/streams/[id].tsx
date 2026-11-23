@@ -150,7 +150,7 @@ export default function StreamDetail() {
              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{stream.sport}</span>
              {stream.status === 'live' && <span className="inline-flex items-center rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500/20 animate-pulse">LIVE</span>}
           </div>
-          <h1 className="text-3xl font-bold text-white">{stream.title}</h1>
+          <h1 className="text-2xl font-bold text-white">{stream.title}</h1>
           <p className="text-slate-400 mt-2 max-w-3xl">{stream.description}</p>
         </div>
         <div className="flex items-center gap-6 text-sm text-slate-400">

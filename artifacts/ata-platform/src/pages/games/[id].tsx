@@ -186,7 +186,7 @@ export default function GameDetail() {
               <div className="inline-flex items-center gap-2 text-purple-400 text-xs font-bold uppercase tracking-widest mb-3">
                 <Trophy className="h-4 w-4" /> {containerLabel}
               </div>
-              <div className="text-4xl font-extrabold text-white mb-2">{game.playerA}</div>
+              <div className="text-2xl font-extrabold text-white mb-2">{game.playerA}</div>
               <div className="flex justify-center flex-wrap gap-4 mt-4 text-sm text-slate-400">
                 <span className="flex items-center gap-1.5"><CalendarClock className="h-4 w-4" />{game.eventDate}</span>
                 {(game as any).eventEndDate && (

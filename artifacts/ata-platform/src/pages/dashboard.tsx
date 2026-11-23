@@ -108,7 +108,7 @@ export default function Dashboard() {
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-400">{greeting}</p>
             <div className="mt-2 flex items-center gap-3">
-              <h1 className="text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">{firstName}</h1>
+              <h1 className="text-2xl font-extrabold leading-[1.05] text-white">{firstName}</h1>
               <Link href="/notifications">
                 <button className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10" aria-label="Notifications">
                   <Bell className={`h-4 w-4 ${unreadCount > 0 ? 'text-amber-400' : ''}`} />

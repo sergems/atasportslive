@@ -11,7 +11,7 @@ export default function AppPrivacy() {
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
       <a href="/app" className="text-xs font-semibold text-teal-400 hover:underline">← Back to the app</a>
-      <h1 className="mt-6 text-3xl font-bold text-white mb-2">ATA Sports Live App — Privacy Policy</h1>
+      <h1 className="mt-6 text-2xl font-bold text-white mb-2">ATA Sports Live App — Privacy Policy</h1>
       <p className="text-sm text-slate-500 mb-8">Last updated: November 2026 · Applies to the ATA Sports Live iOS and Android apps</p>
 
       <div className="prose prose-invert prose-slate max-w-none space-y-6 text-slate-300 text-sm leading-relaxed">

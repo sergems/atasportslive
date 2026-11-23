@@ -502,7 +502,7 @@ export default function Wallet() {
       <div className="flex items-center gap-2">
         <WalletIcon className="h-5 w-5 text-teal-400 shrink-0" />
         <div>
-          <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight leading-tight">Wallet</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight leading-tight">Wallet</h1>
           <p className="text-slate-400 text-xs sm:text-sm hidden sm:block">Manage your funds — deposit, withdraw, and track transactions.</p>
         </div>
       </div>

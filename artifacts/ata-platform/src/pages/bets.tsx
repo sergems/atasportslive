@@ -57,7 +57,7 @@ export default function Bets() {
         <div className="relative flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-400">Prediction history</p>
-            <h1 className="mt-2 text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">My Predictions</h1>
+            <h1 className="mt-2 text-2xl font-extrabold leading-[1.05] text-white">My Predictions</h1>
             <p className="mt-3 max-w-md text-base leading-relaxed text-slate-400">Every pick, every result — all in one place.</p>
           </div>
           <Link href="/games">
