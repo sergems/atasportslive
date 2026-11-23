@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Lock, Radio, Users, Wallet, LogIn, Calendar, Timer, Eye, EyeOff, MessageSquare, Send, ChevronUp, Swords, PanelRightClose, PanelRightOpen, Volume2, Volume1, VolumeX, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import { toast } from 'sonner';
 import Hls from 'hls.js';
+import { QualityMenu, useHlsQuality } from '@/components/video/quality-control';
 import { useAuthStore } from '@/lib/auth-store';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -284,20 +285,12 @@ function useControlsAutoHide() {
 
 const FALLBACK_MUX_PLAYBACK_ID = 'QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00';
 
+/**
+ * Mux is played through our own HLS player instead of the Mux iframe so the
+ * adaptive quality control works identically on every stream source.
+ */
 export function MuxPlayer({ playbackId, title }: { playbackId: string; title: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  usePlayerFullscreen(containerRef);
-  return (
-    <div ref={containerRef} className="relative w-full h-full">
-      <iframe
-        src={`https://player.mux.com/${playbackId}?autoplay=true&muted=false`}
-        title={title}
-        className="absolute inset-0 w-full h-full border-0"
-        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-        allowFullScreen
-      />
-    </div>
-  );
+  return <HlsPlayer hlsUrl={`https://stream.mux.com/${playbackId}.m3u8`} title={title} />;
 }
 
 export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
@@ -668,10 +661,13 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
   const containerRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggle: toggleFullscreen } = usePlayerFullscreen(containerRef);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [hls, setHls] = useState<Hls | null>(null);
+  const { currentHeight, choice, setChoice, options } = useHlsQuality(hls);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    setHls(null);
 
     // Mobile browsers only allow autoplay to start at all when the video is
     // declared muted (the `muted` attribute below) *before* play() is ever
@@ -690,12 +686,19 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
     video.addEventListener('pause', onPause);
 
     if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(hlsUrl);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, startPlayback);
+      // capLevelToPlayerSize would stop a 4K rendition being selected on
+      // smaller players, so it is disabled — the ABR tiers control quality.
+      const instance = new Hls({
+        capLevelToPlayerSize: false,
+        abrEwmaDefaultEstimate: 8_000_000,
+      });
+      setHls(instance);
+      instance.loadSource(hlsUrl);
+      instance.attachMedia(video);
+      instance.on(Hls.Events.MANIFEST_PARSED, startPlayback);
       return () => {
-        hls.destroy();
+        setHls(null);
+        instance.destroy();
         video.removeEventListener('play', onPlay);
         video.removeEventListener('pause', onPause);
       };
@@ -721,10 +724,17 @@ export function HlsPlayer({ hlsUrl, title }: { hlsUrl: string; title: string }) 
     <div ref={containerRef} className="relative w-full h-full bg-black">
       <video ref={videoRef} className="w-full h-full object-cover" controls autoPlay muted playsInline title={title} />
 
-      {/* Manual controls, kept alongside the native <video> controls so a
-          fullscreen button is always available even where native browser
-          controls hide or omit one */}
+      {/* Manual controls, kept alongside the native <video> controls so
+          fullscreen and adaptive quality are always available even where
+          native browser controls hide or omit them */}
       <div className="absolute bottom-3 right-3 flex items-center gap-2 pointer-events-none">
+        <QualityMenu
+          hls={hls}
+          options={options}
+          currentHeight={currentHeight}
+          choice={choice}
+          onChange={setChoice}
+        />
         <div className="pointer-events-auto">
           <FullscreenButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
         </div>
