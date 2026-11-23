@@ -117,18 +117,22 @@ export function Navbar() {
 
   const unreadCount = notificationsData?.unreadCount || 0;
 
+  // One menu slot for live channels: "Livestream" when nothing is on air,
+  // otherwise one tab per active channel (Live / Live 2 / Live 3).
+  const anyLive = ch1Live || ch2Live || ch3Live;
   const navLinks = [
-    { href: '/', label: 'Home', exact: true, pulse: false, ch1: false },
-    { href: '/live', label: 'Livestream', exact: true, pulse: ch1Live, ch1: true },
-    ...(ch2Live ? [{ href: '/live-2', label: 'Livestream 2', exact: true, pulse: true, ch1: false }] : []),
-    ...(ch3Live ? [{ href: '/live-3', label: 'Livestream 3', exact: true, pulse: true, ch1: false }] : []),
+    { href: '/', label: 'Home', exact: true, pulse: false },
+    ...(!anyLive ? [{ href: '/live', label: 'Livestream', exact: true, pulse: false }] : []),
+    ...(ch1Live ? [{ href: '/live', label: 'Live', exact: true, pulse: true }] : []),
+    ...(ch2Live ? [{ href: '/live-2', label: 'Live 2', exact: true, pulse: true }] : []),
+    ...(ch3Live ? [{ href: '/live-3', label: 'Live 3', exact: true, pulse: true }] : []),
     ...(!isAuthenticated ? [
-      { href: '/streams', label: 'Events', pulse: false, ch1: false },
-      { href: '/upcoming', label: 'Upcoming', pulse: false, ch1: false },
+      { href: '/streams', label: 'Events', pulse: false },
+      { href: '/upcoming', label: 'Upcoming', pulse: false },
     ] : []),
-    { href: '/highlights', label: 'Highlights', pulse: false, ch1: false },
-    { href: '/fixtures', label: 'Fixtures', pulse: false, ch1: false },
-    ...(isAuthenticated ? [{ href: '/games', label: 'Predictions', pulse: false, ch1: false }] : []),
+    { href: '/highlights', label: 'Highlights', pulse: false },
+    { href: '/fixtures', label: 'Fixtures', pulse: false },
+    ...(isAuthenticated ? [{ href: '/games', label: 'Predictions', pulse: false }] : []),
   ].filter(() => !isFinanceOnly);
 
   return (
@@ -143,7 +147,7 @@ export function Navbar() {
 
         {/* Nav links - centered absolutely (desktop only) */}
         <nav className="hidden md:flex items-center space-x-4 text-sm font-medium absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
-          {navLinks.map(({ href, label, pulse, exact, ch1 }) => {
+          {navLinks.map(({ href, label, pulse, exact }) => {
             const active = exact
               ? location === href
               : location === href || location.startsWith(href + '/');
@@ -153,10 +157,8 @@ export function Navbar() {
                 href={href}
                 className={`relative inline-flex items-center gap-1.5 pb-1 transition-colors hover:text-white border-b-2 ${active ? 'text-white border-teal-400' : 'text-slate-400 border-transparent hover:border-slate-600'}`}
               >
-                {pulse && ch1 ? (
-                  <LiveBadge />
-                ) : pulse ? (
-                  <LiveBadge channel={href === '/live-2' ? 2 : 3} />
+                {pulse ? (
+                  <LiveBadge channel={href === '/live-2' ? 2 : href === '/live-3' ? 3 : 1} />
                 ) : (
                   label
                 )}

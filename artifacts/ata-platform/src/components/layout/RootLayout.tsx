@@ -26,12 +26,14 @@ function MobileBottomNav() {
 
   if (isAuthenticated) {
     // Finance staff get the finance menu only — no viewer/admin menu.
+    const anyLive = isLive || ch2Live || ch3Live;
     const tabs = user?.role === 'finance' ? [
       { href: '/finance/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/finance/withdrawals', label: 'Payments', icon: ArrowUpRight, badge: unreadCount },
     ] : [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: unreadCount },
-      { href: '/live',      label: 'Live',    icon: Radio,  pulse: isLive },
+      ...(!anyLive ? [{ href: '/live', label: 'Livestream', icon: Radio }] : []),
+      ...(isLive ? [{ href: '/live', label: 'Live', icon: Radio, pulse: true }] : []),
       ...(ch2Live ? [{ href: '/live-2', label: 'Live 2', icon: Radio, pulse: true }] : []),
       ...(ch3Live ? [{ href: '/live-3', label: 'Live 3', icon: Radio, pulse: true }] : []),
       { href: '/streams',   label: 'Streams', icon: Film },
@@ -76,9 +78,11 @@ function MobileBottomNav() {
     );
   }
 
+  const anyGuestLive = isLive || ch2Live || ch3Live;
   const guestTabs = [
     { href: '/',        label: 'Home',    icon: Home },
-    { href: '/live',    label: 'Live',    icon: Radio,  pulse: isLive },
+    ...(!anyGuestLive ? [{ href: '/live', label: 'Livestream', icon: Radio }] : []),
+    ...(isLive ? [{ href: '/live', label: 'Live', icon: Radio, pulse: true }] : []),
     ...(ch2Live ? [{ href: '/live-2', label: 'Live 2', icon: Radio, pulse: true }] : []),
     ...(ch3Live ? [{ href: '/live-3', label: 'Live 3', icon: Radio, pulse: true }] : []),
     { href: '/streams', label: 'Streams', icon: Film },
