@@ -87,7 +87,8 @@ function UserMenu({ onLogout, user }: { onLogout: () => void; user: any }) {
 }
 
 export function Navbar() {
-  const { isAuthenticated, logout, isAdmin, isManager, user } = useAuth();
+  const { isAuthenticated, logout, isAdmin, isManager, canAccessFinance, user } = useAuth();
+  const isFinanceOnly = user?.role === 'finance';
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { ch1Live, ch2Live, ch3Live } = useChannelStatus();
@@ -124,7 +125,7 @@ export function Navbar() {
     { href: '/highlights', label: 'Highlights', pulse: false, ch1: false },
     { href: '/fixtures', label: 'Fixtures', pulse: false, ch1: false },
     ...(isAuthenticated ? [{ href: '/games', label: 'Predictions', pulse: false, ch1: false }] : []),
-  ];
+  ].filter(() => !isFinanceOnly);
 
   return (
     <header className="safe-area-header sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -158,14 +159,24 @@ export function Navbar() {
               </Link>
             );
           })}
-          <a
-            href="https://shop.atasportslive.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative inline-flex items-center gap-1.5 pb-1 transition-colors hover:text-white text-slate-400 border-b-2 border-transparent hover:border-slate-600"
-          >
-            E-Shop
-          </a>
+          {!isFinanceOnly && (
+            <a
+              href="https://shop.atasportslive.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative inline-flex items-center gap-1.5 pb-1 transition-colors hover:text-white text-slate-400 border-b-2 border-transparent hover:border-slate-600"
+            >
+              E-Shop
+            </a>
+          )}
+          {canAccessFinance && (
+            <Link
+              href="/finance/dashboard"
+              className={`transition-colors hover:text-teal-400 ${location.startsWith('/finance') ? 'text-teal-400' : 'text-slate-400'}`}
+            >
+              Finance
+            </Link>
+          )}
           {isManager && (
             <Link
               href="/admin"

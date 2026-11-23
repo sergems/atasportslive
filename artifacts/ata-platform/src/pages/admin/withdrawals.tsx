@@ -42,9 +42,9 @@ async function fetchApproved() {
 }
 
 async function fetchHistory() {
-  const res = await fetch('/api/wallet/transactions?type=withdrawal&limit=50', { headers: authHeaders() });
-  if (!res.ok) return { transactions: [] };
-  return res.json() as Promise<{ transactions: any[] }>;
+  const res = await fetch('/api/admin/withdrawal-history?limit=50', { headers: authHeaders() });
+  if (!res.ok) return [] as any[];
+  return res.json() as Promise<any[]>;
 }
 
 async function approveWithdrawal(id: number) {
@@ -214,9 +214,9 @@ export default function AdminWithdrawals() {
     staleTime: 30_000,
   });
 
-  const allHistory: any[] = historyData?.transactions?.filter((t: any) =>
+  const allHistory: any[] = (Array.isArray(historyData) ? historyData : []).filter((t: any) =>
     ['approved', 'completed', 'rejected'].includes(t.status)
-  ) ?? [];
+  );
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-withdrawals'] });

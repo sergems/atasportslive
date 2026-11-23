@@ -11,7 +11,7 @@ import {
   Users, Search, Ban, Lock, Smartphone, Bitcoin,
   CheckCircle2, Pencil, X, ShieldCheck, Mail, ChevronDown, ChevronUp, Send, DollarSign, Wallet, KeyRound,
   History, TrendingUp, TrendingDown, ArrowLeftRight, AlertCircle, ChevronLeft, ChevronRight,
-  Check, XCircle, RefreshCw, Loader2, Star, ShieldOff, Crown
+  Check, XCircle, RefreshCw, Loader2, Star, ShieldOff, Crown, Gift
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -996,7 +996,7 @@ export default function AdminUsers() {
                           className={`h-5 w-6 p-0 rounded-sm ${bonusAdjustFor === user.id ? 'bg-amber-500/20 text-amber-400' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'}`}
                           title="Adjust Bonus Wallet"
                         >
-                          <Star className="h-3 w-3" />
+                          <Gift className="h-3 w-3" />
                         </Button>
                         <Button
                           size="sm" variant="ghost"

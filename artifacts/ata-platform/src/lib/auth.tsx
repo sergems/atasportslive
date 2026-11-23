@@ -28,6 +28,8 @@ interface AuthContextType {
   canAccessAdmin: boolean;
   /** True for admin and manager — can credit/debit/suspend other users */
   canManageUsers: boolean;
+  /** True for the finance role (and admins/managers who can use the finance portal) */
+  canAccessFinance: boolean;
   login: (token: string, user: any) => void;
   logout: () => void;
 }
@@ -82,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isContentEditor: role === 'admin' || role === 'manager' || role === 'content_editor',
     canAccessAdmin: ['admin', 'manager', 'content_editor'].includes(role),
     canManageUsers: role === 'admin' || role === 'manager',
+    canAccessFinance: ['admin', 'manager', 'finance'].includes(role),
     login,
     logout,
   };

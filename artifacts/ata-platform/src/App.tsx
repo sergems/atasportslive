@@ -110,7 +110,7 @@ function ProtectedRoute({
   useEffect(() => {
     if (!isAuthenticated) { setLocation("/login"); return; }
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-      setLocation("/dashboard");
+      setLocation(user.role === "finance" ? "/finance/dashboard" : "/dashboard");
     }
   }, [isAuthenticated, user?.role, setLocation]);
 
@@ -241,6 +241,9 @@ function Router() {
         </Route>
 
         {/* ── Finance routes (finance + manager + admin) ─────────────── */}
+        <Route path="/finance">
+          {() => <ProtectedRoute allowedRoles={FIN_ROLES} component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
+        </Route>
         <Route path="/finance/dashboard">
           {() => <ProtectedRoute allowedRoles={FIN_ROLES} component={() => <FinanceLayout><FinanceDashboard /></FinanceLayout>} />}
         </Route>

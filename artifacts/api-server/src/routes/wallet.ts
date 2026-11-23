@@ -360,6 +360,9 @@ router.patch("/admin/approve-withdrawal/:id", authMiddleware, requireRole("admin
     .reduce((s: number, t: any) => s + parseFloat(t.amount as string), 0);
 
   for (const fu of financeUsers) {
+    // In-app handoff so finance sees the queued payment even without email.
+    await notify(fu.id, "general", "New withdrawal to pay",
+      `$${parseFloat(tx.amount as string).toFixed(2)} via ${tx.paymentMethod?.replace(/_/g, " ") ?? "wallet"} for ${user?.fullName ?? `User #${tx.userId}`}. ${approvedCount} approved withdrawal(s) waiting.`);
     if (fu.email) {
       sendMail({
         to: fu.email,

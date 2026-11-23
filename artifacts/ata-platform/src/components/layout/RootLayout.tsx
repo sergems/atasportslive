@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Navbar } from './Navbar';
 import { useWebSocket } from '@/hooks/use-websocket';
-import { MapPin, Phone, Mail, Home, Radio, Film, Swords, Wallet, LogIn, LogOut, LayoutDashboard, ShieldCheck, ChevronUp } from 'lucide-react';
+import { MapPin, Phone, Mail, Home, Radio, Film, Swords, Wallet, LogIn, LogOut, LayoutDashboard, ShieldCheck, ChevronUp, ArrowUpRight } from 'lucide-react';
 import { FaFacebook, FaYoutube, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6';
 import ataLogo from '@assets/ATA_logo_1781543559550.png';
@@ -16,7 +16,7 @@ const EXACT_MATCH_ROUTES = new Set(['/dashboard', '/live', '/live-2', '/live-3']
 
 function MobileBottomNav() {
   const [location] = useLocation();
-  const { isAuthenticated, logout, isAdmin } = useAuth();
+  const { isAuthenticated, logout, isAdmin, canAccessFinance, user } = useAuth();
   const { ch1Live: isLive, ch2Live, ch3Live } = useChannelStatus();
   const { data: notifData } = useListNotifications({ unreadOnly: true }, {
     query: { enabled: isAuthenticated, queryKey: ['notif-mobile'], refetchInterval: 30000 }
@@ -25,7 +25,11 @@ function MobileBottomNav() {
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
 
   if (isAuthenticated) {
-    const tabs = [
+    // Finance staff get the finance menu only — no viewer/admin menu.
+    const tabs = user?.role === 'finance' ? [
+      { href: '/finance/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/finance/withdrawals', label: 'Payments', icon: ArrowUpRight, badge: unreadCount },
+    ] : [
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: unreadCount },
       { href: '/live',      label: 'Live',    icon: Radio,  pulse: isLive },
       ...(ch2Live ? [{ href: '/live-2', label: 'Live 2', icon: Radio, pulse: true }] : []),
@@ -33,6 +37,7 @@ function MobileBottomNav() {
       { href: '/streams',   label: 'Streams', icon: Film },
       { href: '/games',     label: 'Games',   icon: Swords },
       { href: '/wallet',    label: 'Wallet',  icon: Wallet },
+      ...(canAccessFinance ? [{ href: '/finance/dashboard', label: 'Finance', icon: ArrowUpRight }] : []),
       ...(isAdmin ? [{ href: '/admin', label: 'Admin', icon: ShieldCheck }] : []),
     ];
 

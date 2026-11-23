@@ -55,7 +55,8 @@ export default function SetPassword() {
       if (!res.ok) throw new Error(body.error || 'Failed to set password');
       login(body.accessToken, body.user);
       toast.success('Password set! Welcome to ATA Sports Live.');
-      setLocation(body.user.role === 'admin' ? '/admin' : '/streams');
+      const role = body.user.role;
+      setLocation(role === 'finance' ? '/finance/dashboard' : role === 'admin' ? '/admin' : '/streams');
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {

@@ -9,7 +9,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
-import { eq, sql, desc, and, gte, isNotNull, ilike, or } from "drizzle-orm";
+import { eq, sql, desc, and, gte, isNotNull, ilike, or, like } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify, wsClients } from "../lib/notify";
 
@@ -32,7 +32,7 @@ router.get("/stats", authMiddleware, requireRole("admin", "manager", "content_ed
   const [{ matchedBets }] = await db.select({ matchedBets: sql<number>`count(*)` }).from(betsTable).where(eq(betsTable.status, "matched"));
   const [{ pendingWithdrawals }] = await db.select({ pendingWithdrawals: sql<number>`count(*)` }).from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "pending")));
   const [{ totalDepositsToday }] = await db.select({ totalDepositsToday: sql<number>`coalesce(sum(amount::numeric), 0)` }).from(transactionsTable).where(and(eq(transactionsTable.type, "deposit"), eq(transactionsTable.status, "completed"), gte(transactionsTable.createdAt, today)));
-  const [{ totalWithdrawalsToday }] = await db.select({ totalWithdrawalsToday: sql<number>`coalesce(sum(amount::numeric), 0)` }).from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed"), gte(transactionsTable.createdAt, today)));
+  const [{ totalWithdrawalsToday }] = await db.select({ totalWithdrawalsToday: sql<number>`coalesce(sum(amount::numeric), 0)` }).from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed"), like(transactionsTable.transactionId, "WIT-%"), gte(transactionsTable.createdAt, today)));
 
   res.json({
     totalUsers: Number(totalUsers),
@@ -162,7 +162,7 @@ router.get("/activity/count", authMiddleware, requireRole("admin", "manager", "c
   res.json({ total: Number(total) });
 });
 
-router.get("/pending-withdrawals", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/pending-withdrawals", authMiddleware, requireRole("admin", "manager", "finance"), async (req: AuthRequest, res): Promise<void> => {
   const txs = await db
     .select({ tx: transactionsTable, user: usersTable })
     .from(transactionsTable)
@@ -180,12 +180,12 @@ router.get("/pending-withdrawals", authMiddleware, requireRole("admin", "manager
 });
 
 // Approved withdrawals waiting for finance to pay
-router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "manager", "finance"), async (req: AuthRequest, res): Promise<void> => {
   const txs = await db
     .select({ tx: transactionsTable, user: usersTable })
     .from(transactionsTable)
     .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
-    .where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved")))
+    .where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved"), like(transactionsTable.transactionId, "WIT-%")))
     .orderBy(desc(transactionsTable.createdAt));
 
   res.json(txs.map(({ tx, user }: any) => ({
@@ -197,24 +197,48 @@ router.get("/approved-withdrawals", authMiddleware, requireRole("admin", "manage
   })));
 });
 
+// Global withdrawal history (all users) for admin + finance
+router.get("/withdrawal-history", authMiddleware, requireRole("admin", "manager", "finance"), async (req: AuthRequest, res): Promise<void> => {
+  const limit = Math.min(200, Number(req.query.limit) || 50);
+  const txs = await db
+    .select({ tx: transactionsTable, user: usersTable })
+    .from(transactionsTable)
+    .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
+    .where(and(
+      eq(transactionsTable.type, "withdrawal"),
+      or(eq(transactionsTable.status, "completed"), eq(transactionsTable.status, "rejected")),
+      like(transactionsTable.transactionId, "WIT-%"),
+    ))
+    .orderBy(desc(transactionsTable.createdAt))
+    .limit(limit);
+
+  res.json(txs.map(({ tx, user }: any) => ({
+    id: tx.id, transactionId: tx.transactionId, userId: tx.userId,
+    userFullName: user?.fullName || null, userEmail: user?.email || null,
+    type: tx.type, amount: parseFloat(tx.amount as string), status: tx.status,
+    paymentMethod: tx.paymentMethod, reference: tx.reference,
+    description: tx.description, createdAt: tx.createdAt,
+  })));
+});
+
 // Finance dashboard stats
-router.get("/finance-stats", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+router.get("/finance-stats", authMiddleware, requireRole("admin", "manager", "finance"), async (req: AuthRequest, res): Promise<void> => {
   const [{ pendingCount }] = await db.select({ pendingCount: sql<number>`count(*)` })
-    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved")));
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved"), like(transactionsTable.transactionId, "WIT-%")));
   const [{ pendingValue }] = await db.select({ pendingValue: sql<number>`coalesce(sum(amount::numeric),0)` })
-    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved")));
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "approved"), like(transactionsTable.transactionId, "WIT-%")));
   const [{ paidToday }] = await db.select({ paidToday: sql<number>`coalesce(sum(amount::numeric),0)` })
-    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed"), gte(transactionsTable.createdAt, new Date(new Date().setHours(0,0,0,0)))));
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed"), like(transactionsTable.transactionId, "WIT-%"), gte(transactionsTable.createdAt, new Date(new Date().setHours(0,0,0,0)))));
   const [{ paidTotal }] = await db.select({ paidTotal: sql<number>`coalesce(sum(amount::numeric),0)` })
-    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed")));
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed"), like(transactionsTable.transactionId, "WIT-%")));
   const [{ paidCount }] = await db.select({ paidCount: sql<number>`count(*)` })
-    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed")));
+    .from(transactionsTable).where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed"), like(transactionsTable.transactionId, "WIT-%")));
 
   // Recent paid (last 10)
   const recent = await db.select({ tx: transactionsTable, user: usersTable })
     .from(transactionsTable)
     .leftJoin(usersTable, eq(transactionsTable.userId, usersTable.id))
-    .where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed")))
+    .where(and(eq(transactionsTable.type, "withdrawal"), eq(transactionsTable.status, "completed"), like(transactionsTable.transactionId, "WIT-%")))
     .orderBy(desc(transactionsTable.createdAt)).limit(10);
 
   res.json({

@@ -34,9 +34,9 @@ async function fetchApproved() {
 }
 
 async function fetchPaidHistory() {
-  const res = await fetch('/api/wallet/transactions?type=withdrawal&status=completed&limit=50', { headers: authHeaders() });
-  if (!res.ok) return { transactions: [] };
-  return res.json() as Promise<{ transactions: any[] }>;
+  const res = await fetch('/api/admin/withdrawal-history?limit=50', { headers: authHeaders() });
+  if (!res.ok) return [] as any[];
+  return res.json() as Promise<any[]>;
 }
 
 async function markPaid(id: number) {
@@ -161,7 +161,7 @@ export default function FinanceWithdrawals() {
     staleTime: 30_000,
   });
 
-  const paidHistory: any[] = historyData?.transactions?.filter((t: any) => t.type === 'withdrawal') ?? [];
+  const paidHistory: any[] = Array.isArray(historyData) ? historyData : [];
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['finance-approved'] });
