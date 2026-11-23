@@ -3,10 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import {
   ArrowUpRight, CheckCircle2, Clock, Smartphone, Bitcoin,
-  Lock, ShieldCheck, RefreshCw, Inbox, AlertTriangle, History,
+  Lock, RefreshCw, Inbox, AlertTriangle, History,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/lib/auth-store';
@@ -67,76 +66,59 @@ function PaymentCard({ tx, onPaid }: { tx: any; onPaid: () => void }) {
   });
 
   return (
-    <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl overflow-hidden">
+    <div className="bg-slate-800/60 border border-slate-700/50 rounded-lg overflow-hidden">
       <div className="h-0.5 bg-teal-500" />
-      <div className="p-4 space-y-3">
-        {/* User + Amount */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-sm font-bold text-white">
-              {tx.userFullName?.charAt(0) ?? '?'}
-            </div>
-            <div className="min-w-0">
-              <div className="text-white font-semibold text-sm truncate">{tx.userFullName ?? `User #${tx.userId}`}</div>
-              <div className="text-slate-500 text-xs">{tx.userEmail}</div>
-              <div className="text-slate-600 text-[10px] font-mono">{tx.transactionId}</div>
-            </div>
+      <div className="px-3 py-2.5">
+        {/* Compact identity + amount */}
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center shrink-0 text-[11px] font-bold text-white">
+            {tx.userFullName?.charAt(0) ?? '?'}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-white font-semibold text-xs truncate">{tx.userFullName ?? `User #${tx.userId}`}</div>
+            <div className="text-slate-500 text-[11px] truncate">{tx.userEmail}</div>
           </div>
           <div className="text-right shrink-0">
-            <div className="text-white font-bold font-mono text-xl">${Number(tx.amount).toFixed(2)}</div>
-            <Badge className="bg-teal-500/15 text-teal-400 border border-teal-500/30 text-[10px] mt-0.5">Admin Approved</Badge>
+            <div className="text-white font-mono font-bold text-sm">${Number(tx.amount).toFixed(2)}</div>
+            <div className="text-slate-600 text-[10px]">Waiting {waitingTime(tx.createdAt)}</div>
           </div>
         </div>
 
-        {/* Payout details — the critical info for manual payment */}
-        <div className="rounded-lg bg-slate-700/60 border border-slate-600/50 px-3 py-2.5 space-y-1.5">
-          <div className="flex items-center gap-2 text-xs text-slate-400 font-medium mb-1">
-            <Lock className="h-3 w-3" /> Send payment to:
-          </div>
-          <div className="flex items-center gap-2">
-            <MethodIcon className="h-4 w-4 text-teal-400 shrink-0" />
-            <span className="text-sm font-semibold text-white">{METHOD_LABELS[tx.paymentMethod] ?? tx.paymentMethod}</span>
-          </div>
-          <div className="font-mono text-base text-teal-300 tracking-wide pl-6">{tx.reference}</div>
-        </div>
-
-        {/* Waiting time */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
-          <Clock className="h-3 w-3" />
-          Waiting {waitingTime(tx.createdAt)} · Submitted {new Date(tx.createdAt).toLocaleString('en-UG', { dateStyle: 'medium', timeStyle: 'short' })}
-        </div>
-
-        {/* Action */}
-        {!confirming ? (
-          <Button
-            onClick={() => setConfirming(true)}
-            className="w-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-400 border border-teal-500/40 font-semibold h-10 gap-2"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Mark as Paid
-          </Button>
-        ) : (
-          <div className="rounded-lg border border-teal-500/30 bg-teal-500/5 p-3 space-y-2">
-            <p className="text-xs text-teal-300 font-semibold flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5" /> Confirm payment sent?
-            </p>
-            <p className="text-xs text-slate-400">
-              Confirm you have manually sent <span className="text-white font-mono font-bold">${Number(tx.amount).toFixed(2)}</span> to <span className="text-teal-300 font-mono">{tx.reference}</span> via {METHOD_LABELS[tx.paymentMethod]}.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setConfirming(false)} className="flex-1 text-slate-400 h-8 text-xs">Cancel</Button>
-              <Button
-                size="sm"
+        {/* Payout detail + action on one line */}
+        <div className="mt-2 flex items-center gap-2 rounded bg-slate-900/60 px-2 py-1.5">
+          <Lock className="h-3 w-3 text-slate-500 shrink-0" />
+          <MethodIcon className="h-3.5 w-3.5 text-teal-400 shrink-0" />
+          <span className="text-slate-400 text-[11px] shrink-0">{METHOD_LABELS[tx.paymentMethod] ?? tx.paymentMethod}</span>
+          <span className="font-mono text-[11px] text-teal-300 truncate" title={tx.reference}>{tx.reference}</span>
+          {!confirming ? (
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="shrink-0 rounded border border-teal-500/40 bg-teal-500/15 px-2 py-1 text-[11px] font-semibold text-teal-400 hover:bg-teal-500/25 transition-colors"
+            >
+              Mark paid
+            </button>
+          ) : (
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="text-[10px] text-slate-400 hidden sm:inline">Paid?</span>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="rounded px-1.5 py-1 text-[11px] text-slate-400 hover:text-white"
+              >
+                No
+              </button>
+              <button
+                type="button"
                 onClick={() => markPaidMut.mutate()}
                 disabled={markPaidMut.isPending}
-                className="flex-1 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold h-8 text-xs gap-1"
+                className="rounded bg-teal-500 px-2 py-1 text-[11px] font-bold text-slate-950 disabled:opacity-50"
               >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                {markPaidMut.isPending ? 'Confirming…' : 'Yes, Paid'}
-              </Button>
+                {markPaidMut.isPending ? '…' : 'Yes, paid'}
+              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -232,8 +214,8 @@ export default function FinanceWithdrawals() {
           )}
 
           {isLoading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-52 bg-slate-800 rounded-xl" />)}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+              {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24 bg-slate-800 rounded-lg" />)}
             </div>
           ) : approved.length === 0 ? (
             <Card className="bg-slate-900 border-primary/20">
@@ -245,7 +227,7 @@ export default function FinanceWithdrawals() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
               {approved.map((tx: any) => <PaymentCard key={tx.id} tx={tx} onPaid={invalidate} />)}
             </div>
           )}
