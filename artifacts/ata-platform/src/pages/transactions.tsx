@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { useListTransactions } from '@workspace/api-client-react';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   History, ArrowDownCircle, ArrowUpCircle, Trophy, PlayCircle,
   Gift, ShieldCheck, CreditCard, RefreshCw, Wallet,
   TrendingUp, TrendingDown, ChevronDown
 } from 'lucide-react';
-
-// ── Type metadata ─────────────────────────────────────────────────────────
 
 const TX_META: Record<string, { label: string; sign: '+' | '-'; color: string; iconBg: string; icon: React.ElementType }> = {
   deposit:        { label: 'Deposit',          sign: '+', color: 'text-teal-400',   iconBg: 'bg-teal-500/10 border-teal-500/30',   icon: ArrowDownCircle },
@@ -60,8 +57,6 @@ function groupByDate(txs: any[]): { label: string; items: any[] }[] {
   return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
 }
 
-// ── Component ─────────────────────────────────────────────────────────────
-
 export default function Transactions() {
   useEffect(() => { document.title = 'Transactions — ATA Sports Live'; }, []);
   const [typeFilter, setTypeFilter] = useState('all');
@@ -73,142 +68,110 @@ export default function Transactions() {
   const filtered = typeFilter === 'all' ? all : all.filter((tx: any) => tx.type === typeFilter);
   const displayed = showAll ? filtered : filtered.slice(0, 40);
 
-  const totalIn  = all.filter((t: any) => TX_META[t.type]?.sign === '+').reduce((s: number, t: any) => s + Number(t.amount), 0);
+  const totalIn = all.filter((t: any) => TX_META[t.type]?.sign === '+').reduce((s: number, t: any) => s + Number(t.amount), 0);
   const totalOut = all.filter((t: any) => TX_META[t.type]?.sign === '-').reduce((s: number, t: any) => s + Number(t.amount), 0);
-
   const groups = groupByDate(displayed);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+    <div className="mx-auto w-full max-w-6xl space-y-6 pb-10">
 
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-teal-500/20 bg-gradient-to-br from-teal-950/40 via-slate-900 to-slate-900 px-6 py-6">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-teal-500/10 blur-3xl" />
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/40 px-6 py-8 shadow-2xl shadow-black/30 sm:px-9 sm:py-10">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
         <div className="relative">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-2">
-            <History className="h-3 w-3" /> Wallet Activity
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Transactions</h1>
-          <p className="text-slate-400 text-sm mt-0.5">Your complete wallet history.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-400">Wallet activity</p>
+          <h1 className="mt-2 text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">Transactions</h1>
+          <p className="mt-3 max-w-md text-base leading-relaxed text-slate-400">Your complete wallet history, all in one place.</p>
         </div>
 
-        {/* Summary strip */}
-        <div className="relative mt-5 grid grid-cols-3 gap-2">
-          <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 px-3 py-2.5 text-center">
-            <Wallet className="h-3.5 w-3.5 mx-auto mb-1 text-slate-400" />
-            <div className="font-bold font-mono text-sm text-white">{all.length}</div>
-            <div className="text-slate-500 text-[10px] mt-0.5">Total</div>
-          </div>
-          <div className="rounded-xl bg-slate-800/60 border border-teal-500/20 px-3 py-2.5 text-center">
-            <TrendingUp className="h-3.5 w-3.5 mx-auto mb-1 text-teal-400" />
-            <div className="font-bold font-mono text-sm text-teal-400">${totalIn.toFixed(2)}</div>
-            <div className="text-slate-500 text-[10px] mt-0.5">Total In</div>
-          </div>
-          <div className="rounded-xl bg-slate-800/60 border border-red-500/20 px-3 py-2.5 text-center">
-            <TrendingDown className="h-3.5 w-3.5 mx-auto mb-1 text-red-400" />
-            <div className="font-bold font-mono text-sm text-red-400">${totalOut.toFixed(2)}</div>
-            <div className="text-slate-500 text-[10px] mt-0.5">Total Out</div>
-          </div>
+        <div className="relative mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            { label: 'Total entries', value: all.length,        icon: Wallet,      color: 'text-white' },
+            { label: 'Total in',      value: `$${totalIn.toFixed(2)}`,  icon: TrendingUp,   color: 'text-teal-400' },
+            { label: 'Total out',     value: `$${totalOut.toFixed(2)}`, icon: TrendingDown, color: 'text-red-400' },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <Icon className={`h-4 w-4 ${color}`} />
+              <p className={`mt-3 text-2xl font-bold tabular-nums tracking-tight ${color}`}>{value}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
 
-      {/* ── Filters ────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-1.5">
+      {/* ── Filters ───────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-2">
         {FILTER_OPTIONS.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => { setTypeFilter(key); setShowAll(false); }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              typeFilter === key
-                ? 'bg-teal-500 text-slate-950'
-                : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700/50'
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+              typeFilter === key ? 'bg-teal-500 text-slate-950' : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:bg-slate-800 hover:text-white'
             }`}
           >
-            {key !== 'all' && TX_META[key] && React.createElement(TX_META[key].icon, { className: 'h-3 w-3' })}
+            {key !== 'all' && TX_META[key] && React.createElement(TX_META[key].icon, { className: 'h-3.5 w-3.5' })}
             {label}
           </button>
         ))}
       </div>
 
-      {/* ── List ───────────────────────────────────────────────── */}
+      {/* ── List ──────────────────────────────────────────────── */}
       {isLoading ? (
-        <div className="space-y-2">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-16 rounded-2xl bg-slate-800/50 animate-pulse" />
-          ))}
-        </div>
+        <div className="space-y-2">{[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-20 rounded-2xl bg-slate-800/50" />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-slate-800 bg-slate-900/60">
-          <div className="w-14 h-14 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-4">
-            <History className="h-7 w-7 text-teal-500/40" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/60 py-20">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-teal-500/20 bg-teal-500/10">
+            <History className="h-8 w-8 text-teal-500/40" />
           </div>
-          <p className="text-white font-semibold mb-1">No transactions found</p>
-          <p className="text-slate-500 text-sm mb-5">
+          <p className="mt-4 text-lg font-bold text-white">No transactions found</p>
+          <p className="mt-1 text-sm text-slate-500">
             {typeFilter === 'all' ? "You haven't made any transactions yet." : `No ${typeFilter.replace(/_/g, ' ')} transactions.`}
           </p>
           <Link href="/wallet">
-            <div className="inline-flex items-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-sm px-4 py-2 transition-all cursor-pointer">
+            <span className="mt-6 inline-flex items-center gap-2 rounded-xl bg-teal-500 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-teal-400 cursor-pointer">
               <Wallet className="h-4 w-4" /> Go to Wallet
-            </div>
+            </span>
           </Link>
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
           {groups.map(({ label, items }, gi) => (
             <div key={label}>
-              {/* Date divider */}
-              <div className={`px-5 py-2 flex items-center gap-3 ${gi > 0 ? 'border-t border-slate-800' : ''} bg-slate-800/30`}>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
-                <div className="flex-1 h-px bg-slate-800" />
-                <span className="text-[10px] text-slate-600">{items.length} tx</span>
+              <div className={`flex items-center gap-3 bg-slate-800/30 px-5 py-3 ${gi > 0 ? 'border-t border-slate-800' : ''}`}>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{label}</span>
+                <div className="h-px flex-1 bg-slate-800" />
+                <span className="text-xs text-slate-600">{items.length} tx</span>
               </div>
-
-              {/* Rows */}
               <div className="divide-y divide-slate-800/60">
                 {items.map((tx: any) => {
                   const meta = TX_META[tx.type] ?? {
-                    label: tx.type.replace(/_/g, ' '),
-                    sign: '+' as const,
-                    color: 'text-white',
-                    iconBg: 'bg-slate-700 border-slate-600',
-                    icon: CreditCard,
+                    label: tx.type.replace(/_/g, ' '), sign: '+' as const, color: 'text-white',
+                    iconBg: 'bg-slate-700 border-slate-600', icon: CreditCard,
                   };
                   const Icon = meta.icon;
                   const statusStyle = STATUS_STYLE[tx.status] ?? 'text-slate-400 bg-slate-500/10 border-slate-500/30';
-
                   return (
-                    <div key={tx.id} className="group flex items-center gap-3.5 px-5 py-3.5 hover:bg-slate-800/30 transition-colors">
-                      {/* Icon */}
-                      <div className={`shrink-0 w-9 h-9 rounded-xl border flex items-center justify-center ${meta.iconBg}`}>
-                        <Icon className={`h-4 w-4 ${meta.color}`} />
+                    <div key={tx.id} className="flex items-center gap-4 px-5 py-5 transition hover:bg-slate-800/30">
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${meta.iconBg}`}>
+                        <Icon className={`h-5 w-5 ${meta.color}`} />
                       </div>
-
-                      {/* Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-white text-sm font-medium">{meta.label}</span>
-                          <span className={`inline-flex items-center rounded-full border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ${statusStyle}`}>
-                            {tx.status}
-                          </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-base font-semibold text-white">{meta.label}</span>
+                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusStyle}`}>{tx.status}</span>
                         </div>
                         {tx.description ? (
-                          <p className="text-slate-500 text-xs mt-0.5 truncate">{tx.description}</p>
+                          <p className="mt-1 truncate text-sm text-slate-400">{tx.description}</p>
                         ) : (
-                          <p className="text-slate-600 text-[10px] mt-0.5 font-mono">{tx.transactionId}</p>
+                          <p className="mt-1 truncate font-mono text-xs text-slate-600">{tx.transactionId}</p>
                         )}
-                        <p className="text-slate-600 text-[10px] mt-0.5">
+                        <p className="mt-0.5 text-xs text-slate-600">
                           {new Date(tx.createdAt).toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-
-                      {/* Amount */}
                       <div className="shrink-0 text-right">
-                        <div className={`font-mono font-bold text-sm ${meta.color}`}>
-                          {meta.sign}${Number(tx.amount).toFixed(2)}
-                        </div>
-                        <div className="text-slate-600 text-[10px] uppercase tracking-wider mt-0.5">
-                          {tx.paymentMethod?.replace(/_/g, ' ') ?? ''}
-                        </div>
+                        <p className={`text-base font-bold tabular-nums ${meta.color}`}>{meta.sign}${Number(tx.amount).toFixed(2)}</p>
+                        <p className="mt-1 text-[11px] uppercase tracking-wider text-slate-600">{tx.paymentMethod?.replace(/_/g, ' ') ?? ''}</p>
                       </div>
                     </div>
                   );
@@ -216,16 +179,10 @@ export default function Transactions() {
               </div>
             </div>
           ))}
-
-          {/* Load more */}
           {!showAll && filtered.length > 40 && (
-            <div className="border-t border-slate-800 px-5 py-3 text-center">
-              <button
-                onClick={() => setShowAll(true)}
-                className="inline-flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 font-medium transition-colors"
-              >
-                <ChevronDown className="h-4 w-4" />
-                Show all {filtered.length} transactions
+            <div className="border-t border-slate-800 px-5 py-4 text-center">
+              <button onClick={() => setShowAll(true)} className="inline-flex items-center gap-2 text-sm font-bold text-teal-400 hover:text-teal-300">
+                <ChevronDown className="h-4 w-4" /> Show all {filtered.length} transactions
               </button>
             </div>
           )}
