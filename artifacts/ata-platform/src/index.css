@@ -2,7 +2,26 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
-html { font-size: 16.32px; }
+html { font-size: 16px; }
+
+/* Premium typography — the same Inter face used by the public site, with
+   tighter tracking and refined rendering across the whole app. */
+html, body {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+body {
+  font-feature-settings: 'cv11', 'ss01', 'calt';
+  font-optical-sizing: auto;
+  letter-spacing: -0.011em;
+}
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.tabular-nums { font-variant-numeric: tabular-nums; }
 
 /* Hide scrollbar for horizontally-scrollable mobile nav bars while keeping scroll functional */
 .no-scrollbar {
@@ -267,11 +286,10 @@ html { font-size: 16.32px; }
 
   html {
     scroll-behavior: smooth;
-    font-size: 12px;
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans bg-background text-foreground;
   }
 }
 

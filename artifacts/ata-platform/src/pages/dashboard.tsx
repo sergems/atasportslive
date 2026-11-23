@@ -5,9 +5,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'wouter';
 import {
-  Wallet, Activity, TrendingUp, History, Radio, Swords,
-  Film, ArrowDownCircle, ChevronRight, Trophy, Clock,
-  Zap, Star, Target, Gift, Copy, Check, Users, Bell
+  Wallet, Activity, TrendingUp, History, Radio,
+  Film, ChevronRight, Trophy, Clock,
+  Zap, Target, Gift, Copy, Check, Users, Bell
 } from 'lucide-react';
 
 interface LiveStream {
@@ -89,378 +89,299 @@ export default function Dashboard() {
     });
   }
 
+  const stats = [
+    { label: 'Available', value: wallet?.availableBalance, icon: Wallet, tone: 'text-teal-400', bg: 'bg-teal-500/10 border-teal-500/20' },
+    { label: 'Bonus wallet', value: wallet?.bonusBalance, icon: Gift, tone: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+    { label: 'In play', value: wallet?.pendingBalance, icon: Activity, tone: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+    { label: 'Withdrawable', value: wallet?.withdrawableBalance, icon: TrendingUp, tone: 'text-white', bg: 'bg-slate-700/40 border-slate-600/40' },
+  ];
+
   return (
-    <div className="max-w-3xl mx-auto space-y-3">
+    <div className="mx-auto w-full max-w-6xl space-y-6 pb-10">
 
-      {/* ── Hero greeting ─────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/40 px-4 py-4">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-teal-500/10 blur-3xl" />
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950/50 px-6 py-7 shadow-2xl shadow-black/30 sm:px-9 sm:py-9">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 left-1/3 h-64 w-64 rounded-full bg-amber-500/5 blur-3xl" />
 
-        <div className="relative flex items-center justify-between gap-3">
-          <div>
-            <p className="text-slate-400 text-xs">{greeting} 👋</p>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white tracking-tight leading-tight">{firstName}</h1>
+        <div className="relative flex flex-wrap items-end justify-between gap-8">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-400">{greeting}</p>
+            <div className="mt-2 flex items-center gap-3">
+              <h1 className="text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">{firstName}</h1>
               <Link href="/notifications">
-                <button className="relative flex items-center justify-center h-6 w-6 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 active:scale-90 transition-all">
-                  <Bell className={`h-3 w-3 ${unreadCount > 0 ? 'text-amber-400' : 'text-slate-500'}`} />
+                <button className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10" aria-label="Notifications">
+                  <Bell className={`h-4 w-4 ${unreadCount > 0 ? 'text-amber-400' : ''}`} />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-red-500 text-[8px] font-bold text-white flex items-center justify-center leading-none">
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </button>
               </Link>
             </div>
+            <p className="mt-3 max-w-md text-base leading-relaxed text-slate-400">
+              Your sport, your wallet, your moment — everything in one place.
+            </p>
           </div>
 
-          <div className="text-right shrink-0">
-            <p className="text-slate-500 text-[9px] uppercase tracking-widest">Cash Balance</p>
+          <div className="w-full min-w-[240px] rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:w-auto">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Available balance</p>
             {loadingWallet ? (
-              <Skeleton className="h-7 w-24 bg-slate-800 rounded-lg mt-0.5" />
+              <Skeleton className="mt-2 h-10 w-36 rounded-lg bg-slate-800" />
             ) : (
-              <div className="text-2xl font-bold font-mono text-teal-400 leading-tight">
+              <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight text-teal-400">
                 ${wallet?.availableBalance?.toFixed(2) ?? '0.00'}
-              </div>
+              </p>
             )}
             {!loadingWallet && (wallet?.bonusBalance ?? 0) > 0 && (
-              <div className="flex items-center gap-1 justify-end mt-0.5">
-                <Gift className="h-2.5 w-2.5 text-yellow-400" />
-                <span className="font-mono text-xs font-bold text-yellow-400">${(wallet?.bonusBalance ?? 0).toFixed(2)}</span>
-                <span className="text-[9px] text-yellow-600">bonus</span>
+              <div className="mt-2 flex items-center gap-1.5 text-sm text-yellow-400">
+                <Gift className="h-3.5 w-3.5" />
+                <span className="font-semibold tabular-nums">${(wallet?.bonusBalance ?? 0).toFixed(2)}</span>
+                <span className="text-xs text-yellow-600">bonus</span>
               </div>
             )}
             <Link href="/wallet">
-              <span className="inline-flex items-center gap-0.5 mt-1 text-[10px] text-teal-500 hover:text-teal-300 transition-colors cursor-pointer">
-                Manage wallet <ChevronRight className="h-2.5 w-2.5" />
+              <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-teal-400 hover:text-teal-300">
+                Manage wallet <ChevronRight className="h-3.5 w-3.5" />
               </span>
             </Link>
           </div>
         </div>
 
         {!isAdmin && (
-          <div className="relative mt-3 flex gap-1.5">
-            <Link href="/wallet">
-              <div className="inline-flex items-center gap-1 rounded-lg bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 font-semibold text-xs px-3 py-1.5 transition-all cursor-pointer">
-                <ArrowDownCircle className="h-3 w-3" /> Deposit
-              </div>
-            </Link>
-            <Link href="/live">
-              <div className="inline-flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3 py-1.5 border border-slate-700 transition-all cursor-pointer">
-                <Radio className="h-3 w-3 text-red-400" /> Watch Live
-              </div>
-            </Link>
-            <Link href="/games">
-              <div className="inline-flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs px-3 py-1.5 border border-slate-700 transition-all cursor-pointer">
-                <Swords className="h-3 w-3 text-amber-400" /> Predict
-              </div>
-            </Link>
+          <div className="relative mt-7 flex flex-wrap gap-3">
+            {[
+              { href: '/wallet',  label: 'Deposit',    icon: Wallet, style: 'bg-teal-500 text-slate-950 hover:bg-teal-400' },
+              { href: '/live',    label: 'Watch Live', icon: Radio,  style: 'bg-white/5 text-white border border-white/10 hover:bg-white/10' },
+              { href: '/games',   label: 'Predict',    icon: Target, style: 'bg-white/5 text-white border border-white/10 hover:bg-white/10' },
+            ].map(({ href, label, icon: Icon, style }) => (
+              <Link key={href} href={href}>
+                <span className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all active:scale-95 cursor-pointer ${style}`}>
+                  <Icon className="h-4 w-4" /> {label}
+                </span>
+              </Link>
+            ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* ── Live now banner ───────────────────────────────────── */}
+      {/* ── Live now ──────────────────────────────────────────── */}
       {liveStream && (
         <Link href="/live">
-          <div className="group relative overflow-hidden rounded-2xl border border-red-500/30 bg-gradient-to-r from-red-950/60 via-slate-900 to-slate-900 px-4 py-3 cursor-pointer hover:border-red-500/50 transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="shrink-0 flex items-center justify-center h-9 w-9 rounded-full bg-red-500/20 border border-red-500/30">
-                <Radio className="h-4 w-4 text-red-400" />
+          <div className="group relative overflow-hidden rounded-2xl border border-red-500/30 bg-gradient-to-r from-red-950/60 via-slate-900 to-slate-900 px-5 py-4 transition hover:border-red-500/60 cursor-pointer">
+            <div className="flex items-center gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-red-500/30 bg-red-500/15">
+                <Radio className="h-5 w-5 text-red-400" />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="inline-flex items-center gap-1 rounded bg-red-500/20 border border-red-500/30 px-1.5 py-0.5 text-[9px] font-bold text-red-400 uppercase tracking-wider">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-red-400">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" /> Live now
                   </span>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{liveStream.sport}</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">{liveStream.sport}</span>
                 </div>
-                <p className="text-white font-semibold truncate text-sm">{liveStream.title}</p>
+                <p className="mt-1 truncate text-base font-semibold text-white">{liveStream.title}</p>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-red-400 shrink-0 transition-colors" />
+              <ChevronRight className="h-5 w-5 shrink-0 text-slate-600 transition group-hover:text-red-400" />
             </div>
           </div>
         </Link>
       )}
 
-      {/* ── Stat cards ────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-2">
-        {/* Available */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5 flex items-center gap-3">
-          <div className="h-7 w-7 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
-            <Wallet className="h-3.5 w-3.5 text-teal-400" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">Available</p>
+      {/* ── Balance stats ─────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {stats.map(({ label, value, icon: Icon, tone, bg }) => (
+          <div key={label} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-lg shadow-black/10">
+            <div className={`flex h-9 w-9 items-center justify-center rounded-xl border ${bg}`}>
+              <Icon className={`h-4 w-4 ${tone}`} />
+            </div>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
             {loadingWallet ? (
-              <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
+              <Skeleton className="mt-1 h-8 w-24 rounded bg-slate-800" />
             ) : (
-              <p className="text-base font-bold font-mono text-white leading-tight">${wallet?.availableBalance?.toFixed(2) ?? '0.00'}</p>
+              <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-white">
+                ${value?.toFixed(2) ?? '0.00'}
+              </p>
             )}
           </div>
-        </div>
-
-        {/* Bonus */}
-        <div className={`rounded-xl border px-3 py-2.5 flex items-center gap-3 transition-colors ${(wallet?.bonusBalance ?? 0) > 0 ? 'border-yellow-500/30 bg-yellow-950/10' : 'border-slate-800 bg-slate-900/80'}`}>
-          <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${(wallet?.bonusBalance ?? 0) > 0 ? 'bg-yellow-500/10 border border-yellow-500/30' : 'bg-slate-800 border border-slate-700'}`}>
-            <Gift className={`h-3.5 w-3.5 ${(wallet?.bonusBalance ?? 0) > 0 ? 'text-yellow-400' : 'text-slate-600'}`} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">Bonus</p>
-            {loadingWallet ? (
-              <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
-            ) : (
-              <p className={`text-base font-bold font-mono leading-tight ${(wallet?.bonusBalance ?? 0) > 0 ? 'text-yellow-400' : 'text-slate-600'}`}>${(wallet?.bonusBalance ?? 0).toFixed(2)}</p>
-            )}
-          </div>
-        </div>
-
-        {/* In Bets */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5 flex items-center gap-3">
-          <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-            <Activity className="h-3.5 w-3.5 text-amber-400" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">In Play</p>
-            {loadingWallet ? (
-              <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
-            ) : (
-              <p className="text-base font-bold font-mono text-white leading-tight">${wallet?.pendingBalance?.toFixed(2) ?? '0.00'}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Withdrawable */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5 flex items-center gap-3">
-          <div className="h-7 w-7 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
-            <TrendingUp className="h-3.5 w-3.5 text-teal-400" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">Withdrawable</p>
-            {loadingWallet ? (
-              <Skeleton className="h-5 w-16 bg-slate-800 rounded mt-0.5" />
-            ) : (
-              <p className="text-base font-bold font-mono text-white leading-tight">${wallet?.withdrawableBalance?.toFixed(2) ?? '0.00'}</p>
-            )}
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* ── Quick nav tiles ───────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-2">
+      {/* ── Quick links ───────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { href: '/live',    label: 'Live',     icon: Radio,  color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/20' },
-          { href: '/streams', label: 'Streams',  icon: Film,   color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20' },
-          { href: '/games',   label: 'Predict',  icon: Target, color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/20' },
-          { href: '/fixtures',label: 'Fixtures', icon: Zap,    color: 'text-teal-400',   bg: 'bg-teal-500/10 border-teal-500/20' },
-        ].map(({ href, label, icon: Icon, color, bg }) => (
+          { href: '/live',     label: 'Live',      icon: Radio,  tone: 'text-red-400' },
+          { href: '/streams',  label: 'Streams',   icon: Film,   tone: 'text-violet-400' },
+          { href: '/games',    label: 'Predict',   icon: Target, tone: 'text-amber-400' },
+          { href: '/fixtures', label: 'Fixtures',  icon: Zap,    tone: 'text-teal-400' },
+        ].map(({ href, label, icon: Icon, tone }) => (
           <Link key={href} href={href}>
-            <div className={`flex flex-col items-center justify-center gap-1 rounded-xl border ${bg} py-2.5 cursor-pointer hover:brightness-110 active:scale-95 transition-all`}>
-              <Icon className={`h-4 w-4 ${color}`} />
-              <span className={`text-[9px] font-bold uppercase tracking-wider ${color}`}>{label}</span>
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/60 py-5 transition hover:border-slate-600 hover:bg-slate-900 cursor-pointer">
+              <Icon className={`h-5 w-5 ${tone}`} />
+              <span className={`text-sm font-semibold ${tone}`}>{label}</span>
             </div>
           </Link>
         ))}
       </div>
 
-      {/* ── Upcoming games teaser ─────────────────────────────── */}
+      {/* ── Next up ───────────────────────────────────────────── */}
       {nextGames.length > 0 && (
-        <div className="space-y-2">
+        <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5 text-teal-400" /> Next Up
+            <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+              <Clock className="h-4 w-4 text-teal-400" /> Next up
             </h2>
             <Link href="/fixtures">
-              <span className="text-xs text-teal-400 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1">
-                All fixtures <ChevronRight className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400 hover:text-teal-300">
+                All fixtures <ChevronRight className="h-3.5 w-3.5" />
               </span>
             </Link>
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {nextGames.map((g) => {
               const dt = new Date(`${g.eventDate}T${g.eventTime}`);
               const timeStr = dt.toLocaleDateString('en-UG', { weekday: 'short', month: 'short', day: 'numeric' })
                 + ' · ' + dt.toLocaleTimeString('en-UG', { hour: '2-digit', minute: '2-digit' });
               return (
                 <Link key={g.id} href={`/games/${g.id}`}>
-                  <div className="group flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-amber-500/30 hover:bg-slate-900 transition-all cursor-pointer">
-                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                      <Swords className="h-3.5 w-3.5 text-amber-400" />
+                  <div className="group flex items-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 transition hover:border-amber-500/40 cursor-pointer">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10">
+                      <Trophy className="h-4 w-4 text-amber-400" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-semibold truncate group-hover:text-amber-300 transition-colors">
-                        {g.playerA} <span className="text-slate-600 font-normal">vs</span> {g.playerB}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white transition group-hover:text-amber-300">
+                        {g.playerA} <span className="font-normal text-slate-600">vs</span> {g.playerB}
                       </p>
-                      <p className="text-slate-500 text-[10px] mt-0.5">{timeStr}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">{timeStr}</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-700 group-hover:text-amber-400 transition-colors shrink-0" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-slate-700 transition group-hover:text-amber-400" />
                   </div>
                 </Link>
               );
             })}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* ── Activity feed: bets + transactions ───────────────── */}
-      <div className="space-y-4">
-
-        {/* Recent Bets */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800">
-            <h2 className="font-bold text-white text-sm flex items-center gap-2">
-              <Trophy className="h-3.5 w-3.5 text-amber-400" /> Recent Predictions
+      {/* ── Activity ──────────────────────────────────────────── */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+          <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+            <h2 className="flex items-center gap-2 text-base font-bold text-white">
+              <Trophy className="h-4 w-4 text-amber-400" /> Recent predictions
             </h2>
             <Link href="/bets">
-              <span className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1">
-                View all <ChevronRight className="h-3 w-3" />
-              </span>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-amber-400 hover:text-amber-300">View all <ChevronRight className="h-3.5 w-3.5" /></span>
             </Link>
           </div>
           <div className="divide-y divide-slate-800/60">
             {loadingBets ? (
-              <div className="px-5 py-4 space-y-3">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 rounded-lg bg-slate-800" />)}
-              </div>
+              <div className="space-y-3 p-5">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 rounded bg-slate-800" />)}</div>
             ) : recentBets?.bets?.length ? (
               recentBets.bets.map((bet: any) => {
                 const statusStyle = BET_STATUS_STYLES[bet.status] ?? BET_STATUS_STYLES.cancelled;
-                const pick = bet.outcome === 'player_a_wins'
-                  ? bet.game?.playerA
-                  : bet.outcome === 'player_b_wins'
-                  ? bet.game?.playerB
+                const pick = bet.outcome === 'player_a_wins' ? bet.game?.playerA
+                  : bet.outcome === 'player_b_wins' ? bet.game?.playerB
                   : bet.outcome?.replace(/_/g, ' ');
                 return (
                   <Link key={bet.id} href={`/games/${bet.gameId}`}>
-                    <div className="group flex items-center gap-3 px-5 py-3 hover:bg-slate-800/40 transition-colors cursor-pointer">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate group-hover:text-amber-300 transition-colors">
+                    <div className="group flex items-center gap-3 px-5 py-4 transition hover:bg-slate-800/40 cursor-pointer">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-white transition group-hover:text-amber-300">
                           {bet.game?.playerA} vs {bet.game?.playerB}
                         </p>
-                        <p className="text-slate-500 text-[10px] mt-0.5 truncate capitalize">
-                          Pick: {pick}
-                        </p>
+                        <p className="mt-0.5 truncate text-xs capitalize text-slate-500">Pick: {pick}</p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-white font-mono text-sm font-semibold">${bet.stake.toFixed(2)}</p>
-                        <span className={`inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider mt-0.5 ${statusStyle}`}>
-                          {bet.status}
-                        </span>
+                        <p className="text-sm font-bold tabular-nums text-white">${bet.stake.toFixed(2)}</p>
+                        <span className={`mt-1 inline-block rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${statusStyle}`}>{bet.status}</span>
                       </div>
                     </div>
                   </Link>
                 );
               })
             ) : (
-              <div className="py-8 text-center">
-                <Swords className="h-7 w-7 mx-auto text-slate-700 mb-2" />
-                <p className="text-slate-500 text-sm">No predictions yet</p>
-                <Link href="/games">
-                  <span className="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer mt-1 inline-block">
-                    Browse games →
-                  </span>
-                </Link>
+              <div className="py-10 text-center">
+                <Trophy className="mx-auto h-8 w-8 text-slate-700" />
+                <p className="mt-2 text-sm text-slate-500">No predictions yet</p>
+                <Link href="/games"><span className="mt-1 inline-block text-sm font-semibold text-amber-400">Browse games →</span></Link>
               </div>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Recent Transactions */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800">
-            <h2 className="font-bold text-white text-sm flex items-center gap-2">
-              <History className="h-3.5 w-3.5 text-teal-400" /> Recent Transactions
+        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
+          <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+            <h2 className="flex items-center gap-2 text-base font-bold text-white">
+              <History className="h-4 w-4 text-teal-400" /> Recent transactions
             </h2>
             <Link href="/wallet">
-              <span className="text-xs text-teal-400 hover:text-teal-300 transition-colors cursor-pointer flex items-center gap-1">
-                View all <ChevronRight className="h-3 w-3" />
-              </span>
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400 hover:text-teal-300">View all <ChevronRight className="h-3.5 w-3.5" /></span>
             </Link>
           </div>
           <div className="divide-y divide-slate-800/60">
             {loadingTx ? (
-              <div className="px-5 py-4 space-y-3">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 rounded-lg bg-slate-800" />)}
-              </div>
+              <div className="space-y-3 p-5">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 rounded bg-slate-800" />)}</div>
             ) : recentTx?.transactions?.length ? (
               recentTx.transactions.map((tx: any) => {
                 const isCredit = TX_CREDIT.has(tx.type);
                 return (
-                  <div key={tx.id} className="flex items-center gap-3 px-5 py-3">
-                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${
-                      isCredit ? 'bg-teal-500/10 border border-teal-500/20' : 'bg-red-500/10 border border-red-500/20'
-                    }`}>
-                      {isCredit
-                        ? <TrendingUp className="h-3 w-3 text-teal-400" />
-                        : <Activity className="h-3 w-3 text-red-400" />
-                      }
+                  <div key={tx.id} className="flex items-center gap-3 px-5 py-4">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${isCredit ? 'border-teal-500/20 bg-teal-500/10' : 'border-red-500/20 bg-red-500/10'}`}>
+                      {isCredit ? <TrendingUp className="h-4 w-4 text-teal-400" /> : <Activity className="h-4 w-4 text-red-400" />}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium capitalize">{tx.type.replace(/_/g, ' ')}</p>
-                      <p className="text-slate-500 text-[10px] mt-0.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold capitalize text-white">{tx.type.replace(/_/g, ' ')}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
                         {new Date(tx.createdAt).toLocaleDateString('en-UG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <p className={`font-mono text-sm font-semibold ${isCredit ? 'text-teal-400' : 'text-red-400'}`}>
+                      <p className={`text-sm font-bold tabular-nums ${isCredit ? 'text-teal-400' : 'text-red-400'}`}>
                         {isCredit ? '+' : '-'}${tx.amount.toFixed(2)}
                       </p>
-                      <span className={`text-[9px] font-bold uppercase tracking-wider ${
-                        tx.status === 'completed' ? 'text-teal-500'
-                          : tx.status === 'failed' || tx.status === 'rejected' ? 'text-red-400'
-                          : 'text-amber-400'
-                      }`}>{tx.status}</span>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${tx.status === 'completed' ? 'text-teal-500' : tx.status === 'failed' || tx.status === 'rejected' ? 'text-red-400' : 'text-amber-400'}`}>{tx.status}</span>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="py-8 text-center">
-                <Wallet className="h-7 w-7 mx-auto text-slate-700 mb-2" />
-                <p className="text-slate-500 text-sm">No transactions yet</p>
-                <Link href="/wallet">
-                  <span className="text-xs text-teal-400 hover:text-teal-300 transition-colors cursor-pointer mt-1 inline-block">
-                    Deposit funds →
-                  </span>
-                </Link>
+              <div className="py-10 text-center">
+                <Wallet className="mx-auto h-8 w-8 text-slate-700" />
+                <p className="mt-2 text-sm text-slate-500">No transactions yet</p>
+                <Link href="/wallet"><span className="mt-1 inline-block text-sm font-semibold text-teal-400">Deposit funds →</span></Link>
               </div>
             )}
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* ── Referral strip ────────────────────────────────────── */}
-      <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 px-5 py-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-9 w-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
-            <Users className="h-4.5 w-4.5 text-amber-400" />
+      {/* ── Referral ──────────────────────────────────────────── */}
+      <section className="rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 p-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/15">
+            <Users className="h-5 w-5 text-amber-400" />
           </div>
           <div>
-            <p className="text-white font-semibold text-sm">Invite a friend — earn together</p>
-            <p className="text-slate-500 text-xs">Share your link · earn bonus on every sign-up</p>
+            <p className="text-base font-bold text-white">Invite a friend — earn together</p>
+            <p className="text-sm text-slate-400">Share your link and earn a bonus on every sign-up</p>
           </div>
         </div>
         {referralLink ? (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0 bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2 overflow-hidden">
-              <p className="font-mono text-xs text-slate-300 truncate">{referralLink}</p>
+          <div className="mt-4 flex gap-2">
+            <div className="min-w-0 flex-1 overflow-hidden rounded-xl border border-slate-700 bg-slate-950/60 px-4 py-3">
+              <p className="truncate font-mono text-sm text-slate-300">{referralLink}</p>
             </div>
             <button
               onClick={copyReferralLink}
-              className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg font-semibold text-xs px-3.5 py-2 transition-all active:scale-95 ${
-                copied
-                  ? 'bg-teal-500 text-slate-950'
-                  : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
-              }`}
+              className={`shrink-0 rounded-xl px-5 py-3 text-sm font-bold transition active:scale-95 ${copied ? 'bg-teal-500 text-slate-950' : 'bg-amber-500 text-slate-950 hover:bg-amber-400'}`}
             >
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? 'Copied!' : 'Copy'}
+              <span className="inline-flex items-center gap-2">{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}{copied ? 'Copied!' : 'Copy link'}</span>
             </button>
           </div>
-        ) : (
-          <div className="h-9 rounded-lg bg-slate-800/50 animate-pulse" />
-        )}
-      </div>
-
+        ) : <div className="mt-4 h-10 animate-pulse rounded-xl bg-slate-800/50" />}
+      </section>
     </div>
   );
 }
