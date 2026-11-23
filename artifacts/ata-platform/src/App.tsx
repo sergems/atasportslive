@@ -43,6 +43,7 @@ import AdminWithdrawals from "@/pages/admin/withdrawals";
 import AdminPromotions from "@/pages/admin/promotions";
 import AdminBets from "@/pages/admin/bets";
 import AdminSessions from "@/pages/admin/sessions";
+import AdminCommentModeration from "@/pages/admin/comment-moderation";
 import AdminInfluencers from "@/pages/admin/influencers";
 import FinanceDashboard from "@/pages/finance/dashboard";
 import FinanceWithdrawals from "@/pages/finance/withdrawals";
@@ -232,6 +233,9 @@ function Router() {
         </Route>
         <Route path="/admin/sessions">
           {() => <ProtectedRoute allowedRoles={ADM_ROLES} component={() => <AdminLayout><AdminSessions /></AdminLayout>} />}
+        </Route>
+        <Route path="/admin/comment-moderation">
+          {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminCommentModeration /></AdminLayout>} />}
         </Route>
         <Route path="/admin/settings">
           {() => <ProtectedRoute allowedRoles={MGR_ROLES} component={() => <AdminLayout><AdminSettings /></AdminLayout>} />}

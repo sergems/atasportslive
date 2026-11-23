@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, streamCommentsTable, usersTable } from "@workspace/db";
-import { eq, desc, and, gte } from "drizzle-orm";
+import { db, streamCommentsTable, usersTable, commentBansTable } from "@workspace/db";
+import { eq, desc, and, gte, gt } from "drizzle-orm";
 import { authMiddleware, type AuthRequest } from "../middlewares/auth";
 import { broadcastToStream } from "../lib/notify";
 
@@ -21,6 +21,7 @@ router.get("/", async (req, res): Promise<void> => {
     .where(and(
       eq(streamCommentsTable.streamId, streamId),
       gte(streamCommentsTable.createdAt, cutoff),
+      eq(streamCommentsTable.isHidden, false),
     ))
     .orderBy(desc(streamCommentsTable.createdAt))
     .limit(100);
@@ -42,9 +43,26 @@ router.post("/", authMiddleware, async (req: AuthRequest, res): Promise<void> =>
   const userId = req.userId!;
 
   const [userRow] = await db
-    .select({ fullName: usersTable.fullName, email: usersTable.email })
+    .select({ fullName: usersTable.fullName, email: usersTable.email, status: usersTable.status })
     .from(usersTable)
     .where(eq(usersTable.id, userId));
+
+  if (userRow?.status === "suspended") {
+    res.status(403).json({ error: "Your account is suspended and cannot post comments" });
+    return;
+  }
+
+  const [ban] = await db
+    .select({ bannedUntil: commentBansTable.bannedUntil, reason: commentBansTable.reason })
+    .from(commentBansTable)
+    .where(and(eq(commentBansTable.userId, userId), gt(commentBansTable.bannedUntil, new Date())))
+    .limit(1);
+  if (ban) {
+    res.status(403).json({
+      error: `Commenting is disabled until ${new Date(ban.bannedUntil).toLocaleString()}${ban.reason ? ` — ${ban.reason}` : ""}`,
+    });
+    return;
+  }
 
   const username = userRow?.fullName || userRow?.email?.split("@")[0] || `user${userId}`;
 

@@ -26,6 +26,7 @@ import {
   MonitorSmartphone,
   Tv2,
   Star,
+  MessageSquare,
 } from 'lucide-react';
 
 function usePendingWithdrawalCount() {
@@ -106,6 +107,7 @@ const navItems = [
   { href: '/admin/vouchers',            label: 'Vouchers',            icon: Ticket,                        minLevel: 3 },
   { href: '/admin/reports',             label: 'Reports',             icon: BarChart2,                     minLevel: 3 },
   { href: '/admin/sessions',            label: 'Sessions',            icon: MonitorSmartphone,              minLevel: 3 },
+  { href: '/admin/comment-moderation',  label: 'Comment Moderation', icon: MessageSquare,                  minLevel: 2 },
   { href: '/admin/settings',            label: 'Settings',            icon: Settings,                      minLevel: 3 },
 ];
 

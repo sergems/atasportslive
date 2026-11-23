@@ -8,8 +8,8 @@ import multer from "multer";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable } from "@workspace/db";
-import { eq, sql, desc, and, gte, isNotNull, ilike, or, like } from "drizzle-orm";
+import { db, usersTable, walletsTable, transactionsTable, streamsTable, betsTable, notificationsTable, vouchersTable, promotionsTable, bonusTransactionsTable, promotionTermsAcceptanceTable, streamCommentsTable, commentBansTable } from "@workspace/db";
+import { eq, sql, desc, and, gte, isNotNull, ilike, or, like, gt } from "drizzle-orm";
 import { authMiddleware, requireRole, type AuthRequest } from "../middlewares/auth";
 import { notify, wsClients } from "../lib/notify";
 
@@ -1170,6 +1170,103 @@ router.delete("/sessions/:userId", authMiddleware, requireRole("admin"), async (
     .where(eq(usersTable.id, userId));
 
   req.log.info({ adminId: req.userId, targetUserId: userId }, "Admin force-logged-out user");
+  res.json({ ok: true });
+});
+
+// ── Comment moderation (admin + manager) ────────────────────────────────────
+
+router.get("/comments", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const limit = Math.min(200, Number(req.query.limit) || 50);
+  const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+  const hiddenOnly = req.query.hidden === "true";
+  const conditions: any[] = [];
+  if (hiddenOnly) conditions.push(eq(streamCommentsTable.isHidden, true));
+  if (search) conditions.push(or(
+    ilike(streamCommentsTable.content, `%${search}%`),
+    ilike(streamCommentsTable.username, `%${search}%`),
+    ilike(usersTable.email, `%${search}%`),
+  ));
+  const rows = await db
+    .select({ comment: streamCommentsTable, user: usersTable, stream: streamsTable })
+    .from(streamCommentsTable)
+    .leftJoin(usersTable, eq(streamCommentsTable.userId, usersTable.id))
+    .leftJoin(streamsTable, eq(streamCommentsTable.streamId, streamsTable.id))
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(streamCommentsTable.createdAt))
+    .limit(limit);
+
+  res.json(rows.map(({ comment, user, stream }: any) => ({
+    id: comment.id,
+    streamId: comment.streamId,
+    streamTitle: stream?.title ?? `Stream #${comment.streamId}`,
+    userId: comment.userId,
+    username: comment.username,
+    userEmail: user?.email ?? null,
+    content: comment.content,
+    isHidden: comment.isHidden,
+    hiddenAt: comment.hiddenAt,
+    hideReason: comment.hideReason,
+    createdAt: comment.createdAt,
+  })));
+});
+
+router.patch("/comments/:id/hide", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const id = Number(req.params.id);
+  const { hidden, reason } = req.body as { hidden?: boolean; reason?: string };
+  if (!Number.isInteger(id) || id <= 0 || typeof hidden !== "boolean") {
+    res.status(400).json({ error: "id and hidden (boolean) are required" }); return;
+  }
+  const [updated] = await db.update(streamCommentsTable).set({
+    isHidden: hidden,
+    hiddenBy: hidden ? req.userId! : null,
+    hiddenAt: hidden ? new Date() : null,
+    hideReason: hidden ? (reason?.trim() || null) : null,
+  }).where(eq(streamCommentsTable.id, id)).returning();
+  if (!updated) { res.status(404).json({ error: "Comment not found" }); return; }
+  res.json({ ok: true, isHidden: updated.isHidden });
+});
+
+router.get("/comment-bans", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const rows = await db
+    .select({ ban: commentBansTable, user: usersTable })
+    .from(commentBansTable)
+    .leftJoin(usersTable, eq(commentBansTable.userId, usersTable.id))
+    .where(gt(commentBansTable.bannedUntil, new Date()))
+    .orderBy(desc(commentBansTable.bannedUntil));
+  res.json(rows.map(({ ban, user }: any) => ({
+    userId: ban.userId,
+    username: user?.fullName ?? user?.email ?? `User #${ban.userId}`,
+    userEmail: user?.email ?? null,
+    bannedUntil: ban.bannedUntil,
+    reason: ban.reason,
+    createdAt: ban.createdAt,
+  })));
+});
+
+router.post("/comment-bans", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  const { userId, hours, reason } = req.body as { userId?: number; hours?: number; reason?: string };
+  const duration = Number(hours);
+  if (!userId || !Number.isFinite(duration) || duration <= 0 || duration > 24 * 365) {
+    res.status(400).json({ error: "Valid userId and hours (1–8760) are required" }); return;
+  }
+  const [user] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, Number(userId))).limit(1);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  const bannedUntil = new Date(Date.now() + duration * 60 * 60 * 1000);
+  await db.insert(commentBansTable).values({
+    userId: Number(userId),
+    bannedUntil,
+    reason: reason?.trim() || null,
+    createdBy: req.userId!,
+    updatedAt: new Date(),
+  }).onConflictDoUpdate({
+    target: commentBansTable.userId,
+    set: { bannedUntil, reason: reason?.trim() || null, createdBy: req.userId!, updatedAt: new Date() },
+  });
+  res.json({ ok: true, bannedUntil });
+});
+
+router.delete("/comment-bans/:userId", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+  await db.delete(commentBansTable).where(eq(commentBansTable.userId, Number(req.params.userId)));
   res.json({ ok: true });
 });
 

@@ -15,3 +15,4 @@ export * from "./promotions";
 export * from "./stream_comments";
 export * from "./platform_subscriptions";
 export * from "./push-tokens";
+export * from "./comment-bans";
