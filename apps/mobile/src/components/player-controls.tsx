@@ -14,6 +14,8 @@ export type PlayerControlsProps = {
   onFullscreen: () => void;
   onBack?: () => void;
   onChat?: () => void;
+  onQuality?: () => void;
+  qualityLabel?: string;
 };
 
 /** Shared, auto-hiding control surface drawn on top of the live video. */
@@ -28,6 +30,8 @@ export function PlayerControls({
   onFullscreen,
   onBack,
   onChat,
+  onQuality,
+  qualityLabel,
 }: PlayerControlsProps) {
   return (
     <View style={[StyleSheet.absoluteFill, styles.layer]} pointerEvents="box-none">
@@ -78,6 +82,17 @@ export function PlayerControls({
               <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={24} color="#FFFFFF" />
             </Pressable>
             <View style={styles.spacer} />
+            {onQuality && (
+              <Pressable
+                onPress={onQuality}
+                style={styles.qualityButton}
+                hitSlop={8}
+                accessibilityLabel="Change video quality"
+              >
+                <Ionicons name="settings-outline" size={18} color="#FFFFFF" />
+                {!!qualityLabel && <Text style={styles.qualityText}>{qualityLabel}</Text>}
+              </Pressable>
+            )}
             {onChat && (
               <Pressable
                 onPress={onChat}
@@ -137,5 +152,11 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.14)',
   },
+  qualityButton: {
+    height: 44, borderRadius: 22, paddingHorizontal: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+  },
+  qualityText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
   spacer: { flex: 1 },
 });

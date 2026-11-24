@@ -62,6 +62,12 @@ export default function LoginScreen() {
         {error && <Text style={styles.error}>{error}</Text>}
 
         <PrimaryButton title="Sign in" onPress={handleLogin} loading={loading} disabled={!email || !password} />
+        <Pressable onPress={() => router.push('/forgot-password')} style={styles.link}>
+          <Text style={styles.linkText}>Forgot password?</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push('/register')} style={styles.link}>
+          <Text style={styles.linkText}>Create an account</Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
@@ -82,4 +88,6 @@ const styles = StyleSheet.create({
   checkboxOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   checkLabel: { color: colors.text, fontSize: fontSize.sm },
   error: { color: colors.danger, fontSize: fontSize.sm },
+  link: { alignSelf: 'center', paddingVertical: 4 },
+  linkText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
 });

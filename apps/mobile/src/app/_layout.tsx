@@ -22,6 +22,9 @@ function RootNavigator() {
         <Stack.Screen name="lock" options={{ headerShown: false }} />
         <Stack.Screen name="player/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ headerShown: false }} />
+        <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
       </Stack>
       {status === 'loading' && (
         <View style={styles.loading}>

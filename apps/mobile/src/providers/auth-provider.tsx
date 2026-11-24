@@ -19,6 +19,7 @@ interface AuthContextValue {
   accessToken: string | null;
   biometricAvailable: boolean;
   signIn: (email: string, password: string, useBiometrics: boolean) => Promise<void>;
+  register: (data: { email: string; username: string; password: string; fullName: string; phone?: string; referralCode?: string }) => Promise<void>;
   unlock: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: (user: AuthResponse['user']) => void;
@@ -82,6 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus('authenticated');
   }, [biometricAvailable]);
 
+  const register = useCallback(async (data: { email: string; username: string; password: string; fullName: string; phone?: string; referralCode?: string }) => {
+    const result = await api.register(data);
+    await saveTokens(result, false);
+    setTokens(result);
+    setUser(result.user);
+    setStatus('authenticated');
+  }, []);
+
   const unlock = useCallback(async () => {
     const ok = await promptBiometrics();
     if (!ok) throw new Error('Biometric unlock was cancelled');
@@ -136,8 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => ({
     status, user, accessToken: tokens?.accessToken ?? null, biometricAvailable,
-    signIn, unlock, signOut, refreshUser, setBiometricProtection, authedFetch,
-  }), [status, user, tokens, biometricAvailable, signIn, unlock, signOut, refreshUser, setBiometricProtection, authedFetch]);
+    signIn, register, unlock, signOut, refreshUser, setBiometricProtection, authedFetch,
+  }), [status, user, tokens, biometricAvailable, signIn, register, unlock, signOut, refreshUser, setBiometricProtection, authedFetch]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

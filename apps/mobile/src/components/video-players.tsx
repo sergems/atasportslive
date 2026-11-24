@@ -1,10 +1,11 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { VideoView } from 'expo-video';
 import { WebView } from 'react-native-webview';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import { PlayerControls } from '@/components/player-controls';
+import { QualitySheet, QUALITY_LABEL, MAX_RESOLUTION, type QualityTier } from '@/components/quality-sheet';
 import { useControlsVisibility } from '@/hooks/use-controls-visibility';
 import { useMuxPlayer } from '@/hooks/use-mux-player';
 import { APP_ORIGIN } from '@/lib/api';
@@ -18,36 +19,67 @@ const tapLayer = { ...StyleSheet.absoluteFill, zIndex: 5 } as const;
 
 type SharedProps = { title?: string; live?: boolean; showBack?: boolean; onChat?: () => void };
 
+const QUALITY_KEY = 'ata-mobile-quality';
+
 export function MuxPlayer({ uri, title, live = true, showBack = false, onChat }: { uri: string } & SharedProps) {
   const viewRef = useRef<VideoView | null>(null);
   const { player, isPlaying, muted, togglePlay, toggleMute } = useMuxPlayer(uri);
   const { visible, toggle } = useControlsVisibility(isPlaying);
+  const [quality, setQuality] = useState<QualityTier>('auto');
+  const [qualityOpen, setQualityOpen] = useState(false);
+
+  useEffect(() => {
+    void SecureStore.getItemAsync(QUALITY_KEY).then((stored) => {
+      if (stored === 'auto' || stored === '4k' || stored === 'hd' || stored === 'sd') setQuality(stored);
+    });
+  }, []);
+
+  // A cap, not a lock — expo-video keeps adapting within the chosen ceiling.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
+    player.maxResolution = MAX_RESOLUTION[quality];
+  }, [player, quality]);
+
+  const selectQuality = useCallback((tier: QualityTier) => {
+    setQuality(tier);
+    void SecureStore.setItemAsync(QUALITY_KEY, tier);
+  }, []);
 
   return (
-    <View style={StyleSheet.absoluteFill}>
-      <VideoView
-        ref={viewRef}
-        style={StyleSheet.absoluteFill}
-        player={player}
-        contentFit="contain"
-        nativeControls={false}
-        fullscreenOptions={{ enable: true }}
-        allowsPictureInPicture
+    <>
+      <View style={StyleSheet.absoluteFill}>
+        <VideoView
+          ref={viewRef}
+          style={StyleSheet.absoluteFill}
+          player={player}
+          contentFit="contain"
+          nativeControls={false}
+          fullscreenOptions={{ enable: true }}
+          allowsPictureInPicture
+        />
+        <Pressable style={tapLayer} onPress={toggle} />
+        <PlayerControls
+          title={title}
+          live={live}
+          playing={isPlaying}
+          muted={muted}
+          visible={visible}
+          onTogglePlay={togglePlay}
+          onToggleMute={toggleMute}
+          onFullscreen={() => { void viewRef.current?.enterFullscreen().catch(() => {}); }}
+          onBack={showBack ? () => router.back() : undefined}
+          onChat={onChat}
+          onQuality={() => setQualityOpen(true)}
+          qualityLabel={QUALITY_LABEL[quality]}
+        />
+      </View>
+      <QualitySheet
+        visible={qualityOpen}
+        current={quality}
+        onSelect={selectQuality}
+        onClose={() => setQualityOpen(false)}
       />
-      <Pressable style={tapLayer} onPress={toggle} />
-      <PlayerControls
-        title={title}
-        live={live}
-        playing={isPlaying}
-        muted={muted}
-        visible={visible}
-        onTogglePlay={togglePlay}
-        onToggleMute={toggleMute}
-        onFullscreen={() => { void viewRef.current?.enterFullscreen().catch(() => {}); }}
-        onBack={showBack ? () => router.back() : undefined}
-        onChat={onChat}
-      />
-    </View>
+    </>
   );
 }
 
