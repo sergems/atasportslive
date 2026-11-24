@@ -16,9 +16,9 @@ type WebViewHandle = { injectJavaScript: (script: string) => void };
 // the tap catcher and controls are explicitly layered over the player.
 const tapLayer = { ...StyleSheet.absoluteFill, zIndex: 5 } as const;
 
-type SharedProps = { title?: string; live?: boolean; showBack?: boolean };
+type SharedProps = { title?: string; live?: boolean; showBack?: boolean; onChat?: () => void };
 
-export function MuxPlayer({ uri, title, live = true, showBack = false }: { uri: string } & SharedProps) {
+export function MuxPlayer({ uri, title, live = true, showBack = false, onChat }: { uri: string } & SharedProps) {
   const viewRef = useRef<VideoView | null>(null);
   const { player, isPlaying, muted, togglePlay, toggleMute } = useMuxPlayer(uri);
   const { visible, toggle } = useControlsVisibility(isPlaying);
@@ -45,6 +45,7 @@ export function MuxPlayer({ uri, title, live = true, showBack = false }: { uri: 
         onToggleMute={toggleMute}
         onFullscreen={() => { void viewRef.current?.enterFullscreen().catch(() => {}); }}
         onBack={showBack ? () => router.back() : undefined}
+        onChat={onChat}
       />
     </View>
   );
@@ -56,6 +57,7 @@ export function YouTubePlayer({
   startAt,
   title,
   showBack = false,
+  onChat,
 }: { videoId: string; live: boolean; startAt: number } & SharedProps) {
   const webRef = useRef<WebViewHandle>(null);
   const lastCommand = useRef(0);
@@ -159,6 +161,7 @@ export function YouTubePlayer({
         onToggleMute={toggleMute}
         onFullscreen={fullscreen}
         onBack={showBack ? () => router.back() : undefined}
+        onChat={onChat}
       />
     </View>
   );

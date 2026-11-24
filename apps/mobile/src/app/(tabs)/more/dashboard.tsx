@@ -18,9 +18,7 @@ export default function DashboardScreen() {
   const { ch1Live } = useChannelStatus();
 
   const { data: wallet } = useQuery({ queryKey: ['wallet'], queryFn: () => authedFetch((t) => api.wallet(t)) });
-  const { data: bets } = useQuery({ queryKey: ['dashboard-bets'], queryFn: () => authedFetch((t) => api.myBets(t, 'limit=5')) });
   const { data: tx } = useQuery({ queryKey: ['wallet-transactions'], queryFn: () => authedFetch((t) => api.transactions(t, 5)) });
-  const { data: games } = useQuery({ queryKey: ['upcoming-games'], queryFn: api.upcomingGames, staleTime: 60_000 });
   const { data: live } = useQuery({ queryKey: ['dashboard-live'], queryFn: api.liveStreams, refetchInterval: 30_000 });
   const { data: notes } = useQuery({ queryKey: ['notifications'], queryFn: () => authedFetch((t) => api.notifications(t)), refetchInterval: 30_000 });
 
@@ -40,7 +38,7 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>{greeting},</Text>
             <Text style={styles.name}>{user?.fullName?.split(' ')[0] ?? 'there'}</Text>
           </View>
-          <Pressable onPress={() => router.push('/(tabs)/more/subscription')} style={styles.bell}>
+          <Pressable onPress={() => router.push('/notifications')} style={styles.bell}>
             <Ionicons name="notifications-outline" size={22} color={(notes?.unreadCount ?? 0) > 0 ? colors.accent : colors.muted} />
             {(notes?.unreadCount ?? 0) > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{notes!.unreadCount > 9 ? '9+' : notes!.unreadCount}</Text></View>}
           </Pressable>
@@ -52,7 +50,6 @@ export default function DashboardScreen() {
         <View style={styles.actions}>
           <Pressable style={styles.action} onPress={() => router.push('/(tabs)/wallet')}><Ionicons name="add-circle-outline" size={20} color={colors.primary} /><Text style={styles.actionText}>Deposit</Text></Pressable>
           <Pressable style={styles.action} onPress={() => router.push('/(tabs)/live')}><Ionicons name="play-circle-outline" size={20} color={colors.primary} /><Text style={styles.actionText}>Watch Live</Text></Pressable>
-          <Pressable style={styles.action} onPress={() => router.push('/(tabs)/predictions')}><Ionicons name="trophy-outline" size={20} color={colors.primary} /><Text style={styles.actionText}>Predict</Text></Pressable>
         </View>
       </View>
 
@@ -70,38 +67,6 @@ export default function DashboardScreen() {
           <View key={s.label} style={styles.stat}><Text style={[styles.statValue, { color: s.tone }]}>{money(s.value)}</Text><Text style={styles.statLabel}>{s.label}</Text></View>
         ))}
       </View>
-
-      {(games?.length ?? 0) > 0 && (
-        <>
-          <SectionTitle>Next up</SectionTitle>
-          <Card>
-            {games!.slice(0, 2).map((g) => (
-              <View key={g.id} style={styles.row}>
-                <View style={styles.rowText}>
-                  <Text style={styles.rowMain} numberOfLines={2}>{g.playerA} vs {g.playerB}</Text>
-                  <Text style={styles.rowSub}>{g.sport} · {new Date(`${g.eventDate}T${g.eventTime}`).toLocaleDateString()}</Text>
-                </View>
-              </View>
-            ))}
-            <Pressable onPress={() => router.push('/(tabs)/predictions')}><Text style={styles.link}>All fixtures →</Text></Pressable>
-          </Card>
-        </>
-      )}
-
-      <SectionTitle>Recent predictions</SectionTitle>
-      <Card>
-        {(bets?.bets?.length ?? 0) === 0
-          ? <Text style={styles.hint}>No predictions yet.</Text>
-          : bets!.bets.map((b) => (
-            <View key={b.id} style={styles.row}>
-              <View style={styles.rowText}>
-                <Text style={styles.rowMain}>{b.game ? `${b.game.playerA} vs ${b.game.playerB}` : `Prediction #${b.id}`}</Text>
-                <Text style={styles.rowSub}>Pick: {b.outcome.replace(/_/g, ' ')} · {money(b.stake)}</Text>
-              </View>
-              <Text style={[styles.status, { color: b.status === 'won' ? colors.cash : b.status === 'lost' ? colors.danger : colors.accent }]}>{b.status.toUpperCase()}</Text>
-            </View>
-          ))}
-      </Card>
 
       <SectionTitle>Recent transactions</SectionTitle>
       <Card>

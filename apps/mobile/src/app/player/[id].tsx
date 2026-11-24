@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { MuxPlayer, YouTubePlayer } from '@/components/video-players';
+import { ChatPanel } from '@/components/chat-panel';
 import { useLandscapeOnFocus } from '@/hooks/use-landscape-on-focus';
 import { api, type StreamItem, type AccessStatus } from '@/lib/api';
 import { useAuth } from '@/providers/auth-provider';
@@ -20,6 +21,7 @@ export default function PlayerScreen() {
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startAt, setStartAt] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,17 +103,20 @@ export default function PlayerScreen() {
   }
 
   return (
-    <View style={styles.player}>
-      {ytLive && ytId ? (
-        <YouTubePlayer videoId={ytId} live startAt={0} title={stream?.title} showBack />
-      ) : hls ? (
-        <MuxPlayer uri={hls} title={stream?.title} live={stream?.status === 'live'} showBack />
-      ) : ytId ? (
-        <YouTubePlayer videoId={ytId} live={false} startAt={startAt} title={stream?.title} showBack />
-      ) : (
-        <View style={styles.center}><Text style={styles.message}>This stream has no video feed configured yet.</Text></View>
-      )}
-    </View>
+    <>
+      <View style={styles.player}>
+        {ytLive && ytId ? (
+          <YouTubePlayer videoId={ytId} live startAt={0} title={stream?.title} showBack onChat={() => setChatOpen(true)} />
+        ) : hls ? (
+          <MuxPlayer uri={hls} title={stream?.title} live={stream?.status === 'live'} showBack onChat={() => setChatOpen(true)} />
+        ) : ytId ? (
+          <YouTubePlayer videoId={ytId} live={false} startAt={startAt} title={stream?.title} showBack onChat={() => setChatOpen(true)} />
+        ) : (
+          <View style={styles.center}><Text style={styles.message}>This stream has no video feed configured yet.</Text></View>
+        )}
+      </View>
+      <ChatPanel streamId={streamId} visible={chatOpen} onClose={() => setChatOpen(false)} />
+    </>
   );
 }
 

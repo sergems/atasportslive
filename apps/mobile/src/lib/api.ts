@@ -134,6 +134,31 @@ export interface AccessStatus {
   secondsRemaining?: number;
 }
 
+export interface LiveComment {
+  id: number;
+  userId: number;
+  username: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface AppNotification {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface NotificationListResponse {
+  notifications: AppNotification[];
+  total: number;
+  unreadCount: number;
+  page: number;
+  limit: number;
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
@@ -167,6 +192,14 @@ export const api = {
     }, token),
 
   publicSettings: () => request<Record<string, string>>('/settings/public'),
+
+  // ── Live chat ──
+  comments: (streamId: number) =>
+    request<{ comments: LiveComment[] }>(`/streams/${streamId}/comments`),
+  postComment: (streamId: number, token: string, content: string) =>
+    request<LiveComment>(`/streams/${streamId}/comments`, {
+      method: 'POST', body: JSON.stringify({ content }),
+    }, token),
 
   slides: () => request<{
     id: number; title: string; subtitle?: string | null; buttonText?: string | null;
@@ -223,6 +256,12 @@ export const api = {
   myBets: (token: string, query = 'limit=5') => request<{ bets: Bet[]; total: number }>(`/bets/my?${query}`, {}, token),
   notifications: (token: string) =>
     request<{ unreadCount: number }>('/notifications?unreadOnly=true', {}, token),
+  notificationsList: (token: string, page = 1, limit = 30) =>
+    request<NotificationListResponse>(`/notifications?page=${page}&limit=${limit}`, {}, token),
+  markNotificationRead: (token: string, id: number) =>
+    request<AppNotification>(`/notifications/${id}/read`, { method: 'PATCH' }, token),
+  markAllNotificationsRead: (token: string) =>
+    request<{ message: string }>('/notifications/read-all', { method: 'PATCH' }, token),
   registerPushToken: (token: string, fcmToken: string, platform: string) =>
     request<{ ok: boolean }>('/notifications/token', {
       method: 'POST', body: JSON.stringify({ token: fcmToken, platform }),

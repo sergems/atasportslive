@@ -13,6 +13,7 @@ export type PlayerControlsProps = {
   onToggleMute: () => void;
   onFullscreen: () => void;
   onBack?: () => void;
+  onChat?: () => void;
 };
 
 /** Shared, auto-hiding control surface drawn on top of the live video. */
@@ -26,6 +27,7 @@ export function PlayerControls({
   onToggleMute,
   onFullscreen,
   onBack,
+  onChat,
 }: PlayerControlsProps) {
   return (
     <View style={[StyleSheet.absoluteFill, styles.layer]} pointerEvents="box-none">
@@ -76,6 +78,16 @@ export function PlayerControls({
               <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={24} color="#FFFFFF" />
             </Pressable>
             <View style={styles.spacer} />
+            {onChat && (
+              <Pressable
+                onPress={onChat}
+                style={styles.roundButton}
+                hitSlop={8}
+                accessibilityLabel="Open live chat"
+              >
+                <Ionicons name="chatbubbles-outline" size={22} color="#FFFFFF" />
+              </Pressable>
+            )}
             <Pressable
               onPress={onFullscreen}
               style={styles.roundButton}

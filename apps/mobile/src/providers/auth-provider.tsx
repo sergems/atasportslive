@@ -15,6 +15,8 @@ type Status = 'loading' | 'unauthenticated' | 'locked' | 'authenticated';
 interface AuthContextValue {
   status: Status;
   user: AuthResponse['user'] | null;
+  /** Raw access token, needed for the WebSocket chat connection. */
+  accessToken: string | null;
   biometricAvailable: boolean;
   signIn: (email: string, password: string, useBiometrics: boolean) => Promise<void>;
   unlock: () => Promise<void>;
@@ -133,8 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [tokens]);
 
   const value = useMemo(() => ({
-    status, user, biometricAvailable, signIn, unlock, signOut, refreshUser, setBiometricProtection, authedFetch,
-  }), [status, user, biometricAvailable, signIn, unlock, signOut, refreshUser, setBiometricProtection, authedFetch]);
+    status, user, accessToken: tokens?.accessToken ?? null, biometricAvailable,
+    signIn, unlock, signOut, refreshUser, setBiometricProtection, authedFetch,
+  }), [status, user, tokens, biometricAvailable, signIn, unlock, signOut, refreshUser, setBiometricProtection, authedFetch]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

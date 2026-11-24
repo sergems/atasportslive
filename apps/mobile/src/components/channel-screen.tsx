@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as SecureStore from 'expo-secure-store';
 import { MuxPlayer, YouTubePlayer } from '@/components/video-players';
+import { ChatPanel } from '@/components/chat-panel';
 import { useLandscapeOnFocus } from '@/hooks/use-landscape-on-focus';
 import { useChannelStatus } from '@/hooks/use-channel-status';
 import { api } from '@/lib/api';
@@ -15,6 +16,7 @@ export function ChannelScreen({ channel }: { channel: 1 | 2 | 3 }) {
   const live = channel === 1 ? status.ch1Live : channel === 2 ? status.ch2Live : status.ch3Live;
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [startAt, setStartAt] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useLandscapeOnFocus();
 
@@ -29,6 +31,8 @@ export function ChannelScreen({ channel }: { channel: 1 | 2 | 3 }) {
   const muxId = settings[`${prefix}mux_playback_id`] ?? '';
   const muxLive = settings[`${prefix}mux_is_live`] === 'true';
   const hls = muxLive && muxId ? `https://stream.mux.com/${muxId}.m3u8` : '';
+  // Chat uses the linked DB stream id so it works for free and paid streams.
+  const chatStreamId = Number(settings[`${prefix}mux_stream_db_id`] || settings[`${prefix}yt_stream_db_id`] || 0) || undefined;
 
   useEffect(() => {
     if (!ytLive && ytId) {
@@ -47,20 +51,23 @@ export function ChannelScreen({ channel }: { channel: 1 | 2 | 3 }) {
   }
 
   return (
-    <View style={styles.player}>
-      {ytLive && ytId ? (
-        <YouTubePlayer videoId={ytId} live startAt={0} title={channelTitle} />
-      ) : hls ? (
-        <MuxPlayer uri={hls} title={channelTitle} />
-      ) : ytId ? (
-        <YouTubePlayer videoId={ytId} live={false} startAt={startAt} title={channelTitle} />
-      ) : (
-        <View style={styles.empty}>
-          <ActivityIndicator color={colors.primary} />
-          <Text style={styles.message}>Connecting to the live feed…</Text>
-        </View>
-      )}
-    </View>
+    <>
+      <View style={styles.player}>
+        {ytLive && ytId ? (
+          <YouTubePlayer videoId={ytId} live startAt={0} title={channelTitle} onChat={() => setChatOpen(true)} />
+        ) : hls ? (
+          <MuxPlayer uri={hls} title={channelTitle} onChat={() => setChatOpen(true)} />
+        ) : ytId ? (
+          <YouTubePlayer videoId={ytId} live={false} startAt={startAt} title={channelTitle} onChat={() => setChatOpen(true)} />
+        ) : (
+          <View style={styles.empty}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.message}>Connecting to the live feed…</Text>
+          </View>
+        )}
+      </View>
+      <ChatPanel streamId={chatStreamId} visible={chatOpen} onClose={() => setChatOpen(false)} />
+    </>
   );
 }
 
