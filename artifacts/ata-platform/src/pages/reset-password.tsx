@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSEO } from '@/lib/seo';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
+import { apiErrorMessage, readJsonOrThrow } from '@/lib/api-response';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,8 +45,8 @@ export default function ResetPassword() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, token, newPassword: newPw }),
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'Failed to reset password');
+      if (!res.ok) throw new Error(await apiErrorMessage(res));
+      const body = await readJsonOrThrow<{ accessToken: string; user: any }>(res);
       login(body.accessToken, body.user);
       setDone(true);
       const firstName = body.user.fullName?.split(' ')[0] || 'there';

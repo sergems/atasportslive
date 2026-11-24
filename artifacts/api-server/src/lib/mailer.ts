@@ -39,6 +39,27 @@ export async function sendMail(opts: {
   attachments?: { filename: string; content: string; contentType: string }[];
 }): Promise<boolean> {
   try {
+    // HTTPS-based provider (Resend) — works on servers where outbound SMTP
+    // ports are blocked. Activated by setting RESEND_API_KEY in the environment.
+    if (process.env.RESEND_API_KEY) {
+      const from = process.env.RESEND_FROM || 'ATA Sports Live <onboarding@resend.dev>';
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!response.ok) {
+        logger.error({ status: response.status, body: (await response.text()).slice(0, 300) }, 'Resend email failed');
+        return false;
+      }
+      logger.info({ to: opts.to, subject: opts.subject }, 'Email sent via Resend');
+      return true;
+    }
+
     const transporter = await createTransporter();
     if (!transporter) {
       logger.warn("SMTP not configured — skipping email");

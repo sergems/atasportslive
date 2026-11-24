@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
+import { apiErrorMessage, readJsonOrThrow } from '@/lib/api-response';
 import { useGoogleAuth } from '@/lib/google-auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLogin } from '@workspace/api-client-react';
@@ -51,8 +52,8 @@ function ForgotPasswordDialog({ open, onClose }: { open: boolean; onClose: () =>
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim() }),
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'Something went wrong');
+      if (!res.ok) throw new Error(await apiErrorMessage(res));
+      const body = await readJsonOrThrow<{ message?: string }>(res);
       setStep('sent');
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');

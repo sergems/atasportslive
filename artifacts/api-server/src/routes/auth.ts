@@ -645,7 +645,8 @@ router.post("/forgot-password", async (req, res): Promise<void> => {
   });
 
   if (!sent) {
-    res.status(502).json({ error: "Unable to send the password reset email. Please try again later." });
+    // Return a 4xx so proxies don't replace our JSON with an HTML error page.
+    res.status(400).json({ error: "Unable to send the password reset email right now. Please try again later or contact support." });
     return;
   }
 
