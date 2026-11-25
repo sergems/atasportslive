@@ -8,7 +8,7 @@ import {
 
 const SCREENS = [
   { src: '/app-screens/home.png', label: 'Home' },
-  { src: '/app-screens/live.png', label: 'Live player' },
+  { src: '/app-screens/live.png', label: 'Livestream' },
   { src: '/app-screens/wallet.png', label: 'Wallet' },
   { src: '/app-screens/subscription.png', label: 'Subscriptions' },
   { src: '/app-screens/more.png', label: 'More' },

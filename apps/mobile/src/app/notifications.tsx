@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Screen, ScreenHeader, SectionTitle } from '@/components/ui';
+import { router } from 'expo-router';
+import { SectionTitle } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
 import { api } from '@/lib/api';
 import { colors, fontSize, radius, spacing } from '@/theme';
@@ -14,6 +15,12 @@ const iconFor = (type: string) => {
   if (type.includes('bet') || type.includes('game')) return 'trophy-outline';
   return 'notifications-outline';
 };
+
+const MENU = [
+  { label: 'Home', icon: 'home-outline', href: '/(tabs)/' },
+  { label: 'Wallet', icon: 'wallet-outline', href: '/(tabs)/wallet' },
+  { label: 'More', icon: 'menu-outline', href: '/(tabs)/more' },
+] as const;
 
 export default function NotificationsScreen() {
   const { authedFetch } = useAuth();
@@ -46,8 +53,17 @@ export default function NotificationsScreen() {
   const items = data?.notifications ?? [];
 
   return (
-    <Screen scroll={false}>
-      <ScreenHeader title="Notifications" />
+    <View style={styles.root}>
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Go back">
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
+        </Pressable>
+        <Text style={styles.headerTitle}>Notifications</Text>
+        <Pressable onPress={() => router.push('/(tabs)/more')} hitSlop={10} accessibilityLabel="Open menu">
+          <Ionicons name="menu-outline" size={23} color={colors.primary} />
+        </Pressable>
+      </View>
+
       <View style={styles.head}>
         <SectionTitle>{data?.unreadCount ? `${data.unreadCount} unread` : 'All caught up'}</SectionTitle>
         {!!data?.unreadCount && (
@@ -63,6 +79,7 @@ export default function NotificationsScreen() {
         <FlatList
           data={items}
           keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.list}
           renderItem={({ item }) => (
             <Pressable onPress={() => void open(item.id)} style={[styles.row, !item.read && styles.rowUnread]}>
               <View style={styles.iconWrap}>
@@ -80,17 +97,34 @@ export default function NotificationsScreen() {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={colors.primary} />}
         />
       )}
-    </Screen>
+
+      <View style={styles.menu}>
+        {MENU.map((item) => (
+          <Pressable key={item.label} onPress={() => router.push(item.href)} style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}>
+            <Ionicons name={item.icon} size={21} color={colors.primary} />
+            <Text style={styles.menuLabel}>{item.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  headerTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
   head: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg, paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm,
   },
   markAll: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '800' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  list: { paddingBottom: 100 },
   row: {
     flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md,
     marginHorizontal: spacing.lg, marginBottom: spacing.sm,
@@ -108,4 +142,14 @@ const styles = StyleSheet.create({
   time: { color: colors.muted, fontSize: fontSize.xs, marginTop: 4 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary, marginTop: 6 },
   empty: { color: colors.muted, fontSize: fontSize.sm, textAlign: 'center', paddingVertical: 48 },
+  menu: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'space-around',
+    backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border,
+    paddingVertical: spacing.sm, paddingBottom: spacing.md,
+  },
+  menuItem: { flex: 1, alignItems: 'center', gap: 3 },
+  menuItemPressed: { opacity: 0.6 },
+  menuLabel: { color: colors.text, fontSize: 11, fontWeight: '700' },
 });
+

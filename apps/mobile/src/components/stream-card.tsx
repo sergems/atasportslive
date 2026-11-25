@@ -1,19 +1,16 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { colors, fontSize, radius, spacing } from '@/theme';
 import type { StreamItem } from '@/lib/api';
 import { resolveAssetUrl } from '@/lib/api';
 
+/** Display-only card. It never navigates, so it cannot trigger the player's landscape lock. */
 export function StreamCard({ stream }: { stream: StreamItem }) {
   const live = stream.status === 'live';
   const thumb = resolveAssetUrl(stream.thumbnailUrl);
   return (
-    <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-      onPress={() => router.push(`/player/${stream.id}`)}
-    >
+    <View style={styles.card}>
       <Image
         source={thumb ? { uri: thumb } : require('../../assets/icon.png')}
         style={styles.thumb}
@@ -34,7 +31,7 @@ export function StreamCard({ stream }: { stream: StreamItem }) {
           {live ? `${stream.viewerCount ?? 0} watching` : `$${Number(stream.accessPrice ?? 0).toFixed(2)} access`}
         </Text>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -44,7 +41,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderRadius: radius.md,
     borderWidth: 1, borderColor: colors.border,
   },
-  pressed: { opacity: 0.75 },
   thumb: { width: 116, height: 78, borderRadius: radius.sm, backgroundColor: colors.surfaceAlt },
   body: { flex: 1, gap: spacing.xs, justifyContent: 'center' },
   badges: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

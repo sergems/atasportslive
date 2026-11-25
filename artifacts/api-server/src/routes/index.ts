@@ -19,6 +19,7 @@ import commentsRouter from "./comments";
 import reactionsRouter from "./reactions";
 import subscriptionsRouter from "./subscriptions";
 import influencersRouter from "./influencers";
+import webhooksRouter from "./webhooks";
 
 const router: IRouter = Router();
 
@@ -42,5 +43,6 @@ router.use("/slides", slidesRouter);
 router.use("/promotions", promotionsRouter);
 router.use("/subscriptions", subscriptionsRouter);
 router.use("/influencers", influencersRouter);
+router.use("/webhooks", webhooksRouter);
 
 export default router;

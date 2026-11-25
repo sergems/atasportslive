@@ -53,6 +53,7 @@ services:
       APP_BASE_URL: ${APP_BASE_URL:-https://atasportslive.com}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM: ${RESEND_FROM:-}
+      REVENUECAT_WEBHOOK_SECRET: ${REVENUECAT_WEBHOOK_SECRET:-}
       PORT: "8080"
       NODE_ENV: production
     volumes:

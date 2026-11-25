@@ -1,22 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Card, PrimaryButton, Screen, SectionTitle, SegmentedTabs, TextField } from '@/components/ui';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Card, PrimaryButton, Screen, SectionTitle, TextField } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
 import { api } from '@/lib/api';
+import { CREDIT_PRODUCTS, getCreditProducts, isIapAvailable, purchaseCredit, syncIapUser, type CreditProduct } from '@/lib/iap';
 import { colors, fontSize, radius, spacing } from '@/theme';
-
-const PROVIDERS = [
-  ['MTN_MOMO_UGA', '🇺🇬 MTN MoMo — Uganda'], ['AIRTEL_UGA', '🇺🇬 Airtel Money — Uganda'],
-  ['MPESA_KEN', '🇰🇪 M-Pesa — Kenya'], ['AIRTEL_KEN', '🇰🇪 Airtel Money — Kenya'],
-  ['VODACOM_TZA', '🇹🇿 M-Pesa — Tanzania'], ['AIRTEL_TZA', '🇹🇿 Airtel Money — Tanzania'],
-  ['TIGO_TZA', '🇹🇿 Tigo Pesa — Tanzania'], ['MTN_MOMO_RWA', '🇷🇼 MTN MoMo — Rwanda'],
-  ['AIRTEL_RWA', '🇷🇼 Airtel Money — Rwanda'], ['MTN_MOMO_ZMB', '🇿🇲 MTN MoMo — Zambia'],
-  ['AIRTEL_ZMB', '🇿🇲 Airtel Money — Zambia'], ['MTN_MOMO_GHA', '🇬🇭 MTN MoMo — Ghana'],
-  ['MPESA_MOZ', '🇲🇿 M-Pesa — Mozambique'], ['VODACOM_COD', '🇨🇩 M-Pesa — DR Congo'],
-  ['AIRTEL_COD', '🇨🇩 Airtel Money — DR Congo'], ['AIRTEL_MWI', '🇲🇼 Airtel Money — Malawi'],
-  ['MTN_MOMO_CMR', '🇨🇲 MTN MoMo — Cameroon'], ['ORANGE_CIV', '🇨🇮 Orange Money — Côte d’Ivoire'],
-] as const;
 
 const money = (v?: number) => `$${(v ?? 0).toFixed(2)}`;
 const message = (e: unknown) => e instanceof Error ? e.message : 'Something went wrong';
@@ -31,26 +20,25 @@ const payoutLabel = (value?: string | null) => PAYOUT_METHODS.find((m) => m.valu
 export default function WalletScreen() {
   const { authedFetch, user } = useAuth();
   const queryClient = useQueryClient();
-  const [depositTab, setDepositTab] = useState('pawapay');
-  const [amount, setAmount] = useState('');
-  const [phone, setPhone] = useState('');
-  const [provider, setProvider] = useState<string>('MTN_MOMO_UGA');
   const [voucher, setVoucher] = useState('');
   const [bonusCode, setBonusCode] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [payoutMethod, setPayoutMethod] = useState<string>('mtn_momo');
   const [payoutAccount, setPayoutAccount] = useState('');
   const [confirmPayout, setConfirmPayout] = useState(false);
-  const [pendingDeposit, setPendingDeposit] = useState<string | null>(null);
-  const [pesapalRef, setPesapalRef] = useState<string | null>(null);
-  const pawapayAttempts = useRef(0);
-  const pesapalAttempts = useRef(0);
+  const [creditProducts, setCreditProducts] = useState<CreditProduct[]>([...CREDIT_PRODUCTS]);
+  const [selectedCredit, setSelectedCredit] = useState<string>(CREDIT_PRODUCTS[0].id);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => { void syncIapUser(user?.id); }, [user?.id]);
+  useEffect(() => {
+    if (!isIapAvailable()) return;
+    void getCreditProducts().then(setCreditProducts);
+  }, []);
 
   const { data: wallet, isLoading } = useQuery({
     queryKey: ['wallet'], queryFn: () => authedFetch((t) => api.wallet(t)),
   });
-  const { data: gateway } = useQuery({ queryKey: ['gateway-status'], queryFn: api.gatewayStatus, staleTime: 60_000 });
   const { data: tx } = useQuery({
     queryKey: ['wallet-transactions'], queryFn: () => authedFetch((t) => api.transactions(t, 8)),
   });
@@ -67,55 +55,6 @@ export default function WalletScreen() {
     void queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
   };
 
-  // Confirm payment / poll PawaPay while the deposit is pending.
-  const poll = useQuery({
-    queryKey: ['pawapay-status', pendingDeposit],
-    queryFn: () => authedFetch((t) => api.pawapayDepositStatus(t, pendingDeposit!)),
-    enabled: !!pendingDeposit,
-    refetchInterval: () => {
-      pawapayAttempts.current += 1;
-      return pawapayAttempts.current > 40 ? false : 3000;
-    },
-  });
-  const pesapalPoll = useQuery({
-    queryKey: ['pesapal-status', pesapalRef],
-    queryFn: () => authedFetch((t) => api.pesapalStatus(t, pesapalRef!)),
-    enabled: !!pesapalRef,
-    refetchInterval: () => {
-      pesapalAttempts.current += 1;
-      return pesapalAttempts.current > 40 ? false : 3000;
-    },
-  });
-  React.useEffect(() => {
-    if (poll.data?.status === 'completed') {
-      // Poll results come from the network; the UI must react to the status change.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPendingDeposit(null); setAmount(''); setPhone(''); refresh();
-      queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
-      Alert.alert('Deposit confirmed', `${money(poll.data.amount)} added to your wallet.`);
-    } else if (poll.data?.status === 'failed') {
-      setPendingDeposit(null);
-      Alert.alert('Deposit failed', 'The payment was declined or cancelled.');
-    }
-  }, [poll.data?.status]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  React.useEffect(() => {
-    const status = pesapalPoll.data?.status;
-    if (status === 'completed' || status === 'failed') {
-      // Poll results come from the network; the UI must react to the status change.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPesapalRef(null);
-      setWithdrawAmount('');
-      refresh();
-      Alert.alert(
-        status === 'completed' ? 'Deposit confirmed' : 'Deposit not completed',
-        status === 'completed'
-          ? `${money(pesapalPoll.data?.amount)} added to your wallet.`
-          : 'The payment was not completed. Please try again.',
-      );
-    }
-  }, [pesapalPoll.data?.status]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     try { await fn(); }
@@ -123,38 +62,28 @@ export default function WalletScreen() {
     finally { setBusy(false); }
   };
 
-  const payPawapay = () => run(async () => {
-    const res = await authedFetch((t) => api.pawapayDeposit(t, Number(amount), phone.trim(), provider));
-    pawapayAttempts.current = 0;
-    setPendingDeposit(res.depositId);
-  });
-
-  const payPesapal = () => run(async () => {
-    const res = await authedFetch((t) => api.pesapalInitiate(t, Number(amount)));
-    pesapalAttempts.current = 0;
-    setPesapalRef(res.transactionId);
-    Alert.alert('Complete payment', 'Finish the payment in your browser. This screen updates once it is confirmed.', [
-      { text: 'Continue', onPress: () => {
-        void (async () => {
-          const supported = await Linking.canOpenURL(res.redirectUrl);
-          if (supported) await Linking.openURL(res.redirectUrl);
-          else Alert.alert('Open in browser', res.redirectUrl);
-        })();
-      } },
-    ]);
-  });
-
   const redeemVoucherCode = () => run(async () => {
     const res = await authedFetch((t) => api.redeemVoucher(t, voucher.replace(/-/g, '')));
     Alert.alert('Voucher redeemed', `${money(res.amount)} added to your wallet.`);
     setVoucher(''); refresh();
   });
 
+  const buyCredits = () => run(async () => {
+    if (!isIapAvailable()) {
+      Alert.alert('Not available here', 'Install the Android app from Google Play to buy credits.');
+      return;
+    }
+    await purchaseCredit(selectedCredit);
+    Alert.alert('Payment complete', 'Your credits will appear in your wallet shortly. Tap OK to refresh.', [
+      { text: 'OK', onPress: refresh },
+    ]);
+  });
+
   const applyBonus = () => run(async () => {
     const code = bonusCode.trim().toUpperCase();
     const check = await authedFetch((t) => api.validatePromo(t, code, 0));
     if (!check.valid) throw new Error(check.reason ?? 'This bonus code is not valid.');
-    if (!check.isBonus) throw new Error('That is a deposit promo. Use it in the Deposit tab.');
+    if (!check.isBonus) throw new Error('That code is not a bonus code.');
     Alert.alert(
       'Apply bonus',
       `${check.promotion?.name ?? 'Bonus'} — ${money(check.estimatedBonus)} will be added to your Bonus Wallet. Bonus funds are for livestreams only and cannot be withdrawn.`,
@@ -165,7 +94,7 @@ export default function WalletScreen() {
             await authedFetch((t) => api.applyPromo(t, code));
             Alert.alert('Bonus applied', `${money(check.estimatedBonus)} added to your Bonus Wallet.`);
             setBonusCode(''); refresh();
-            queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
+            void queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
           });
         } },
       ],
@@ -207,76 +136,39 @@ export default function WalletScreen() {
       </View>
       {isLoading && <ActivityIndicator color={colors.primary} />}
 
-      {/* Bonus code */}
+      {/* Deposit — mobile version: voucher only, in-app purchases coming next */}
+      <Card>
+        <Text style={styles.cardTitle}>Deposit</Text>
+        <Text style={styles.hint}>Enter your 12-character ATA voucher code to credit your wallet instantly.</Text>
+        <TextField label="Voucher code" value={voucher} onChangeText={(v) => setVoucher(formatVoucher(v))} placeholder="XXXX-XXXX-XXXX" maxLength={14} />
+        <PrimaryButton title={busy ? 'Redeeming…' : 'Redeem Voucher'} onPress={redeemVoucherCode} disabled={voucher.replace(/-/g, '').length !== 12 || busy} />
+        <Text style={styles.sectionLabel}>Or buy credits with Google Play</Text>
+        <View style={styles.creditGrid}>
+          {creditProducts.map((p) => (
+            <Pressable
+              key={p.id}
+              onPress={() => setSelectedCredit(p.id)}
+              style={[styles.creditChip, selectedCredit === p.id && styles.creditChipActive]}
+            >
+              <Text style={[styles.creditChipText, selectedCredit === p.id && styles.creditChipTextActive]}>${p.amount}</Text>
+            </Pressable>
+          ))}
+        </View>
+        <PrimaryButton
+          title={busy ? 'Processing…' : `Buy $${creditProducts.find((p) => p.id === selectedCredit)?.amount ?? 1} credits`}
+          onPress={buyCredits}
+          disabled={busy}
+          tone="accent"
+        />
+        <Text style={styles.iapNote}>Credits are added by the server after Google Play confirms payment.</Text>
+      </Card>
+
+      {/* Bonus code directly below Deposit */}
       <Card style={styles.bonusCard}>
         <Text style={styles.cardTitle}>🎁 Redeem a Bonus Code</Text>
         <Text style={styles.hint}>Loads straight into your Bonus Wallet — no deposit needed. For livestreams only; not withdrawable.</Text>
         <TextField label="Bonus code" value={bonusCode} onChangeText={(v) => setBonusCode(v.toUpperCase())} placeholder="BONUS-A1B2C3" autoCapitalize="characters" />
         <PrimaryButton title={busy ? 'Working…' : 'Apply Bonus'} onPress={applyBonus} disabled={!bonusCode.trim() || busy} tone="accent" />
-      </Card>
-
-      {/* Deposit */}
-      <Card>
-        <Text style={styles.cardTitle}>Deposit</Text>
-        <SegmentedTabs
-          value={depositTab}
-          onChange={setDepositTab}
-          options={[
-            { value: 'pawapay', label: 'PawaPay' },
-            { value: 'pesapal', label: 'Pesapal' },
-            { value: 'voucher', label: 'Voucher' },
-          ]}
-        />
-        {!!gateway && !gateway.pawapayEnabled && <Text style={styles.hint}>PawaPay is temporarily unavailable — use Pesapal or a voucher.</Text>}
-        {!!gateway && !gateway.pesapalEnabled && <Text style={styles.hint}>Pesapal is temporarily unavailable — use PawaPay or a voucher.</Text>}
-
-        {depositTab !== 'voucher' && (
-          <>
-            <TextField label="Amount (USD)" value={amount} onChangeText={setAmount} placeholder="0.00" keyboardType="decimal-pad" />
-            <Text style={styles.hint}>Have a bonus code? Use the Bonus Code field above.</Text>
-          </>
-        )}
-
-        {depositTab === 'pawapay' && (
-          <>
-            {pendingDeposit ? (
-              <View style={styles.waiting}>
-                <ActivityIndicator color={colors.cash} size="large" />
-                <Text style={styles.waitingTitle}>Check your phone!</Text>
-                <Text style={styles.hint}>Approve the mobile money prompt sent to {phone}. This screen updates automatically.</Text>
-                <Pressable onPress={() => setPendingDeposit(null)}><Text style={styles.link}>Cancel / Try again</Text></Pressable>
-              </View>
-            ) : (
-              <>
-                <Text style={styles.fieldLabel}>Mobile network</Text>
-                <ScrollView style={styles.providerList} nestedScrollEnabled>
-                  {PROVIDERS.map(([value, label]) => (
-                    <Pressable key={value} onPress={() => setProvider(value)} style={[styles.chip, provider === value && styles.chipActive]}>
-                      <Text style={[styles.chipText, provider === value && styles.chipTextActive]}>{label}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-                <TextField label="Mobile number" value={phone} onChangeText={setPhone} placeholder="e.g. 0771234567" keyboardType="phone-pad" />
-                <PrimaryButton title={busy ? 'Sending prompt…' : 'Pay with PawaPay'} onPress={payPawapay} disabled={Number(amount) < 1 || !phone.trim() || busy} />
-              </>
-            )}
-          </>
-        )}
-
-        {depositTab === 'pesapal' && (
-          <>
-            <Text style={styles.hint}>Pay securely with MTN MoMo, Airtel Money or Visa/Mastercard via Pesapal. Minimum $1.00.</Text>
-            <PrimaryButton title={busy ? 'Opening Pesapal…' : 'Pay with Pesapal'} onPress={payPesapal} disabled={Number(amount) < 1 || busy} tone="accent" />
-          </>
-        )}
-
-        {depositTab === 'voucher' && (
-          <>
-            <Text style={styles.hint}>Enter your 12-character ATA voucher code to credit your wallet instantly.</Text>
-            <TextField label="Voucher code" value={voucher} onChangeText={(v) => setVoucher(formatVoucher(v))} placeholder="XXXX-XXXX-XXXX" maxLength={14} />
-            <PrimaryButton title={busy ? 'Redeeming…' : 'Redeem Voucher'} onPress={redeemVoucherCode} disabled={voucher.replace(/-/g, '').length !== 12 || busy} />
-          </>
-        )}
       </Card>
 
       {/* Payout account — required before any withdrawal */}
@@ -388,19 +280,19 @@ const styles = StyleSheet.create({
   cash: { color: colors.cash }, bonus: { color: colors.bonus }, muted: { color: colors.muted },
   cardTitle: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800', marginBottom: spacing.sm },
   hint: { color: colors.muted, fontSize: fontSize.sm, lineHeight: 19 },
+  iapNote: { color: colors.muted, fontSize: fontSize.xs, textAlign: 'center', marginTop: spacing.sm },
+  sectionLabel: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700', marginTop: spacing.md, marginBottom: spacing.sm },
+  creditGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
+  creditChip: { minWidth: 58, alignItems: 'center', paddingVertical: 9, paddingHorizontal: spacing.md, borderRadius: radius.sm, backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border },
+  creditChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  creditChipText: { color: colors.text, fontWeight: '800', fontSize: fontSize.sm },
+  creditChipTextActive: { color: colors.onPrimary },
   bonusCard: { borderColor: '#FACC1555', gap: spacing.sm },
-  promoRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
-  promoInput: { flex: 1 },
-  smallButton: { backgroundColor: colors.surfaceAlt, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 13 },
-  smallButtonText: { color: colors.primary, fontWeight: '700' },
   fieldLabel: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
-  providerList: { maxHeight: 130 },
   chip: { paddingVertical: 7, paddingHorizontal: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceAlt, marginBottom: 6 },
   chipActive: { backgroundColor: colors.primary },
   chipText: { color: colors.muted, fontSize: fontSize.sm },
   chipTextActive: { color: colors.onPrimary, fontWeight: '700' },
-  waiting: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
-  waitingTitle: { color: colors.text, fontWeight: '800', fontSize: fontSize.lg },
   link: { color: colors.primary, textDecorationLine: 'underline', paddingVertical: spacing.sm },
   confirmBox: { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },

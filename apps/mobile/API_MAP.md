@@ -14,7 +14,7 @@ The mobile app talks to the existing ATA backend. Base URL: `EXPO_PUBLIC_API_URL
 | Forgot password | `POST /auth/forgot-password` | Implemented (`forgot-password.tsx`) |
 | Reset password | `POST /auth/reset-password` | Implemented; email link has an "Open in app" deep link on the website |
 | Wallet | `GET /wallet` | Implemented (cash + bonus always shown) |
-| Deposits | `POST /wallet/pawapay/deposit`, `POST /wallet/pesapal/initiate` | Implemented (status polling, 40-attempt cap) |
+| Deposits | Voucher redemption + Google Play credit tiers | Vouchers are admin-generated; Play sells $1/$2/$5/$10/$20/$50 credits via RevenueCat (Android only) |
 | Withdrawals | `POST /wallet/withdraw` | Implemented; gated on FICA + payout method |
 | Payout method | `GET/POST /wallet/payout-method` | Implemented (one-time setup with confirmation) |
 | Vouchers | `POST /wallet/redeem-voucher` | Implemented |
