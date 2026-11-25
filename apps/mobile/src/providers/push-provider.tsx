@@ -1,28 +1,34 @@
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
-import {
-  getMessaging, getToken, requestPermission, AuthorizationStatus,
-  onMessage, onTokenRefresh, onNotificationOpenedApp, getInitialNotification,
-  type RemoteMessage,
-} from '@react-native-firebase/messaging';
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { AndroidImportance, SchedulableTriggerInputTypes } from 'expo-notifications';
 import { router } from 'expo-router';
 import { useAuth } from '@/providers/auth-provider';
 import { api } from '@/lib/api';
+import type { RemoteMessage } from '@react-native-firebase/messaging';
 
-// Firebase Messaging is native-only. Expo Go and misconfigured dev builds have
-// no default Firebase app, so a missing module must not crash the whole app.
-function messagingSafe() {
-  if (Platform.OS === 'web') return null;
-  try {
-    return getMessaging();
-  } catch {
-    return null;
+type FirebaseMessaging = typeof import('@react-native-firebase/messaging');
+
+let firebase: FirebaseMessaging | null = null;
+
+/**
+ * Firebase Messaging ships no native module in Expo Go or on web. Importing it
+ * at module scope crashes the whole app there, so load it lazily only in a
+ * native build.
+ */
+function getFirebase(): FirebaseMessaging | null {
+  if (Platform.OS === 'web' || Constants.expoVersion) return null;
+  if (!firebase) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      firebase = require('@react-native-firebase/messaging') as FirebaseMessaging;
+    } catch {
+      return null;
+    }
   }
+  return firebase;
 }
-
-const messaging = messagingSafe();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -44,10 +50,11 @@ async function prepareChannel() {
 }
 
 export async function requestPushPermission(): Promise<boolean> {
-  if (!messaging) return false;
+  const fb = getFirebase();
+  if (!fb) return false;
   await prepareChannel();
-  const status = await requestPermission(messaging);
-  return status === AuthorizationStatus.AUTHORIZED || status === AuthorizationStatus.PROVISIONAL;
+  const status = await fb.requestPermission(fb.getMessaging());
+  return status === fb.AuthorizationStatus.AUTHORIZED || status === fb.AuthorizationStatus.PROVISIONAL;
 }
 
 /** Only internal app paths may be used as notification deep links. */
@@ -64,8 +71,11 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
   const { status, authedFetch } = useAuth();
 
   useEffect(() => {
-    if (status !== 'authenticated' || !messaging) return;
+    if (status !== 'authenticated') return;
+    const fb = getFirebase();
+    if (!fb) return;
     let active = true;
+    const messaging = fb.getMessaging();
 
     const register = async (fcmToken: string) => {
       if (!active || !fcmToken) return;
@@ -78,17 +88,20 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
       try {
         const granted = await requestPushPermission();
         if (!granted) return;
-        await register(await getToken(messaging));
+        await register(await fb.getToken(messaging));
       } catch { /* push unavailable on this device/build */ }
     })();
 
-    const refresh = onTokenRefresh(messaging, (token) => { void register(token); });
+    const refresh = fb.onTokenRefresh(messaging, (token) => { void register(token); });
     return () => { active = false; refresh(); };
   }, [status, authedFetch]);
 
   useEffect(() => {
-    if (!messaging) return;
-    const showForeground = onMessage(messaging, (remote: RemoteMessage) => {
+    const fb = getFirebase();
+    if (!fb) return;
+    const messaging = fb.getMessaging();
+
+    const showForeground = fb.onMessage(messaging, (remote: RemoteMessage) => {
       void Notifications.scheduleNotificationAsync({
         content: {
           title: remote.notification?.title ?? 'ATA Sports Live',
@@ -103,10 +116,10 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => {});
     });
 
-    const openedApp = onNotificationOpenedApp(messaging, (remote: RemoteMessage) => {
+    const openedApp = fb.onNotificationOpenedApp(messaging, (remote: RemoteMessage) => {
       openInternalUrl(remote.data?.url);
     });
-    void getInitialNotification(messaging)
+    void fb.getInitialNotification(messaging)
       .then((remote) => { if (remote) openInternalUrl(remote.data?.url); })
       .catch(() => {});
 

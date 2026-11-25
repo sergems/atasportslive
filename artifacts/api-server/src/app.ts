@@ -32,6 +32,10 @@ app.use(cors({
     if (!origin) return callback(null, true);
     const allowed = [
       /^https?:\/\/localhost(:\d+)?$/,
+      // Expo web/dev previews (cloud simulator and LAN builds)
+      /\.expo\.app$/,
+      /\.expo\.dev$/,
+      /^exp:\/\//,
       /\.replit\.dev$/,
       /\.repl\.co$/,
       /^https?:\/\/(www\.)?atasportslive\.com\/?$/,
