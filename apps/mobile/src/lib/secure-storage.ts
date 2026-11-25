@@ -64,6 +64,19 @@ export async function clearTokens(): Promise<void> {
   ]);
 }
 
+/**
+ * Reads the stored access token without a biometric prompt. Used only so the
+ * lock screen's "Use email instead" can revoke the session on the server; it
+ * is never exposed to screens while the app is locked.
+ */
+export async function readAccessTokenRaw(): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(KEYS.access);
+  } catch {
+    return null;
+  }
+}
+
 /** Explicit biometric gate used by the lock screen before reading tokens. */
 export async function promptBiometrics(): Promise<boolean> {
   try {

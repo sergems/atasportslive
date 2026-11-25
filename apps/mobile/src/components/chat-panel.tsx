@@ -43,15 +43,18 @@ export function ChatPanel({
   useEffect(() => {
     if (!visible || !streamId) return;
     let destroyed = false;
-    let reconnect: ReturnType<typeof setTimeout>;
+    let reconnect: ReturnType<typeof setTimeout> | undefined;
+    let socket: WebSocket | undefined;
+    let attempts = 0;
 
     const connect = () => {
       if (destroyed) return;
       const host = APP_ORIGIN.replace(/^https?:\/\//, '');
       const scheme = APP_ORIGIN.startsWith('https:') ? 'wss' : 'ws';
       const tokenParam = accessToken ? `&token=${encodeURIComponent(accessToken)}` : '';
-      const ws = new WebSocket(`${scheme}://${host}/ws?streamId=${streamId}${tokenParam}`);
-      ws.onmessage = (event) => {
+      socket = new WebSocket(`${scheme}://${host}/ws?streamId=${streamId}${tokenParam}`);
+      socket.onopen = () => { attempts = 0; };
+      socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'stream_comment' && data.comment) {
@@ -62,11 +65,22 @@ export function ChatPanel({
           }
         } catch { /* ignore malformed frames */ }
       };
-      ws.onclose = () => { if (!destroyed) reconnect = setTimeout(connect, 3000); };
+      const scheduleReconnect = () => {
+        if (destroyed) return;
+        attempts = Math.min(attempts + 1, 5);
+        clearTimeout(reconnect);
+        reconnect = setTimeout(connect, Math.min(3000 * attempts, 15000));
+      };
+      socket.onerror = scheduleReconnect;
+      socket.onclose = scheduleReconnect;
     };
 
     connect();
-    return () => { destroyed = true; clearTimeout(reconnect); };
+    return () => {
+      destroyed = true;
+      clearTimeout(reconnect);
+      socket?.close();
+    };
   }, [visible, streamId, accessToken]);
 
   useEffect(() => {

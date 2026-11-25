@@ -150,6 +150,13 @@ export default function ResetPassword() {
               >
                 ← Back to sign in
               </button>
+
+              <a
+                href={`atasportslive://reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`}
+                className="block w-full text-center text-xs text-teal-400/80 hover:text-teal-300 transition-colors"
+              >
+                Using the ATA app? Open there instead →
+              </a>
             </form>
           </CardContent>
         )}

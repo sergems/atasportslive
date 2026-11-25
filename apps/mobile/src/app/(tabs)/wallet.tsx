@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card, PrimaryButton, Screen, SectionTitle, SegmentedTabs, TextField } from '@/components/ui';
@@ -21,6 +21,13 @@ const PROVIDERS = [
 const money = (v?: number) => `$${(v ?? 0).toFixed(2)}`;
 const message = (e: unknown) => e instanceof Error ? e.message : 'Something went wrong';
 
+const PAYOUT_METHODS = [
+  { value: 'mtn_momo', label: 'MTN MoMo', placeholder: '0771234567' },
+  { value: 'airtel_money', label: 'Airtel Money', placeholder: '0751234567' },
+  { value: 'btc_binance', label: 'Bitcoin (Binance)', placeholder: 'BTC wallet address' },
+] as const;
+const payoutLabel = (value?: string | null) => PAYOUT_METHODS.find((m) => m.value === value)?.label ?? value ?? '';
+
 export default function WalletScreen() {
   const { authedFetch, user } = useAuth();
   const queryClient = useQueryClient();
@@ -30,8 +37,14 @@ export default function WalletScreen() {
   const [provider, setProvider] = useState<string>('MTN_MOMO_UGA');
   const [voucher, setVoucher] = useState('');
   const [bonusCode, setBonusCode] = useState('');
-  const [promo, setPromo] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [payoutMethod, setPayoutMethod] = useState<string>('mtn_momo');
+  const [payoutAccount, setPayoutAccount] = useState('');
+  const [confirmPayout, setConfirmPayout] = useState(false);
   const [pendingDeposit, setPendingDeposit] = useState<string | null>(null);
+  const [pesapalRef, setPesapalRef] = useState<string | null>(null);
+  const pawapayAttempts = useRef(0);
+  const pesapalAttempts = useRef(0);
   const [busy, setBusy] = useState(false);
 
   const { data: wallet, isLoading } = useQuery({
@@ -44,15 +57,34 @@ export default function WalletScreen() {
   const { data: bonuses } = useQuery({
     queryKey: ['my-bonuses'], queryFn: () => authedFetch((t) => api.myBonuses(t)),
   });
+  const { data: payout, isLoading: loadingPayout } = useQuery({
+    queryKey: ['payout-method'], queryFn: () => authedFetch((t) => api.payoutMethod(t)),
+  });
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['wallet'] });
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ['wallet'] });
+    void queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+    void queryClient.invalidateQueries({ queryKey: ['my-bonuses'] });
+  };
 
   // Confirm payment / poll PawaPay while the deposit is pending.
   const poll = useQuery({
     queryKey: ['pawapay-status', pendingDeposit],
     queryFn: () => authedFetch((t) => api.pawapayDepositStatus(t, pendingDeposit!)),
     enabled: !!pendingDeposit,
-    refetchInterval: 3000,
+    refetchInterval: () => {
+      pawapayAttempts.current += 1;
+      return pawapayAttempts.current > 40 ? false : 3000;
+    },
+  });
+  const pesapalPoll = useQuery({
+    queryKey: ['pesapal-status', pesapalRef],
+    queryFn: () => authedFetch((t) => api.pesapalStatus(t, pesapalRef!)),
+    enabled: !!pesapalRef,
+    refetchInterval: () => {
+      pesapalAttempts.current += 1;
+      return pesapalAttempts.current > 40 ? false : 3000;
+    },
   });
   React.useEffect(() => {
     if (poll.data?.status === 'completed') {
@@ -67,6 +99,23 @@ export default function WalletScreen() {
     }
   }, [poll.data?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  React.useEffect(() => {
+    const status = pesapalPoll.data?.status;
+    if (status === 'completed' || status === 'failed') {
+      // Poll results come from the network; the UI must react to the status change.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPesapalRef(null);
+      setWithdrawAmount('');
+      refresh();
+      Alert.alert(
+        status === 'completed' ? 'Deposit confirmed' : 'Deposit not completed',
+        status === 'completed'
+          ? `${money(pesapalPoll.data?.amount)} added to your wallet.`
+          : 'The payment was not completed. Please try again.',
+      );
+    }
+  }, [pesapalPoll.data?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
     try { await fn(); }
@@ -76,14 +125,23 @@ export default function WalletScreen() {
 
   const payPawapay = () => run(async () => {
     const res = await authedFetch((t) => api.pawapayDeposit(t, Number(amount), phone.trim(), provider));
+    pawapayAttempts.current = 0;
     setPendingDeposit(res.depositId);
   });
 
   const payPesapal = () => run(async () => {
     const res = await authedFetch((t) => api.pesapalInitiate(t, Number(amount)));
-    const supported = await Linking.canOpenURL(res.redirectUrl);
-    if (supported) await Linking.openURL(res.redirectUrl);
-    else Alert.alert('Open in browser', res.redirectUrl);
+    pesapalAttempts.current = 0;
+    setPesapalRef(res.transactionId);
+    Alert.alert('Complete payment', 'Finish the payment in your browser. This screen updates once it is confirmed.', [
+      { text: 'Continue', onPress: () => {
+        void (async () => {
+          const supported = await Linking.canOpenURL(res.redirectUrl);
+          if (supported) await Linking.openURL(res.redirectUrl);
+          else Alert.alert('Open in browser', res.redirectUrl);
+        })();
+      } },
+    ]);
   });
 
   const redeemVoucherCode = () => run(async () => {
@@ -114,18 +172,18 @@ export default function WalletScreen() {
     );
   });
 
-  const validateDepositPromo = () => run(async () => {
-    const check = await authedFetch((t) => api.validatePromo(t, promo.trim().toUpperCase(), Number(amount) || 0));
-    Alert.alert(check.valid ? 'Promo applied' : 'Promo invalid',
-      check.valid
-        ? `${check.promotion?.name ?? 'Promo'}${check.estimatedBonus ? ` — ${money(check.estimatedBonus)} bonus` : ''}. It will be applied after your deposit.`
-        : (check.reason ?? 'This code is not valid.'));
+  const savePayout = () => run(async () => {
+    await authedFetch((t) => api.savePayoutMethod(t, payoutMethod, payoutAccount.trim()));
+    setConfirmPayout(false);
+    setPayoutAccount('');
+    void queryClient.invalidateQueries({ queryKey: ['payout-method'] });
+    Alert.alert('Payout account saved', 'This account is locked. Contact support to change it.');
   });
 
   const withdraw = () => run(async () => {
-    await authedFetch((t) => api.withdraw(t, Number(amount)));
-    Alert.alert('Withdrawal requested', 'Your request is pending approval.');
-    setAmount(''); refresh();
+    await authedFetch((t) => api.withdraw(t, Number(withdrawAmount)));
+    Alert.alert('Withdrawal requested', 'Your request has been submitted and will be reviewed before payment.');
+    setWithdrawAmount(''); refresh();
   });
 
   const formatVoucher = (raw: string) => {
@@ -175,10 +233,7 @@ export default function WalletScreen() {
         {depositTab !== 'voucher' && (
           <>
             <TextField label="Amount (USD)" value={amount} onChangeText={setAmount} placeholder="0.00" keyboardType="decimal-pad" />
-            <View style={styles.promoRow}>
-              <View style={styles.promoInput}><TextField label="Promo code (optional)" value={promo} onChangeText={(v) => setPromo(v.toUpperCase())} placeholder="WELCOME50" /></View>
-              <Pressable style={styles.smallButton} onPress={validateDepositPromo} disabled={!promo.trim()}><Text style={styles.smallButtonText}>Use</Text></Pressable>
-            </View>
+            <Text style={styles.hint}>Have a bonus code? Use the Bonus Code field above.</Text>
           </>
         )}
 
@@ -224,18 +279,69 @@ export default function WalletScreen() {
         )}
       </Card>
 
+      {/* Payout account — required before any withdrawal */}
+      <Card>
+        <Text style={styles.cardTitle}>Withdrawal account</Text>
+        {loadingPayout ? (
+          <ActivityIndicator color={colors.primary} />
+        ) : payout?.payoutMethod ? (
+          <>
+            <Text style={styles.hint}>Your payout account is locked. Contact support to change it.</Text>
+            <View style={styles.row}>
+              <Text style={styles.rowMain}>{payoutLabel(payout.payoutMethod)}</Text>
+              <Text style={styles.rowSub}>{payout.payoutAccount}</Text>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.hint}>Choose how you want to receive withdrawals. This can only be set once — check the details carefully.</Text>
+            <Text style={styles.fieldLabel}>Payout method</Text>
+            {PAYOUT_METHODS.map((m) => (
+              <Pressable
+                key={m.value}
+                onPress={() => { setPayoutMethod(m.value); setPayoutAccount(''); setConfirmPayout(false); }}
+                style={[styles.chip, payoutMethod === m.value && styles.chipActive]}
+              >
+                <Text style={[styles.chipText, payoutMethod === m.value && styles.chipTextActive]}>{m.label}</Text>
+              </Pressable>
+            ))}
+            <TextField
+              label={payoutMethod === 'btc_binance' ? 'Bitcoin address' : 'Mobile number'}
+              value={payoutAccount}
+              onChangeText={(v) => { setPayoutAccount(v); setConfirmPayout(false); }}
+              placeholder={PAYOUT_METHODS.find((m) => m.value === payoutMethod)?.placeholder}
+              keyboardType={payoutMethod === 'btc_binance' ? 'default' : 'phone-pad'}
+            />
+            {!!payoutAccount.trim() && !confirmPayout && (
+              <Pressable onPress={() => setConfirmPayout(true)}>
+                <Text style={styles.link}>Confirm {payoutLabel(payoutMethod)} — {payoutAccount.trim()}</Text>
+              </Pressable>
+            )}
+            {confirmPayout && (
+              <View style={styles.confirmBox}>
+                <Text style={styles.hint}>Save {payoutLabel(payoutMethod)} as {payoutAccount.trim()}? This cannot be changed later.</Text>
+                <PrimaryButton title={busy ? 'Saving…' : 'Save & lock'} onPress={savePayout} disabled={busy || !payoutAccount.trim()} />
+                <Pressable onPress={() => setConfirmPayout(false)}><Text style={styles.link}>Go back</Text></Pressable>
+              </View>
+            )}
+          </>
+        )}
+      </Card>
+
       {/* Withdrawal */}
       <Card>
         <Text style={styles.cardTitle}>Withdrawal</Text>
         <Text style={styles.hint}>
-          {user?.ficaCompleted
-            ? 'Enter an amount to request a withdrawal. Requests are reviewed before payment.'
-            : 'Complete identity verification (FICA) in Profile before withdrawing.'}
+          {!user?.ficaCompleted
+            ? 'Complete identity verification (FICA) in Profile before withdrawing.'
+            : !payout?.payoutMethod
+              ? 'Add a withdrawal account above before requesting a payout.'
+              : 'Enter an amount to request a withdrawal. Requests are reviewed before payment.'}
         </Text>
-        {user?.ficaCompleted && (
+        {!!user?.ficaCompleted && !!payout?.payoutMethod && (
           <>
-            <TextField label="Amount (USD)" value={amount} onChangeText={setAmount} placeholder="0.00" keyboardType="decimal-pad" />
-            <PrimaryButton title={busy ? 'Submitting…' : 'Request Withdrawal'} onPress={withdraw} disabled={Number(amount) < 1 || busy} tone="accent" />
+            <TextField label="Amount (USD)" value={withdrawAmount} onChangeText={setWithdrawAmount} placeholder="0.00" keyboardType="decimal-pad" />
+            <PrimaryButton title={busy ? 'Submitting…' : 'Request Withdrawal'} onPress={withdraw} disabled={Number(withdrawAmount) < 1 || busy} tone="accent" />
           </>
         )}
       </Card>
@@ -296,6 +402,7 @@ const styles = StyleSheet.create({
   waiting: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
   waitingTitle: { color: colors.text, fontWeight: '800', fontSize: fontSize.lg },
   link: { color: colors.primary, textDecorationLine: 'underline', paddingVertical: spacing.sm },
+  confirmBox: { backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: spacing.md, gap: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
   rowMainWrap: { flex: 1 },
   rowMain: { color: colors.text, fontSize: fontSize.sm, flex: 1, textTransform: 'capitalize' },

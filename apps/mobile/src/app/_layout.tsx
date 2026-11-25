@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { Stack, Redirect } from 'expo-router';
+import { Stack, Redirect, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/providers/auth-provider';
@@ -10,8 +10,12 @@ import { colors } from '@/theme';
 // Keep the tab navigator as the base screen so login/lock present as modals.
 export const unstable_settings = { anchor: '(tabs)' };
 
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
+
 function RootNavigator() {
   const { status } = useAuth();
+  const pathname = usePathname();
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
   return (
     <View style={styles.root}>
@@ -31,8 +35,8 @@ function RootNavigator() {
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
-      {status === 'unauthenticated' && <Redirect href="/login" />}
-      {status === 'locked' && <Redirect href="/lock" />}
+      {status === 'unauthenticated' && !isPublicRoute && <Redirect href="/login" />}
+      {status === 'locked' && pathname !== '/lock' && <Redirect href="/lock" />}
     </View>
   );
 }

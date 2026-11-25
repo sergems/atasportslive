@@ -34,7 +34,8 @@
             "useFrameworks": "dynamic"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,

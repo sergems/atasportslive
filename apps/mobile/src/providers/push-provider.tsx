@@ -6,14 +6,23 @@ import {
   type RemoteMessage,
 } from '@react-native-firebase/messaging';
 import * as Notifications from 'expo-notifications';
-import { AndroidImportance } from 'expo-notifications';
+import { AndroidImportance, SchedulableTriggerInputTypes } from 'expo-notifications';
 import { router } from 'expo-router';
 import { useAuth } from '@/providers/auth-provider';
 import { api } from '@/lib/api';
 
-// Firebase Messaging is native-only. Web preview (Expo) has no default app,
-// so skip it there — real Android/iOS builds keep the full push behaviour.
-const messaging = Platform.OS === 'web' ? null : getMessaging();
+// Firebase Messaging is native-only. Expo Go and misconfigured dev builds have
+// no default Firebase app, so a missing module must not crash the whole app.
+function messagingSafe() {
+  if (Platform.OS === 'web') return null;
+  try {
+    return getMessaging();
+  } catch {
+    return null;
+  }
+}
+
+const messaging = messagingSafe();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -41,6 +50,15 @@ export async function requestPushPermission(): Promise<boolean> {
   return status === AuthorizationStatus.AUTHORIZED || status === AuthorizationStatus.PROVISIONAL;
 }
 
+/** Only internal app paths may be used as notification deep links. */
+function openInternalUrl(value: unknown) {
+  if (typeof value !== 'string') return;
+  if (!value.startsWith('/') || value.startsWith('//') || value.includes('://')) return;
+  try {
+    router.push(value as never);
+  } catch { /* ignore malformed routes from the server */ }
+}
+
 /** Registers the FCM token with our backend and handles notification taps. */
 export function PushProvider({ children }: { children: React.ReactNode }) {
   const { status, authedFetch } = useAuth();
@@ -56,12 +74,11 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
       } catch { /* retry on next launch or token refresh */ }
     };
 
-    (async () => {
+    void (async () => {
       try {
         const granted = await requestPushPermission();
         if (!granted) return;
-        const token = await getToken(messaging);
-        await register(token);
+        await register(await getToken(messaging));
       } catch { /* push unavailable on this device/build */ }
     })();
 
@@ -71,26 +88,43 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!messaging) return;
-    const showForeground = onMessage(messaging, async (remote: RemoteMessage) => {
-      await Notifications.scheduleNotificationAsync({
+    const showForeground = onMessage(messaging, (remote: RemoteMessage) => {
+      void Notifications.scheduleNotificationAsync({
         content: {
           title: remote.notification?.title ?? 'ATA Sports Live',
           body: remote.notification?.body ?? '',
           data: (remote.data ?? {}) as Record<string, string>,
         },
-        trigger: null,
-      });
+        trigger: {
+          type: SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 0,
+          channelId: 'ata-default',
+        },
+      }).catch(() => {});
     });
 
-    const open = (data: { [key: string]: string } | undefined) => {
-      const url = data?.url;
-      if (typeof url === 'string' && url.length > 0) router.push(url as never);
+    const openedApp = onNotificationOpenedApp(messaging, (remote: RemoteMessage) => {
+      openInternalUrl(remote.data?.url);
+    });
+    void getInitialNotification(messaging)
+      .then((remote) => { if (remote) openInternalUrl(remote.data?.url); })
+      .catch(() => {});
+
+    // Foreground taps are re-presented as local notifications, so they need
+    // the expo-notifications response listener to navigate.
+    const response = Notifications.addNotificationResponseReceivedListener((event) => {
+      openInternalUrl(event.notification.request.content.data?.url);
+      void Notifications.clearLastNotificationResponseAsync().catch(() => {});
+    });
+    void Notifications.getLastNotificationResponseAsync()
+      .then((event) => { if (event) openInternalUrl(event.notification.request.content.data?.url); })
+      .catch(() => {});
+
+    return () => {
+      showForeground();
+      openedApp();
+      response.remove();
     };
-
-    const openedApp = onNotificationOpenedApp(messaging, (remote: RemoteMessage) => open(remote.data as Record<string, string> | undefined));
-    void getInitialNotification(messaging).then((remote) => { if (remote) open(remote.data as Record<string, string> | undefined); });
-
-    return () => { showForeground(); openedApp(); };
   }, []);
 
   return <>{children}</>;

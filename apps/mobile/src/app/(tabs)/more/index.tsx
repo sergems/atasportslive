@@ -9,6 +9,9 @@ import { colors, fontSize, radius, spacing } from '@/theme';
 const ITEMS = [
   { label: 'Dashboard', detail: 'Your activity at a glance', icon: 'grid-outline', route: '/(tabs)/more/dashboard' },
   { label: 'Subscription', detail: 'Plans and access', icon: 'card-outline', route: '/(tabs)/more/subscription' },
+  { label: 'Fixtures', detail: 'Upcoming streams', icon: 'calendar-outline', route: '/(tabs)/more/fixtures' },
+  { label: 'Highlights', detail: 'Watch recent moments', icon: 'play-circle-outline', route: '/(tabs)/more/highlights' },
+  { label: 'Referrals', detail: 'Your code and commissions', icon: 'people-outline', route: '/(tabs)/more/referrals' },
   { label: 'Profile', detail: 'Account and verification', icon: 'person-outline', route: '/(tabs)/more/profile' },
 ] as const;
 

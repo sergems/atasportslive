@@ -121,6 +121,12 @@ export interface StreamItem {
   sport?: string | null;
   accessPrice?: string | number | null;
   viewerCount?: number;
+  startTime?: string;
+  city?: string | null;
+  country?: string | null;
+  playerA?: string | null;
+  playerB?: string | null;
+  secondsUntilStart?: number;
 }
 
 export interface StreamListResponse {
@@ -179,7 +185,7 @@ export const api = {
   refresh: (refreshToken: string) =>
     request<AuthResponse>('/auth/refresh', { method: 'POST', body: JSON.stringify({ refreshToken }) }),
 
-  me: (token: string) => request<{ id: number; email: string; fullName: string; role: string }>('/auth/me', {}, token),
+  me: (token: string) => request<User>('/auth/me', {}, token),
 
   wallet: (token: string) =>
     request<{ balance: number; availableBalance: number; bonusBalance: number; pendingBalance: number; withdrawableBalance: number }>('/wallet', {}, token),
@@ -233,6 +239,14 @@ export const api = {
     request<{ redirectUrl: string; transactionId: string }>('/wallet/pesapal/initiate', {
       method: 'POST', body: JSON.stringify({ amount }),
     }, token),
+  pesapalStatus: (token: string, ref: string) =>
+    request<{ status: string; amount: number }>(`/wallet/pesapal/status?ref=${encodeURIComponent(ref)}`, {}, token),
+  payoutMethod: (token: string) =>
+    request<{ payoutMethod: string | null; payoutAccount: string | null; payoutMethodSetAt: string | null }>('/wallet/payout-method', {}, token),
+  savePayoutMethod: (token: string, payoutMethod: string, payoutAccount: string) =>
+    request<{ ok: boolean; payoutMethod: string; payoutAccount: string }>('/wallet/payout-method', {
+      method: 'POST', body: JSON.stringify({ payoutMethod, payoutAccount }),
+    }, token),
   redeemVoucher: (token: string, code: string) =>
     request<{ success: boolean; amount: number }>('/wallet/redeem-voucher', {
       method: 'POST', body: JSON.stringify({ code }),
@@ -281,7 +295,20 @@ export const api = {
     request<{ ok: boolean }>('/notifications/token', {
       method: 'DELETE', body: JSON.stringify(fcmToken ? { token: fcmToken } : {}),
     }, token),
-  upcomingGames: () => request<{ id: number; sport: string; playerA: string; playerB: string; eventDate: string; eventTime: string }[]>('/games/upcoming'),
+  highlights: () => request<{
+    id: number; title: string; description: string | null; youtubeUrl: string;
+    createdAt: string;
+  }[]>('/highlights'),
+
+  // ── Referrals (influencers only) ──
+  commissionHistory: (token: string) =>
+    request<{ id: number; amount: number; description: string | null; createdAt: string }[]>(
+      '/influencers/my-commission-history', {}, token,
+    ),
+  updateReferralCode: (token: string, code: string) =>
+    request<{ ok: boolean; referralCode: string; referralCodeCustomized: boolean }>('/influencers/my-referral-code', {
+      method: 'PATCH', body: JSON.stringify({ code }),
+    }, token),
   updateProfile: (token: string, data: { fullName: string; phone?: string | null; username?: string }) =>
     request<User>('/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }, token),
   updateFica: (token: string, data: Record<string, string>) =>
