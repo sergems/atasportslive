@@ -1323,65 +1323,65 @@ pawapay_exchange_rate	3700	2026-07-03 19:32:56.886232+00
 liveStreamUrl		2026-07-05 00:06:23.305169+00
 price_monthly	20.00	2026-07-17 00:00:26.048125+00
 ch3_yt_is_free	false	2026-07-17 09:34:50.790328+00
-mux_player_a_country		2026-07-14 07:55:42.765265+00
+cf_player_a_country		2026-07-14 07:55:42.765265+00
 price_yearly	99.00	2026-07-17 00:00:26.048828+00
 ad_slot_left_1_link	#	2026-07-17 12:34:58.962652+00
 ad_slot_right_1_enabled	false	2026-07-17 12:35:00.456588+00
-mux_is_live	false	2026-07-16 12:26:11.820039+00
+cf_is_live	false	2026-07-16 12:26:11.820039+00
 ch2_yt_price	1.50	2026-07-17 09:34:01.061938+00
-mux_player_b_country		2026-07-14 07:55:42.765919+00
-mux_stream_db_id	43	2026-07-14 07:55:43.130878+00
+cf_player_b_country		2026-07-14 07:55:42.765919+00
+cf_stream_db_id	43	2026-07-14 07:55:43.130878+00
 ch2_yt_player_a_country	US	2026-07-17 09:34:01.064724+00
-mux_is_free	false	2026-07-14 07:55:42.760562+00
-ch3_mux_is_live	false	2026-07-16 12:30:02.883854+00
-mux_price	1.70	2026-07-14 07:55:42.761338+00
-mux_title	ATA Live Streaming	2026-07-14 07:55:42.762136+00
+cf_is_free	false	2026-07-14 07:55:42.760562+00
+ch3_cf_is_live	false	2026-07-16 12:30:02.883854+00
+cf_price	1.70	2026-07-14 07:55:42.761338+00
+cf_title	ATA Live Streaming	2026-07-14 07:55:42.762136+00
 ch2_yt_player_b_country	GB	2026-07-17 09:34:01.065276+00
-ch2_mux_is_free	false	2026-07-14 07:54:50.578797+00
-ch2_mux_price	1.50	2026-07-14 07:54:50.579335+00
+ch2_cf_is_free	false	2026-07-14 07:54:50.578797+00
+ch2_cf_price	1.50	2026-07-14 07:54:50.579335+00
 ch3_yt_player_b	ZHENG	2026-07-17 09:34:50.793009+00
 yt_player_a_country	UG	2026-07-17 09:33:52.671805+00
 yt_player_b_country	UG	2026-07-17 09:33:52.672262+00
 ch3_yt_player_a_country	GB	2026-07-17 09:34:50.793439+00
 ch3_yt_price	1.50	2026-07-17 09:34:50.791007+00
 ch3_yt_player_b_country	CN	2026-07-17 09:34:50.793975+00
-ch2_mux_title	ATA	2026-07-14 07:54:50.580046+00
+ch2_cf_title	ATA	2026-07-14 07:54:50.580046+00
 ch2_yt_title	REPLAY: RASKARA PAUL VS HASSAN HABIB	2026-07-17 09:34:01.062544+00
-ch2_mux_thumbnail_url	/uploads/thumb-1784015679328-iozc1b.png	2026-07-14 07:54:50.58057+00
+ch2_cf_thumbnail_url	/uploads/thumb-1784015679328-iozc1b.png	2026-07-14 07:54:50.58057+00
 yt_stream_db_id	39	2026-07-17 09:33:53.030152+00
 ch3_page_enabled	false	2026-07-17 09:34:50.794375+00
 influencer_commission_rate	10	2026-07-17 00:01:38.894368+00
 referral_bonus_pct	10	2026-07-17 00:02:07.249294+00
 ch2_yt_video_id	yH-24ZAvd7M	2026-07-17 09:34:01.059115+00
-ch2_mux_player_b	GAPA	2026-07-14 07:54:50.581565+00
+ch2_cf_player_b	GAPA	2026-07-14 07:54:50.581565+00
 ch2_yt_is_live	false	2026-07-17 09:34:01.060468+00
-mux_thumbnail_url	/uploads/thumb-1784015740834-qkir4v.png	2026-07-14 07:55:42.762905+00
+cf_thumbnail_url	/uploads/thumb-1784015740834-qkir4v.png	2026-07-14 07:55:42.762905+00
 ch2_yt_thumbnail_url	/uploads/thumb-1784015705087-umcjsw.png	2026-07-17 09:34:01.063106+00
 ch2_yt_player_a	HUSTLE	2026-07-17 09:34:01.063642+00
 yt_video_id	fATvFkfY1lk	2026-07-17 09:33:52.665731+00
-ch2_mux_player_a	JUJU	2026-07-14 07:54:50.581063+00
+ch2_cf_player_a	JUJU	2026-07-14 07:54:50.581063+00
 ch3_yt_title	SF | 2026 JOY Heyball Masters Zhengzhou Station	2026-07-17 09:34:50.791511+00
 ch3_yt_stream_db_id	41	2026-07-17 09:34:51.15128+00
 price_daily	1.50	2026-07-17 00:00:26.04549+00
-mux_player_a		2026-07-14 07:55:42.763644+00
+cf_player_a		2026-07-14 07:55:42.763644+00
 price_weekly	7.00	2026-07-17 00:00:26.04753+00
 ch2_yt_player_b	FURY	2026-07-17 09:34:01.064182+00
 ch2_page_enabled	false	2026-07-17 09:34:01.065892+00
 ch3_yt_thumbnail_url	/uploads/thumb-1783944614342-ciqpdk.png	2026-07-17 09:34:50.792175+00
-ch2_mux_is_live	false	2026-07-16 12:28:24.713877+00
+ch2_cf_is_live	false	2026-07-16 12:28:24.713877+00
 ch2_yt_stream_db_id	40	2026-07-17 09:34:01.429717+00
 ch3_yt_video_id	MDHxCNZOxpA	2026-07-17 09:34:50.788226+00
 yt_price	1.50	2026-07-17 09:33:52.668611+00
-ch2_mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-14 07:54:50.576679+00
-ch2_mux_player_a_country	CD	2026-07-14 07:54:50.582254+00
-ch2_mux_player_b_country	RW	2026-07-14 07:54:50.582738+00
-mux_player_b		2026-07-14 07:55:42.7645+00
-ch2_mux_stream_db_id	44	2026-07-14 07:54:50.928572+00
+ch2_cf_playback_id	02672b2c4ecd1ec8dccf90ba9caac0f8	2026-07-14 07:54:50.576679+00
+ch2_cf_player_a_country	CD	2026-07-14 07:54:50.582254+00
+ch2_cf_player_b_country	RW	2026-07-14 07:54:50.582738+00
+cf_player_b		2026-07-14 07:55:42.7645+00
+ch2_cf_stream_db_id	44	2026-07-14 07:54:50.928572+00
 ch3_yt_player_a	CHU BINGUIE	2026-07-17 09:34:50.792597+00
 yt_is_live	false	2026-07-17 09:33:52.667277+00
 ch3_yt_is_live	false	2026-07-17 09:34:50.78969+00
 yt_title	REPLAY: UKASHA MATOVU VS ISAAC KASASA (MAIN EVENT)	2026-07-17 09:33:52.669235+00
-mux_playback_id	QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00	2026-07-14 07:55:42.758371+00
+cf_playback_id	943a0b1a8184331cdb4ac9a7aef6f07e	2026-07-14 07:55:42.758371+00
 yt_thumbnail_url	/uploads/thumb-1784015933224-pdmflg.png	2026-07-17 09:33:52.669936+00
 yt_is_free	false	2026-07-17 09:33:52.667901+00
 yt_player_a	UKASHALEE	2026-07-17 09:33:52.670624+00
@@ -1422,12 +1422,12 @@ COPY public.streams (id, title, description, sport, thumbnail_url, hls_url, stre
 28	UBCL MAIN FIGHT OF THE NIGHT | 22nd FIGHT 12:00AM | WELTER 67KGS ELT	\N	boxing	/uploads/thumb-1783762970368-dsxqed.jpg	\N	\N	upcoming	2026-07-18 21:00:00+00	2026-07-18 21:30:00+00	0	1.50	2026-07-06 17:40:42.16567+00	2026-07-17 13:14:51.376+00	Lugogo Arena	Uganda	RASKARA PAUL	MUSULUBE STEPHAN	UG	UG	single	27
 33	NYENDO MASAKA GRAND OPEN CHAMPIONSHIPS	\N	pool	/uploads/thumb-1783763136625-lsj4as.jpg	\N	\N	upcoming	2026-08-02 01:00:00+00	2026-08-02 05:00:00+00	0	1.50	2026-07-09 10:49:17.793099+00	2026-07-11 09:45:36.909+00	Masaka	Uganda	\N	\N	\N	\N	competition	\N
 27	UGANDA BOXING CHAMP LEAGUE SEASON 5	\N	boxing	/uploads/thumb-1783763064343-b9u56z.jpg	\N	\N	upcoming	2026-07-18 11:00:00+00	2026-07-19 01:00:00+00	0	1.50	2026-07-06 17:38:03.006088+00	2026-07-17 13:24:59.475+00	Lugogo Arena	Uganda	\N	\N	\N	\N	competition	\N
-43	ATA Live Streaming	\N	other	\N	\N	__mux_default__	upcoming	2026-07-14 07:53:41.538856+00	\N	0	1.70	2026-07-14 07:53:41.538856+00	2026-07-16 12:26:11.820039+00	\N	\N	\N	\N	\N	\N	single	\N
+43	ATA Live Streaming	\N	other	\N	\N	__cf_default__	upcoming	2026-07-14 07:53:41.538856+00	\N	0	1.70	2026-07-14 07:53:41.538856+00	2026-07-16 12:26:11.820039+00	\N	\N	\N	\N	\N	\N	single	\N
 38	WPA HEYBALL WORLD CHAMPIONSHIPS	\N	pool	/uploads/thumb-1783718526583-52y9pt.jpg	\N	\N	upcoming	2026-08-12 07:00:00+00	2026-08-15 23:30:00+00	0	0.00	2026-07-10 21:22:06.987464+00	2026-07-10 21:22:06.987464+00	Pune 	India	\N	\N	\N	\N	competition	\N
 52	ADRIKO JIMMY VS MAKANGA MOSES | 12th FIGHT 7:PM | FLY 51KGS ELT	\N	boxing	/uploads/thumb-1784279554448-mtkc01.png	\N	\N	upcoming	2026-07-18 16:00:00+00	2026-07-18 16:30:00+00	0	1.50	2026-07-17 09:12:34.820013+00	2026-07-17 13:36:58.096+00	Lugogo Arena	Uganda	ADRIKO JIMMY	MAKANGA MOSES	UG	UG	single	27
 42	GRAND MCHANA 2026	\N	pool	/uploads/thumb-1783725840376-wjy2ut.jpg	\N	\N	upcoming	2026-12-07 08:00:00+00	2026-12-13 00:00:00+00	0	0.00	2026-07-10 23:24:00.688364+00	2026-07-10 23:24:00.688364+00	Nairobi 	Kenya	\N	\N	\N	\N	competition	\N
 34	CUEXTV - BATTLE FOR LEGACY	A £50,000 battle race to 31. 	pool	/uploads/thumb-1783725959547-h0trcg.jpg	\N	\N	upcoming	2026-09-11 22:00:00+00	2026-09-13 02:00:00+00	0	5.00	2026-07-09 10:53:09.678062+00	2026-07-10 23:25:59.869+00	Coalville	United Kingdom	CHRIS MELLING - Magician	TOM COUSINS - Top Cat	UK	WH	single	\N
-44	ATA	\N	other	\N	\N	__ch2_mux_default__	upcoming	2026-07-14 07:54:50.928572+00	\N	0	1.50	2026-07-14 07:54:50.928572+00	2026-07-16 12:28:24.713877+00	\N	\N	\N	\N	\N	\N	single	\N
+44	ATA	\N	other	\N	\N	__ch2_cf_default__	upcoming	2026-07-14 07:54:50.928572+00	\N	0	1.50	2026-07-14 07:54:50.928572+00	2026-07-16 12:28:24.713877+00	\N	\N	\N	\N	\N	\N	single	\N
 48	WASSWA JONATHAN VS KASASA ISAAC | 20th FIGHT 11:00PM | L/MIDDLE 71KGS ELT	\N	boxing	/uploads/thumb-1784278364104-7z2evf.png	\N	\N	upcoming	2026-07-18 20:00:00+00	2026-07-18 20:30:00+00	0	1.50	2026-07-17 08:52:44.49397+00	2026-07-17 13:32:24.881+00	Lugogo Arena	Uganda	WASSWA JONATHAN	KASASA ISAAC	UG	UG	single	27
 47	KAKANDE BRUNO VS ROCH NELSON | 21th  FIGHT 11:30PM | MINIMUM 48KGS ELT	\N	boxing	/uploads/thumb-1784277585070-o9a5qj.png	\N	\N	upcoming	2026-07-18 20:30:00+00	2026-07-18 21:00:00+00	0	1.50	2026-07-17 08:27:17.365595+00	2026-07-17 13:28:42.437+00	Lugogo Arena	Uganda	KAKANDE BRUNO	 ROCH NELSON	UG	UG	single	27
 54	KATABALWA RODNEY VS NYUTE ELIJAH | 10th FIGHT 6:00PM | FEATHER 57KGS ELT	\N	boxing	/uploads/thumb-1784279963809-k9074h.png	\N	\N	upcoming	2026-07-18 15:00:00+00	2026-07-18 15:30:00+00	0	1.50	2026-07-17 09:19:24.200016+00	2026-07-17 13:33:14.856+00	Lugogo Arena	Uganda	KATABALWA RODNEY	 NYUTE ELIJAH	UG	UG	single	27

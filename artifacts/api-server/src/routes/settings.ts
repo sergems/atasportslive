@@ -11,26 +11,26 @@ const router = Router();
 // can see live-stream state, pricing, thumbnails, and player details.
 const PUBLIC_SETTING_KEYS = new Set([
   // ── Channel 1 ───────────────────────────────────────────────────────────
-  "mux_is_live", "mux_playback_id", "mux_stream_db_id", "mux_title", "mux_price",
-  "mux_is_free", "mux_thumbnail_url", "mux_sport",
-  "mux_player_a", "mux_player_b", "mux_player_a_country", "mux_player_b_country",
+  "cf_is_live", "cf_playback_id", "cf_hls_url", "cf_stream_db_id", "cf_title", "cf_price",
+  "cf_is_free", "cf_thumbnail_url", "cf_sport",
+  "cf_player_a", "cf_player_b", "cf_player_a_country", "cf_player_b_country",
   "yt_is_live", "yt_video_id", "yt_stream_db_id", "yt_title", "yt_price",
   "yt_is_free", "yt_thumbnail_url", "yt_sport",
   "yt_player_a", "yt_player_b", "yt_player_a_country", "yt_player_b_country",
   "liveStreamUrl",
   // ── Channel 2 ───────────────────────────────────────────────────────────
   "ch2_page_enabled",
-  "ch2_mux_is_live", "ch2_mux_playback_id", "ch2_mux_stream_db_id", "ch2_mux_title", "ch2_mux_price",
-  "ch2_mux_is_free", "ch2_mux_thumbnail_url", "ch2_mux_sport",
-  "ch2_mux_player_a", "ch2_mux_player_b", "ch2_mux_player_a_country", "ch2_mux_player_b_country",
+  "ch2_cf_is_live", "ch2_cf_playback_id", "ch2_cf_hls_url", "ch2_cf_stream_db_id", "ch2_cf_title", "ch2_cf_price",
+  "ch2_cf_is_free", "ch2_cf_thumbnail_url", "ch2_cf_sport",
+  "ch2_cf_player_a", "ch2_cf_player_b", "ch2_cf_player_a_country", "ch2_cf_player_b_country",
   "ch2_yt_is_live", "ch2_yt_video_id", "ch2_yt_stream_db_id", "ch2_yt_title", "ch2_yt_price",
   "ch2_yt_is_free", "ch2_yt_thumbnail_url", "ch2_yt_sport",
   "ch2_yt_player_a", "ch2_yt_player_b", "ch2_yt_player_a_country", "ch2_yt_player_b_country",
   // ── Channel 3 ───────────────────────────────────────────────────────────
   "ch3_page_enabled",
-  "ch3_mux_is_live", "ch3_mux_playback_id", "ch3_mux_stream_db_id", "ch3_mux_title", "ch3_mux_price",
-  "ch3_mux_is_free", "ch3_mux_thumbnail_url", "ch3_mux_sport",
-  "ch3_mux_player_a", "ch3_mux_player_b", "ch3_mux_player_a_country", "ch3_mux_player_b_country",
+  "ch3_cf_is_live", "ch3_cf_playback_id", "ch3_cf_hls_url", "ch3_cf_stream_db_id", "ch3_cf_title", "ch3_cf_price",
+  "ch3_cf_is_free", "ch3_cf_thumbnail_url", "ch3_cf_sport",
+  "ch3_cf_player_a", "ch3_cf_player_b", "ch3_cf_player_a_country", "ch3_cf_player_b_country",
   "ch3_yt_is_live", "ch3_yt_video_id", "ch3_yt_stream_db_id", "ch3_yt_title", "ch3_yt_price",
   "ch3_yt_is_free", "ch3_yt_thumbnail_url", "ch3_yt_sport",
   "ch3_yt_player_a", "ch3_yt_player_b", "ch3_yt_player_a_country", "ch3_yt_player_b_country",
@@ -90,19 +90,45 @@ router.put("/", authMiddleware, requireRole("admin", "manager"), async (req: Aut
 
 const YT_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
 
-// Sync the Mux default stream record in the streams table so existing
+const CF_STREAM_HOST = "customer-g6v4ltgbn9y6fl7a.cloudflarestream.com";
+
+/** Cloudflare's public lifecycle endpoint tells us whether a live input is broadcasting. */
+function cfLifecycleUrl(uid?: string, hlsUrl?: string): string | null {
+  if (uid && hlsUrl) {
+    try {
+      const u = new URL(hlsUrl);
+      return `https://${u.host}/${uid}/lifecycle`;
+    } catch { /* fall through to the configured host */ }
+  }
+  return uid ? `https://${CF_STREAM_HOST}/${uid}/lifecycle` : null;
+}
+
+async function cfInputIsLive(uid?: string, hlsUrl?: string): Promise<boolean> {
+  const url = cfLifecycleUrl(uid, hlsUrl);
+  if (!url) return false;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { live?: boolean };
+    return data.live === true;
+  } catch {
+    return false;
+  }
+}
+
+// Sync the Cloudflare default stream record in the streams table so existing
 // stream-access infrastructure handles the paywall automatically.
 // All writes are wrapped in a single transaction so mutual-exclusion is atomic.
-router.post("/sync-mux", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/sync-cf", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   try {
     await db.transaction(async (tx: any) => {
-      const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'mux_%' OR key = 'yt_stream_db_id'`);
+      const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'cf_%' OR key = 'yt_stream_db_id'`);
       const s: Record<string, string> = {};
       for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
 
-      const isLive = s.mux_is_live === "true";
-      const price  = s.mux_price || "1.50";
-      const title  = s.mux_title || "ATA Live Stream";
+      const isLive = s.cf_is_live === "true";
+      const price  = s.cf_price || "1.50";
+      const title  = s.cf_title || "ATA Live Stream";
       const status = isLive ? "live" : "upcoming";
 
       // Mutual exclusion: going live → forcibly disable YouTube in the same tx
@@ -120,7 +146,7 @@ router.post("/sync-mux", authMiddleware, requireRole("admin", "manager"), async 
       }
 
       const existing = await tx.execute(
-        sql`SELECT id FROM streams WHERE stream_key = '__mux_default__' ORDER BY id LIMIT 1`
+        sql`SELECT id FROM streams WHERE stream_key = '__cf_default__' ORDER BY id LIMIT 1`
       );
       const existingRow = (existing.rows as { id: number }[])[0];
       let streamId: number;
@@ -133,29 +159,29 @@ router.post("/sync-mux", authMiddleware, requireRole("admin", "manager"), async 
       } else {
         const inserted = await tx.execute(
           sql`INSERT INTO streams (title, sport, status, start_time, access_price, stream_key, viewer_count, updated_at)
-              VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, '__mux_default__', 0, NOW())
+              VALUES (${title}, 'other'::sport_type, ${status}::stream_status, NOW(), ${price}, '__cf_default__', 0, NOW())
               RETURNING id`
         );
         streamId = (inserted.rows as { id: number }[])[0].id;
       }
 
       await tx.execute(
-        sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_stream_db_id', ${streamId.toString()}, NOW())
+        sql`INSERT INTO settings (key, value, updated_at) VALUES ('cf_stream_db_id', ${streamId.toString()}, NOW())
             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
       );
 
       res.json({ ok: true, streamId });
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || "sync-mux failed" });
+    res.status(500).json({ error: err.message || "sync-cf failed" });
   }
 });
 
-// Sync the YouTube default stream record — mirrors sync-mux logic.
+// Sync the YouTube default stream record — mirrors sync-cf logic.
 router.post("/sync-yt", authMiddleware, requireRole("admin", "manager"), async (req: AuthRequest, res): Promise<void> => {
   try {
     await db.transaction(async (tx: any) => {
-      const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'yt_%' OR key = 'mux_stream_db_id'`);
+      const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'yt_%' OR key = 'cf_stream_db_id'`);
       const s: Record<string, string> = {};
       for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
 
@@ -171,16 +197,16 @@ router.post("/sync-yt", authMiddleware, requireRole("admin", "manager"), async (
         return;
       }
 
-      // Mutual exclusion: going live → forcibly disable Mux in the same tx
+      // Mutual exclusion: going live → forcibly disable Cloudflare in the same tx
       if (isLive) {
         await tx.execute(
-          sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_is_live', 'false', NOW())
+          sql`INSERT INTO settings (key, value, updated_at) VALUES ('cf_is_live', 'false', NOW())
               ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`
         );
-        const muxDbId = s.mux_stream_db_id ? Number(s.mux_stream_db_id) : null;
-        if (muxDbId) {
+        const cfDbId = s.cf_stream_db_id ? Number(s.cf_stream_db_id) : null;
+        if (cfDbId) {
           await tx.execute(
-            sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${muxDbId}`
+            sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${cfDbId}`
           );
         }
       }
@@ -217,41 +243,34 @@ router.post("/sync-yt", authMiddleware, requireRole("admin", "manager"), async (
   }
 });
 
-// Auto-probe the Mux HLS manifest to detect when a live stream ends.
-// Called by the frontend periodically while mux_is_live=true.
-// If Mux returns 4xx the stream has ended — we flip mux_is_live=false and
-// update the companion stream record so the paywall disappears automatically.
-router.post("/mux-probe", async (_req, res): Promise<void> => {
+// Auto-probe Cloudflare Stream's lifecycle endpoint to detect when a live input ends.
+// Called by the frontend periodically while cf_is_live=true.
+// When the input is idle we flip cf_is_live=false and update the companion stream
+// record so the paywall disappears automatically.
+router.post("/cf-probe", async (_req, res): Promise<void> => {
   try {
-    const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'mux_%'`);
+    const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE 'cf_%'`);
     const s: Record<string, string> = {};
     for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
 
-    const playbackId = s.mux_playback_id;
-    const isLive     = s.mux_is_live === "true";
+    const playbackId = s.cf_playback_id;
+    const isLive     = s.cf_is_live === "true";
 
-    // Nothing to probe if Mux is already marked offline
+    // Nothing to probe if Cloudflare is already marked offline
     if (!isLive || !playbackId) { res.json({ live: false, changed: false }); return; }
 
-    // Probe the HLS manifest — no auth required for public playback IDs
-    let muxLive = true;
-    try {
-      const probe = await fetch(`https://stream.mux.com/${playbackId}.m3u8`, { method: "HEAD" });
-      muxLive = probe.ok; // 4xx / 5xx → stream is idle/ended
-    } catch {
-      muxLive = false; // network error — treat as offline
-    }
-
-    if (muxLive) { res.json({ live: true, changed: false }); return; }
+    // The lifecycle endpoint is public and reports "live" only while broadcasting.
+    const online = await cfInputIsLive(playbackId, s.cf_hls_url);
+    if (online) { res.json({ live: true, changed: false }); return; }
 
     // Stream has ended — flip the flag
     await db.execute(
-      sql`INSERT INTO settings (key, value, updated_at) VALUES ('mux_is_live', 'false', NOW())
+      sql`INSERT INTO settings (key, value, updated_at) VALUES ('cf_is_live', 'false', NOW())
           ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`
     );
 
     // Also update the companion stream record if it exists
-    const dbId = s.mux_stream_db_id ? Number(s.mux_stream_db_id) : null;
+    const dbId = s.cf_stream_db_id ? Number(s.cf_stream_db_id) : null;
     if (dbId) {
       await db.execute(
         sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${dbId}`
@@ -266,12 +285,12 @@ router.post("/mux-probe", async (_req, res): Promise<void> => {
 
 // ── Channel 2 & 3 helpers ─────────────────────────────────────────────────────
 
-async function syncChannelMux(channel: 2 | 3, res: any): Promise<void> {
-  const p        = `ch${channel}_mux`;
+async function syncChannelCf(channel: 2 | 3, res: any): Promise<void> {
+  const p        = `ch${channel}_cf`;
   const ytLiveK  = `ch${channel}_yt_is_live`;
   const ytDbIdK  = `ch${channel}_yt_stream_db_id`;
-  const streamKey = `__ch${channel}_mux_default__`;
-  const dbIdKey  = `ch${channel}_mux_stream_db_id`;
+  const streamKey = `__ch${channel}_cf_default__`;
+  const dbIdKey  = `ch${channel}_cf_stream_db_id`;
   try {
     await db.transaction(async (tx: any) => {
       const rows = await tx.execute(sql`SELECT key, value FROM settings WHERE key LIKE ${`ch${channel}_%`}`);
@@ -300,14 +319,14 @@ async function syncChannelMux(channel: 2 | 3, res: any): Promise<void> {
       if (!res.headersSent) res.json({ ok: true, streamId });
     });
   } catch (err: any) {
-    if (!res.headersSent) res.status(500).json({ error: err.message || `sync-ch${channel}-mux failed` });
+    if (!res.headersSent) res.status(500).json({ error: err.message || `sync-ch${channel}-cf failed` });
   }
 }
 
 async function syncChannelYt(channel: 2 | 3, res: any): Promise<void> {
   const p         = `ch${channel}_yt`;
-  const muxLiveK  = `ch${channel}_mux_is_live`;
-  const muxDbIdK  = `ch${channel}_mux_stream_db_id`;
+  const cfLiveK  = `ch${channel}_cf_is_live`;
+  const cfDbIdK  = `ch${channel}_cf_stream_db_id`;
   const streamKey = `__ch${channel}_yt_default__`;
   const dbIdKey   = `ch${channel}_yt_stream_db_id`;
   try {
@@ -325,9 +344,9 @@ async function syncChannelYt(channel: 2 | 3, res: any): Promise<void> {
         return;
       }
       if (isLive) {
-        await tx.execute(sql`INSERT INTO settings (key, value, updated_at) VALUES (${muxLiveK}, 'false', NOW()) ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`);
-        const muxDbId = s[muxDbIdK] ? Number(s[muxDbIdK]) : null;
-        if (muxDbId) await tx.execute(sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${muxDbId}`);
+        await tx.execute(sql`INSERT INTO settings (key, value, updated_at) VALUES (${cfLiveK}, 'false', NOW()) ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`);
+        const cfDbId = s[cfDbIdK] ? Number(s[cfDbIdK]) : null;
+        if (cfDbId) await tx.execute(sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${cfDbId}`);
       }
       const existing = await tx.execute(sql`SELECT id FROM streams WHERE stream_key = ${streamKey} ORDER BY id LIMIT 1`);
       const existingRow = (existing.rows as { id: number }[])[0];
@@ -347,20 +366,19 @@ async function syncChannelYt(channel: 2 | 3, res: any): Promise<void> {
   }
 }
 
-async function probeChannelMux(channel: 2 | 3, res: any): Promise<void> {
+async function probeChannelCf(channel: 2 | 3, res: any): Promise<void> {
   try {
-    const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE ${`ch${channel}_mux_%`}`);
+    const rows = await db.execute(sql`SELECT key, value FROM settings WHERE key LIKE ${`ch${channel}_cf_%`}`);
     const s: Record<string, string> = {};
     for (const row of rows.rows as { key: string; value: string }[]) s[row.key] = row.value ?? "";
-    const playbackId = s[`ch${channel}_mux_playback_id`];
-    const isLive     = s[`ch${channel}_mux_is_live`] === "true";
+    const playbackId = s[`ch${channel}_cf_playback_id`];
+    const isLive     = s[`ch${channel}_cf_is_live`] === "true";
     if (!isLive || !playbackId) { res.json({ live: false, changed: false }); return; }
-    let muxLive = true;
-    try { const probe = await fetch(`https://stream.mux.com/${playbackId}.m3u8`, { method: "HEAD" }); muxLive = probe.ok; } catch { muxLive = false; }
-    if (muxLive) { res.json({ live: true, changed: false }); return; }
-    const liveKey = `ch${channel}_mux_is_live`;
+    const online = await cfInputIsLive(playbackId, s[`ch${channel}_cf_hls_url`]);
+    if (online) { res.json({ live: true, changed: false }); return; }
+    const liveKey = `ch${channel}_cf_is_live`;
     await db.execute(sql`INSERT INTO settings (key, value, updated_at) VALUES (${liveKey}, 'false', NOW()) ON CONFLICT (key) DO UPDATE SET value = 'false', updated_at = NOW()`);
-    const dbIdKey = `ch${channel}_mux_stream_db_id`;
+    const dbIdKey = `ch${channel}_cf_stream_db_id`;
     const dbId = s[dbIdKey] ? Number(s[dbIdKey]) : null;
     if (dbId) await db.execute(sql`UPDATE streams SET status = 'upcoming'::stream_status, updated_at = NOW() WHERE id = ${dbId}`);
     res.json({ live: false, changed: true });
@@ -369,12 +387,12 @@ async function probeChannelMux(channel: 2 | 3, res: any): Promise<void> {
   }
 }
 
-router.post("/sync-ch2-mux", authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelMux(2, res); });
+router.post("/sync-ch2-cf", authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelCf(2, res); });
 router.post("/sync-ch2-yt",  authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelYt(2, res);  });
-router.post("/ch2-mux-probe", async (_req, res): Promise<void> => { await probeChannelMux(2, res); });
-router.post("/sync-ch3-mux", authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelMux(3, res); });
+router.post("/ch2-cf-probe", async (_req, res): Promise<void> => { await probeChannelCf(2, res); });
+router.post("/sync-ch3-cf", authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelCf(3, res); });
 router.post("/sync-ch3-yt",  authMiddleware, requireRole("admin", "manager"), async (_req, res): Promise<void> => { await syncChannelYt(3, res);  });
-router.post("/ch3-mux-probe", async (_req, res): Promise<void> => { await probeChannelMux(3, res); });
+router.post("/ch3-cf-probe", async (_req, res): Promise<void> => { await probeChannelCf(3, res); });
 
 // Send a test email to the logged-in admin using saved SMTP settings
 router.post("/test-email", authMiddleware, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {

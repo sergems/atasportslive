@@ -3,7 +3,7 @@ import { useEvent } from 'expo';
 import { useVideoPlayer, type VideoSource } from 'expo-video';
 
 /** Owns the expo-video instance and exposes imperative, immutable controls. */
-export function useMuxPlayer(uri: string) {
+export function useCloudflarePlayer(uri: string) {
   const source: VideoSource = { uri, contentType: 'hls' };
   const player = useVideoPlayer(source, (p) => {
     p.muted = true; // required for reliable autoplay; the overlay can unmute

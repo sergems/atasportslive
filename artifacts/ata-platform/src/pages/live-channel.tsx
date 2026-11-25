@@ -283,14 +283,21 @@ function useControlsAutoHide() {
 
 // ─── Players ─────────────────────────────────────────────────────────────────
 
-const FALLBACK_MUX_PLAYBACK_ID = 'QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00';
+const CF_STREAM_HOST = 'customer-g6v4ltgbn9y6fl7a.cloudflarestream.com';
+const FALLBACK_CF_INPUT_UID = '943a0b1a8184331cdb4ac9a7aef6f07e';
+
+/** Prefer the saved unsigned manifest URL; fall back to the input UID on our account. */
+export function cfHlsUrl(uid: string, savedUrl?: string): string {
+  if (savedUrl && /^https?:\/\//.test(savedUrl)) return savedUrl;
+  return `https://${CF_STREAM_HOST}/${uid}/manifest/video.m3u8`;
+}
 
 /**
- * Mux is played through our own HLS player instead of the Mux iframe so the
- * adaptive quality control works identically on every stream source.
+ * Cloudflare Stream is played through our own HLS player so the adaptive
+ * quality control works identically on every stream source.
  */
-export function MuxPlayer({ playbackId, title }: { playbackId: string; title: string }) {
-  return <HlsPlayer hlsUrl={`https://stream.mux.com/${playbackId}.m3u8`} title={title} />;
+export function CloudflarePlayer({ uid, hlsUrl, title }: { uid: string; hlsUrl?: string; title: string }) {
+  return <HlsPlayer hlsUrl={cfHlsUrl(uid, hlsUrl)} title={title} />;
 }
 
 export function YouTubePlayer({ videoId, title }: { videoId: string; title: string }) {
@@ -1468,12 +1475,13 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
 
   // ── Settings derivation ─────────────────────────────────────────────────
   const liveStreamUrl = channel === 1 ? (s.liveStreamUrl ?? '') : '';
-  const muxPlaybackId = s[`${prefix}mux_playback_id`] || (channel === 1 ? FALLBACK_MUX_PLAYBACK_ID : '');
-  const muxIsLive     = s[`${prefix}mux_is_live`] === 'true';
-  const muxIsFree     = s[`${prefix}mux_is_free`] === 'true';
-  const muxPrice      = parseFloat(s[`${prefix}mux_price`] ?? '1.50');
-  const muxTitle      = s[`${prefix}mux_title`] || 'ATA Live Stream';
-  const muxStreamDbId = s[`${prefix}mux_stream_db_id`] ? Number(s[`${prefix}mux_stream_db_id`]) : undefined;
+  const cfInputUid = s[`${prefix}cf_playback_id`] || (channel === 1 ? FALLBACK_CF_INPUT_UID : '');
+  const cfHlsUrlValue = s[`${prefix}cf_hls_url`] ?? '';
+  const cfIsLive     = s[`${prefix}cf_is_live`] === 'true';
+  const cfIsFree     = s[`${prefix}cf_is_free`] === 'true';
+  const cfPrice      = parseFloat(s[`${prefix}cf_price`] ?? '1.50');
+  const cfTitle      = s[`${prefix}cf_title`] || 'ATA Live Stream';
+  const cfStreamDbId = s[`${prefix}cf_stream_db_id`] ? Number(s[`${prefix}cf_stream_db_id`]) : undefined;
 
   const ytVideoId    = s[`${prefix}yt_video_id`] ?? '';
   const ytIsLive     = s[`${prefix}yt_is_live`] === 'true';
@@ -1482,10 +1490,10 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   const ytTitle      = s[`${prefix}yt_title`] || 'ATA Live Stream';
   const ytStreamDbId = s[`${prefix}yt_stream_db_id`] ? Number(s[`${prefix}yt_stream_db_id`]) : undefined;
 
-  // Only the stream linked from Livestream Settings (synced by sync-mux/sync-yt)
+  // Only the stream linked from Livestream Settings (synced by sync-cf/sync-yt)
   // may drive this channel. A stray row that merely has status="live" must not
   // make the channel appear live or become the active feed.
-  const liveDbStreamId = muxIsLive ? muxStreamDbId : ytIsLive ? ytStreamDbId : undefined;
+  const liveDbStreamId = cfIsLive ? cfStreamDbId : ytIsLive ? ytStreamDbId : undefined;
   const stream = liveStreamRow && liveDbStreamId && liveStreamRow.id === liveDbStreamId ? liveStreamRow : null;
 
   const subPrices = {
@@ -1495,10 +1503,10 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
     yearly:  parseFloat(s.price_yearly  ?? '99.00'),
   };
 
-  // ── Mux auto-probe ──────────────────────────────────────────────────────
-  const probeEndpoint = channel === 1 ? '/api/settings/mux-probe' : `/api/settings/ch${channel}-mux-probe`;
+  // ── Cloudflare auto-probe ──────────────────────────────────────────────────────
+  const probeEndpoint = channel === 1 ? '/api/settings/cf-probe' : `/api/settings/ch${channel}-cf-probe`;
   useQuery({
-    queryKey: [`mux-probe-ch${channel}`],
+    queryKey: [`cf-probe-ch${channel}`],
     queryFn: async () => {
       const r = await fetch(probeEndpoint, { method: 'POST' });
       const d = await r.json();
@@ -1508,28 +1516,28 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
       }
       return d;
     },
-    enabled: muxIsLive,
+    enabled: cfIsLive,
     refetchInterval: 30_000,
     staleTime: 25_000,
   });
 
   // ── Feed resolution ─────────────────────────────────────────────────────
   // LIVE is driven exclusively by the admin's Livestream Settings toggles.
-  const isAnythingLive = muxIsLive || ytIsLive;
-  const activeFeed: 'db' | 'mux' | 'yt' | null = stream ? 'db' : muxIsLive ? 'mux' : ytIsLive ? 'yt' : null;
+  const isAnythingLive = cfIsLive || ytIsLive;
+  const activeFeed: 'db' | 'cf' | 'yt' | null = stream ? 'db' : cfIsLive ? 'cf' : ytIsLive ? 'yt' : null;
 
   const paywallStreamId: number | undefined =
     activeFeed === 'db'  ? stream!.id :
-    activeFeed === 'mux' && !muxIsFree ? muxStreamDbId :
+    activeFeed === 'cf' && !cfIsFree ? cfStreamDbId :
     activeFeed === 'yt'  && !ytIsFree  ? ytStreamDbId  :
     undefined;
 
   // chatStreamId is separate from paywallStreamId — chat always works regardless of paywall.
   const chatStreamId: number | undefined =
     activeFeed === 'db'  ? stream?.id :
-    activeFeed === 'mux' ? muxStreamDbId :
+    activeFeed === 'cf' ? cfStreamDbId :
     activeFeed === 'yt'  ? ytStreamDbId  :
-    muxStreamDbId ?? ytStreamDbId;
+    cfStreamDbId ?? ytStreamDbId;
 
   // ── Live viewer count polling (admin fallback + initial load) ────────────
   // Primary source: WebSocket `viewer_count` pushed on every connect/disconnect.
@@ -1553,9 +1561,9 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
     }
   }, [viewersData]);
 
-  const paywallPrice = activeFeed === 'db' ? stream!.accessPrice : activeFeed === 'yt' ? ytPrice : muxPrice;
-  const paywallTitle = activeFeed === 'db' ? stream!.title : activeFeed === 'yt' ? ytTitle : muxTitle;
-  const isFreeStream = activeFeed === 'db' ? false : activeFeed === 'yt' ? ytIsFree : muxIsFree;
+  const paywallPrice = activeFeed === 'db' ? stream!.accessPrice : activeFeed === 'yt' ? ytPrice : cfPrice;
+  const paywallTitle = activeFeed === 'db' ? stream!.title : activeFeed === 'yt' ? ytTitle : cfTitle;
+  const isFreeStream = activeFeed === 'db' ? false : activeFeed === 'yt' ? ytIsFree : cfIsFree;
 
   // ── Access check ────────────────────────────────────────────────────────
   const { data: access, isLoading: loadingAccess } = useStreamAccess(
@@ -1565,7 +1573,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
   const canWatch = isAuthenticated && (isFreeStream || access?.hasAccess === true || isManager);
 
   // ── Sneak peek ──────────────────────────────────────────────────────────
-  const peekKey = `sneak_used_ch${channel}_${paywallStreamId ?? 'mux'}`;
+  const peekKey = `sneak_used_ch${channel}_${paywallStreamId ?? 'cf'}`;
   const sneakPeek = useSneakPeek(peekKey);
 
   const [selectedSubType, setSelectedSubType] = useState<'daily'|'weekly'|'monthly'|'yearly'>('daily');
@@ -1596,11 +1604,11 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
     activeFeed === 'yt' && ytIdValid      ? <YouTubePlayer videoId={ytVideoId} title={paywallTitle} /> :
     activeFeed === 'yt' && !ytIdValid     ? <div className="absolute inset-0 flex items-center justify-center text-slate-500 text-sm">Stream configuration invalid — check admin settings.</div> :
     activeFeed === null && hlsUrlValid    ? <HlsPlayer hlsUrl={liveStreamUrl} title={stream?.title ?? paywallTitle} /> :
-    <MuxPlayer playbackId={muxPlaybackId} title={stream?.title ?? paywallTitle} />;
+    <CloudflarePlayer uid={cfInputUid} hlsUrl={cfHlsUrlValue} title={stream?.title ?? paywallTitle} />;
 
   const sidebar = (
     <div className="w-full lg:w-[260px] shrink-0 flex flex-col gap-2 h-full min-h-0">
-      {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? s[`${prefix}mux_sport`]} />}
+      {isAuthenticated && <QuickBetPanel token={token} streamSport={stream?.sport ?? s[`${prefix}cf_sport`]} />}
       <div className="flex-1 min-h-0 max-h-[420px] lg:max-h-[460px] flex flex-col overflow-hidden">
         <CommentSection streamId={chatStreamId} token={token} userId={user?.id} isAuthenticated={isAuthenticated} onReaction={handleReaction} onViewerCount={isAdmin ? setLiveViewerCount : undefined} />
       </div>
@@ -1671,7 +1679,7 @@ export function ChannelLivePage({ channel }: { channel: 1 | 2 | 3 }) {
             title={paywallTitle}
             description={stream?.description}
             sport={stream?.sport}
-            thumbnailUrl={stream?.thumbnailUrl ?? (s[`${prefix}mux_thumbnail_url`] || s[`${prefix}yt_thumbnail_url`] || null)}
+            thumbnailUrl={stream?.thumbnailUrl ?? (s[`${prefix}cf_thumbnail_url`] || s[`${prefix}yt_thumbnail_url`] || null)}
             prices={subPrices}
             selectedSubType={selectedSubType}
             onSelectSubType={setSelectedSubType}

@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as SecureStore from 'expo-secure-store';
-import { MuxPlayer, YouTubePlayer } from '@/components/video-players';
+import { CloudflarePlayer, YouTubePlayer } from '@/components/video-players';
 import { ChatPanel } from '@/components/chat-panel';
 import { useLandscapeOnFocus } from '@/hooks/use-landscape-on-focus';
 import { useChannelStatus } from '@/hooks/use-channel-status';
 import { api } from '@/lib/api';
+import { cfHlsUrl } from '@/lib/cloudflare';
 import { colors, fontSize, spacing } from '@/theme';
 
 export function ChannelScreen({ channel }: { channel: 1 | 2 | 3 }) {
@@ -28,11 +29,11 @@ export function ChannelScreen({ channel }: { channel: 1 | 2 | 3 }) {
 
   const ytId = settings[`${prefix}yt_video_id`] ?? '';
   const ytLive = settings[`${prefix}yt_is_live`] === 'true';
-  const muxId = settings[`${prefix}mux_playback_id`] ?? '';
-  const muxLive = settings[`${prefix}mux_is_live`] === 'true';
-  const hls = muxLive && muxId ? `https://stream.mux.com/${muxId}.m3u8` : '';
+  const cfUid = settings[`${prefix}cf_playback_id`] ?? '';
+  const cfLive = settings[`${prefix}cf_is_live`] === 'true';
+  const hls = cfLive && cfUid ? cfHlsUrl(cfUid, settings[`${prefix}cf_hls_url`]) : '';
   // Chat uses the linked DB stream id so it works for free and paid streams.
-  const chatStreamId = Number(settings[`${prefix}mux_stream_db_id`] || settings[`${prefix}yt_stream_db_id`] || 0) || undefined;
+  const chatStreamId = Number(settings[`${prefix}cf_stream_db_id`] || settings[`${prefix}yt_stream_db_id`] || 0) || undefined;
 
   useEffect(() => {
     if (!ytLive && ytId) {
@@ -56,7 +57,7 @@ export function ChannelScreen({ channel }: { channel: 1 | 2 | 3 }) {
         {ytLive && ytId ? (
           <YouTubePlayer videoId={ytId} live startAt={0} title={channelTitle} onChat={() => setChatOpen(true)} />
         ) : hls ? (
-          <MuxPlayer uri={hls} title={channelTitle} onChat={() => setChatOpen(true)} />
+          <CloudflarePlayer uri={hls} title={channelTitle} onChat={() => setChatOpen(true)} />
         ) : ytId ? (
           <YouTubePlayer videoId={ytId} live={false} startAt={startAt} title={channelTitle} onChat={() => setChatOpen(true)} />
         ) : (

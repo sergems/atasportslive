@@ -27,9 +27,9 @@ export function useChannelStatus(): ChannelStatus {
       const settingsData = await settingsRes.json();
       const dbLive = (streamsData.streams?.length ?? 0) > 0;
       return {
-        ch1Live: dbLive || settingsData?.mux_is_live === 'true' || settingsData?.yt_is_live === 'true',
-        ch2Live: settingsData?.ch2_mux_is_live === 'true' || settingsData?.ch2_yt_is_live === 'true',
-        ch3Live: settingsData?.ch3_mux_is_live === 'true' || settingsData?.ch3_yt_is_live === 'true',
+        ch1Live: dbLive || settingsData?.cf_is_live === 'true' || settingsData?.yt_is_live === 'true',
+        ch2Live: settingsData?.ch2_cf_is_live === 'true' || settingsData?.ch2_yt_is_live === 'true',
+        ch3Live: settingsData?.ch3_cf_is_live === 'true' || settingsData?.ch3_yt_is_live === 'true',
         ch2Enabled: settingsData?.ch2_page_enabled === 'true',
         ch3Enabled: settingsData?.ch3_page_enabled === 'true',
       };

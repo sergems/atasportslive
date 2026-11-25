@@ -21,9 +21,9 @@ export function useChannelStatus(): ChannelStatus {
       const [settings, live] = await Promise.all([api.publicSettings(), api.liveStreams()]);
       const dbLive = (live.streams?.length ?? 0) > 0;
       return {
-        ch1Live: dbLive || settings.mux_is_live === 'true' || settings.yt_is_live === 'true',
-        ch2Live: settings.ch2_mux_is_live === 'true' || settings.ch2_yt_is_live === 'true',
-        ch3Live: settings.ch3_mux_is_live === 'true' || settings.ch3_yt_is_live === 'true',
+        ch1Live: dbLive || settings.cf_is_live === 'true' || settings.yt_is_live === 'true',
+        ch2Live: settings.ch2_cf_is_live === 'true' || settings.ch2_yt_is_live === 'true',
+        ch3Live: settings.ch3_cf_is_live === 'true' || settings.ch3_yt_is_live === 'true',
         ch2Enabled: settings.ch2_page_enabled === 'true',
         ch3Enabled: settings.ch3_page_enabled === 'true',
       };

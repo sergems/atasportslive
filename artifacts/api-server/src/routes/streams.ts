@@ -33,15 +33,15 @@ const toStream = (s: typeof streamsTable.$inferSelect) => ({
 });
 
 // Virtual streams are internal paywall anchors — never expose them in public listings.
-// This includes all channel variants: __mux_default__, __ch2_mux_default__, etc.
+// This includes all channel variants: __cf_default__, __ch2_cf_default__, etc.
 const notVirtual = or(
   isNull(streamsTable.streamKey),
   and(
-    ne(streamsTable.streamKey, '__mux_default__'),
+    ne(streamsTable.streamKey, '__cf_default__'),
     ne(streamsTable.streamKey, '__yt_default__'),
-    ne(streamsTable.streamKey, '__ch2_mux_default__'),
+    ne(streamsTable.streamKey, '__ch2_cf_default__'),
     ne(streamsTable.streamKey, '__ch2_yt_default__'),
-    ne(streamsTable.streamKey, '__ch3_mux_default__'),
+    ne(streamsTable.streamKey, '__ch3_cf_default__'),
     ne(streamsTable.streamKey, '__ch3_yt_default__'),
   ),
 );

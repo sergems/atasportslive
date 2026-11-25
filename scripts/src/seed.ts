@@ -69,7 +69,7 @@ async function seed() {
       sport: "pool",
       thumbnailUrl: "https://images.unsplash.com/photo-1615672968435-75e0c291cd6e?w=800&q=80",
       status: "upcoming",
-      hlsUrl: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      hlsUrl: "https://customer-g6v4ltgbn9y6fl7a.cloudflarestream.com/943a0b1a8184331cdb4ac9a7aef6f07e/manifest/video.m3u8",
       startTime: yesterday,
       accessPrice: "1.50",
       viewerCount: 0,

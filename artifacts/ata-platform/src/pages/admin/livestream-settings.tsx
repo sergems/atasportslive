@@ -58,7 +58,7 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
   saveMutation: ReturnType<typeof useMutation<any, any, Record<string, string>>>;
 }) {
   const prefix = channel === 1 ? '' : `ch${channel}_`;
-  const muxSyncPath = channel === 1 ? '/api/settings/sync-mux' : `/api/settings/sync-ch${channel}-mux`;
+  const cfSyncPath = channel === 1 ? '/api/settings/sync-cf' : `/api/settings/sync-ch${channel}-cf`;
   const ytSyncPath  = channel === 1 ? '/api/settings/sync-yt'  : `/api/settings/sync-ch${channel}-yt`;
   const chLabel = channel === 1 ? 'Channel 1 — Main Live Page (/live)' : `Channel ${channel} — /live-${channel}`;
 
@@ -73,19 +73,20 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
   // Page enabled (ch2/ch3 only)
   const [pageEnabled, setPageEnabled] = useState(channel === 1 ? true : false);
 
-  // Mux
-  const [muxPlaybackId, setMuxPlaybackId] = useState('');
-  const [muxIsLive, setMuxIsLive] = useState(false);
-  const [muxIsFree, setMuxIsFree] = useState(false);
-  const [muxPrice, setMuxPrice] = useState('1.50');
-  const [muxTitle, setMuxTitle] = useState('');
-  const [muxThumbnailUrl, setMuxThumbnailUrl] = useState('');
-  const [muxPlayerA, setMuxPlayerA] = useState('');
-  const [muxPlayerB, setMuxPlayerB] = useState('');
-  const [muxPlayerACountry, setMuxPlayerACountry] = useState('');
-  const [muxPlayerBCountry, setMuxPlayerBCountry] = useState('');
-  const [syncingMux, setSyncingMux] = useState(false);
-  const muxThumbInputRef = React.useRef<HTMLInputElement>(null);
+  // Cloudflare Stream
+  const [cfInputUid, setCfPlaybackId] = useState('');
+  const [cfHlsUrl, setCfHlsUrl] = useState('');
+  const [cfIsLive, setCfIsLive] = useState(false);
+  const [cfIsFree, setCfIsFree] = useState(false);
+  const [cfPrice, setCfPrice] = useState('1.50');
+  const [cfTitle, setCfTitle] = useState('');
+  const [cfThumbnailUrl, setCfThumbnailUrl] = useState('');
+  const [cfPlayerA, setCfPlayerA] = useState('');
+  const [cfPlayerB, setCfPlayerB] = useState('');
+  const [cfPlayerACountry, setCfPlayerACountry] = useState('');
+  const [cfPlayerBCountry, setCfPlayerBCountry] = useState('');
+  const [syncingCf, setSyncingCf] = useState(false);
+  const cfThumbInputRef = React.useRef<HTMLInputElement>(null);
 
   // YouTube
   const [ytVideoId, setYtVideoId] = useState('');
@@ -103,16 +104,17 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
 
   const applySettings = (s: Record<string, string>) => {
     if (channel !== 1) setPageEnabled(s[`ch${channel}_page_enabled`] === 'true');
-    setMuxPlaybackId(s[`${prefix}mux_playback_id`] ?? '');
-    setMuxIsLive(s[`${prefix}mux_is_live`] === 'true');
-    setMuxIsFree(s[`${prefix}mux_is_free`] === 'true');
-    setMuxPrice(s[`${prefix}mux_price`] ?? '1.50');
-    setMuxTitle(s[`${prefix}mux_title`] ?? '');
-    setMuxThumbnailUrl(s[`${prefix}mux_thumbnail_url`] ?? '');
-    setMuxPlayerA(s[`${prefix}mux_player_a`] ?? '');
-    setMuxPlayerB(s[`${prefix}mux_player_b`] ?? '');
-    setMuxPlayerACountry(s[`${prefix}mux_player_a_country`] ?? '');
-    setMuxPlayerBCountry(s[`${prefix}mux_player_b_country`] ?? '');
+    setCfPlaybackId(s[`${prefix}cf_playback_id`] ?? '');
+    setCfHlsUrl(s[`${prefix}cf_hls_url`] ?? '');
+    setCfIsLive(s[`${prefix}cf_is_live`] === 'true');
+    setCfIsFree(s[`${prefix}cf_is_free`] === 'true');
+    setCfPrice(s[`${prefix}cf_price`] ?? '1.50');
+    setCfTitle(s[`${prefix}cf_title`] ?? '');
+    setCfThumbnailUrl(s[`${prefix}cf_thumbnail_url`] ?? '');
+    setCfPlayerA(s[`${prefix}cf_player_a`] ?? '');
+    setCfPlayerB(s[`${prefix}cf_player_b`] ?? '');
+    setCfPlayerACountry(s[`${prefix}cf_player_a_country`] ?? '');
+    setCfPlayerBCountry(s[`${prefix}cf_player_b_country`] ?? '');
     setYtVideoId(s[`${prefix}yt_video_id`] ?? '');
     setYtIsLive(s[`${prefix}yt_is_live`] === 'true');
     setYtIsFree(s[`${prefix}yt_is_free`] === 'true');
@@ -150,35 +152,36 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
     setExternalUpdateAt(0);
   };
 
-  const saveMuxSettings = async () => {
-    if (!muxPlaybackId.trim()) { toast.error('Mux Playback ID is required'); return; }
-    const priceNum = parseFloat(muxPrice);
+  const saveCfSettings = async () => {
+    if (!cfInputUid.trim()) { toast.error('Cloudflare Stream Live Input UID is required'); return; }
+    const priceNum = parseFloat(cfPrice);
     if (isNaN(priceNum) || priceNum < 0) { toast.error('Enter a valid price (0 for free)'); return; }
     const updates: Record<string, string> = {
-      [`${prefix}mux_playback_id`]:  muxPlaybackId.trim(),
-      [`${prefix}mux_is_live`]:      muxIsLive ? 'true' : 'false',
-      [`${prefix}mux_is_free`]:      muxIsFree ? 'true' : 'false',
-      [`${prefix}mux_price`]:        priceNum.toFixed(2),
-      [`${prefix}mux_title`]:        muxTitle.trim() || `ATA Live Stream${channel > 1 ? ` ${channel}` : ''}`,
-      [`${prefix}mux_thumbnail_url`]: muxThumbnailUrl.trim(),
-      [`${prefix}mux_player_a`]:     muxPlayerA.trim(),
-      [`${prefix}mux_player_b`]:     muxPlayerB.trim(),
-      [`${prefix}mux_player_a_country`]: muxPlayerACountry.trim().toUpperCase().slice(0, 2),
-      [`${prefix}mux_player_b_country`]: muxPlayerBCountry.trim().toUpperCase().slice(0, 2),
+      [`${prefix}cf_playback_id`]:  cfInputUid.trim(),
+      [`${prefix}cf_hls_url`]:      cfHlsUrl.trim(),
+      [`${prefix}cf_is_live`]:      cfIsLive ? 'true' : 'false',
+      [`${prefix}cf_is_free`]:      cfIsFree ? 'true' : 'false',
+      [`${prefix}cf_price`]:        priceNum.toFixed(2),
+      [`${prefix}cf_title`]:        cfTitle.trim() || `ATA Live Stream${channel > 1 ? ` ${channel}` : ''}`,
+      [`${prefix}cf_thumbnail_url`]: cfThumbnailUrl.trim(),
+      [`${prefix}cf_player_a`]:     cfPlayerA.trim(),
+      [`${prefix}cf_player_b`]:     cfPlayerB.trim(),
+      [`${prefix}cf_player_a_country`]: cfPlayerACountry.trim().toUpperCase().slice(0, 2),
+      [`${prefix}cf_player_b_country`]: cfPlayerBCountry.trim().toUpperCase().slice(0, 2),
     };
     if (channel !== 1) updates[`ch${channel}_page_enabled`] = pageEnabled ? 'true' : 'false';
     await saveMutation.mutateAsync(updates);
-    setSyncingMux(true);
+    setSyncingCf(true);
     try {
-      const r = await fetch(muxSyncPath, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
+      const r = await fetch(cfSyncPath, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
       if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Sync failed'); }
-      if (muxIsLive) setYtIsLive(false);
+      if (cfIsLive) setYtIsLive(false);
       qc.invalidateQueries({ queryKey: ['settings'] });
-      toast.success('Mux stream settings saved and synced.');
+      toast.success('Cloudflare Stream settings saved and synced.');
     } catch (e: any) {
-      toast.error(e.message || 'Failed to sync Mux stream');
+      toast.error(e.message || 'Failed to sync Cloudflare Stream');
     } finally {
-      setSyncingMux(false);
+      setSyncingCf(false);
     }
   };
 
@@ -206,7 +209,7 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
     try {
       const r = await fetch(ytSyncPath, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
       if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'Sync failed'); }
-      if (ytIsLive) setMuxIsLive(false);
+      if (ytIsLive) setCfIsLive(false);
       qc.invalidateQueries({ queryKey: ['settings'] });
       toast.success('YouTube stream settings saved and synced.');
     } catch (e: any) {
@@ -267,75 +270,82 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
         </Card>
       )}
 
-      {/* Mux stream */}
+      {/* Cloudflare Stream */}
       <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-white flex items-center gap-2">
               <Tv2 className="h-4 w-4 text-red-400" />
-              Mux Default Stream
+              Cloudflare Stream Live Input
             </CardTitle>
             <div className="flex items-center gap-2">
-              {muxIsLive && <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1 animate-pulse"><span className="h-1.5 w-1.5 rounded-full bg-red-400" /> LIVE</Badge>}
-              {muxIsFree && <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">FREE</Badge>}
+              {cfIsLive && <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1 animate-pulse"><span className="h-1.5 w-1.5 rounded-full bg-red-400" /> LIVE</Badge>}
+              {cfIsFree && <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">FREE</Badge>}
             </div>
           </div>
           <CardDescription className="text-slate-400">
-            The Mux video feed for this channel. Toggle it live to activate the paywall — mark it free to let everyone watch without paying.
+            The Cloudflare Stream live feed for this channel. Toggle it live to activate the paywall — mark it free to let everyone watch without paying.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Mux Playback ID</Label>
-            <Input value={muxPlaybackId} onChange={e => setMuxPlaybackId(e.target.value)}
-              placeholder="QEQX7ir02QjD1eYSV00vdTr8waLZof6bisQLNWzom00sZ00"
+            <Label className="text-slate-300 text-sm">Cloudflare Stream Live Input UID</Label>
+            <Input value={cfInputUid} onChange={e => setCfPlaybackId(e.target.value)}
+              placeholder="943a0b1a8184331cdb4ac9a7aef6f07e"
               className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-sm" disabled={isLoading} />
-            <p className="text-xs text-slate-500">The ID from your Mux dashboard — e.g. <code className="text-teal-400">player.mux.com/<strong>YOUR_ID</strong></code></p>
+            <p className="text-xs text-slate-500">The Live Input UID from Cloudflare Stream. Leave the manifest URL blank to derive it from the UID.</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">HLS Manifest URL (optional)</Label>
+            <Input value={cfHlsUrl} onChange={e => setCfHlsUrl(e.target.value)}
+              placeholder="https://customer-g6v4ltgbn9y6fl7a.cloudflarestream.com/UID/manifest/video.m3u8"
+              className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 font-mono text-xs" disabled={isLoading} />
           </div>
 
           <div className="space-y-1.5">
             <Label className="text-slate-300 text-sm">Stream Title</Label>
-            <Input value={muxTitle} onChange={e => setMuxTitle(e.target.value)} placeholder="ATA Live Stream"
+            <Input value={cfTitle} onChange={e => setCfTitle(e.target.value)} placeholder="ATA Live Stream"
               className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 text-sm" disabled={isLoading} />
           </div>
 
           <div className="space-y-1.5">
             <Label className="text-slate-300 text-sm flex items-center gap-1.5"><Upload className="h-3.5 w-3.5" /> Thumbnail URL</Label>
             <div className="flex items-center gap-2">
-              <Input value={muxThumbnailUrl} onChange={e => setMuxThumbnailUrl(e.target.value)}
+              <Input value={cfThumbnailUrl} onChange={e => setCfThumbnailUrl(e.target.value)}
                 placeholder="https://… or upload below"
                 className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-600 text-sm font-mono" disabled={isLoading} />
-              <Button type="button" variant="outline" size="sm" onClick={() => muxThumbInputRef.current?.click()}
+              <Button type="button" variant="outline" size="sm" onClick={() => cfThumbInputRef.current?.click()}
                 className="shrink-0 border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700">
                 <Upload className="h-3.5 w-3.5 mr-1" /> Upload
               </Button>
-              <input ref={muxThumbInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
+              <input ref={cfThumbInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
                 const file = e.target.files?.[0]; if (!file) return;
                 const fd = new FormData(); fd.append('thumbnail', file);
                 const r = await fetch('/api/uploads/thumbnail', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
-                if (r.ok) { const d = await r.json(); setMuxThumbnailUrl(d.url); toast.success('Thumbnail uploaded'); }
+                if (r.ok) { const d = await r.json(); setCfThumbnailUrl(d.url); toast.success('Thumbnail uploaded'); }
                 else toast.error('Upload failed');
               }} />
             </div>
-            {muxThumbnailUrl && <div className="w-24 h-14 rounded overflow-hidden border border-slate-700"><img src={muxThumbnailUrl} alt="thumbnail" className="w-full h-full object-cover" /></div>}
+            {cfThumbnailUrl && <div className="w-24 h-14 rounded overflow-hidden border border-slate-700"><img src={cfThumbnailUrl} alt="thumbnail" className="w-full h-full object-cover" /></div>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-slate-300 text-sm">Player A</Label>
-              <Input value={muxPlayerA} onChange={e => setMuxPlayerA(e.target.value)} placeholder="Serge Mulumba" className="bg-slate-800 border-slate-700 text-white text-sm" disabled={isLoading} />
+              <Input value={cfPlayerA} onChange={e => setCfPlayerA(e.target.value)} placeholder="Serge Mulumba" className="bg-slate-800 border-slate-700 text-white text-sm" disabled={isLoading} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-300 text-sm">Player A Country <span className="text-slate-500 text-xs">(2-letter code)</span></Label>
-              <Input value={muxPlayerACountry} onChange={e => setMuxPlayerACountry(e.target.value.toUpperCase().slice(0, 2))} placeholder="UG" maxLength={2} className="bg-slate-800 border-slate-700 text-white text-sm uppercase" disabled={isLoading} />
+              <Input value={cfPlayerACountry} onChange={e => setCfPlayerACountry(e.target.value.toUpperCase().slice(0, 2))} placeholder="UG" maxLength={2} className="bg-slate-800 border-slate-700 text-white text-sm uppercase" disabled={isLoading} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-300 text-sm">Player B</Label>
-              <Input value={muxPlayerB} onChange={e => setMuxPlayerB(e.target.value)} placeholder="Erik Katamba" className="bg-slate-800 border-slate-700 text-white text-sm" disabled={isLoading} />
+              <Input value={cfPlayerB} onChange={e => setCfPlayerB(e.target.value)} placeholder="Erik Katamba" className="bg-slate-800 border-slate-700 text-white text-sm" disabled={isLoading} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-slate-300 text-sm">Player B Country <span className="text-slate-500 text-xs">(2-letter code)</span></Label>
-              <Input value={muxPlayerBCountry} onChange={e => setMuxPlayerBCountry(e.target.value.toUpperCase().slice(0, 2))} placeholder="CD" maxLength={2} className="bg-slate-800 border-slate-700 text-white text-sm uppercase" disabled={isLoading} />
+              <Input value={cfPlayerBCountry} onChange={e => setCfPlayerBCountry(e.target.value.toUpperCase().slice(0, 2))} placeholder="CD" maxLength={2} className="bg-slate-800 border-slate-700 text-white text-sm uppercase" disabled={isLoading} />
             </div>
           </div>
 
@@ -343,39 +353,39 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
             <Label className="text-slate-300 text-sm">Access Price (USD)</Label>
             <div className="flex items-center gap-2 w-36">
               <span className="text-slate-400 text-sm">$</span>
-              <Input type="number" min="0" step="0.50" value={muxPrice} onChange={e => setMuxPrice(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-white font-mono text-sm" disabled={isLoading || muxIsFree} />
+              <Input type="number" min="0" step="0.50" value={cfPrice} onChange={e => setCfPrice(e.target.value)}
+                className="bg-slate-800 border-slate-700 text-white font-mono text-sm" disabled={isLoading || cfIsFree} />
             </div>
           </div>
 
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <Toggle value={muxIsLive} onChange={(v) => { if (v) setYtIsLive(false); setMuxIsLive(v); }} />
-              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => { setMuxIsLive(v => { if (!v) setYtIsLive(false); return !v; }); }}>
-                Stream is <strong className={muxIsLive ? 'text-red-400' : 'text-slate-400'}>{muxIsLive ? 'LIVE' : 'offline'}</strong>
-                {muxIsLive ? ' — paywall is active' : ' — no paywall'}
+              <Toggle value={cfIsLive} onChange={(v) => { if (v) setYtIsLive(false); setCfIsLive(v); }} />
+              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => { setCfIsLive(v => { if (!v) setYtIsLive(false); return !v; }); }}>
+                Stream is <strong className={cfIsLive ? 'text-red-400' : 'text-slate-400'}>{cfIsLive ? 'LIVE' : 'offline'}</strong>
+                {cfIsLive ? ' — paywall is active' : ' — no paywall'}
               </Label>
             </div>
             <div className="flex items-center gap-3">
-              <Toggle value={muxIsFree} onChange={setMuxIsFree} activeColor="bg-emerald-500" />
-              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => setMuxIsFree(v => !v)}>
-                Free stream — <span className={muxIsFree ? 'text-emerald-400' : 'text-slate-400'}>{muxIsFree ? 'anyone can watch without paying' : 'paywall applies when live'}</span>
+              <Toggle value={cfIsFree} onChange={setCfIsFree} activeColor="bg-emerald-500" />
+              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => setCfIsFree(v => !v)}>
+                Free stream — <span className={cfIsFree ? 'text-emerald-400' : 'text-slate-400'}>{cfIsFree ? 'anyone can watch without paying' : 'paywall applies when live'}</span>
               </Label>
             </div>
           </div>
 
-          {muxIsLive && !muxIsFree && (
+          {cfIsLive && !cfIsFree && (
             <div className="rounded-md bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 text-xs text-amber-400 flex items-start gap-2">
               <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span>Paywall is <strong>ON</strong>. Users must pay ${muxPrice || '1.50'} from their wallet for access.</span>
+              <span>Paywall is <strong>ON</strong>. Users must pay ${cfPrice || '1.50'} from their wallet for access.</span>
             </div>
           )}
 
           <div className="pt-1">
-            <Button onClick={saveMuxSettings} disabled={saveMutation.isPending || syncingMux || isLoading}
+            <Button onClick={saveCfSettings} disabled={saveMutation.isPending || syncingCf || isLoading}
               className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2">
               <Save className="h-4 w-4" />
-              {saveMutation.isPending || syncingMux ? 'Saving…' : 'Save Mux Settings'}
+              {saveMutation.isPending || syncingCf ? 'Saving…' : 'Save Cloudflare Stream Settings'}
             </Button>
           </div>
         </CardContent>
@@ -395,7 +405,7 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
             </div>
           </div>
           <CardDescription className="text-slate-400">
-            Backup feed from a YouTube live stream (public or unlisted). Only one of Mux or YouTube can be active at a time per channel.
+            Backup feed from a YouTube live stream (public or unlisted). Only one of Cloudflare Stream or YouTube can be active at a time per channel.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -464,8 +474,8 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
 
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <Toggle value={ytIsLive} onChange={(v) => { if (v) setMuxIsLive(false); setYtIsLive(v); }} />
-              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => { setYtIsLive(v => { if (!v) setMuxIsLive(false); return !v; }); }}>
+              <Toggle value={ytIsLive} onChange={(v) => { if (v) setCfIsLive(false); setYtIsLive(v); }} />
+              <Label className="text-slate-300 text-sm cursor-pointer" onClick={() => { setYtIsLive(v => { if (!v) setCfIsLive(false); return !v; }); }}>
                 Stream is <strong className={ytIsLive ? 'text-red-400' : 'text-slate-400'}>{ytIsLive ? 'LIVE' : 'offline'}</strong>
                 {ytIsLive ? ' — paywall is active' : ' — no paywall'}
               </Label>
@@ -485,15 +495,15 @@ function ChannelForm({ channel, settings, settingsUpdatedAt, token, qc, isLoadin
             </div>
           )}
 
-          {muxIsLive && ytIsLive && (
+          {cfIsLive && ytIsLive && (
             <div className="rounded-md bg-red-500/10 border border-red-500/20 px-3 py-2.5 text-xs text-red-400 flex items-start gap-2">
               <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span><strong>Conflict:</strong> Both Mux and YouTube are marked live. Turn off one before saving.</span>
+              <span><strong>Conflict:</strong> Both Cloudflare Stream and YouTube are marked live. Turn off one before saving.</span>
             </div>
           )}
 
           <div className="pt-1">
-            <Button onClick={saveYtSettings} disabled={saveMutation.isPending || syncingYt || isLoading || (muxIsLive && ytIsLive)}
+            <Button onClick={saveYtSettings} disabled={saveMutation.isPending || syncingYt || isLoading || (cfIsLive && ytIsLive)}
               className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold gap-2">
               <Save className="h-4 w-4" />
               {saveMutation.isPending || syncingYt ? 'Saving…' : 'Save YouTube Settings'}
@@ -541,7 +551,7 @@ export default function AdminLivestreamSettings() {
   const isLive = (ch: 1 | 2 | 3) => {
     if (!settings) return false;
     const p = ch === 1 ? '' : `ch${ch}_`;
-    return settings[`${p}mux_is_live`] === 'true' || settings[`${p}yt_is_live`] === 'true';
+    return settings[`${p}cf_is_live`] === 'true' || settings[`${p}yt_is_live`] === 'true';
   };
 
   return (

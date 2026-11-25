@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import { PlayerControls } from '@/components/player-controls';
 import { QualitySheet, QUALITY_LABEL, MAX_RESOLUTION, type QualityTier } from '@/components/quality-sheet';
 import { useControlsVisibility } from '@/hooks/use-controls-visibility';
-import { useMuxPlayer } from '@/hooks/use-mux-player';
+import { useCloudflarePlayer } from '@/hooks/use-cloudflare-player';
 import { APP_ORIGIN } from '@/lib/api';
 
 // react-native-webview types its ref as `unknown`; this is the handle we use.
@@ -21,9 +21,9 @@ type SharedProps = { title?: string; live?: boolean; showBack?: boolean; onChat?
 
 const QUALITY_KEY = 'ata-mobile-quality';
 
-export function MuxPlayer({ uri, title, live = true, showBack = false, onChat }: { uri: string } & SharedProps) {
+export function CloudflarePlayer({ uri, title, live = true, showBack = false, onChat }: { uri: string } & SharedProps) {
   const viewRef = useRef<VideoView | null>(null);
-  const { player, isPlaying, muted, togglePlay, toggleMute } = useMuxPlayer(uri);
+  const { player, isPlaying, muted, togglePlay, toggleMute } = useCloudflarePlayer(uri);
   const { visible, toggle } = useControlsVisibility(isPlaying);
   const [quality, setQuality] = useState<QualityTier>('auto');
   const [qualityOpen, setQualityOpen] = useState(false);

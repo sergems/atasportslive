@@ -3,10 +3,11 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { MuxPlayer, YouTubePlayer } from '@/components/video-players';
+import { CloudflarePlayer, YouTubePlayer } from '@/components/video-players';
 import { ChatPanel } from '@/components/chat-panel';
 import { useLandscapeOnFocus } from '@/hooks/use-landscape-on-focus';
 import { api, type StreamItem, type AccessStatus } from '@/lib/api';
+import { cfHlsUrl } from '@/lib/cloudflare';
 import { useAuth } from '@/providers/auth-provider';
 import { colors, fontSize, radius, spacing } from '@/theme';
 
@@ -51,10 +52,10 @@ export default function PlayerScreen() {
 
   const ytLive = settings.yt_is_live === 'true';
   const ytId = settings.yt_video_id ?? '';
-  const muxLive = settings.mux_is_live === 'true';
-  const muxId = settings.mux_playback_id ?? '';
-  const hls = muxLive && muxId
-    ? `https://stream.mux.com/${muxId}.m3u8`
+  const cfLive = settings.cf_is_live === 'true';
+  const cfUid = settings.cf_playback_id ?? '';
+  const hls = cfLive && cfUid
+    ? cfHlsUrl(cfUid, settings.cf_hls_url)
     : stream?.hlsUrl ?? '';
 
   useEffect(() => {
@@ -108,7 +109,7 @@ export default function PlayerScreen() {
         {ytLive && ytId ? (
           <YouTubePlayer videoId={ytId} live startAt={0} title={stream?.title} showBack onChat={() => setChatOpen(true)} />
         ) : hls ? (
-          <MuxPlayer uri={hls} title={stream?.title} live={stream?.status === 'live'} showBack onChat={() => setChatOpen(true)} />
+          <CloudflarePlayer uri={hls} title={stream?.title} live={stream?.status === 'live'} showBack onChat={() => setChatOpen(true)} />
         ) : ytId ? (
           <YouTubePlayer videoId={ytId} live={false} startAt={startAt} title={stream?.title} showBack onChat={() => setChatOpen(true)} />
         ) : (
