@@ -6,12 +6,11 @@ UPDATE settings SET key = replace(key, 'mux_', 'cf_'), updated_at = NOW()
 WHERE key LIKE 'mux_%' OR key LIKE 'ch2_mux_%' OR key LIKE 'ch3_mux_%';
 
 -- 2. Point the playback keys at the new Cloudflare Stream Live Input UIDs.
-UPDATE settings SET value = '943a0b1a8184331cdb4ac9a7aef6f07e', updated_at = NOW()
-WHERE key = 'cf_playback_id';
-UPDATE settings SET value = '02672b2c4ecd1ec8dccf90ba9caac0f8', updated_at = NOW()
-WHERE key = 'ch2_cf_playback_id';
-UPDATE settings SET value = '57b7175304c4a9be02ad6bb46783c97c', updated_at = NOW()
-WHERE key = 'ch3_cf_playback_id';
+INSERT INTO settings (key, value, updated_at) VALUES
+  ('cf_playback_id',   '943a0b1a8184331cdb4ac9a7aef6f07e', NOW()),
+  ('ch2_cf_playback_id','02672b2c4ecd1ec8dccf90ba9caac0f8', NOW()),
+  ('ch3_cf_playback_id','57b7175304c4a9be02ad6bb46783c97c', NOW())
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
 
 -- 3. Store unsigned HLS manifest URLs (clients fall back to deriving these from the UID).
 INSERT INTO settings (key, value, updated_at) VALUES
