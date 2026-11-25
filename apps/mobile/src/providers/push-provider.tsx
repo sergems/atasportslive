@@ -11,7 +11,9 @@ import { router } from 'expo-router';
 import { useAuth } from '@/providers/auth-provider';
 import { api } from '@/lib/api';
 
-const messaging = getMessaging();
+// Firebase Messaging is native-only. Web preview (Expo) has no default app,
+// so skip it there — real Android/iOS builds keep the full push behaviour.
+const messaging = Platform.OS === 'web' ? null : getMessaging();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -33,6 +35,7 @@ async function prepareChannel() {
 }
 
 export async function requestPushPermission(): Promise<boolean> {
+  if (!messaging) return false;
   await prepareChannel();
   const status = await requestPermission(messaging);
   return status === AuthorizationStatus.AUTHORIZED || status === AuthorizationStatus.PROVISIONAL;
@@ -43,7 +46,7 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
   const { status, authedFetch } = useAuth();
 
   useEffect(() => {
-    if (status !== 'authenticated') return;
+    if (status !== 'authenticated' || !messaging) return;
     let active = true;
 
     const register = async (fcmToken: string) => {
@@ -67,6 +70,7 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
   }, [status, authedFetch]);
 
   useEffect(() => {
+    if (!messaging) return;
     const showForeground = onMessage(messaging, async (remote: RemoteMessage) => {
       await Notifications.scheduleNotificationAsync({
         content: {
