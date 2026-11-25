@@ -7,11 +7,11 @@ import {
 } from 'lucide-react';
 
 const SCREENS = [
-  { src: '/app-screens/home.png', label: 'Home' },
-  { src: '/app-screens/live.png', label: 'Livestream' },
-  { src: '/app-screens/wallet.png', label: 'Wallet' },
-  { src: '/app-screens/subscription.png', label: 'Subscriptions' },
-  { src: '/app-screens/more.png', label: 'More' },
+  { src: '/app-screens/home.png?v=2', label: 'Home' },
+  { src: '/app-screens/live.png?v=2', label: 'Livestream' },
+  { src: '/app-screens/wallet.png?v=2', label: 'Wallet' },
+  { src: '/app-screens/subscription.png?v=2', label: 'Subscriptions' },
+  { src: '/app-screens/more.png?v=2', label: 'More' },
 ];
 
 const FEATURES = [
@@ -100,9 +100,9 @@ export default function AppLanding() {
           <div className="relative flex justify-center">
             <div className="absolute inset-0 rounded-full bg-teal-500/10 blur-3xl" />
             <div className="relative flex translate-y-6 gap-4">
-              <Phone src="/app-screens/home.png" label="Home" className="rotate-[-7deg]" />
-              <Phone src="/app-screens/subscription.png" label="Subscriptions" className="z-10 translate-y-6" />
-              <Phone src="/app-screens/wallet.png" label="Wallet" className="rotate-[7deg]" />
+              <Phone src="/app-screens/home.png?v=2" label="Home" className="rotate-[-7deg]" />
+              <Phone src="/app-screens/subscription.png?v=2" label="Subscriptions" className="z-10 translate-y-6" />
+              <Phone src="/app-screens/wallet.png?v=2" label="Wallet" className="rotate-[7deg]" />
             </div>
           </div>
         </div>
